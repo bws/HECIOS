@@ -60,6 +60,10 @@ Note that the simulation models are simply the high level interfaces.  It
 should be possible to create models within the named models below.
 
 \subsection{System Models}
+System models control the experiment configuration.  The cluster type.  The
+node types.  The cpus per node.  The number of I/O nodes in the system.  The amount
+of existing network traffic.  The network type.  The connection topology.  All
+the physical stuff that actually I/O performance.
 
 \subsubsection{ClusterConfig}
 A model describing the number of compute nodes and I/O nodes of the cluster.
@@ -69,29 +73,45 @@ A model describing the applications I/O trace and the number of dedicated
 compute nodes.
 
 \subsection{Client Filesystem Models}
+The following simulation models simulate the behaviour of the client's file
+system interface.
 
 \subsubsection{I/O Middleware}
+Model to provide support for the various I/O primitives available to parallel
+applications.  Should probably provide support for at least the following
+serial file operations:  create, delete, open, stat, read, write.  Possibly 
+sync.  Should also provide support for parallel I/O ops: open, read, write.
+Maybe some stuff for working with data types/views.  Could be interesting.
 
 \subsubsection{I/O Statistics}
+A sensing layor for collecting statistics on client I/O operations.  I'm not
+precisely sure where this will hook in, maybe it has hooks everywhere.
 
 \subsubsection{ClientCache}
+A model to provide caching semantics.  Almost definitely needs to be a read
+through cache.  Write back versus write through should probably be
+configurable.  Also needs to address the notions of caching things other than
+data (metadata, handles, etc.)
 
 \subsubsection{FileDistribution}
+Describes how the file is distributed among the I/O servers.
 
 \subsubsection{NetworkTransport}
 The network model.  And example of where a single high level interface may
 stand as a proxy for alot of detail underneath.
 
 \subsection{Server Filesystem Models}
+The following models simulate the filesystem's server interface.
 
 \subsubsection{Request Scheduler}
 
 \subsubsection{O/S (filesystem)}
 
 \subsubsection{BlockCache}
+A block device that acts as a cache.
 
 \subsubsection{Disk}
-
+A block device.
 
 \end{document}
 
