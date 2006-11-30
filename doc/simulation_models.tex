@@ -63,7 +63,7 @@ should be possible to create models within the named models below.
 System models control the experiment configuration.  The cluster type.  The
 node types.  The cpus per node.  The number of I/O nodes in the system.  The amount
 of existing network traffic.  The network type.  The connection topology.  All
-the physical stuff that actually I/O performance.
+the physical stuff that impacts I/O performance.
 
 \subsubsection{ClusterConfig}
 A model describing the number of compute nodes and I/O nodes of the cluster.
@@ -104,8 +104,13 @@ stand as a proxy for alot of detail underneath.
 The following models simulate the filesystem's server interface.
 
 \subsubsection{Request Scheduler}
+The queue for scheduling incoming operations.  This is a fairly critical
+component as it pretty much defines the consistency mehanics for the file.
 
 \subsubsection{O/S (filesystem)}
+I'm not too certain what needs to go here.  I suppose it is the equivalent of
+trove in PVFS2.  So then something capable of simulating direct IO, AIO,
+Berkely DB.  Etc.
 
 \subsubsection{BlockCache}
 A block device that acts as a cache.
