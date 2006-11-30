@@ -12,10 +12,14 @@ DOC_DIR = doc
 # Include all make system makefiles
 #
 include mf/rules.mk
+
+#
+# Include module makefiles
+#
 include $(DOC_DIR)/module.mk
 
 #
-# Module build targets
+# Doc Module build targets
 #
 DOC_PDF := $(patsubst %.tex,%.pdf, $(filter %.tex,$(DOC_SRC)))
 
@@ -26,7 +30,7 @@ DOC_PDF := $(patsubst %.tex,%.pdf, $(filter %.tex,$(DOC_SRC)))
 all: $(TARGETS)
 
 doc: $(DOC_PDF)
-	echo "DOC_PDF: $(DOC_PDF)"
+	@#echo "DOC_PDF: $(DOC_PDF)"
 
 #
 # Required by make command

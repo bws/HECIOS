@@ -22,9 +22,9 @@
 % \addtolength{\textheight}{3cm}
 %
 
-\title{Parallel Virtual File System, Version 2}
-\author{PVFS2 Development Team}
-\date{September, 2003}
+\title{HECIOS: High End Computing I/O Simulator (Nominations for names are welcome}
+\author{HECIOS Development Team}
+\date{Fall 2006, Spring 2007}
 
 \pagestyle{plain}
 \begin{document}
@@ -47,14 +47,50 @@
 % Begin document body text
 %
 \section{Introduction to the Simulator}
+HECIOS, the High End Computing I/O Simulator, is a trace driven simulator
+designed to explore the I/O characteristics of very large cluster storage
+systems.  The simulator leverages the OmNet++ simulation package to access an
+event driven simulation package that provides existing well developed
+networking components.
 
 \section{Simulator Overview}
 
 \section{Simulator Models}
+Note that the simulation models are simply the high level interfaces.  It
+should be possible to create models within the named models below.
 
-\subsection{Client Models}
+\subsection{System Models}
 
-\subsection{Server Models}
+\subsubsection{ClusterConfig}
+A model describing the number of compute nodes and I/O nodes of the cluster.
+
+\subsubsection{ApplicationConfig}
+A model describing the applications I/O trace and the number of dedicated
+compute nodes.
+
+\subsection{Client Filesystem Models}
+
+\subsubsection{I/O Middleware}
+
+\subsubsection{I/O Statistics}
+
+\subsubsection{ClientCache}
+
+\subsubsection{FileDistribution}
+
+\subsubsection{NetworkTransport}
+The network model.  And example of where a single high level interface may
+stand as a proxy for alot of detail underneath.
+
+\subsection{Server Filesystem Models}
+
+\subsubsection{Request Scheduler}
+
+\subsubsection{O/S (filesystem)}
+
+\subsubsection{BlockCache}
+
+\subsubsection{Disk}
 
 
 \end{document}
