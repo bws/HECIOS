@@ -37,7 +37,7 @@ clean:
 	$(RM) $(DOC_PDF) $(DOC_CRUFT)
 
 doc: $(DOC_PDF)
-	@echo "DOC_PDF: $(DOC_PDF) DOC_DIR: $(DOC_DIR)"
+	@#echo "DOC_PDF: $(DOC_PDF) DOC_DIR: $(DOC_DIR)"
 
 
 #
