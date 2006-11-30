@@ -22,5 +22,5 @@
 	dvipdfm $<
 
 %.pdf: %.tex
-	TEXMFOUTPUT=$(DOC_DIR) && pdflatex $<
+	pdflatex -output-directory $(DOC_DIR) $<
 
