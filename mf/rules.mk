@@ -1,10 +1,15 @@
 
 
 #
-# Document generation rules
+# Document generation rules (nasty current directory stuff to handle
+# all the crazy output by latex)
 #
 %.dvi: %.tex
-	pslatex $<
+	(cd $(@D) && pslatex $(<F))
+	(cd $(@D) && pslatex $(<F))
+
+%.pdf: %.dvi
+	(cd $(@D) && dvipdfm -o $(@F) $(<F))
 
 %.eps: %.fig
 	fig2dev -L eps -p 1 $^ $@
@@ -17,10 +22,4 @@
 
 %.pdf: %.eps
 	epstopdf --outfile=$@ $^
-
-%.pdf: %.dvi
-	dvipdfm $<
-
-%.pdf: %.tex
-	pdflatex -output-directory $(DOC_DIR) $<
 
