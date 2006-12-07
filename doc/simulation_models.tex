@@ -9,7 +9,7 @@
 \usepackage{ae,aecompl}
 
 %
-% GET THE MARGINS RIGHT, THE UGLY WAY
+% GET THE MARGINS RIGHT, THE UGLY WAY (from PVFS)
 %
 \topmargin 0.2in
 \textwidth 6.5in
@@ -21,13 +21,15 @@
 \headheight 0.0in
 
 
-% \addtolength{\hoffset}{-2cm}
-% \addtolength{\textwidth}{4cm}
 %
-% \addtolength{\voffset}{-1.5cm}
-% \addtolength{\textheight}{3cm}
+% Enable figure subnumbering at the section level -- still doesn't work
+% will figure this out when it becomes more important
 %
+\newcommand{\Section}[1]{\section{#1} \setcounter{figure}{1}}
 
+%
+% Actual document content begins here
+%
 \title{HECIOS: High End Computing I/O Simulator 
        (Nominations for a new name are welcome)}
 \author{HECIOS Development Team}
@@ -39,12 +41,12 @@
 \maketitle
 \newpage
 
-\setcounter{tocdepth}{2}
-\tableofcontents
+%\setcounter{tocdepth}{2}
+%\tableofcontents
+%\newpage
 
 %
-% These two give us paragraphs with space between, which personally I
-% think is the right way to have things.
+% These two give us paragraphs with space between
 %
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{11pt}
