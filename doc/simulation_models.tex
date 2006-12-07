@@ -1,6 +1,12 @@
 \documentclass[11pt]{article}
-\usepackage[dvips]{graphicx}
+\usepackage{graphicx}
 \usepackage{times}
+\usepackage{pifont}
+\usepackage{subfigure}
+\usepackage{url}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage{ae,aecompl}
 
 %
 % GET THE MARGINS RIGHT, THE UGLY WAY
@@ -22,7 +28,8 @@
 % \addtolength{\textheight}{3cm}
 %
 
-\title{HECIOS: High End Computing I/O Simulator (Nominations for names are welcome}
+\title{HECIOS: High End Computing I/O Simulator 
+       (Nominations for a new name are welcome)}
 \author{HECIOS Development Team}
 \date{Fall 2006, Spring 2007}
 
@@ -58,29 +65,49 @@ networking components.
 Note that the simulation models are simply the high level interfaces.  It
 should be possible to create models within the named models below.
 
+HECIOS is architected using a layered approach.  The 3 layers are: the system
+layer, the client storage layer, and the server storage layer.  This layering
+is similar to the layering used in modern cluster file systems.
+ 
 \begin{figure}[t]
   \begin{center}
-    \includegraphics[scale=.8]{figs/model_layers}
+    \includegraphics[scale=.6]{figs/model_layers}
   \end{center}
   \caption{Simulation Model Layers \label{fig:model-layers}}
 \end{figure}
 
-\subsection{System Models}
-System models control the experiment configuration.  The cluster type.  The
-node types.  The cpus per node.  The number of I/O nodes in the system.  The amount
-of existing network traffic.  The network type.  The connection topology.  All
-the physical stuff that impacts I/O performance.
+\subsection{System Layer}
+The system layer describes the experiment configuration.  The cluster type.
+The node types.  The cpus per node.  The number of I/O nodes in the system.
+The amount of existing network traffic.  The network type.  The connection
+topology.  All the physical stuff that impacts I/O performance.
 
 \subsubsection{ClusterConfig}
 A model describing the number of compute nodes and I/O nodes of the cluster.
 
+\begin{itemize}
+\item Set the number of compute nodes
+\item Set the number of I/O nodes
+\item Set the compute node network type (speed, topology, etc.)
+\item Set the I/O node network type (speed, topology, etc.)
+\item Set some type of utilization factor??
+\end{itemize}
+
 \subsubsection{ApplicationConfig}
 A model describing the applications I/O trace and the number of dedicated
-compute nodes.
+compute nodes.  This model will need to provide support for parsing multiple
+trace formats, and possibly have a mechanism for allowing the generation of
+random I/O trace information.
 
-\subsection{Client Filesystem Models}
-The following simulation models simulate the behaviour of the client's file
-system interface.
+\begin{itemize}
+\item Set the number of job compute nodes
+\item Set the number of job I/O nodes
+\item Set the application/IO trace
+\end{itemize}
+
+\subsection{Client Storage Layer}
+The following simulation models simulate the behaviour of the storage
+interface available to applications running on a compute node.
 
 \subsubsection{I/O Middleware}
 Model to provide support for the various I/O primitives available to parallel
@@ -93,21 +120,40 @@ Maybe some stuff for working with data types/views.  Could be interesting.
 A sensing layor for collecting statistics on client I/O operations.  I'm not
 precisely sure where this will hook in, maybe it has hooks everywhere.
 
+\subsubsection{DataDistribution}
+The data distribution model describes how the client's logical data is mapped
+to the storage servers.  Since we are currently only interested in simulating
+file systems, this model is likely to have a bias for file systems; however, it
+is not our intent to specify this model in a file system specific manner.
+
+A data distribution fundamentally provides a list of I/O servers, and an
+algorithm for mapping an application's logical data to a physical storage
+location.  The data distribution provides the following model interfaces:
+
+\begin{itemize}
+\item Get the number of I/O servers
+\item Get I/O server(s) for logical data location
+\end{itemize}
+
+In the file system specific case we expect the data locations to be logical 
+file offsets.  Additionally, it may be important for a file distribution
+model to handle multiple data locations simultaneously in order to perform
+some data packing operations.
+
 \subsubsection{ClientCache}
 A model to provide caching semantics.  Almost definitely needs to be a read
 through cache.  Write back versus write through should probably be
 configurable.  Also needs to address the notions of caching things other than
 data (metadata, handles, etc.)
 
-\subsubsection{FileDistribution}
-Describes how the file is distributed among the I/O servers.
+Possible operations:  Read, Read-Through, Write, Invalidate, Evict.
 
 \subsubsection{NetworkTransport}
 The network model.  And example of where a single high level interface may
 stand as a proxy for alot of detail underneath.
 
-\subsection{Server Filesystem Models}
-The following models simulate the filesystem's server interface.
+\subsection{Server Storage Layer}
+The following models simulate the server storage interface.
 
 \subsubsection{Request Scheduler}
 The queue for scheduling incoming operations.  This is a fairly critical
