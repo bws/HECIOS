@@ -61,45 +61,60 @@ systems.  The simulator leverages the OmNet++ simulation package to access an
 event driven simulation package that provides existing well developed
 networking components.
 
+There are several things that we need to verify about the simulator and
+OmNet++ before implementing the other portions of the simulator too
+carefully.  Specifically, we need to make sure that the networking components
+available within OmNet can be used by our simulation.  It would also be
+beneficial to check on sticking the disk model stuff into our simulator.
+Finally, we will need to make sure there is a working build system (Makefiles)
+for integrating all of this code together in a working package.
+
 \section{Simulator Overview}
 
-\section{Simulator Models}
-Note that the simulation models are simply the high level interfaces.  It
-should be possible to create models within the named models below.
-
-HECIOS is architected using a layered approach.  The 3 layers are: the system
-layer, the client storage layer, and the server storage layer.  This layering
-is similar to the layering used in modern cluster file systems.
+\section{Simulator Layers}
+HECIOS is architected using a layered approach.  The 4 layers are: the
+configuration layer, the client storage layer, the server storage layer, and
+the system layer.  This layering is similar to the high level layering used in
+modern cluster file systems.
  
 \begin{figure}[t]
   \begin{center}
     \includegraphics[scale=.6]{figs/model_layers}
   \end{center}
-  \caption{Simulation Model Layers \label{fig:model-layers}}
+  \caption{Simulation Architectural Layers \label{fig:model-layers}}
 \end{figure}
 
-\subsection{System Layer}
-The system layer describes the experiment configuration.  The cluster type.
-The node types.  The cpus per node.  The number of I/O nodes in the system.
-The amount of existing network traffic.  The network type.  The connection
-topology.  All the physical stuff that impacts I/O performance.
+\subsection{Configuration Layer}
+The configuration layer describes the experiment configuration.  Relevant
+models within the configuration layer include the cluster type, the node
+types, the number of cpus per node, and the number of I/O nodes in the system.
+Additional parameters would include the amount of existing network, the
+existing job mix, and the I/O application trace we are attempting to
+benchmark.  All of these parameters need to be easily configurable, as these
+parameters will generally be important in measuring a particular filesystem
+configuration.
 
-\subsubsection{ClusterConfig}
+\subsubsection{ClusterConfig Model}
 A model describing the number of compute nodes and I/O nodes of the cluster.
+All cluster configuration models support 
 
 \begin{itemize}
 \item Set the number of compute nodes
 \item Set the number of I/O nodes
 \item Set the compute node network type (speed, topology, etc.)
 \item Set the I/O node network type (speed, topology, etc.)
-\item Set some type of utilization factor??
+\item Set some type of utilization factor?? -- this should probably be set in
+  the application, as my idea is that you specify real world existing clusters
+  here, and then reuse them (Jazz, Adenine, LLNL BG/L, etc).  But setting it
+  here maintains better encapsulation.
 \end{itemize}
 
-\subsubsection{ApplicationConfig}
+\subsubsection{ApplicationConfig Model}
 A model describing the applications I/O trace and the number of dedicated
 compute nodes.  This model will need to provide support for parsing multiple
 trace formats, and possibly have a mechanism for allowing the generation of
-random I/O trace information.
+random I/O trace information.  All Application Configurations support the
+following operations:
 
 \begin{itemize}
 \item Set the number of job compute nodes
@@ -148,11 +163,29 @@ through cache.  Write back versus write through should probably be
 configurable.  Also needs to address the notions of caching things other than
 data (metadata, handles, etc.)
 
-Possible operations:  Read, Read-Through, Write, Invalidate, Evict.
+\begin{itemize}
+\item Read location
+\item Read-through location
+\item Write location
+\item Invalidate range
+\item Evict range
+\end{itemize}
+
+There are lots of questions about how to best organize this cache, since it
+will probably be capable of storing variable length data.  A very non-cachey
+idea.  Lots of space for someone to get really into it, and do a bunch of
+background research and propose something I bet.
 
 \subsubsection{NetworkTransport}
-The network model.  And example of where a single high level interface may
-stand as a proxy for alot of detail underneath.
+The storage layer network model.  This simply needs to provide a clean
+interface for grabbing the detailed network stuff stored at the system layer.
+
+\begin{itemize}
+\item Send Request
+\item Receive Response
+\item Send Data
+\item Recieve Data
+\end{itemize}
 
 \subsection{Server Storage Layer}
 The following models simulate the server storage interface.
@@ -161,16 +194,39 @@ The following models simulate the server storage interface.
 The queue for scheduling incoming operations.  This is a fairly critical
 component as it pretty much defines the consistency mehanics for the file.
 
+\begin{itemize}
+\item Add Request
+\end{itemize}
+
+The only external operation I can think of is Add Request . . . nevertheless,
+the request scheduler has alot of internal mechanics.  It needs to figure out
+when queued requests can be performed.  Which is quite impacted by what
+requests are currently being performed.  Some meta-data operations need to be
+atomic (renames, e.g.), while I/O operations can hopefully be overlapped to a
+large degree.  Additionally, there is need for fast algorithm for detecting
+overlapping reads and writes.  Another valid research problem available for
+poaching.
+
+\subsection{System Layer}
+The layer responsible for providing system level services: networking,
+storage, etc.
+
 \subsubsection{O/S (filesystem)}
 I'm not too certain what needs to go here.  I suppose it is the equivalent of
 trove in PVFS2.  So then something capable of simulating direct IO, AIO,
-Berkely DB.  Etc.
+Berkely DB.  Etc.  Where should this be, should this be a slightly different
+idea.  Walt will probably have strong opinions on this, I don't of yet.
 
 \subsubsection{BlockCache}
 A block device that acts as a cache.
 
 \subsubsection{Disk}
-A block device.
+A block device used to store data.
+
+\subsubsection{Network}
+A character device.  But probably higher level than that, most likely a packet
+oriented device.  If it supported  DMA, it would be even better, as that is
+the future according to many experts.
 
 \end{document}
 
