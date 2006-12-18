@@ -70,6 +70,9 @@ Finally, we will need to make sure there is a working build system (Makefiles)
 for integrating all of this code together in a working package.
 
 \section{Simulator Overview}
+The simulator described here is now a pretty large departure from what Walt
+originally discussed.  Maybe I've spent a little too much time thinking about
+this, and I'm beginning to get carried away.
 
 \section{Simulator Layers}
 HECIOS is architected using a layered approach.  The 4 layers are: the
@@ -86,7 +89,7 @@ modern cluster file systems.
 
 \subsection{Configuration Layer}
 The configuration layer describes the experiment configuration.  Relevant
-models within the configuration layer include the cluster type, the node
+details within the configuration layer include the cluster type, the node
 types, the number of cpus per node, and the number of I/O nodes in the system.
 Additional parameters would include the amount of existing network, the
 existing job mix, and the I/O application trace we are attempting to
@@ -96,7 +99,7 @@ configuration.
 
 \subsubsection{ClusterConfig Model}
 A model describing the number of compute nodes and I/O nodes of the cluster.
-All cluster configuration models support 
+All cluster configuration models support the following operations:
 
 \begin{itemize}
 \item Set the number of compute nodes
@@ -132,12 +135,21 @@ applications.  Should probably provide support for at least the following
 serial file operations:  create, delete, open, stat, read, write.  Possibly 
 sync.  Should also provide support for parallel I/O ops: open, read, write.
 Maybe some stuff for working with data types/views.  Could be interesting.
+Possible operations:
+
+\begin{itemize}
+\item Open
+\item Read
+\item Write
+\item Create
+\item Delete
+\end{itemize}
 
 \subsubsection{I/O Statistics}
 A sensing layor for collecting statistics on client I/O operations.  I'm not
 precisely sure where this will hook in, maybe it has hooks everywhere.
 
-\subsubsection{DataDistribution}
+\subsubsection{Data Distribution}
 The data distribution model describes how the client's logical data is mapped
 to the storage servers.  Since we are currently only interested in simulating
 file systems, this model is likely to have a bias for file systems; however, it
@@ -157,7 +169,7 @@ file offsets.  Additionally, it may be important for a file distribution
 model to handle multiple data locations simultaneously in order to perform
 some data packing operations.
 
-\subsubsection{ClientCache}
+\subsubsection{Client Cache}
 A model to provide caching semantics.  Almost definitely needs to be a read
 through cache.  Write back versus write through should probably be
 configurable.  Also needs to address the notions of caching things other than
@@ -182,10 +194,19 @@ interface for grabbing the detailed network stuff stored at the system layer.
 
 \begin{itemize}
 \item Send Request
+\item Receive Request
+\item Send Response
 \item Receive Response
 \item Send Data
 \item Recieve Data
 \end{itemize}
+
+My thinking is that this will be a glue model that will do all the networking
+internally, and connect directly to the Request Scheduler and the I/O
+Scheduler described below.  In my opinion, this is the trickiest concept in
+the whole simulator.  Will this work as a single point for simulating network
+delays, or will we actually need to construct packets and send them between
+models in order to achieve valid network delay models?
 
 \subsection{Server Storage Layer}
 The following models simulate the server storage interface.
@@ -205,11 +226,34 @@ requests are currently being performed.  Some meta-data operations need to be
 atomic (renames, e.g.), while I/O operations can hopefully be overlapped to a
 large degree.  Additionally, there is need for fast algorithm for detecting
 overlapping reads and writes.  Another valid research problem available for
-poaching.
+investigation.  RobR once told me that he and Phil sat down and hashed out
+what the ideal Scheduler would look like in their opinion, so contacting them
+might be a starting place.  Or, simply implement what PVFS2 already has for a
+scheduler.
+
+\subsubsection{I/O Scheduler}
+The model responsible for representing I/O operations within the storage
+system.  This will provide the interface for storing data into the storage
+system.
+
+\begin{itemize}
+\item Create
+\item Delete
+\item Read
+\item Write
+\end{itemize}
+
+So what exactly needs to be simulated here.  I suppose it needs to connect
+directly to the client's network transport layer, to act as an intermediary
+between the client and the System models (O/S filesystem stuff).  Does it need
+to provide an interface for each of the existing server state machines.  That
+sounds reasonable actually.
 
 \subsection{System Layer}
 The layer responsible for providing system level services: networking,
-storage, etc.
+storage, etc.  Hopefully, all these models can be heavily leveraged from items
+already existing within OmNet.  The idea is to provide only as much wrapper
+stuff as is strictly needed.
 
 \subsubsection{O/S (filesystem)}
 I'm not too certain what needs to go here.  I suppose it is the equivalent of
@@ -227,6 +271,8 @@ A block device used to store data.
 A character device.  But probably higher level than that, most likely a packet
 oriented device.  If it supported  DMA, it would be even better, as that is
 the future according to many experts.
+
+\subsection{Summary}
 
 \end{document}
 
