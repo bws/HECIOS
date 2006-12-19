@@ -112,6 +112,9 @@ All cluster configuration models support the following operations:
   here maintains better encapsulation.
 \end{itemize}
 
+Resposibilities:  This model is responsible for constructing and initializing
+all of the models other than the ApplicationConfig.
+  
 \subsubsection{ApplicationConfig Model}
 A model describing the applications I/O trace and the number of dedicated
 compute nodes.  This model will need to provide support for parsing multiple
@@ -124,6 +127,9 @@ following operations:
 \item Set the number of job I/O nodes
 \item Set the application/IO trace
 \end{itemize}
+
+Responsibilities:  This model is responsible for parsing the I/O trace and
+scheduling the I/O events at appropriate intervals.
 
 \subsection{Client Storage Layer}
 The following simulation models simulate the behaviour of the storage
@@ -148,6 +154,10 @@ Possible operations:
 \subsubsection{I/O Statistics}
 A sensing layor for collecting statistics on client I/O operations.  I'm not
 precisely sure where this will hook in, maybe it has hooks everywhere.
+
+Responsibilites:  Models senses and stores all of the relevant experimental
+data.  Collection ideas include:  Aggregate Bandwidth, Operations/Sec, cache
+hit rate, cache size.  Etc.
 
 \subsubsection{Data Distribution}
 The data distribution model describes how the client's logical data is mapped
