@@ -41,6 +41,7 @@ DOC_CRUFT += $(patsubst %.tex,%.log, $(filter %.tex,$(DOC_SRC)))
 all: $(TARGETS)
 
 clean:
+	echo "Removing all derived files."
 	$(RM) $(DOC_DVI) $(DOC_PDF) $(DOC_PS) $(DOC_CRUFT)
 
 doc: $(DOC_EPS) $(DOC_PDF)
