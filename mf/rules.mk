@@ -23,3 +23,8 @@
 %.pdf: %.eps
 	epstopdf --outfile=$@ $^
 
+#
+# Generate source files from NED specs
+#
+%_n.cc: %.ned
+	$(NEDC) $(NEDFLAGS) $^

@@ -4,3 +4,5 @@ Documentation Notes:
 
 Integration Notes:
   This simulator utilizes the OmNet++ event framework and the contributed network package: the INET framework.  A compatible snapshot of the inet framework is stored with this simulator under source control.  
+
+  Current integrated INET version:  INET-20060912a
