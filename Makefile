@@ -1,11 +1,12 @@
 #
 # Master Makefile default targets
 #
-TARGETS = doc hecios
+TARGETS = doc build_hecios
 
 #
 # System paths
 #
+HECIOS_DIR := $(shell pwd)
 OMNET_DIR := /parl/bradles/projects/oppsim/omnetpp-3.2p1
 
 #
@@ -43,6 +44,7 @@ SIM_SRC :=
 
 # Include module makefiles
 #
+include mf/inet.mk
 include $(DOC_DIR)/module.mk
 include $(SRC_DIR)/module.mk
 
@@ -83,6 +85,11 @@ doc: $(DOC_EPS) $(DOC_PDF)
 	@#echo "DOC_PDF: $(DOC_PDF) DOC_DIR: $(DOC_DIR)"
 
 #
+# Build targets for 3rd party frameworks
+#
+third_party: build_inet
+
+#
 # Targets to hecios build simulator
 #
 ned_gen: $(SIM_NED_OUTPUT)
@@ -91,7 +98,9 @@ ned_gen: $(SIM_NED_OUTPUT)
 hecios: $(SIM_NED_OBJS) $(SIM_OBJS)
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
+build_hecios: third_party hecios
+
 #
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all clean doc ned_gen
+.PHONY: all build_inet build_hecios clean doc ned_gen third_party
