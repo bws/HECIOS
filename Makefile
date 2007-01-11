@@ -50,11 +50,12 @@ INCLUDES = $(OMNET_DIR)/include \
 # Libraries to link
 #
 LIB_DIR = lib
-THIRDPARTY_LIBS = $(LIB_DIR)/libinet.a \
-	$(LIB_DIR)/libzebra.a \
+THIRDPARTY_LIBS = \
 	$(LIB_DIR)/ospfd.a \
 	$(LIB_DIR)/ripd.a \
-	$(LIB_DIR)/zebra.a
+	$(LIB_DIR)/zebra.a \
+	$(LIB_DIR)/libzebra.a \
+	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o
 
 LIBS = -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
         -lenvir -ltkenv -ltk8.4 -ltcl8.4 -lsim_std -lnedxml -lxml2 -ldl \

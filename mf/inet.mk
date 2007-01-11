@@ -131,7 +131,6 @@ $(INET_DIR)/Network/MPLS/MPLSPacket.o \
 	$(INET_DIR)/Network/OSPFv2/OSPFPacket_m.o \
 	$(INET_DIR)/Network/OSPFv2/OSPFTimer_m.o \
 	$(INET_DIR)/Network/OSPFv2/OSPFRouting.o \
-	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o \
 	$(INET_DIR)/Network/Quagga/Daemon.o \
 	$(INET_DIR)/Network/Quagga/glue.o \
 	$(INET_DIR)/Network/Quagga/Netlink.o \
