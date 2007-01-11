@@ -1,7 +1,7 @@
 #
 # Master Makefile default targets
 #
-TARGETS = doc build_hecios
+TARGETS = doc hecios
 
 #
 # System paths
@@ -26,6 +26,7 @@ INET_DIR = INET
 # Include path (directories to search for include files)
 #
 INCLUDES = $(OMNET_DIR)/include \
+        $(INET_DIR) \
         $(INET_DIR)/Applications/Ethernet \
         $(INET_DIR)/Applications/Generic \
         $(INET_DIR)/Applications/PingApp \
@@ -48,7 +49,14 @@ INCLUDES = $(OMNET_DIR)/include \
 #
 # Libraries to link
 #
-LIBS = -L$(OMNET_DIR)/lib \
+LIB_DIR = lib
+THIRDPARTY_LIBS = $(LIB_DIR)/libinet.a \
+	$(LIB_DIR)/libzebra.a \
+	$(LIB_DIR)/ospfd.a \
+	$(LIB_DIR)/ripd.a \
+	$(LIB_DIR)/zebra.a
+
+LIBS = -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
         -lenvir -ltkenv -ltk8.4 -ltcl8.4 -lsim_std -lnedxml -lxml2 -ldl \
         -lstdc++
 
@@ -103,7 +111,7 @@ doc: $(DOC_EPS) $(DOC_PDF)
 #
 # Build targets for 3rd party frameworks
 #
-third_party: build_inet
+third_party: $(THIRDPARTY_LIBS)
 
 #
 # Targets to hecios build simulator
@@ -111,13 +119,13 @@ third_party: build_inet
 ned_gen: $(SIM_NED_OUTPUT)
 	echo "Ned translation complete"
 
-hecios: $(SIM_NED_OBJS) $(SIM_OBJS)
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+hecios: $(THIRDPARTY_LIBS) $(SIM_NED_OBJS) $(SIM_OBJS)
+	$(LD) $(LDFLAGS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(SIM_NED_OBJS) $(SIM_OBJS) $(LIBS) -o $@
 
-build_hecios: third_party hecios
+build_hecios: $(THIRDPARTY_LIBS) hecios
 	@echo "Hecios build complete"
 
 #
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all build_inet build_hecios clean doc ned_gen third_party
+.PHONY: all build_hecios clean doc ned_gen third_party

@@ -1,6 +1,8 @@
 #
 # Tools used to perform builds
 #
+AR = ar
+CP = cp
 RM = rm -f
 CXX = g++
 LD = g++
