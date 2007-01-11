@@ -2,7 +2,8 @@
 import
     "compute_node",
     "io_node",
-    "switch";
+    "switch",
+     "Network/AutoRouting/FlatNetworkConfigurator";
 
 //
 // Beowulf commodity cluster model

@@ -26,7 +26,23 @@ INET_DIR = INET
 # Include path (directories to search for include files)
 #
 INCLUDES = $(OMNET_DIR)/include \
-        $(INET_DIR) \
+        $(INET_DIR)/Applications/Ethernet \
+        $(INET_DIR)/Applications/Generic \
+        $(INET_DIR)/Applications/PingApp \
+        $(INET_DIR)/Applications/TCPApp \
+        $(INET_DIR)/Applications/UDPApp \
+        $(INET_DIR)/Base \
+        $(INET_DIR)/Network/ARP \
+        $(INET_DIR)/Network/AutoRouting \
+        $(INET_DIR)/Network/Contract \
+        $(INET_DIR)/Network/IPv4 \
+        $(INET_DIR)/Network/Queue \
+	$(INET_DIR)/NetworkInterfaces/Ethernet \
+	$(INET_DIR)/NetworkInterfaces/PPP \
+        $(INET_DIR)/Nodes/INET \
+        $(INET_DIR)/Transport/TCP \
+        $(INET_DIR)/Transport/UDP \
+        $(INET_DIR)/Util \
         $(SRC_DIR)
 
 #
@@ -99,6 +115,7 @@ hecios: $(SIM_NED_OBJS) $(SIM_OBJS)
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 build_hecios: third_party hecios
+	@echo "Hecios build complete"
 
 #
 # Psuedotargets (required by make for some dependencies)

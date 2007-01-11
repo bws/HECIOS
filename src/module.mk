@@ -9,4 +9,5 @@ SIM_SRC += $(DIR)/cluster.ned \
 	$(DIR)/switch.ned \
 	$(DIR)/compute_node.cc \
 	$(DIR)/io_node.cc \
-	$(DIR)/switch.cc
+	$(DIR)/switch.cc \
+	$(DIR)/file-sender-receiver.ned
