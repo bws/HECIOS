@@ -3,7 +3,14 @@ import
     "compute_node",
     "io_node",
     "switch",
-     "Network/AutoRouting/FlatNetworkConfigurator";
+    "Network/AutoRouting/FlatNetworkConfigurator",
+    "StandardHost",
+    "Router";
+
+channel gig_link
+    datarate 1000000000
+    delay 10ms
+endchannel
 
 //
 // Beowulf commodity cluster model
@@ -14,40 +21,39 @@ module Cluster
         num_io_nodes : const;
 
     submodules:
-        cpun: ComputeNode[num_cpu_nodes]
-            display: "i=block/process,cyan"; // "i=<icon>,<color>"
-
-        ion: IONode[num_io_nodes]
-            display: "i=abstract/server,green";
-
-        switch1: Switch
+        configurator: FlatNetworkConfigurator;
             parameters:
-                num_ports = sizeof(ion) + sizeof(cpun);
-            gatesizes:
-                in[sizeof(ion) + sizeof(cpun)], 
-                out[sizeof(ion) + sizeof(cpun)];
-            display: "i=device/switch,pink";
+                moduleTypes = "Router StandardHost",
+                nonIPModuleTypes = "",
+                networkAddress = "192.168.0.0",
+                netmask = "255.255.0.0";
+
+        cpun: StandardHost[num_cpu_nodes];
+            display: "p=56,64;i=block/process,cyan";
+
+        ion: StandardHost[num_io_nodes];
+            display: "p=42,144;i=abstract/server,green";
+
+        router: Router;
+            display: "p=147,143;i=abstract/router";
     
     connections:
+
         for i = 0..num_cpu_nodes-1 do
-            cpun[i].out --> delay 10ms --> switch1.in++;
-            cpun[i].in <-- delay 10ms <-- switch1.out++;
+            cpun[i].out++ --> gig_link --> router.in++;
+            cpun[i].in++ <-- gig_link <-- router.out++;
         endfor;
 
         for i = 0..num_io_nodes-1 do
-            ion[i].out --> delay 10ms --> switch1.in++;
-            ion[i].in <-- delay 10ms <-- switch1.out++;
+            ion[i].out++ --> gig_link --> router.in++;
+            ion[i].in++ <-- gig_link <-- router.out++;
         endfor;
 
-        //for i=0..num_cpu_nodes-1, j=0..num_io_nodes-1 do
-        //    cpun[i].out --> delay 10ms --> ion[j].in;
-        //    ion[j].out --> delay 100ms --> cpun[i].in;
-        //endfor;
 endmodule
 
 //
 // Network for a Beowulf commodity cluster
 //
-network cluster1 : Cluster
+network beowulf_net : Cluster
 endnetwork
 
