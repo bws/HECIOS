@@ -39,37 +39,37 @@ INET_OBJS = $(INET_DIR)/Applications/Ethernet/EtherApp_m.o \
 	$(INET_DIR)/Base/ReassemblyBuffer.o \
 	$(INET_DIR)/Base/Sink.o \
 	$(INET_DIR)/Mobility/ANSimMobility.o \
-$(INET_DIR)/Mobility/BasicMobility.o \
-$(INET_DIR)/Mobility/BonnMotionFileCache.o \
-$(INET_DIR)/Mobility/BonnMotionMobility.o \
-$(INET_DIR)/Mobility/CircleMobility.o \
-$(INET_DIR)/Mobility/ConstSpeedMobility.o \
-$(INET_DIR)/Mobility/LinearMobility.o \
-$(INET_DIR)/Mobility/LineSegmentsMobilityBase.o \
-$(INET_DIR)/Mobility/MassMobility.o \
-$(INET_DIR)/Mobility/NullMobility.o \
-$(INET_DIR)/Mobility/RandomWPMobility.o \
-$(INET_DIR)/Mobility/RectangleMobility.o \
-$(INET_DIR)/Mobility/TurtleMobility.o \
-$(INET_DIR)/Network/ARP/ARPPacket_m.o \
-$(INET_DIR)/Network/ARP/ARP.o \
-$(INET_DIR)/Network/AutoRouting/FlatNetworkConfigurator6.o \
-$(INET_DIR)/Network/AutoRouting/FlatNetworkConfigurator.o \
-$(INET_DIR)/Network/AutoRouting/NetworkConfigurator.o \
-$(INET_DIR)/Network/Contract/IPControlInfo_m.o \
-$(INET_DIR)/Network/Contract/IPProtocolId_m.o \
-$(INET_DIR)/Network/Contract/IPv6ControlInfo_m.o \
-$(INET_DIR)/Network/Contract/InterfaceEntry.o \
-$(INET_DIR)/Network/Contract/InterfaceTable.o \
-$(INET_DIR)/Network/Contract/IPAddress.o \
-$(INET_DIR)/Network/Contract/IPAddressResolver.o \
-$(INET_DIR)/Network/Contract/IPControlInfo.o \
-$(INET_DIR)/Network/Contract/IPv6Address.o \
-$(INET_DIR)/Network/Contract/IPv6ControlInfo.o \
-$(INET_DIR)/Network/Contract/IPvXAddress.o \
-$(INET_DIR)/Network/Extras/Dummy.o \
-$(INET_DIR)/Network/Extras/FailureManager.o \
-$(INET_DIR)/Network/ICMPv6/ICMPv6Message_m.o \
+	$(INET_DIR)/Mobility/BasicMobility.o \
+	$(INET_DIR)/Mobility/BonnMotionFileCache.o \
+	$(INET_DIR)/Mobility/BonnMotionMobility.o \
+	$(INET_DIR)/Mobility/CircleMobility.o \
+	$(INET_DIR)/Mobility/ConstSpeedMobility.o \
+	$(INET_DIR)/Mobility/LinearMobility.o \
+	$(INET_DIR)/Mobility/LineSegmentsMobilityBase.o \
+	$(INET_DIR)/Mobility/MassMobility.o \
+	$(INET_DIR)/Mobility/NullMobility.o \
+	$(INET_DIR)/Mobility/RandomWPMobility.o \
+	$(INET_DIR)/Mobility/RectangleMobility.o \
+	$(INET_DIR)/Mobility/TurtleMobility.o \
+	$(INET_DIR)/Network/ARP/ARPPacket_m.o \
+	$(INET_DIR)/Network/ARP/ARP.o \
+	$(INET_DIR)/Network/AutoRouting/FlatNetworkConfigurator6.o \
+	$(INET_DIR)/Network/AutoRouting/FlatNetworkConfigurator.o \
+	$(INET_DIR)/Network/AutoRouting/NetworkConfigurator.o \
+	$(INET_DIR)/Network/Contract/IPControlInfo_m.o \
+	$(INET_DIR)/Network/Contract/IPProtocolId_m.o \
+	$(INET_DIR)/Network/Contract/IPv6ControlInfo_m.o \
+	$(INET_DIR)/Network/Contract/InterfaceEntry.o \
+	$(INET_DIR)/Network/Contract/InterfaceTable.o \
+	$(INET_DIR)/Network/Contract/IPAddress.o \
+	$(INET_DIR)/Network/Contract/IPAddressResolver.o \
+	$(INET_DIR)/Network/Contract/IPControlInfo.o \
+	$(INET_DIR)/Network/Contract/IPv6Address.o \
+	$(INET_DIR)/Network/Contract/IPv6ControlInfo.o \
+	$(INET_DIR)/Network/Contract/IPvXAddress.o \
+	$(INET_DIR)/Network/Extras/Dummy.o \
+	$(INET_DIR)/Network/Extras/FailureManager.o \
+	$(INET_DIR)/Network/ICMPv6/ICMPv6Message_m.o \
 $(INET_DIR)/Network/ICMPv6/IPv6NDMessage_m.o \
 $(INET_DIR)/Network/ICMPv6/ICMPv6.o \
 $(INET_DIR)/Network/ICMPv6/IPv6NeighbourCache.o \
@@ -97,30 +97,30 @@ $(INET_DIR)/Network/LDP/LDP.o \
 $(INET_DIR)/Network/MPLS/LIBTable.o \
 $(INET_DIR)/Network/MPLS/MPLS.o \
 $(INET_DIR)/Network/MPLS/MPLSPacket.o \
-  $(INET_DIR)/Network/OSPFv2/Interface/OSPFInterface.o \
-     $(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateBackup.o \
-     $(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceState.o \
-     $(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateDesignatedRouter.o \
-     $(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateDown.o \
-     $(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateLoopback.o \
-     $(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateNotDesignatedRouter.o \
-     $(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStatePointToPoint.o \
-     $(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateWaiting.o \
-     $(INET_DIR)/Network/OSPFv2/MessageHandler/DatabaseDescriptionHandler.o \
-     $(INET_DIR)/Network/OSPFv2/MessageHandler/HelloHandler.o \
-     $(INET_DIR)/Network/OSPFv2/MessageHandler/LinkStateAcknowledgementHandler.o \
-     $(INET_DIR)/Network/OSPFv2/MessageHandler/LinkStateRequestHandler.o \
-     $(INET_DIR)/Network/OSPFv2/MessageHandler/LinkStateUpdateHandler.o \
-     $(INET_DIR)/Network/OSPFv2/MessageHandler/MessageHandler.o \
-     $(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighbor.o \
-     $(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateAttempt.o \
-     $(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborState.o \
-     $(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateDown.o \
-     $(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateExchange.o \
-     $(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateExchangeStart.o \
-     $(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateFull.o \
-     $(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateInit.o \
-     $(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateLoading.o \
+$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterface.o \
+$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateBackup.o \
+$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceState.o \
+$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateDesignatedRouter.o \
+$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateDown.o \
+$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateLoopback.o \
+$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateNotDesignatedRouter.o \
+$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStatePointToPoint.o \
+$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateWaiting.o \
+$(INET_DIR)/Network/OSPFv2/MessageHandler/DatabaseDescriptionHandler.o \
+$(INET_DIR)/Network/OSPFv2/MessageHandler/HelloHandler.o \
+$(INET_DIR)/Network/OSPFv2/MessageHandler/LinkStateAcknowledgementHandler.o \
+$(INET_DIR)/Network/OSPFv2/MessageHandler/LinkStateRequestHandler.o \
+$(INET_DIR)/Network/OSPFv2/MessageHandler/LinkStateUpdateHandler.o \
+$(INET_DIR)/Network/OSPFv2/MessageHandler/MessageHandler.o \
+$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighbor.o \
+$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateAttempt.o \
+$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborState.o \
+$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateDown.o \
+$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateExchange.o \
+$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateExchangeStart.o \
+$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateFull.o \
+$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateInit.o \
+$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateLoading.o \
 	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateTwoWay.o \
 	$(INET_DIR)/Network/OSPFv2/Router/ASExternalLSA.o \
 	$(INET_DIR)/Network/OSPFv2/Router/NetworkLSA.o \
@@ -255,13 +255,9 @@ $(INET_DIR)/bin/INET: $(INET_DIR)/.tstamp
 #
 # Archives created by and for the INET framework package
 #
-lib/libinet.a: $(INET_DIR)/bin/INET
+lib/inet.a: $(INET_DIR)/bin/INET
 	mkdir -p lib
 	$(AR) rcs $@ $(INET_OBJS)
-
-lib/libzebra.a: $(INET_DIR)/bin/INET
-	mkdir -p lib
-	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/lib/libzebra.a $@
 
 lib/ospfd.a: $(INET_DIR)/bin/INET
 	mkdir -p lib
@@ -274,4 +270,8 @@ lib/ripd.a: $(INET_DIR)/bin/INET
 lib/zebra.a: $(INET_DIR)/bin/INET
 	mkdir -p lib
 	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/zebra/zebra.a $@
+
+lib/libzebra.a: $(INET_DIR)/bin/INET
+	mkdir -p lib
+	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/lib/libzebra.a $@
 

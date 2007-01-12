@@ -1,7 +1,7 @@
 #
-# Master Makefile default targets
+# Top Level Makefile for HECIOS.  This makefile avoids recursive make and 
+# integrates the third party framework, INET, into HECIOS.
 #
-TARGETS = doc hecios
 
 #
 # System paths
@@ -18,9 +18,17 @@ include mf/tools.mk
 #
 # Module locations
 #
+BIN_DIR = bin
 DOC_DIR = doc
 SRC_DIR = src
 INET_DIR = INET
+
+#
+# Master Makefile default targets
+#
+ALL_TARGETS = doc $(BIN_DIR)/hecios
+all: $(ALL_TARGETS)
+
 
 #
 # Include path (directories to search for include files)
@@ -54,10 +62,9 @@ THIRDPARTY_LIBS = \
 	$(LIB_DIR)/ospfd.a \
 	$(LIB_DIR)/ripd.a \
 	$(LIB_DIR)/zebra.a \
-	$(LIB_DIR)/libzebra.a \
 	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o
 
-LIBS = -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
+LIBS = -L$(OMNET_DIR)/lib -L$(LIB_DIR) -lzebra \
         -lenvir -ltkenv -ltk8.4 -ltcl8.4 -lsim_std -lnedxml -lxml2 -ldl \
         -lstdc++
 
@@ -98,14 +105,15 @@ SIM_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_SRC)))
 #
 # Top level psuedo targets
 #
-all: $(TARGETS)
-
 clean:
 	@echo "Removing all derived files."
 	$(RM) $(DOC_DVI) $(DOC_EPS) $(DOC_PDF) $(DOC_PS) $(DOC_CRUFT)
 	$(RM) $(SIM_NED_OUTPUT) $(SIM_NED_OBJS) $(SIM_OBJS)
 	@echo "Derived files deleted.  Project is clean."
 
+#
+# Build targets for documentation
+#
 doc: $(DOC_EPS) $(DOC_PDF)
 	@#echo "DOC_PDF: $(DOC_PDF) DOC_DIR: $(DOC_DIR)"
 
@@ -120,13 +128,11 @@ third_party: $(THIRDPARTY_LIBS)
 ned_gen: $(SIM_NED_OUTPUT)
 	echo "Ned translation complete"
 
-hecios: $(THIRDPARTY_LIBS) $(SIM_NED_OBJS) $(SIM_OBJS)
-	$(LD) $(LDFLAGS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(SIM_NED_OBJS) $(SIM_OBJS) $(LIBS) -o $@
-
-build_hecios: $(THIRDPARTY_LIBS) hecios
-	@echo "Hecios build complete"
+$(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_NED_OBJS) $(SIM_OBJS)
+	mkdir -p $(BIN_DIR)
+	$(LD) $(LDFLAGS) $(INET_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
 
 #
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all build_hecios clean doc ned_gen third_party
+.PHONY: all clean doc ned_gen third_party
