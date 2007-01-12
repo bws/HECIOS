@@ -7,7 +7,7 @@
 # System paths
 #
 HECIOS_DIR := $(shell pwd)
-OMNET_DIR := /parl/bradles/projects/oppsim/omnetpp-3.2p1
+OMNET_DIR := @OMNET_DIR@
 
 #
 # Include all make system makefiles

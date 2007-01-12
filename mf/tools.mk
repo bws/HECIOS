@@ -3,6 +3,7 @@
 #
 AR = ar
 CP = cp
+MKDIR = mkdir -p
 RM = rm -f
 CXX = g++
 LD = g++
@@ -10,8 +11,8 @@ LD = g++
 #
 # OmNet++ tools
 #
-NEDC = nedtool
-MSGC = opp_msgc
+NEDC = $(OMNET_DIR)/nedtool
+MSGC = $(OMNET_DIR)/opp_msgc
 
 #
 # Compilation flags

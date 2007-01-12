@@ -1,0 +1,47 @@
+dnl
+dnl Process this file with autoconf to produce a configure script
+dnl
+AC_INIT(Makefile.in)
+
+
+dnl
+dnl Use the OmNet++ distribution
+dnl
+AC_ARG_WITH([omnet],
+            [  --with-omnet=path    Use OmNet++ installation at "path"],
+            if test x$withval = xyes ; then
+                AC_MSG_ERROR(--with-omnet must be a given pathname)
+            else
+                AC_SUBST(OMNET_DIR, "$withval", [OmNet++ directory])
+            fi,
+            AC_MSG_FAILURE(--with-omnet must be set to the OmNet++ directory.))
+
+
+dnl
+dnl Check for programs (needs check for ar and install)
+dnl
+AC_PROG_CXX
+
+dnl 
+dnl Check for headers
+dnl
+AC_HEADER_STDC
+
+dnl
+dnl Checks for typedefs, structures, and compiler characteristics.
+dnl
+AC_C_CONST
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+
+dnl
+dnl Checks for library functions.
+dnl
+AC_FUNC_MALLOC
+AC_CHECK_FUNCS([memset])
+
+dnl
+dnl Generate output
+dnl
+AC_OUTPUT(Makefile)
