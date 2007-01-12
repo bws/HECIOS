@@ -11,8 +11,8 @@ LD = g++
 #
 # OmNet++ tools
 #
-NEDC = $(OMNET_DIR)/nedtool
-MSGC = $(OMNET_DIR)/opp_msgc
+NEDC = $(OMNET_DIR)/bin/nedtool
+MSGC = $(OMNET_DIR)/bin/opp_msgc
 
 #
 # Compilation flags
