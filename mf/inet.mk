@@ -248,7 +248,7 @@ $(INET_DIR)/World/NAMTrace.o \
 $(INET_DIR)/World/ScenarioManager.o
 
 
-$(INET_DIR)/bin/INET: $(INET_DIR)/.tstamp
+$(INET_DIR)/bin/INET:
 	cd INET && ./makemake
 	cd INET && make ROOT=$(shell pwd)/$(INET_DIR)
 
