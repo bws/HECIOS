@@ -62,6 +62,7 @@ THIRDPARTY_LIBS = \
 	$(LIB_DIR)/ospfd.a \
 	$(LIB_DIR)/ripd.a \
 	$(LIB_DIR)/zebra.a \
+	$(LIB_DIR)/libzebra.a \
 	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o
 
 LIBS = -L$(OMNET_DIR)/lib -L$(LIB_DIR) -lzebra \
