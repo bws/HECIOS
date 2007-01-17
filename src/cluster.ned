@@ -2,8 +2,9 @@
 import
     "compute_node",
     "io_node",
-    "switch",
-    "Network/AutoRouting/FlatNetworkConfigurator",
+    "EtherSwitch",
+    "EtherSwitch2",
+    "FlatNetworkConfigurator",
     "StandardHost",
     "Router";
 
@@ -34,26 +35,33 @@ module Cluster
         ion: StandardHost[num_io_nodes];
             display: "p=42,144;i=abstract/server,green";
 
-        router: Router;
-            display: "p=147,143;i=abstract/router";
+        switch: EtherSwitch;
+            display: "p=147,143;i=abstract/switch";
     
     connections:
 
         for i = 0..num_cpu_nodes-1 do
-            cpun[i].out++ --> gig_link --> router.in++;
-            cpun[i].in++ <-- gig_link <-- router.out++;
+            cpun[i].ethOut++ --> switch.in++;
+            cpun[i].ethIn++ <-- switch.out++;
         endfor;
 
         for i = 0..num_io_nodes-1 do
-            ion[i].out++ --> gig_link --> router.in++;
-            ion[i].in++ <-- gig_link <-- router.out++;
+            ion[i].ethOut++ --> switch.in++;
+            ion[i].ethIn++ <-- switch.out++;
         endfor;
 
 endmodule
 
-//
-// Network for a Beowulf commodity cluster
-//
-network beowulf_net : Cluster
-endnetwork
+network test_cluster: Cluster
+    parameters:
+        num_cpu_nodes = 4,
+        num_io_nodes = 4;
+//        switch.relayUnitType = "MACRelayUnitPP";
+//        switch.relayUnit.addressTableFile = "",
+//        switch.relayUnit.addressTableSize = 100000,
+//        switch.mac[*].address = "auto",
+//        switch.mac[*].txrate = 136000000000,
+//        switch.mac[*].duplexEnabled = true,
+//        switch.mac[*].writeScalars = false;
 
+endnetwork
