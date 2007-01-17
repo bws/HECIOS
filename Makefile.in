@@ -46,6 +46,7 @@ INCLUDES = $(OMNET_DIR)/include \
         $(INET_DIR)/Network/Contract \
         $(INET_DIR)/Network/IPv4 \
         $(INET_DIR)/Network/Queue \
+	$(INET_DIR)/NetworkInterfaces/EtherSwitch \
 	$(INET_DIR)/NetworkInterfaces/Ethernet \
 	$(INET_DIR)/NetworkInterfaces/PPP \
         $(INET_DIR)/Nodes/INET \
