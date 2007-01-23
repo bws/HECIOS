@@ -9,16 +9,8 @@ message fsRequest
         int fsId;
 };
 
-// Create a directory
-message fsCreateDirRequest extends fsRequest
-{
-    fields:
-        int parent_handle;
-        string entry;
-};
-
-// Create a file
-message fsCreateFileRequest extends fsRequest
+// Create a file system object
+message fsCreateRequest extends fsRequest
 {
     fields:
         int parent_handle;
@@ -26,11 +18,33 @@ message fsCreateFileRequest extends fsRequest
         string entry;
 };
 
-// Resolve a filesystem path
-message fsLookupPathRequest extends fsRequest
+// Remove a file system object
+message fsRemoveRequest extends fsRequest
 {
     fields:
-        string path;
+        int handle;
+};
+
+// Read object data
+message fsReadRequest extends fsRequest
+{
+    fields:
+        int handle;
+        int server_nr;
+        int server_cnt;
+        unsigned long offset;
+        unsigned long aggregate_size;
+};
+
+// Write object data
+message fsWriteRequest extends fsRequest
+{
+    fields:
+        int handle;
+        int server_nr;
+        int server_cnt;
+        unsigned long offset;
+        unsigned long aggregate_size;
 };
 
 // Get file attributes
@@ -40,29 +54,6 @@ message fsGetAttrRequest extends fsRequest
         string path;
 };
 
-// Read file data
-message fsReadFileRequest extends fsRequest
-{
-    fields:
-        int handle;
-};
-
-// Remove a directory
-message fsRemoveDirRequest extends fsRequest
-{
-    fields:
-        int parentHandle;
-        int targetHandle;
-};
-
-// Remove a file
-message fsRemoveFileRequest extends fsRequest
-{
-    fields:
-        int parentHandle;
-        int targetHandle;
-};
-
 // Set file attributes
 message fsSetAttrRequest extends fsRequest
 {
@@ -70,13 +61,84 @@ message fsSetAttrRequest extends fsRequest
         string path;
 };
 
-// Write file data
-message fsWriteFileRequest extends fsRequest
+// Resolve a filesystem path
+message fsLookupPathRequest extends fsRequest
+{
+    fields:
+        string path;
+};
+
+// Create a directory entry
+message fsCreateDirEntRequest extends fsRequest
+{
+    fields:
+        int parent_handle;
+        int new_handle;
+        string entry;
+};
+
+// Remove a directory entry
+message fsRemoveDirEntRequest extends fsRequest
 {
     fields:
         int handle;
-        int server_nr;
-        int server_cnt;
-        unsigned long offset;
-        unsigned long aggregate_size;
+        string entry;
+};
+
+// Resolve a filesystem path
+message fsChangeDirEntRequest extends fsRequest
+{
+    fields:
+        int parent_handle;
+        int new_handle;
+        string entry;
+};
+
+// Resolve a filesystem path
+message fsTruncateRequest extends fsRequest
+{
+    fields:
+        int handle;
+        unsigned long new_size;
+        int flags;
+};
+
+// Resolve a filesystem path
+message fsMakeDirRequest extends fsRequest
+{
+    fields:
+        int handle_extents[];
+};
+
+// Resolve a filesystem path
+message fsReadDirRequest extends fsRequest
+{
+    fields:
+        int handle;
+        unsigned long dir_offset;
+        unsigned long dirent_count;
+};
+
+// Resolve a filesystem path
+message fsFlushRequest extends fsRequest
+{
+    fields:
+        string path;
+};
+
+// Resolve a filesystem path
+message fsStatRequest extends fsRequest
+{
+    fields:
+        int handle;
+        int flags;
+};
+
+// Resolve a filesystem path
+message fsListAttrRequest extends fsRequest
+{
+    fields:
+        int handles[];
+        int handle_count;
+        int attr_mask;
 };

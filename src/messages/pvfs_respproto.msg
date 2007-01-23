@@ -9,18 +9,44 @@ message fsResponse
         bool requestSucceeded;
 };
 
-// Create a directory
-message fsCreateDirResponse extends fsResponse
+// Create a file system object
+message fsCreateResponse extends fsResponse
 {
     fields:
         int handle;
 };
 
-// Create a file
-message fsCreateFileResponse extends fsResponse
+// Remove a file system object
+message fsRemoveResponse extends fsResponse
+{
+};
+
+// Read file data
+message fsReadResponse extends fsResponse
 {
     fields:
-        int handle;
+        unsigned long bstream_size;
+};
+
+// Write file data
+message fsWriteResponse extends fsResponse
+{
+    fields:
+        unsigned long bstream_size;
+};
+
+// Get attributes
+message fsGetAttrResponse extends fsResponse
+{
+    fields:
+        string attr;
+};
+
+// Set attributes
+message fsSetAttrResponse extends fsResponse
+{
+    fields:
+        string attr[];
 };
 
 // Lookup a path
@@ -32,35 +58,69 @@ message fsLookupPathResponse extends fsResponse
         int attr_count;
 };
 
-// Get attributes
-message fsGetAttrResponse extends fsResponse
+// Create a directory entry
+message fsCreateDirEntResponse extends fsResponse
 {
 };
 
-// Set attributes
-message fsSetAttrResponse extends fsResponse
-{
-};
-
-// Read file data
-message fsReadFileResponse extends fsResponse
-{
-};
-
-// Remove a directory
-message fsRemoveDirResponse extends fsResponse
-{
-};
-
-// Remove a file
-message fsRemoveFileResponse extends fsResponse
-{
-};
-
-// Write file data
-message fsWriteFileResponse extends fsResponse
+// Remove a directory entry
+message fsRemoveDirEntResponse extends fsResponse
 {
     fields:
-        unsigned long data_written;
+        int removedHandle;
+};
+
+// Change a directory entry
+message fsChangeDirEntResponse extends fsResponse
+{
+    fields:
+        int old_dirent_handle;
+};
+
+// Truncate a data object
+message fsTruncateResponse extends fsResponse
+{
+};
+
+// Create a directory
+message fsMakeDirResponse extends fsResponse
+{
+    fields:
+        int handle;
+};
+
+// Read a directory
+message fsReadDirResponse extends fsResponse
+{
+    fields:
+        int handle;
+        unsigned long dir_offset;
+        string entries[];
+        int entry_count;
+        unsigned long directory_version;
+};
+
+// Write completion
+message fsWriteCompletionResponse extends fsResponse
+{
+};
+
+// Flush a data object
+message fsFlushResponse extends fsResponse
+{
+};
+
+// Stat filesystem
+message fsStatResponse extends fsResponse
+{
+    fields:
+        string stat;
+};
+
+// List data object attributes
+message fsListAttrResponse extends fsResponse
+{
+    fields:
+        unsigned long num_handles;
 };
 
