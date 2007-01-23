@@ -22,6 +22,7 @@ BIN_DIR = bin
 DOC_DIR = doc
 SRC_DIR = src
 INET_DIR = INET
+MESSAGES_DIR= $(SRC_DIR)/messages
 
 #
 # Master Makefile default targets
@@ -34,6 +35,9 @@ all: $(ALL_TARGETS)
 # Include path (directories to search for include files)
 #
 INCLUDES = $(OMNET_DIR)/include \
+	$(HECIOS_DIR) \
+        $(SRC_DIR) \
+        $(MESSAGES_DIR) \
         $(INET_DIR) \
         $(INET_DIR)/Applications/Ethernet \
         $(INET_DIR)/Applications/Generic \
@@ -52,8 +56,7 @@ INCLUDES = $(OMNET_DIR)/include \
         $(INET_DIR)/Nodes/INET \
         $(INET_DIR)/Transport/TCP \
         $(INET_DIR)/Transport/UDP \
-        $(INET_DIR)/Util \
-        $(SRC_DIR)
+        $(INET_DIR)/Util
 
 #
 # Libraries to link
@@ -81,6 +84,7 @@ SIM_SRC :=
 include mf/inet.mk
 include $(DOC_DIR)/module.mk
 include $(SRC_DIR)/module.mk
+include $(MESSAGES_DIR)/module.mk
 
 #
 # Doc Module build targets
@@ -100,6 +104,8 @@ DOC_CRUFT += $(patsubst %.tex,%.log, $(filter %.tex,$(DOC_SRC)))
 #
 # Src Module build targets
 #
+SIM_MSG_OUTPUT := $(patsubst %.msg,%_m.cc, $(filter %.msg, $(SIM_SRC)))
+SIM_MSG_OBJS := $(patsubst %.msg,%_m.o, $(filter %.msg, $(SIM_SRC)))
 SIM_NED_OUTPUT := $(patsubst %.ned,%_n.cc, $(filter %.ned, $(SIM_SRC)))
 SIM_NED_OBJS := $(patsubst %.ned,%_n.o, $(filter %.ned, $(SIM_SRC)))
 SIM_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_SRC)))
@@ -127,12 +133,12 @@ third_party: $(THIRDPARTY_LIBS)
 #
 # Targets to hecios build simulator
 #
-ned_gen: $(SIM_NED_OUTPUT)
+ned_gen: $(SIM_MSG_OUTPUT) $(SIM_NED_OUTPUT)
 	echo "Ned translation complete"
 
-$(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_NED_OBJS) $(SIM_OBJS)
+$(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS)
 	mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(INET_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(INET_OBJS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
 
 #
 # Psuedotargets (required by make for some dependencies)

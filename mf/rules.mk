@@ -28,3 +28,6 @@
 #
 %_n.cc: %.ned
 	$(NEDC) $(NEDFLAGS) $^
+
+%_m.cc: %.msg
+	$(MSGC) $(NEDFLAGS) $^
