@@ -62,15 +62,20 @@ void fsProcessMessage( MPI_seek *msg )
 }
 
 // messages from server/INET
-void fsProcessMessage( fsCreateDirResponse *msg )
+
+void fsProcessMessage( fsCreateResponse *msg )
 {
 }
 
-void fsProcessMessage( fsCreateFileResponse *msg )
+void fsProcessMessage( fsRemoveResponse *msg )
 {
 }
 
-void fsProcessMessage( fsLookupPathResponse *msg )
+void fsProcessMessage( fsReadResponse *msg )
+{
+}
+
+void fsProcessMessage( fsWriteResponse *msg )
 {
 }
 
@@ -82,21 +87,50 @@ void fsProcessMessage( fsSetAttrResponse *msg )
 {
 }
 
-void fsProcessMessage( fsReadFileResponse *msg *msg )
+void fsProcessMessage( fsLookupPathResponse *msg )
 {
 }
 
-void fsProcessMessage( fsRemoveDirResponse *msg )
+void fsProcessMessage( fsCreateDirEntResponse *msg )
 {
 }
 
-void fsProcessMessage( fsRemoveFileResponse *msg )
+void fsProcessMessage( fsRemoveDirEntResponse *msg )
 {
 }
 
-void fsProcessMessage( fsWriteFileResponse *msg )
+void fsProcessMessage( fsChangeDirEntResponse *msg )
 {
 }
+
+void fsProcessMessage( fsTruncateResponse *msg )
+{
+}
+
+void fsProcessMessage( fsMakeDirResponse *msg )
+{
+}
+
+void fsProcessMessage( fsReadDirResponse *msg )
+{
+}
+
+void fsProcessMessage( fsWriteCompletionResponse *msg )
+{
+}
+
+void fsProcessMessage( fsFlushResponse *msg )
+{
+}
+
+void fsProcessMessage( fsStatResponse *msg )
+{
+}
+
+void fsProcessMessage( fsListAttrResponse *msg )
+{
+}
+
 
 // timers from self
 void timeout :
