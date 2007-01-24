@@ -9,7 +9,7 @@
 	(cd $(@D) && pslatex $(<F))
 
 %.pdf: %.dvi
-	(cd $(@D) && dvipdfm -o $(@F) $(<F))
+	(cd $(@D) && dvipdf -o $(@F) $(<F))
 
 %.eps: %.fig
 	fig2dev -L eps -p 1 $^ $@

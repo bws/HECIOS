@@ -29,35 +29,43 @@ fsModule::~fsModule()
 
 void fsModle::handleMessage(cMessage *msg)
 {
-	fsProcessMessage(msg);
+	if (msg->isSelfMessage())
+		fsProcessTimer(msg)
+	else
+		fsProcessMessage(msg);
 }
 
 // messages from user/cache
-void fsProcessMessage( MPI_open *msg )
+
+void fsProcessMessage( mpiFileOpenRequest *msg )
 {
 }
 
-void fsProcessMessage( MPI_close *msg )
+void fsProcessMessage( mpiFileCloseRequest *msg )
 {
 }
 
-void fsProcessMessage( MPI_read *msg )
+void fsProcessMessage( mpiFileDeleteRequest *msg )
 {
 }
 
-void fsProcessMessage( MPI_readat *msg )
+void fsProcessMessage( mpiFileSetSizeRequest *msg )
 {
 }
 
-void fsProcessMessage( MPI_write *msg )
+void fsProcessMessage( mpiFilePreallocateRequest *msg )
 {
 }
 
-void fsProcessMessage( MPI_writeat *msg )
+void fsProcessMessage( mpiFileGetSizeRequest *msg )
 {
 }
 
-void fsProcessMessage( MPI_seek *msg )
+void fsProcessMessage( mpiFileReadRequest *msg )
+{
+}
+
+void fsProcessMessage( mpiFileWriteRequest *msg )
 {
 }
 
@@ -131,6 +139,7 @@ void fsProcessMessage( fsListAttrResponse *msg )
 {
 }
 
-
 // timers from self
-void timeout :
+void fsProcessTimer( cMessage *msg )
+{
+}
