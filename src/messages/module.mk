@@ -3,6 +3,6 @@
 #
 DIR := src/messages
 
-SIM_SRC += $(DIR)/mpiio_proto.msg \
+SIM_SRC +=  \
 	$(DIR)/pvfs_reqproto.msg \
 	$(DIR)/pvfs_respproto.msg
