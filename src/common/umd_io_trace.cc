@@ -7,7 +7,7 @@
 UMDIOTrace::UMDIOTrace(int numProcs, std::string traceFile)
     : IOTrace(numProcs)
 {
-    _traceFile = traceFile;
+    traceFile_ = traceFile;
 }
 
 /**

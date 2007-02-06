@@ -21,7 +21,7 @@ public:
     virtual IOTraceRecord* nextRecord() const;
 
 private:
-    std::string _traceFile;
+    std::string traceFile_;
 };
 
 #endif

@@ -23,13 +23,13 @@ public:
                     WRITE, WRITE_AT};
 
     /** Constructor */
-    IOTrace(int numProcs) : _numProcs(numProcs) {};
+    IOTrace(int numProcs) : numProcs_(numProcs) {};
 
     /** Destructor */
     virtual ~IOTrace() {};
 
     /** @return the number of processes for this IO trace */
-    int getNumProcs() const {return _numProcs;}
+    int getNumProcs() const {return numProcs_;}
 
     /** @return the next IOTraceRecord */
     virtual IOTraceRecord* nextRecord() const = 0;
@@ -37,7 +37,7 @@ public:
 private:
 
     /** The number of processes for this trace */
-    const int _numProcs;
+    const int numProcs_;
 };
 
 /**
@@ -48,26 +48,26 @@ class IOTraceRecord
 public:
     /** Constructor */
     IOTraceRecord(int rank, IOTrace::operation opType) :
-        _rank(rank), _opType(opType) {};
+        rank_(rank), opType_(opType) {};
 
     /** Destructor */
     virtual ~IOTraceRecord() {};
 
     /** Operation type getter */
-    IOTrace::operation getOpType() const {return _opType;};
+    IOTrace::operation getOpType() const {return opType_;};
 
     /** File offset getter */
-    size_t getOffset() const {return _offset;};
+    size_t getOffset() const {return offset_;};
 
     /** Length getter */
-    size_t getLength() const {return _length;};
+    size_t getLength() const {return length_;};
     
 private:
 
-    int _rank;
-    IOTrace::operation _opType;
-    size_t _offset;
-    size_t _length;
+    int rank_;
+    IOTrace::operation opType_;
+    size_t offset_;
+    size_t length_;
     
 };
 
