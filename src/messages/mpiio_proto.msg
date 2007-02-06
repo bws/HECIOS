@@ -2,6 +2,38 @@
 // User request messages for MPI IO
 //
 
+enum mpiRequestTypes
+{
+	mpiFileOpenRequest = 1;
+   mpiFileCloseRequest = 2;
+   mpiFileDeleteRequest = 3;
+   mpiFileSetSizeRequest = 4;
+   mpiFilePreallocateRequest = 5;
+   mpiFileGetSizeRequest = 6;
+   mpiFileGetInfoRequest = 7;
+   mpiFileSetInfoRequest = 8;
+   mpiFileReadAtRequest = 9;
+   mpiFileReadRequest = 10;
+   mpiFileWriteAtRequest = 11;
+   mpiFileWriteRequest = 12;
+};
+
+enum mpiResponseTypes
+{
+   mpiFileOpenResponse = 21;
+   mpiFileCloseResponse = 22;
+   mpiFileDeleteResponse = 23;
+   mpiFileSetSizeResponse = 24;
+   mpiFilepreallocateResponse = 25;
+   mpiFileGetSizeResponse = 26;
+   mpiFileGetInfoResponse = 27;
+   mpiFileSetInfoResponse = 28;
+   mpiFileReadAtResponse = 29;
+   mpiFileReadResponse = 30;
+   mpiFileWriteAtResponse = 31;
+   mpiFileWriteResponse = 31;
+};
+
 // The abstract base class for all MPI IO message requests
 message mpiRequest
 {
@@ -20,15 +52,16 @@ message mpiResponse
 };
 
 // Request to open a file 
-message mpiFileOpenRequest
+message mpiFileOpenRequest extends mpiRequest
 {
     fields:
+	     int mpiRequestType enum(mpiRequestTypes) = mpiFileOpenRequest;
         string fileName;
         int mode;
 };
 
 // Open file response
-message mpiFileOpenResponse
+message mpiFileOpenResponse extends mpiResponse
 {
     fields:
         string fileName;
@@ -36,61 +69,66 @@ message mpiFileOpenResponse
 };
 
 // Request to close a file
-message mpiFileCloseRequest
+message mpiFileCloseRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFileCloseRequest;
         int handle;
 };
 
 // Close file response
-message mpiFileCloseResponse
+message mpiFileCloseResponse extends mpiResponse
 {
     fields:
         int handle;
 };
 
 // Request to delete a file
-message mpiFileDeleteRequest
+message mpiFileDeleteRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFileDeleteRequest;
         string fileName;
 };
 
 // Delete file response
-message mpiFileDeleteResponse
+message mpiFileDeleteResponse extends mpiResponse
 {
 };
 
 // Request to resize a file
-message mpiFileSetSizeRequest
+message mpiFileSetSizeRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFileSetSizeRequest;
         int handle;
         int size;
 };
 
 // Resize file response
-message mpiFileSetSizeResponse
+message mpiFileSetSizeResponse extends mpiResponse
 {
 };
 
 // Request to preallocate file space
-message mpiFilePreallocateRequest
+message mpiFilePreallocateRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFilePreallocateRequest;
         int handle;
         int size;
 };
 
 // Delete file response
-message mpiFilepreallocateResponse
+message mpiFilepreallocateResponse extends mpiResponse
 {
 };
 
 // Request to get the size of a file
-message mpiFileGetSizeRequest
+message mpiFileGetSizeRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFileGetSizeRequest;
         string fileName;
 };
 
@@ -100,42 +138,45 @@ message mpiFileGetSizeResponse
 };
 
 // Request to get the file info object
-message mpiFileGetInfoRequest
+message mpiFileGetInfoRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFileGetInfoRequest;
         int handle;
 };
 
 // Get file info response
-message mpiFileGetInfoResponse
+message mpiFileGetInfoResponse extends mpiResponse
 {
     fields:
         string info[];
 };
 
 // Request to set the file info object
-message mpiFileSetInfoRequest
+message mpiFileSetInfoRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFileSetInfoRequest;
         int handle;
         string info[];
 };
 
 // Set file info response
-message mpiFileSetInfoResponse
+message mpiFileSetInfoResponse extends mpiResponse
 {
 };
 
 // Request to read at a file offset
-message mpiFileReadAtRequest
+message mpiFileReadAtRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFileReadAtRequest;
         int handle;
         long offset = 0;
 };
 
 // File readAt response
-message mpiFileReadAtResponse
+message mpiFileReadAtResponse extends mpiResponse
 {
     fields:
         char data[];
@@ -143,14 +184,15 @@ message mpiFileReadAtResponse
 };
 
 // Request to read from a file
-message mpiFileReadRequest
+message mpiFileReadRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFileReadRequest;
         int handle;
 };
 
 // File read response
-message mpiFileReadResponse
+message mpiFileReadResponse extends mpiResponse
 {
     fields:
         char data[];
@@ -158,9 +200,10 @@ message mpiFileReadResponse
 };
 
 // Request to write at a file offset
-message mpiFileWriteAtRequest
+message mpiFileWriteAtRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFileWriteAtRequest;
         int handle;
         char data[];
         unsigned long num_bytes;
@@ -168,23 +211,24 @@ message mpiFileWriteAtRequest
 };
 
 // File writeAt response
-message mpiFileWriteAtResponse
+message mpiFileWriteAtResponse extends mpiResponse
 {
     fields:
         unsigned long bytes_written;
 };
 
 // Request to write to a file
-message mpiFileWriteRequest
+message mpiFileWriteRequest extends mpiRequest
 {
     fields:
+        int mpiRequestType enum(mpiRequestTypes) = mpiFileWriteRequest;
         int handle;
         char data[];
         unsigned long num_bytes;
 };
 
 // File write response
-message mpiFileWriteResponse
+message mpiFileWriteResponse extends mpiResponse
 {
     fields:
         unsigned long bytes_written;

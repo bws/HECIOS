@@ -32,7 +32,7 @@ void fsModule::handleMessage(cMessage *msg)
 	if (msg->isSelfMessage())
 		fsProcessTimer(msg)
 	else
-		switch(msg->kind())
+		switch(msg->mpiRequestType())
 		{
 		case mpiFileOpenRequest :
 			fsProcess_mpiFileOpenRequest(msg);
@@ -122,10 +122,102 @@ void fsModule::handleMessage(cMessage *msg)
 
 void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *msg )
 {
+	fsOpenFile *filedes;
+	enum {
+		INIT = 0;
+		LOOKUP = FSM_Steady (1),
+		READ_ATTR = FSM_Steady (3),
+		FINISH = FSM_Steady (4),
+	};
+	FSM_Switch(msg->state)
+	{
+		case FSM_Exit(INIT):
+			/* create open file descriptor */
+			filedes = new fsOpenFile;
+			/* look for dir in cache */
+			{
+				filedes->fs = msg->fs;
+				filedes->handle = filedes->fs.lookupDir(msg->fileName);
+				if (filedes->handle == NULL)
+				{
+					/* not in cache go to lookup state */
+					FSM_Goto(filedes->state, LOOKUP);
+				}
+				else
+				{
+					/* in cache go to readdir state */
+					FSM_Goto(filedes->state, READ_ATTR);
+				}
+			}
+			break;
+		case FSM_Enter(LOOKUP):
+			/* send request to lookup file handle */
+			{
+				fsLookupRequest *req;
+				req = new fsLookupRequest;
+				req->setContextPointer(filedes);
+				/* copy path to look up */
+				/* get addr for root dir server */
+				req->setAddr(filedes->fs.root);
+				send(req, fsNetOut);
+			}
+			break;
+		case FSM_Exit(LOOKUP):
+			/* msg is s lookup response */
+			filedes = msg->contextPointer();
+			if ()
+			{
+				/* enter handle in cache */
+				filedes->handle = msg->handle;
+				filedes->fs.insertDir(filedes->path, filedes->handle);
+				/* look for metadata in cache */
+				filedes->meta = filedes->fs.lookupMetaData(filedes->handle);
+				if (filedes->meta == NULL)
+				{
+					/* not in cache go to lookup state */
+					FSM_Goto(filedes->state, READ_ATTR);
+				}
+				else
+				{
+					/* in cache go to readdir state */
+					FSM_Goto(filedes->state, FINISH);
+				}
+			}
+			else
+			{
+				/* set up next lookup */
+			}
+			break;
+		case FSM_Enter(READ_ATTR):
+			/* send request to read metadata */
+			{
+				fsGetAttrib *req;
+				req = new fsGetAttrib;
+				req->setContextPointer(filedes);
+				req->setHandle(filedes->handle);
+				req->setAddr(filedes->fs.map(filedes->handle));
+				send(req, fsNetOut);
+			}
+			break;
+		case FSM_Exit(READ_ATTR):
+			filedes = msg->contextPointer();
+			FSM_Goto(filedes->state, FINISH);
+			break;
+		case FSM_Enter(FINISH):
+			/* return descriptor to caller */
+			{
+				mpiFileOpenResponse resp;
+				resp = new mpiFileOpenResponse;
+				resp->setContextPointer(orig_msg->contextPointer());
+				send(resp, fsAppOut);
+			}
+			break;
+	}
 }
 
 void fsProcess_mpiFileCloseRequest( mpiFileCloseRequest *msg )
 {
+	/* free open file descriptor */
 }
 
 void fsProcess_mpiFileDeleteRequest( mpiFileDeleteRequest *msg )
@@ -146,10 +238,44 @@ void fsProcess_mpiFileGetSizeRequest( mpiFileGetSizeRequest *msg )
 
 void fsProcess_mpiFileReadRequest( mpiFileReadRequest *msg )
 {
+	fsReadRequest *req;
+	fsHandleSet handles;
+	iterator handle;
+	/* look for metadata in cache */
+	msg->fd->meta = msg->fs.lookupMetaData(msg->fd->handle);
+	/* find servers with data */
+	fsSetHandles(handles, msg->fd->meta.handles, msg->fd->meta.dist);
+	/* send request to each server */
+	req = new fsReadRequest;
+	req->setContextPointer(msg);
+	for (handle = handles.begin(); handle < handles.end(); handle++)
+	{
+		fsReadRequest newreq = req.dup();
+		newreq->setHandle(*handle);
+		newreq->setAddr(msg->fs.map(*handle));
+		send(newreq, fsNetOut);
+	}
 }
 
 void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *msg )
 {
+	fsWriteRequest *req;
+	fsHandleSet handles;
+	iterator handle;
+	/* look for metadata in cache */
+	msg->fd->meta = msg->fs.lookupMetaData(msg->fd->handle);
+	/* find affected servers using distribution */
+	fsSetHandles(handles, msg->fd->meta.handles, msg->fd->meta.dist);
+	/* send request to each server */
+	req = new fsWriteRequest;
+	req->setContextPointer(msg);
+	for (handle = handles.begin(); handle < handles.end(); handle++)
+	{
+		fsWriteRequest newreq = req.dup();
+		newreq->setHandle(*handle);
+		newreq->setAddr(msg->fs.map(*handle));
+		send(newreq, fsNetOut);
+	}
 }
 
 // messages from server/INET
@@ -225,4 +351,36 @@ void fsProcess_fsListAttrResponse( fsListAttrResponse *msg )
 // timers from self
 void fsProcessTimer( cMessage *msg )
 {
+}
+
+//*************************************************************************
+// Helper functions
+
+void fsParsePath(mpiFileOpenRequest *msg)
+{
+	bool absolute;
+	int size, index;
+	string::size_type start, end;
+	size = msg->path.size();
+	index = 0;
+	start = 0;
+	// see if absolutepath and if so skip leading slash
+	if (start < size && absolute = (msg->path[start] == '/'))
+	{
+		start = msg->path.find_first_not_of('/', start);
+	}
+	// start points to first non-slash
+	while(start != string::npos && index < MAXSEGS)
+	{
+		// find end of segment
+		end = msg->path.find_first_of('/', start);
+		if (end == string::npos)
+		{
+			end = size;
+		}
+		// copy segment
+		msg->segment[index++].assign(msg->path, start, end-start);
+		// get ready for next segment
+		start = msg->path.find_first_not_of('/', end);
+	}
 }
