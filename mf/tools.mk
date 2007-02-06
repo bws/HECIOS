@@ -15,6 +15,10 @@ NEDC = $(OMNET_DIR)/bin/nedtool
 MSGC = $(OMNET_DIR)/bin/opp_msgc
 
 #
+# Hecios tools
+#
+DEPENDC = maint/depend.sh
+#
 # Compilation flags
 #
 CXXFLAGS += -Wno-unused

@@ -22,12 +22,14 @@ BIN_DIR = bin
 DOC_DIR = doc
 SRC_DIR = src
 INET_DIR = INET
+CLIENT_DIR= $(SRC_DIR)/client
+COMMON_DIR= $(SRC_DIR)/common
 MESSAGES_DIR= $(SRC_DIR)/messages
 
 #
 # Master Makefile default targets
 #
-ALL_TARGETS = doc $(BIN_DIR)/hecios
+ALL_TARGETS = $(BIN_DIR)/hecios
 all: $(ALL_TARGETS)
 
 
@@ -37,6 +39,8 @@ all: $(ALL_TARGETS)
 INCLUDES = $(OMNET_DIR)/include \
 	$(HECIOS_DIR) \
         $(SRC_DIR) \
+        $(CLIENT_DIR) \
+        $(COMMON_DIR) \
         $(MESSAGES_DIR) \
         $(INET_DIR) \
         $(INET_DIR)/Applications/Ethernet \
@@ -79,11 +83,14 @@ LIBS = -L$(OMNET_DIR)/lib -L$(LIB_DIR) -lzebra \
 DOC_SRC :=
 SIM_SRC :=
 
+#
 # Include module makefiles
 #
 include mf/inet.mk
 include $(DOC_DIR)/module.mk
 include $(SRC_DIR)/module.mk
+include $(CLIENT_DIR)/module.mk
+include $(COMMON_DIR)/module.mk
 include $(MESSAGES_DIR)/module.mk
 
 #
@@ -111,11 +118,22 @@ SIM_NED_OBJS := $(patsubst %.ned,%_n.o, $(filter %.ned, $(SIM_SRC)))
 SIM_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_SRC)))
 
 #
+# Source code dependency generation
+#
+SIM_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_SRC)))
+
+#
+# Include dependency makefiles
+#
+-include $(SIM_DEPENDS) src/client/app_module.d
+
+#
 # Top level psuedo targets
 #
 clean:
 	@echo "Removing all derived files."
 	$(RM) $(DOC_DVI) $(DOC_EPS) $(DOC_PDF) $(DOC_PS) $(DOC_CRUFT)
+	$(RM) $(SIM_DEPENDS)
 	$(RM) $(SIM_NED_OUTPUT) $(SIM_NED_OBJS) $(SIM_OBJS)
 	@echo "Derived files deleted.  Project is clean."
 

@@ -31,3 +31,12 @@
 
 %_m.cc: %.msg
 	$(MSGC) $(NEDFLAGS) $^
+
+#
+# Generate dependency information
+#
+%.d: %.c
+	$(CC) -M $(CFLAGS) $< > $@
+
+%.d: %.cc
+	$(CXX) -M $(CXXFLAGS) $< > $@
