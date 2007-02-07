@@ -34,6 +34,16 @@ void AppModule::initialize()
 {
     // Construct a trace and begin sending events
     trace_ = new UMDIOTrace(8, "cholesky.trace");
+
+    // Get the first event for this rank
+    IOTraceRecord* rec = trace_->nextRecord();
+
+    // Construct the appropriate MPI-IO event
+    cMessage* mpiMsg = 0;//UMDIOTrace::convertToMPIEvent(rec);
+    delete rec;
+
+    // Send the message
+    scheduleAt(5.0, mpiMsg);
 }
 
 /**
