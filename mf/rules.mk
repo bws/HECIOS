@@ -36,7 +36,9 @@
 # Generate dependency information
 #
 %.d: %.c
+	@echo "Generating dependencies for $< . . ."
 	$(CC) -M $(CFLAGS) $< > $@
 
 %.d: %.cc
-	$(CXX) -M $(CXXFLAGS) $< > $@
+	@echo "Generating dependencies for $< . . ."
+	@$(CXX) -M $(CXXFLAGS) $< > $@
