@@ -7,7 +7,7 @@
 class IOTraceRecord;
 
 /**
- * @class Abstract I/O trace class
+ * Abstract I/O trace class.
  */
 class IOTrace
 {
@@ -41,7 +41,7 @@ private:
 };
 
 /**
- * @class Individual I/O trace record
+ * I/O trace record.  A single entry from the tracefile.
  */
 class IOTraceRecord
 {

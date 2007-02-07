@@ -5,7 +5,8 @@
 #include "io_trace.h"
 
 /**
- * @class Abstract I/O trace class
+ * An I/O trace in the University of Maryland format.  Traces are available
+ * at the following url: http://www.cs.umd.edu/xxx
  */
 class UMDIOTrace: public IOTrace
 {
