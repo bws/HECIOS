@@ -1,6 +1,25 @@
 // file cacheModule.cc
 // This file implements the cache module message handling
 #include <omnetpp.h>
+#include <cacheModule.h>
+#include <vector>
+
+using namespace std;
+
+
+/*typedef struct cacheEntry
+{
+
+} *ptrSCacheEntry;
+
+typedef struct cacheLine
+{
+
+} *ptrSCacheLine;
+*/
+
+vector<CacheEntry> systemCache;
+
 
 class cacheModule : public cSimpleModule
 {
@@ -18,10 +37,12 @@ cacheModule::cacheModule()
 
 void cacheModule::initialize()
 {
+	//systemCache = malloc(sizeof(CacheEntry)*cacheSize);
 }
 
 void cacheModule::finish()
 {
+	free(systemCache);
 }
 
 cacheModule::~cacheModule()
