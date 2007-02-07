@@ -1,6 +1,7 @@
 #ifndef UMD_IO_TRACE_H
 #define UMD_IO_TRACE_H
 
+#include <fstream>
 #include <string>
 #include "io_trace.h"
 
@@ -13,16 +14,40 @@ class UMDIOTrace: public IOTrace
 public:
 
     /** Constructor */
-    UMDIOTrace(int numProcs, std::string traceFile);
+    UMDIOTrace(int numProcs, std::string traceFileName);
 
     /** Destructor */
-    virtual ~UMDIOTrace() {};
+    virtual ~UMDIOTrace();
 
+    /** @return true if the trace file is valid */
+    bool isValid() const {return traceFile_;};
+    
     /** @return the next IOTraceRecord */
     virtual IOTraceRecord* nextRecord() const;
 
+    /** @return the next IOTraceRecord as a cMessage */
+    virtual cMessage* nextRecordAsMessage() const;
+
 private:
-    std::string traceFile_;
+
+    enum OpType {OPEN = 0, CLOSE = 1, READ = 2,
+                 WRITE = 3, SEEK = 4, LISTIO_HEADER = 5};
+
+    /** @return the next IOTraceRecord as a cMessage */
+    cMessage* createMPIIOMessage(OpType opType, int fileId,
+                                 long offset, long length) const;
+    
+    std::string traceFileName_;
+    mutable std::ifstream traceFile_;
+
+    // Header data
+    int numProcs_;
+    int numFiles_;
+    int numRecords_;
+    
+    std::string* fileNames_;
+
+    int curRecord_;
 };
 
 #endif

@@ -2,6 +2,7 @@
 #define IO_TRACE_H
 
 #include <iostream>
+#include <omnetpp.h>
 
 /** Forward declarations */
 class IOTraceRecord;
@@ -33,6 +34,9 @@ public:
 
     /** @return the next IOTraceRecord */
     virtual IOTraceRecord* nextRecord() const = 0;
+
+    /** @return the next IOTraceRecord */
+    virtual cMessage* nextRecordAsMessage() const = 0;
 
 private:
 

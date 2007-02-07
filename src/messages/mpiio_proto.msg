@@ -4,34 +4,34 @@
 
 enum mpiRequestTypes
 {
-	mpiFileOpenRequest = 1;
-   mpiFileCloseRequest = 2;
-   mpiFileDeleteRequest = 3;
-   mpiFileSetSizeRequest = 4;
-   mpiFilePreallocateRequest = 5;
-   mpiFileGetSizeRequest = 6;
-   mpiFileGetInfoRequest = 7;
-   mpiFileSetInfoRequest = 8;
-   mpiFileReadAtRequest = 9;
-   mpiFileReadRequest = 10;
-   mpiFileWriteAtRequest = 11;
-   mpiFileWriteRequest = 12;
+    MPI_FILE_OPEN_REQUEST = 1;
+    MPI_FILE_CLOSE_REQUEST = 2;
+    MPI_FILE_DELETE_REQUEST = 3;
+    MPI_FILE_SET_SIZE_REQUEST = 4;
+    MPI_FILE_PREALLOCATE_REQUEST = 5;
+    MPI_FILE_GET_SIZE_REQUEST = 6;
+    MPI_FILE_GET_INFO_REQUEST = 7;
+    MPI_FILE_SET_INFO_REQUEST = 8;
+    MPI_FILE_READ_AT_REQUEST = 9;
+    MPI_FILE_READ_REQUEST = 10;
+    MPI_FILE_WRITE_AT_REQUEST = 11;
+    MPI_FILE_WRITE_REQUEST = 12;
 };
 
 enum mpiResponseTypes
 {
-   mpiFileOpenResponse = 21;
-   mpiFileCloseResponse = 22;
-   mpiFileDeleteResponse = 23;
-   mpiFileSetSizeResponse = 24;
-   mpiFilepreallocateResponse = 25;
-   mpiFileGetSizeResponse = 26;
-   mpiFileGetInfoResponse = 27;
-   mpiFileSetInfoResponse = 28;
-   mpiFileReadAtResponse = 29;
-   mpiFileReadResponse = 30;
-   mpiFileWriteAtResponse = 31;
-   mpiFileWriteResponse = 31;
+    MPI_FILE_OPEN_RESPONSE = 101;
+    MPI_FILE_CLOSE_RESPONSE = 102;
+    MPI_FILE_DELETE_RESPONSE = 103;
+    MPI_FILE_SET_SIZE_RESPONSE = 104;
+    MPI_FILE_PREALLOCATE_RESPONSE = 105;
+    MPI_FILE_GET_SIZE_RESPONSE = 106;
+    MPI_FILE_GET_INFO_RESPONSE = 107;
+    MPI_FILE_SET_INFO_RESPONSE = 108;
+    MPI_FILE_READ_AT_RESPONSE = 109;
+    MPI_FILE_READ_RESPONSE = 110;
+    MPI_FILE_WRITE_AT_RESPONSE = 111;
+    MPI_FILE_WRITE_RESPONSE = 112;
 };
 
 // The abstract base class for all MPI IO message requests
@@ -55,7 +55,6 @@ message mpiResponse
 message mpiFileOpenRequest extends mpiRequest
 {
     fields:
-	     int mpiRequestType enum(mpiRequestTypes) = mpiFileOpenRequest;
         string fileName;
         int mode;
 };
@@ -72,7 +71,6 @@ message mpiFileOpenResponse extends mpiResponse
 message mpiFileCloseRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFileCloseRequest;
         int handle;
 };
 
@@ -87,7 +85,6 @@ message mpiFileCloseResponse extends mpiResponse
 message mpiFileDeleteRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFileDeleteRequest;
         string fileName;
 };
 
@@ -100,7 +97,6 @@ message mpiFileDeleteResponse extends mpiResponse
 message mpiFileSetSizeRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFileSetSizeRequest;
         int handle;
         int size;
 };
@@ -114,7 +110,6 @@ message mpiFileSetSizeResponse extends mpiResponse
 message mpiFilePreallocateRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFilePreallocateRequest;
         int handle;
         int size;
 };
@@ -128,7 +123,6 @@ message mpiFilepreallocateResponse extends mpiResponse
 message mpiFileGetSizeRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFileGetSizeRequest;
         string fileName;
 };
 
@@ -141,7 +135,6 @@ message mpiFileGetSizeResponse
 message mpiFileGetInfoRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFileGetInfoRequest;
         int handle;
 };
 
@@ -156,7 +149,6 @@ message mpiFileGetInfoResponse extends mpiResponse
 message mpiFileSetInfoRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFileSetInfoRequest;
         int handle;
         string info[];
 };
@@ -170,7 +162,6 @@ message mpiFileSetInfoResponse extends mpiResponse
 message mpiFileReadAtRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFileReadAtRequest;
         int handle;
         long offset = 0;
 };
@@ -187,7 +178,6 @@ message mpiFileReadAtResponse extends mpiResponse
 message mpiFileReadRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFileReadRequest;
         int handle;
 };
 
@@ -203,7 +193,6 @@ message mpiFileReadResponse extends mpiResponse
 message mpiFileWriteAtRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFileWriteAtRequest;
         int handle;
         char data[];
         unsigned long num_bytes;
@@ -221,7 +210,6 @@ message mpiFileWriteAtResponse extends mpiResponse
 message mpiFileWriteRequest extends mpiRequest
 {
     fields:
-        int mpiRequestType enum(mpiRequestTypes) = mpiFileWriteRequest;
         int handle;
         char data[];
         unsigned long num_bytes;

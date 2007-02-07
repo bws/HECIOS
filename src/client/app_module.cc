@@ -47,7 +47,7 @@ void AppModule::initialize()
 }
 
 /**
- * Cleanup and tally statistics
+ * Cleanup trace and tally statistics
  */
 void AppModule::finish()
 {
