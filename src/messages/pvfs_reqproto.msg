@@ -2,6 +2,26 @@
 // Parallel File System request proto message definitions
 //
 
+// PVFS Request Protocol Messages
+enum fsRequestTypes {
+    FS_CREATE_REQUEST_KIND = 201;
+    FS_REMOVE_REQUEST_KIND = 202;
+    FS_READ_REQUEST_KIND = 203;
+    FS_WRITE_REQUEST_KIND = 204;
+    FS_GET_ATTR_REQEUST_KIND = 205;
+    FS_SET_ATTR_REQUEST_KIND = 206;
+    FS_LOOKUP_PATH_REQUEST_KIND = 207;
+    FS_CREATE_DIR_ENT_REQUEST_KIND = 208;
+    FS_REMOVE_DIR_ENT_REQUEST_KIND = 209;
+    FS_CHANGE_DIR_ENT_REQUEST_KIND = 210;
+    FS_TRUNCATE_REQUEST_KIND = 211;
+    FS_MAKE_DIR_REQUEST_KIND = 212;
+    FS_READ_DIR_REQUEST_KIND = 213;
+    FS_FLUSH_REQUEST_KIND = 214;
+    FS_STAT_REQUEST_KIND = 215;
+    FS_LIST_ATTR_REQUEST_KIND = 216;
+};
+
 // File request abstract base class
 message fsRequest
 {

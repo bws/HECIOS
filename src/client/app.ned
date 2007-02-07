@@ -4,7 +4,8 @@
 //
 simple App
     parameters:
-        trace_file: string;
+        traceFile: string,
+        numTraceProcs : const;
 
     gates:
         in: in;

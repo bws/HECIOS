@@ -67,11 +67,10 @@ INCLUDES = $(OMNET_DIR)/include \
 #
 LIB_DIR = lib
 THIRDPARTY_LIBS = \
+	$(LIB_DIR)/inet.a \
 	$(LIB_DIR)/ospfd.a \
 	$(LIB_DIR)/ripd.a \
-	$(LIB_DIR)/zebra.a \
-	$(LIB_DIR)/libzebra.a \
-	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o
+	$(LIB_DIR)/zebra.a
 
 LIBS = -L$(OMNET_DIR)/lib -L$(LIB_DIR) -lzebra \
         -lenvir -ltkenv -ltk8.4 -ltcl8.4 -lsim_std -lnedxml -lxml2 -ldl \
@@ -157,7 +156,7 @@ ned_gen: $(SIM_MSG_OUTPUT) $(SIM_NED_OUTPUT)
 
 $(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS)
 	mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(INET_OBJS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
 
 #
 # Psuedotargets (required by make for some dependencies)

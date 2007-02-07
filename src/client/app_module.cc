@@ -1,5 +1,8 @@
+#include <iostream>
+#include "mpiio_proto_m.h"
 #include "umd_io_trace.h"
 #include <omnetpp.h>
+using namespace std;
 
 /**
  * Model of an application process.
@@ -8,7 +11,7 @@ class AppModule : public cSimpleModule
 {
 public:
     /** Constructor */
-    AppModule() : cSimpleModule(), trace_(0) {};
+    AppModule() : cSimpleModule(), trace_(0), rank_(-1) {};
     
 protected:
     /** Implementation of initialize */
@@ -22,16 +25,22 @@ protected:
 
 private:
     IOTrace* trace_;
+    int rank_;
 };
 
 // OMNet Registriation Method
 Define_Module(AppModule);
+
+static int rank_seed = 0;
 
 /**
  * Construct an I/O trace using configuration supplied tracefile(s)
  */
 void AppModule::initialize()
 {
+    // Set the process rank
+    rank_ = rank_seed++;
+    
     // Construct a trace and begin sending events
     trace_ = new UMDIOTrace(8, "cholesky.trace");
 
@@ -53,6 +62,9 @@ void AppModule::finish()
 {
     delete trace_;
     trace_ = 0;
+
+    // Reset the rank generator to 0
+    rank_seed = 0;
 }
 
 /**
@@ -60,6 +72,61 @@ void AppModule::finish()
  */
 void AppModule::handleMessage(cMessage* msg)
 {
+    switch(msg->kind())
+    {
+        case MPI_FILE_OPEN_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        case MPI_FILE_CLOSE_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        case MPI_FILE_DELETE_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        case MPI_FILE_SET_SIZE_RESPONSE:
+             cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+           break;
+        case MPI_FILE_PREALLOCATE_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        case MPI_FILE_GET_SIZE_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        case MPI_FILE_GET_INFO_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        case MPI_FILE_SET_INFO_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        case MPI_FILE_READ_AT_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        case MPI_FILE_READ_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        case MPI_FILE_WRITE_AT_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        case MPI_FILE_WRITE_RESPONSE:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+        default:
+            cerr << "handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
+            break;
+    }
 }
 
 /*
