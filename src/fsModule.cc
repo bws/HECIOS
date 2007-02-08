@@ -7,6 +7,11 @@ class fsModule : public cSimpleModule
 		virtual void initialize();
 		virtual void finish();
 		virtual void handleMessage(cMessage *msg);
+
+		int fsMpiOut;
+		int fsMpiIn;
+		int fsNetOut;
+		int fsNetIn;
 };
 
 Define_Module(fsModule);
@@ -17,6 +22,10 @@ fsModule::fsModule()
 
 void fsModule::initialize()
 {
+	fsMpiOut = findGate("fsMpiOut");
+	fsMpiIn = findGate("fsMpiIn");
+	mpiNetOut = findGate("fsNetOut");
+	mpiNetOut = findGate("mfsetIn");
 }
 
 void fsModule::finish()
@@ -32,96 +41,93 @@ void fsModule::handleMessage(cMessage *msg)
 	if (msg->isSelfMessage())
 		fsProcessTimer(msg)
 	else
-		switch(msg->mpiRequestType())
-		{
-		case mpiFileOpenRequest :
+		switch(msg->kind())
+		{ /* Call message specific hander {{{2 */
+		case MPI_FILE_OPEN_REQUEST :
 			fsProcess_mpiFileOpenRequest(msg);
 			break;
-		case mpiFileOpenRequest :
-			fsProcess_mpiFileOpenRequest(msg);
-			break;
-		case mpiFileCloseRequest :
+		case MPI_FILE_CLOSE_REQUEST :
 			fsProcess_mpiFileCloseRequest(msg);
 			break;
-		case mpiFileDeleteRequest :
+		case MPI_FILE_DELETE_REQUEST :
 			fsProcess_mpiFileDeleteRequest(msg);
 			break;
-		case mpiFileSetSizeRequest :
+		case MPI_FILE_SET_SIZE_REQUEST :
 			fsProcess_mpiFileSetSizeRequest(msg);
 			break;
-		case mpiFilePreallocateRequest :
+		case MPI_FILE_PREALLOCATE_REQUEST :
 			fsProcess_mpiFilePreallocateRequest(msg);
 			break;
-		case mpiFileGetSizeRequest :
+		case MPI_FILE_GET_SIZE_REQUEST :
 			fsProcess_mpiFileGetSizeRequest(msg);
 			break;
-		case mpiFileReadRequest :
+		case MPI_FILE_READ_REQUEST :
 			fsProcess_mpiFileReadRequest(msg);
 			break;
-		case mpiFileWriteRequest :
+		case MPI_FILE_WRITE_REQUEST :
 			fsProcess_mpiFileWriteRequest(msg);
 			break;
-		case fsCreateResponse :
+		case FS_CREATE_RESPONSE :
 			fsProcess_fsCreateResponse(msg);
 			break;
-		case fsRemoveResponse :
+		case FS_REMOVE_RESPONSE :
 			fsProcess_fsRemoveResponse(msg);
 			break;
-		case fsReadResponse :
+		case FS_READ_RESPONSE :
 			fsProcess_fsReadResponse(msg);
 			break;
-		case fsWriteResponse :
+		case FS_WRITE_RESPONSE :
 			fsProcess_fsWriteResponse(msg);
 			break;
-		case fsGetAttrResponse :
+		case FS_GET_ATTR_RESPONSE :
 			fsProcess_fsGetAttrResponse(msg);
 			break;
-		case fsSetAttrResponse :
+		case FS_SET_ATTR_RESPONSE :
 			fsProcess_fsSetAttrResponse(msg);
 			break;
-		case fsLookupPathResponse :
+		case FS_LOOKUP_PATH_RESPONSE :
 			fsProcess_fsLookupPathResponse(msg);
 			break;
-		case fsCreateDirEntResponse :
+		case FS_CREATE_DIR_ENT_RESPONSE :
 			fsProcess_fsCreateDirEntResponse(msg);
 			break;
-		case fsRemoveDirEntResponse :
+		case FS_REMOVE_DIR_ENT_RESPONSE :
 			fsProcess_fsRemoveDirEntResponse(msg);
 			break;
-		case fsChangeDirEntResponse :
+		case FS_CHANGE_DIR_ENT_RESPONSE :
 			fsProcess_fsChangeDirEntResponse(msg);
 			break;
-		case fsTruncateResponse :
+		case FS_TRUNCATE_RESPONSE :
 			fsProcess_fsTruncateResponse(msg);
 			break;
-		case fsMakeDirResponse :
+		case FS_MAKE_DIR_RESPONSE :
 			fsProcess_fsMakeDirResponse(msg);
 			break;
-		case fsReadDirResponse :
+		case FS_READ_DIR_RESPONSE :
 			fsProcess_fsReadDirResponse(msg);
 			break;
-		case fsWriteCompletionResponse :
+		case FS_WRITE_COMPLETION_RESPONSE :
 			fsProcess_fsWriteCompletionResponse(msg);
 			break;
-		case fsFlushResponse :
+		case FS_FLUSH_RESPONSE :
 			fsProcess_fsFlushResponse(msg);
 			break;
-		case fsStatResponse :
+		case FS_STAT_RESPONSE :
 			fsProcess_fsStatResponse(msg);
 			break;
-		case fsListAttrResponse :
+		case fs_List_Attr_Response :
 			fsProcess_fsListAttrResponse(msg);
 			break;
 		default :
 			fsUnknownMessage(msg);
 			break;
-		}
+		} /* }}}2 */
 }
 
 // messages from user/cache
 
 void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *msg )
-{
+{ /* Handle MPI open request {{{1 */
 	fsOpenFile *filedes;
 	enum {
 		INIT = 0;
@@ -154,11 +160,12 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *msg )
 			/* send request to lookup file handle */
 			{
 				fsLookupRequest *req;
-				req = new fsLookupRequest;
+				req = new fsLookupRequest(0, FS_LOOKUP_REQUEST);
 				req->setContextPointer(filedes);
 				/* copy path to look up */
-				/* get addr for root dir server */
-				req->setAddr(filedes->fs.root);
+				req->setPath(filedes->path);
+				/* get handle for root dir */
+				req->setHandle(filedes->fs.root);
 				send(req, fsNetOut);
 			}
 			break;
@@ -171,7 +178,7 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *msg )
 				filedes->handle = msg->handle;
 				filedes->fs.insertDir(filedes->path, filedes->handle);
 				/* look for metadata in cache */
-				filedes->meta = filedes->fs.lookupMetaData(filedes->handle);
+				filedes->meta = filedes->fs.lookupAttr(filedes->handle);
 				if (filedes->meta == NULL)
 				{
 					/* not in cache go to lookup state */
@@ -192,10 +199,9 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *msg )
 			/* send request to read metadata */
 			{
 				fsGetAttrib *req;
-				req = new fsGetAttrib;
+				req = new fsGetAttribRequest(0, FS_GET_ATTRIB_REQUEST);
 				req->setContextPointer(filedes);
 				req->setHandle(filedes->handle);
-				req->setAddr(filedes->fs.map(filedes->handle));
 				send(req, fsNetOut);
 			}
 			break;
@@ -207,13 +213,13 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *msg )
 			/* return descriptor to caller */
 			{
 				mpiFileOpenResponse resp;
-				resp = new mpiFileOpenResponse;
+				resp = new mpiFileOpenResponse(0, MPI_FILE_OPEN_RESPONSE);
 				resp->setContextPointer(orig_msg->contextPointer());
 				send(resp, fsAppOut);
 			}
 			break;
 	}
-}
+}  /* }}}1 */
 
 void fsProcess_mpiFileCloseRequest( mpiFileCloseRequest *msg )
 {
@@ -237,25 +243,40 @@ void fsProcess_mpiFileGetSizeRequest( mpiFileGetSizeRequest *msg )
 }
 
 void fsProcess_mpiFileReadRequest( mpiFileReadRequest *msg )
-{
+{ /* process MPI file read request {{{1 */
+	fsOpenFile *filedes;
+	int count;
+	mpiDatatye dtype;
 	fsReadRequest *req;
 	fsHandleSet handles;
-	iterator handle;
-	/* look for metadata in cache */
-	msg->fd->meta = msg->fs.lookupMetaData(msg->fd->handle);
-	/* find servers with data */
-	fsSetHandles(handles, msg->fd->meta.handles, msg->fd->meta.dist);
-	/* send request to each server */
-	req = new fsReadRequest;
+	int snum;
+
+	filedes = msg->getFiledes();
+	count = msg->getCount();
+	dtype = msg->getDtype();
+	/* build a request message */
+	req = new fsReadRequest(0, FS_READ_REQUEST);
 	req->setContextPointer(msg);
-	for (handle = handles.begin(); handle < handles.end(); handle++)
+	req->setServer_cnt(filedes->meta.handles.size());
+	req->setOffset(filedes->fileptr);
+	req->setCount(count);
+	req->setDtype(dtype);
+	/* send request to each server */
+	for (snum = 0; snum < handles.size(); snum++)
 	{
-		fsReadRequest newreq = req.dup();
-		newreq->setHandle(*handle);
-		newreq->setAddr(msg->fs.map(*handle));
-		send(newreq, fsNetOut);
+		if (filedes->fs->fsServerNotUsed(snum, filedes->meta.dist,
+													count, dtype))
+			/* don't send if no data on server */
+			continue;
+		else
+		{
+			fsReadRequest newreq = req->dup();
+			newreq->setHandle(handles[snum]);
+			req->setServer_nr(snum);
+			send(newreq, fsNetOut);
+		}
 	}
-}
+} /* }}}1 */
 
 void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *msg )
 {
@@ -267,7 +288,7 @@ void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *msg )
 	/* find affected servers using distribution */
 	fsSetHandles(handles, msg->fd->meta.handles, msg->fd->meta.dist);
 	/* send request to each server */
-	req = new fsWriteRequest;
+	req = new fsWriteRequest(0, FS_WRITE_REQUEST);
 	req->setContextPointer(msg);
 	for (handle = handles.begin(); handle < handles.end(); handle++)
 	{

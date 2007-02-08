@@ -53,7 +53,8 @@ message fsReadRequest extends fsRequest
         int server_nr;
         int server_cnt;
         unsigned long offset;
-        unsigned long aggregate_size;
+		  int count;
+		  mpiDatatype dtype;
 };
 
 // Write object data
@@ -64,7 +65,8 @@ message fsWriteRequest extends fsRequest
         int server_nr;
         int server_cnt;
         unsigned long offset;
-        unsigned long aggregate_size;
+		  int count;
+		  mpiDatatype dtype;
 };
 
 // Get file attributes

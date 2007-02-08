@@ -1,6 +1,27 @@
 #include <map>
 #include "types.h"
 
+typedef struct fsMetaData
+{
+	int mode;
+	int owner;
+	int group;
+	int nlinks;
+	int size;
+	int meta_handle;
+	vector<int> handles; /* size of handles is server count */
+	int dist; /* for now just strip size */
+} fsMetaData;
+
+typedef struct fsOpenFile
+{
+	fileSystem fs;
+	int handle;
+	int state;
+	fsMetaData meta;
+	int fileptr;
+} fsOpenFile;
+
 typedef struct attrEntry
 {
 	fsMetaData meta;
@@ -41,6 +62,12 @@ class fileSystem
 			attrLRU->clear();
 			dirCache->clear();
 			dirLRU->clear();
+		}
+
+		bool fsServerNotUsed(int snum, int dist, int count, mpiDatatype)
+		{
+			/* for now let all servers participate */
+			return true;
 		}
 
 		void insertAttr(fsHandle handle, fsMetaData meta)
