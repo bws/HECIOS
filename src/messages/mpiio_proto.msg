@@ -163,8 +163,8 @@ message mpiFileReadAtRequest extends mpiRequest
 {
     fields:
         int handle;
-		  int count;
-		  mpiDatatype dtype;
+	int count;
+	//mpiDatatype dtype;
         long offset = 0;
 };
 
@@ -181,8 +181,8 @@ message mpiFileReadRequest extends mpiRequest
 {
     fields:
         int handle;
-		  int count;
-		  mpiDatatype dtype;
+	int count;
+	//mpiDatatype dtype;
 };
 
 // File read response
@@ -198,8 +198,8 @@ message mpiFileWriteAtRequest extends mpiRequest
 {
     fields:
         int handle;
-		  int count;
-		  mpiDatatype dtype;
+	int count;
+	//mpiDatatype dtype;
         long offset;
         char data[];
 };
@@ -216,8 +216,8 @@ message mpiFileWriteRequest extends mpiRequest
 {
     fields:
         int handle;
-		  int count;
-		  mpiDatatype dtype;
+	int count;
+	//mpiDatatype dtype;
         char data[];
 };
 
