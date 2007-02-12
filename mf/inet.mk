@@ -252,7 +252,9 @@ INET_OBJS = $(INET_DIR)/Applications/Ethernet/EtherApp_m.o \
 	$(INET_DIR)/World/ChannelControl.o \
 	$(INET_DIR)/World/ChannelInstaller.o \
 	$(INET_DIR)/World/NAMTrace.o \
-	$(INET_DIR)/World/ScenarioManager.o
+	$(INET_DIR)/World/ScenarioManager.o \
+	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o
+
 
 $(INET_DIR)/bin/INET:
 	cd INET && ./makemake
