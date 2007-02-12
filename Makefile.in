@@ -68,7 +68,6 @@ INCLUDES = $(OMNET_DIR)/include \
 #
 LIB_DIR = lib
 THIRDPARTY_LIBS = \
-	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o \
 	$(LIB_DIR)/libzebra.a \
 	$(LIB_DIR)/ospfd.a \
 	$(LIB_DIR)/ripd.a \
