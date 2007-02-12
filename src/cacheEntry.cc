@@ -5,22 +5,22 @@
 
 class CacheEntry{
 public:
-	CacheEntry(int inAddress, int inData, unsigned char inState);
+	CacheEntry(int inAddress, int inExtent, unsigned char inState);
 	changeEntryState(unsigned char newState);
-	changeEntryData(int newData);
+	changeEntryExtent(int newExtent);
 	changeEntryAddress(int newAddress);
 
 private:
 	int address;
-	int data;
+	int extent;
 	unsigned char entryState;
 };
 
 // cache entry constructor
-CacheEntry::CacheEntry(int inAddress, int inData, unsigned char inState)
+CacheEntry::CacheEntry(int inAddress, int inExtent, unsigned char inState)
 {
 	address = inAddress;
-	data = inData;
+	extent = inExtent;
 	entryState = inState;
 
 }
@@ -31,9 +31,9 @@ CacheEntry::changeEntryState(unsigned char newState)
 
 }
 
-CacheEntry::changeEntryData(int newData)
+CacheEntry::changeEntryExtent(int newExtent)
 {
-	data = newData;
+	extent = newExtent;
 }
 
 CacheEntry::changeEntryAddress(int newAddress)

@@ -18,7 +18,7 @@ typedef struct cacheLine
 } *ptrSCacheLine;
 */
 
-vector<CacheEntry> systemCache;
+map<CacheEntry> systemCache;
 
 
 class cacheModule : public cSimpleModule
