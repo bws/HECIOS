@@ -7,11 +7,11 @@ using namespace std;
 /**
  * Model of an application process.
  */
-class AppModule : public cSimpleModule
+class App : public cSimpleModule
 {
 public:
     /** Constructor */
-    AppModule() : cSimpleModule(), trace_(0), rank_(-1) {};
+    App() : cSimpleModule(), trace_(0), rank_(-1) {};
     
 protected:
     /** Implementation of initialize */
@@ -29,14 +29,14 @@ private:
 };
 
 // OMNet Registriation Method
-Define_Module(AppModule);
+Define_Module(App);
 
 static int rank_seed = 0;
 
 /**
  * Construct an I/O trace using configuration supplied tracefile(s)
  */
-void AppModule::initialize()
+void App::initialize()
 {
     // Set the process rank
     rank_ = rank_seed++;
@@ -58,7 +58,7 @@ void AppModule::initialize()
 /**
  * Cleanup trace and tally statistics
  */
-void AppModule::finish()
+void App::finish()
 {
     delete trace_;
     trace_ = 0;
@@ -70,7 +70,7 @@ void AppModule::finish()
 /**
  * Handle MPI-IO Response messages
  */
-void AppModule::handleMessage(cMessage* msg)
+void App::handleMessage(cMessage* msg)
 {
     switch(msg->kind())
     {

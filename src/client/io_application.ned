@@ -2,7 +2,7 @@
 //
 // Abstract interface for all I/O applications
 //
-simple App
+simple IOApplication
     parameters:
         traceFile: string,
         numTraceProcs : const;

@@ -25,6 +25,7 @@ INET_DIR = INET
 CLIENT_DIR= $(SRC_DIR)/client
 COMMON_DIR= $(SRC_DIR)/common
 MESSAGES_DIR= $(SRC_DIR)/messages
+PHYSICAL_DIR= $(SRC_DIR)/physical
 
 #
 # Master Makefile default targets
@@ -38,10 +39,10 @@ all: $(ALL_TARGETS)
 #
 INCLUDES = $(OMNET_DIR)/include \
 	$(HECIOS_DIR) \
-        $(SRC_DIR) \
         $(CLIENT_DIR) \
         $(COMMON_DIR) \
         $(MESSAGES_DIR) \
+        $(PHYSICAL_DIR) \
         $(INET_DIR) \
         $(INET_DIR)/Applications/Ethernet \
         $(INET_DIR)/Applications/Generic \
@@ -67,7 +68,8 @@ INCLUDES = $(OMNET_DIR)/include \
 #
 LIB_DIR = lib
 THIRDPARTY_LIBS = \
-	$(LIB_DIR)/inet.a \
+	$(INET_OBJS) \
+	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o \
 	$(LIB_DIR)/ospfd.a \
 	$(LIB_DIR)/ripd.a \
 	$(LIB_DIR)/zebra.a
@@ -91,6 +93,7 @@ include $(SRC_DIR)/module.mk
 include $(CLIENT_DIR)/module.mk
 include $(COMMON_DIR)/module.mk
 include $(MESSAGES_DIR)/module.mk
+include $(PHYSICAL_DIR)/module.mk
 
 #
 # Doc Module build targets
@@ -127,14 +130,45 @@ SIM_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_SRC)))
 -include $(SIM_DEPENDS)
 
 #
+# Testing macros
+#
+TEST_DIR := tests
+COMMON_TEST_DIR := $(TEST_DIR)/common
+
+SIM_TEST_SRC :=
+
+TEST_INCLUDES := -I$(COMMON_TEST_DIR)
+
+TEST_LIBS := -lcppunit -ldl
+
+#
+# Testing module includes
+#
+include $(COMMON_TEST_DIR)/module.mk
+
+#
+# Derived files for tests
+#
+SIM_TEST_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_TEST_SRC)))
+
+
+#
 # Top level psuedo targets
 #
 clean:
 	@echo "Removing all derived files."
 	$(RM) $(DOC_DVI) $(DOC_EPS) $(DOC_PDF) $(DOC_PS) $(DOC_CRUFT)
 	$(RM) $(SIM_DEPENDS)
-	$(RM) $(SIM_NED_OUTPUT) $(SIM_NED_OBJS) $(SIM_OBJS)
+	$(RM) $(SIM_NED_OUTPUT) $(SIM_NED_OBJS) 
+	$(RM) $(SIM_MSG_OUTPUT) $(SIM_MSG_OBJS)
+	$(RM) $(SIM_OBJS)
+	$(RM) $(SIM_TEST_OBJS)
 	@echo "Derived files deleted.  Project is clean."
+
+clean_tests:
+	@echo "Removing test subsytem derived objects."
+	$(RM) $(SIM_TEST_OBJS)
+	@echo "Derived files deleted."
 
 #
 # Build targets for documentation
@@ -144,6 +178,11 @@ doc: $(DOC_EPS) $(DOC_PDF)
 	doxygen doc/Doxyfile
 
 #
+# Build unit test drivers
+#
+tests: $(BIN_DIR)/common_test
+
+#
 # Build targets for 3rd party frameworks
 #
 third_party: $(THIRDPARTY_LIBS)
@@ -151,14 +190,20 @@ third_party: $(THIRDPARTY_LIBS)
 #
 # Targets to hecios build simulator
 #
-ned_gen: $(SIM_MSG_OUTPUT) $(SIM_NED_OUTPUT)
-	echo "Ned translation complete"
+$(SIM_OBJS): $(SIM_NED_OUTPUT) $(SIM_MSG_OUTPUT)
 
 $(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS)
 	mkdir -p $(BIN_DIR)
 	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
 
 #
+# common module unit tests
+#
+$(BIN_DIR)/common_test: $(SIM_TEST_OBJS)
+	mkdir -p $(BIN_DIR)
+	$(LD) -g $(TEST_INCLUDES) $(SIM_TEST_OBJS) $(TEST_LIBS) -o $@
+
+#
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all clean doc ned_gen third_party
+.PHONY: all clean clean_tests doc tests third_party

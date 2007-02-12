@@ -18,13 +18,20 @@ MSGC = $(OMNET_DIR)/bin/opp_msgc
 # Hecios tools
 #
 DEPENDC = maint/depend.sh
+
 #
 # Compilation flags
 #
+CXXFLAGS += -g
 CXXFLAGS += -Wno-unused
 CXXFLAGS += -DNDEBUG=1 
 CXXFLAGS += -DWITH_PARSIM -DWITH_NETBUILDER
 CXXFLAGS += $(patsubst %,-I%,$(INCLUDES))
+
+#
+# Dependency generation flags
+#
+DEPFLAGS = $(patsubst %,-I%,$(INCLUDES))
 
 #
 # Link flags

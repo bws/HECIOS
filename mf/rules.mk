@@ -37,8 +37,14 @@
 #
 %.d: %.c
 	@echo "Generating dependencies for $< . . ."
-	$(CC) -M $(CFLAGS) $< > $@
+	@$(CC) -MM $(DEPFLAGS) $< > $@
 
 %.d: %.cc
 	@echo "Generating dependencies for $< . . ."
-	@$(CXX) -M $(CXXFLAGS) $< > $@
+	@$(CXX) -MM $(DEPFLAGS) $< > $@
+
+#
+# Build rules for CppUnit tests
+#
+%_test.o: %_test.cc
+	$(CXX) -c -g $(CXXFLAGS) $(TEST_INCLUDES) $< -o $@

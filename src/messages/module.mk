@@ -4,4 +4,4 @@
 DIR := src/messages
 
 SIM_SRC += $(DIR)/mpiio_proto.msg \
-	$(DIR)/pvfs_proto.msg
+	$(DIR)/pvfs_proto.msg 
