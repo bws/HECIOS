@@ -254,10 +254,14 @@ INET_OBJS = $(INET_DIR)/Applications/Ethernet/EtherApp_m.o \
 	$(INET_DIR)/World/NAMTrace.o \
 	$(INET_DIR)/World/ScenarioManager.o
 
-
 $(INET_DIR)/bin/INET:
 	cd INET && ./makemake
 	cd INET && make ROOT=$(shell pwd)/$(INET_DIR)
+
+#
+# A little hack to get the inet objects to build first
+#
+$(INET_OBJS): $(INET_DIR)/bin/INET
 
 #
 # Archives created by and for the INET framework package

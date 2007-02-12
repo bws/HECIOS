@@ -68,8 +68,8 @@ INCLUDES = $(OMNET_DIR)/include \
 #
 LIB_DIR = lib
 THIRDPARTY_LIBS = \
-	$(INET_OBJS) \
 	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o \
+	$(LIB_DIR)/libzebra.a \
 	$(LIB_DIR)/ospfd.a \
 	$(LIB_DIR)/ripd.a \
 	$(LIB_DIR)/zebra.a
@@ -194,7 +194,7 @@ $(SIM_OBJS): $(SIM_NED_OUTPUT) $(SIM_MSG_OUTPUT)
 
 $(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS)
 	mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
 
 #
 # common module unit tests
