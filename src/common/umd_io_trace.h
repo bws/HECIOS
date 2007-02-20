@@ -21,6 +21,9 @@ public:
 
     /** @return true if the trace file is valid */
     bool isValid() const {return traceFile_;};
+
+    /** @return true if more records remain */
+    bool hasMoreRecords() const { return (curRecord_ < numRecords_); };
     
     /** @return the next IOTraceRecord */
     virtual IOTraceRecord* nextRecord() const;
@@ -44,10 +47,11 @@ private:
     int numProcs_;
     int numFiles_;
     int numRecords_;
+    int offsetToTraceRecords_;
     
     std::string* fileNames_;
 
-    int curRecord_;
+    mutable int curRecord_;
 };
 
 #endif

@@ -18,6 +18,6 @@ module DaemonProcess
         //bmi: BMITransport;
 
     connections:
-        mpi.extOut --> out;
-        mpi.extIn <-- in; 
+        mpi.netOut --> out;
+        mpi.netIn <-- in; 
 endmodule

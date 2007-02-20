@@ -1,8 +1,7 @@
 
 import
     "bmi_transport",
-    "mpi_process",
-    "StandardHost";
+    "mpi_process";
 
 //
 // A UNIX process
@@ -19,7 +18,7 @@ module JobProcess
         //bmi: BMITransport;
  
     connections:
-        mpi.extOut --> out;
-        mpi.extIn <-- in;
+        mpi.netOut --> out;
+        mpi.netIn <-- in;
 
 endmodule

@@ -12,30 +12,39 @@ UMDIOTrace::UMDIOTrace(int numProcs, string traceFileName)
       numProcs_(0),
       numFiles_(0),
       numRecords_(0),
+      offsetToTraceRecords_(0),
+      fileNames_(0),
       curRecord_(-1)
 {
     // Open the trace file
-    traceFile_.open(traceFileName_.c_str());
+    traceFile_.open(traceFileName_.c_str(), ios::in|ios::binary);
     
     // Determine if the trace file opened successfully
-    if (!traceFile_)
+    if (traceFile_)
     {
-        cerr << "Unable to open file: " << traceFileName_ << endl;
-    }
-    else
-    {
+        string temp;
+        
         // Read the header info
         traceFile_ >> numProcs_;
         traceFile_ >> numFiles_;
         traceFile_ >> numRecords_;
+        //cerr << "First 4 parts " << numProcs_ << " " << numFiles_ << " "
+        //     << numRecords_ << endl;
 
         // Read the file names
         fileNames_ = new string[numFiles_];
         for (int i = 0; i < numFiles_; i++)
         {
+            int length;
+            traceFile_ >> length;
             traceFile_ >> fileNames_[i];
+            //cerr << "Filename: " << fileNames_[i] << endl;
         }
         curRecord_ = 0;
+    }
+    else
+    {
+        cerr << "Unable to open trace: " << traceFileName_ << endl;
     }
 }
 
@@ -56,22 +65,33 @@ IOTraceRecord* UMDIOTrace::nextRecord() const
 
 cMessage* UMDIOTrace::nextRecordAsMessage() const
 {
-    int opType;
-    int pid;
-    int fileId;
-    double wallClock;
-    double processClock;
-    long offset;
-    long length;
+    cMessage* msg = 0;
+    
+    if (curRecord_ < numRecords_)
+    {
+        int opType;
+        int numRecords;  // This field seems irrelevant
+        int pid;
+        int fileId;
+        double wallClock;
+        double processClock;
+        long offset;
+        long length;
 
-    // Read the tracefile record in
-    traceFile_ >> opType;
-    traceFile_ >> pid >> fileId >> wallClock >> processClock;
-    traceFile_ >> offset >> length;
+        // Read the tracefile record in
+        traceFile_ >> opType;
+        traceFile_ >> numRecords;
+        traceFile_ >> pid >> fileId >> wallClock >> processClock;
+        traceFile_ >> offset >> length;
+        //cerr << "Op: " << opType << " Pid " << pid << " fid " << fileId
+        //     << " wc " << " pc " << " off " << " len " << endl;
 
-    // Create a new message and fill it out with the relevant data
-    cMessage* msg = createMPIIOMessage(static_cast<OpType>(opType), fileId,
+        // Create a new message and fill it out with the relevant data
+        msg = createMPIIOMessage(static_cast<OpType>(opType), fileId,
                                        offset, length);
+        // Increment the current record
+        curRecord_++;    
+    }
     return msg;
 }
 
@@ -84,6 +104,7 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
     switch(opType) {
         case UMDIOTrace::OPEN:
         {
+            cout << "Creating open message" << endl;
             mpiFileOpenRequest* open = new mpiFileOpenRequest(
                 0, MPI_FILE_OPEN_REQUEST);
             open->setFileName(fileNames_[fileId].c_str());
@@ -92,6 +113,7 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
         }
         case UMDIOTrace::CLOSE:
         {
+            cout << "Creating close message" << endl;
             mpiFileCloseRequest* close = new mpiFileCloseRequest(
                 0, MPI_FILE_CLOSE_REQUEST);
             mpiMsg = close;
@@ -99,20 +121,26 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
         }
         case UMDIOTrace::READ:
         {
-            mpiFileReadRequest* read = new mpiFileReadRequest(
-                0, MPI_FILE_READ_REQUEST);
+            cout << "Creating read message" << endl;
+            mpiFileReadAtRequest* read = new mpiFileReadAtRequest(
+                0, MPI_FILE_READ_AT_REQUEST);
+            read->setCount(length);
+            read->setOffset(offset);
             mpiMsg = read;
             break;
         }
         case UMDIOTrace::WRITE:
         {
-            mpiFileWriteRequest* write = new mpiFileWriteRequest(
-                0, MPI_FILE_WRITE_REQUEST);
-            mpiMsg = write;
+            cout << "Creating write message" << endl;
+            mpiFileWriteAtRequest* write = new mpiFileWriteAtRequest(
+                0, MPI_FILE_WRITE_AT_REQUEST);
+            write->setCount(length);
+            write->setOffset(offset);
+           mpiMsg = write;
             break;
         }
         default:
-            cerr << "Unrecognized IO OpType fo UMDIOTrace: " << opType << endl;
+            cerr << "Ignored IO OpType for UMDIOTrace: " << opType << endl;
             break;
     }
     return mpiMsg;

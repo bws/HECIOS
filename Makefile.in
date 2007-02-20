@@ -88,7 +88,6 @@ SIM_SRC :=
 #
 include mf/inet.mk
 include $(DOC_DIR)/module.mk
-include $(SRC_DIR)/module.mk
 include $(CLIENT_DIR)/module.mk
 include $(COMMON_DIR)/module.mk
 include $(MESSAGES_DIR)/module.mk
@@ -132,18 +131,26 @@ SIM_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_SRC)))
 # Testing macros
 #
 TEST_DIR := tests
-COMMON_TEST_DIR := $(TEST_DIR)/common
 
-SIM_TEST_SRC :=
+TEST_COMMON_DIR := $(TEST_DIR)/common
 
-TEST_INCLUDES := -I$(COMMON_TEST_DIR)
+TEST_INCLUDES := -I$(TEST_COMMON_DIR)
 
 TEST_LIBS := -lcppunit -ldl
 
 #
 # Testing module includes
 #
-include $(COMMON_TEST_DIR)/module.mk
+SIM_TEST_SRC :=
+include $(TEST_COMMON_DIR)/module.mk
+
+#
+# Testing dependencies
+#
+SIM_TEST_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_TEST_SRC)))
+ifeq ($(filter test, $(MAKECMDGOALS)), test)
+-include $(SIM_TEST_DEPENDS)
+endif
 
 #
 # Derived files for tests
@@ -161,13 +168,21 @@ clean:
 	$(RM) $(SIM_NED_OUTPUT) $(SIM_NED_OBJS) 
 	$(RM) $(SIM_MSG_OUTPUT) $(SIM_MSG_OBJS)
 	$(RM) $(SIM_OBJS)
-	$(RM) $(SIM_TEST_OBJS)
 	@echo "Derived files deleted.  Project is clean."
 
-clean_tests:
+ned_clean:
+	@echo "Removing generated source files and objects."
+	$(RM) $(SIM_NED_OUTPUT) $(SIM_NED_OBJS)
+	$(RM) $(SIM_MSG_OUTPUT) $(SIM_MSG_OBJS)
+	@echo "Generated source files and objects removed."
+
+tests_clean:
 	@echo "Removing test subsytem derived objects."
 	$(RM) $(SIM_TEST_OBJS)
+	$(RM) $(SIM_TEST_DEPENDS)
 	@echo "Derived files deleted."
+
+all_clean: clean tests_clean
 
 #
 # Build targets for documentation
@@ -179,30 +194,25 @@ doc: $(DOC_EPS) $(DOC_PDF)
 #
 # Build unit test drivers
 #
-tests: $(BIN_DIR)/common_test
-
-#
-# Build targets for 3rd party frameworks
-#
-third_party: $(THIRDPARTY_LIBS)
+test: $(BIN_DIR)/common_test
 
 #
 # Targets to hecios build simulator
 #
-$(SIM_OBJS): $(SIM_NED_OUTPUT) $(SIM_MSG_OUTPUT)
+$(SIM_OBJS): $(SIM_MSG_OUTPUT)
 
-$(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS)
-	mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_NED_OBJS) $(SIM_OBJS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
+$(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
 
 #
 # common module unit tests
 #
-$(BIN_DIR)/common_test: $(SIM_TEST_OBJS)
-	mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $(SIM_TEST_OBJS) $(TEST_LIBS) -o $@
+$(BIN_DIR)/common_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(SIM_TEST_OBJS) $(TEST_LIBS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
 
 #
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all clean clean_tests doc tests third_party
+.PHONY: all all_clean clean doc ned_clean test tests_clean

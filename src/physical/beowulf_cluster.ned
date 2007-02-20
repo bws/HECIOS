@@ -14,13 +14,13 @@ module BeowulfCluster
     submodules:
 
         cpun: ComputeNode[numCPUNodes];
-            display: "p=56,64;i=block/process,cyan";
+            display: "p=20,32,r;i=block/process,cyan";
 
         ion: IONode[numIONodes];
-            display: "p=42,144;i=abstract/server,green";
+            display: "p=20,256,r;i=abstract/server,green";
 
         switch: EtherSwitch;
-            display: "p=147,143;i=abstract/switch";
+            display: "p=256,164;i=abstract/switch";
 
         configurator: FlatNetworkConfigurator;
             parameters:
@@ -47,7 +47,4 @@ endmodule
 // Settings for a beowulf cluster similar to adenine
 network adenine: BeowulfCluster
 
-    parameters:
-        numCPUNodes = 32,
-        numIONodes = 16;
 endnetwork

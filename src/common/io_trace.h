@@ -32,6 +32,9 @@ public:
     /** @return the number of processes for this IO trace */
     int getNumProcs() const {return numProcs_;}
 
+    /** @return true if more records remain */
+    virtual bool hasMoreRecords() const = 0;
+    
     /** @return the next IOTraceRecord */
     virtual IOTraceRecord* nextRecord() const = 0;
 

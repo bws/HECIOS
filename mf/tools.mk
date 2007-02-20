@@ -17,7 +17,7 @@ MSGC = $(OMNET_DIR)/bin/opp_msgc
 #
 # Hecios tools
 #
-DEPENDC = maint/depend.sh
+DEPENDC = scripts/depend.sh
 
 #
 # Compilation flags

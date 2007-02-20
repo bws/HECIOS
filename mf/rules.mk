@@ -1,4 +1,7 @@
-
+#
+# Useful macro functions
+#
+dirname = $(patsubst %/,%,$(dir $(1)))
 
 #
 # Document generation rules (nasty current directory stuff to handle
@@ -32,16 +35,19 @@
 %_m.cc: %.msg
 	$(MSGC) $(NEDFLAGS) $^
 
+%_m.h: %.msg
+	$(MSGC) $(NEDFLAGS) $^
+
 #
 # Generate dependency information
 #
 %.d: %.c
 	@echo "Generating dependencies for $< . . ."
-	@$(CC) -MM -MG $(DEPFLAGS) $< > $@
+	@$(DEPENDC) $(call dirname,$<) $(CC) -MM -MG $(DEPFLAGS) $< > $@
 
 %.d: %.cc
 	@echo "Generating dependencies for $< . . ."
-	@$(CXX) -MM -MG $(DEPFLAGS) $< > $@
+	@$(DEPENDC) $(call dirname,$<) $(CXX) -MM -MG $(DEPFLAGS) $< > $@
 
 #
 # Build rules for CppUnit tests

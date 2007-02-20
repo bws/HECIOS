@@ -21,11 +21,9 @@ module IONode
 
     connections:
 
-        server.out --> hca.in++;
-        server.in <-- hca.out++;
-
-        // Connect forwarding gates
         ethIn --> hca.ethIn++;
         ethOut <-- hca.ethOut++;
-            
+
+        server.out --> hca.ethIn++;
+        server.in <-- hca.ethOut++;
 endmodule

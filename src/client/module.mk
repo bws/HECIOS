@@ -3,9 +3,10 @@
 #
 DIR := src/client
 
-SIM_SRC += $(DIR)/bmi_transport.ned \
-	$(DIR)/fs_client.ned \
+SIM_SRC += $(DIR)/fs_client.ned \
 	$(DIR)/io_application.ned \
 	$(DIR)/middleware_cache.ned \
 	$(DIR)/mpi_process.ned \
-	$(DIR)/io_application.cc
+	$(DIR)/fs_client.cc \
+	$(DIR)/io_application.cc \
+	$(DIR)/middleware_cache.cc

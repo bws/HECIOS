@@ -12,8 +12,8 @@ module MPIProcess
 
     gates:
 
-        in: extIn;
-        out: extOut;
+        in: netIn;
+        out: netOut;
 
     submodules:
 
@@ -31,7 +31,7 @@ module MPIProcess
         cache.fsOut --> fsClient.appIn;
         cache.fsIn <-- fsClient.appOut;
 
-        fsClient.netOut --> extOut;
-        fsClient.netIn <-- extIn;
+        fsClient.netOut --> netOut;
+        fsClient.netIn <-- netIn;
 
 endmodule

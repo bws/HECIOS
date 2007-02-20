@@ -16,15 +16,14 @@ module ComputeNode
         jobProcess: JobProcess;
 
         hca: StandardHost;
+        parameters:
+            numTcpApps = 1,
+            tcpAppType = "BMITransport";
 
-    connections:
+    connections nocheck:
 
         // Connect forwarding gates
-        jobProcess.out --> hca.in++;
-        jobProcess.in <-- hca.out++;       
-
-        // Connect forwarding gates
-        ethIn --> hca.ethIn++;
-        ethOut <-- hca.ethOut++;
+        jobProcess.out --> hca.ethIn++;
+        jobProcess.in <-- hca.ethOut++;
 
 endmodule
