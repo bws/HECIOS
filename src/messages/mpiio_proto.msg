@@ -2,6 +2,13 @@
 // User request messages for MPI IO
 //
 
+// allow a pointer field in a message 
+cplusplus {{
+	typedef void *voidPtr;
+}}
+
+class noncobject voidPtr;
+
 enum mpiRequestTypes
 {
     MPI_FILE_OPEN_REQUEST = 1;
@@ -42,6 +49,9 @@ message mpiRequest
         int rank = 0;
         int size = 1;
         int comm_members[] = 0;
+		  // internal fields
+		  int state = 0;
+		  int responses = 0;
 };
 
 // The abstract base class for all MPI IO message responses
@@ -57,6 +67,8 @@ message mpiFileOpenRequest extends mpiRequest
     fields:
         string fileName;
         int mode;
+		  // internal fields
+		  voidPtr filedes;
 };
 
 // Open file response

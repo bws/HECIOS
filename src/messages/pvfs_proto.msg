@@ -43,6 +43,13 @@ enum fsResponseTypes {
     FS_LIST_ATTR_RESPONSE = 317;
 }
 
+enum fsLookupStatus {
+    FS_FOUND = 1;
+	 FS_PARTIAL = 2;
+	 FS_NOTFOUND = 3;
+}
+
+
 // File request abstract base class
 message fsRequest
 {
@@ -167,6 +174,7 @@ message fsLookupPathRequest extends fsRequest
 message fsLookupPathResponse extends fsResponse
 {
     fields:
+	     int status enum(fsLookupStatus);
         int handles[];
         int handle_count;
         int attr_count;

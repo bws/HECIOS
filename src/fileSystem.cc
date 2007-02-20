@@ -1,27 +1,6 @@
 #include <map>
 #include "types.h"
 
-typedef struct fsMetaData
-{
-	int mode;
-	int owner;
-	int group;
-	int nlinks;
-	int size;
-	int meta_handle;
-	vector<int> handles; /* size of handles is server count */
-	int dist; /* for now just strip size */
-} fsMetaData;
-
-typedef struct fsOpenFile
-{
-	fileSystem fs;
-	int handle;
-	int state;
-	fsMetaData meta;
-	int fileptr;
-} fsOpenFile;
-
 typedef struct attrEntry
 {
 	fsMetaData meta;
@@ -36,18 +15,30 @@ typedef struct dirEntry
 	list<string>::iterator refLRU;
 } attrEntry;
 
+typedef struct handleRange
+{
+	int first;
+	int last;
+} handleRange;
+
 class fileSystem
 {
 	private:
 
+		/* attribute (metadata) cache */
 		hash_map<fsHandle, attrEntry> attrCache;
 		maxAttr = 100; /* max number of attr cache entries */
 		maxAttrTime = 100.0; /* max seconds before attr entry times out */
 		list<fsHandle> attrLRU;
+
+		/* directory (name) cache */
 		hash_map<string, fshandle> dirCache;
 		maxDir = 100; /* max number of dir cache entries */
 		maxDirTime = 100.0; /* max seconds before dir entry times out */
 		list<fsHandle> dirLRU;
+
+		/* servers */
+		vector<handleRange> servers;
 
 	public:
 
@@ -67,7 +58,7 @@ class fileSystem
 		bool fsServerNotUsed(int snum, int dist, int count, mpiDatatype)
 		{
 			/* for now let all servers participate */
-			return true;
+			return false;
 		}
 
 		void insertAttr(fsHandle handle, fsMetaData meta)
