@@ -22,5 +22,5 @@ fi
 #
 msg_dir="src/messages/"
 add_dir_re="s@^\(.*\)\.o:@$dir\1.d $dir\1.o:@"
-msg_dir_re="s@/+\([A-Za-z0-9_]*\)_m\.h\s@$msg_dir\1_m.h @g"
+msg_dir_re="s@ \([A-Za-z0-9_]*\)_m\.h\s@ $msg_dir\1_m.h @g"
 exec "$@" | sed -e "$add_dir_re" -e "$msg_dir_re"
