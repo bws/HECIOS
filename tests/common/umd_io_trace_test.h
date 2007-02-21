@@ -50,6 +50,13 @@ void UMDIOTraceTest::testConstructor()
 
 void UMDIOTraceTest::testIsValid()
 {
+    // Test with an invalid file
+    UMDIOTrace test1(1, "dummy_file_name");
+    CPPUNIT_ASSERT(false == test1.isValid());
+
+    //Test with a valid trace file
+    UMDIOTrace test2(1, "tests/support/umd_io_trace.tra");
+    CPPUNIT_ASSERT(true == test2.isValid());
 }
 
 void UMDIOTraceTest::testNextRecord()
@@ -62,8 +69,8 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     cMessage* msg;
     mpiFileOpenRequest* open;
     mpiFileCloseRequest* close;
-    mpiFileReadRequest* read;
-    mpiFileWriteRequest* write;
+    mpiFileReadAtRequest* read;
+    mpiFileWriteAtRequest* write;
 
     //
     // 1st record
@@ -74,7 +81,6 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     // Cast message and check it
     open = dynamic_cast<mpiFileOpenRequest*>(msg);
     CPPUNIT_ASSERT(0 != open);
-    CPPUNIT_ASSERT(1);
 
     //
     // 2nd record
@@ -93,7 +99,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     CPPUNIT_ASSERT(0 != msg);
 
     // Cast message and check it
-    read = dynamic_cast<mpiFileReadRequest*>(msg);
+    read = dynamic_cast<mpiFileReadAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != read);
 
     //
@@ -103,51 +109,61 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     CPPUNIT_ASSERT(0 != msg);
 
     // Cast message and check it
-    write = dynamic_cast<mpiFileWriteRequest*>(msg);
+    write = dynamic_cast<mpiFileWriteAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != read);
 
     //
-    // 5th record
+    // 5th record (at present seek records return null)
     //
     msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
-
-    // Cast message and check it
-    //seek = dynamic_cast<mpiFileReadRequest*>(msg);
-    //CPPUNIT_ASSERT(0 != read);
+    CPPUNIT_ASSERT(0 == msg);
 
     //
-    // 6th record
+    // 6th record (at present listio_header messages return null)
     //
     msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
+    CPPUNIT_ASSERT(0 == msg);
 
     //
     // 7th record
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
+    open = dynamic_cast<mpiFileOpenRequest*>(msg);
+    CPPUNIT_ASSERT(0 != open);
 
     //
     // 8th record
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
+    close = dynamic_cast<mpiFileCloseRequest*>(msg);
+    CPPUNIT_ASSERT(0 != close);
 
     //
     // 9th record
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
+    read = dynamic_cast<mpiFileReadAtRequest*>(msg);
+    CPPUNIT_ASSERT(0 != read);
 
     //
     // 10th record
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-
-    
-    
+    write = dynamic_cast<mpiFileWriteAtRequest*>(msg);
+    CPPUNIT_ASSERT(0 != write);
 }
 
 #endif
+
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=8 sts=4 sw=4 expandtab
+ */
