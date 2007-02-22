@@ -16,6 +16,7 @@ class UMDIOTraceTest : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(UMDIOTraceTest);
     CPPUNIT_TEST(testConstructor);
     CPPUNIT_TEST(testIsValid);
+    CPPUNIT_TEST(testHasMoreRecords);
     CPPUNIT_TEST(testNextRecord);
     CPPUNIT_TEST(testNextRecordAsMessage);
     CPPUNIT_TEST_SUITE_END();
@@ -32,6 +33,8 @@ public:
 
     void testIsValid();
 
+    void testHasMoreRecords();
+    
     void testNextRecord();
 
     void testNextRecordAsMessage();
@@ -57,6 +60,19 @@ void UMDIOTraceTest::testIsValid()
     //Test with a valid trace file
     UMDIOTrace test2(1, "tests/support/umd_io_trace.tra");
     CPPUNIT_ASSERT(true == test2.isValid());
+}
+
+void UMDIOTraceTest::testHasMoreRecords()
+{
+    // Test with a valid trace
+    UMDIOTrace test(1, "tests/support/umd_io_trace.tra");
+    for (int i = 0; i < 10; i++)
+    {
+        CPPUNIT_ASSERT(true == test.hasMoreRecords());
+        test.nextRecordAsMessage();
+    }
+
+    CPPUNIT_ASSERT(false == test.hasMoreRecords());
 }
 
 void UMDIOTraceTest::testNextRecord()
@@ -113,10 +129,12 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     CPPUNIT_ASSERT(0 != read);
 
     //
-    // 5th record (at present seek records return null)
+    // 5th record -- seek
     //
     msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 == msg);
+    CPPUNIT_ASSERT(0 != msg);
+    read = dynamic_cast<mpiFileReadAtRequest*>(msg);
+    CPPUNIT_ASSERT(0 != read);
 
     //
     // 6th record (at present listio_header messages return null)

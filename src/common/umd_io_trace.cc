@@ -139,6 +139,16 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
            mpiMsg = write;
             break;
         }
+        case UMDIOTrace::SEEK:
+        {
+            cout << "Creating WriteAt message" << endl;
+            mpiFileReadAtRequest* seek = new mpiFileReadAtRequest(
+                0, MPI_FILE_READ_AT_REQUEST);
+            seek->setCount(0);
+            seek->setOffset(offset);
+            mpiMsg = seek;
+            break;
+        }
         default:
             cerr << "Ignored IO OpType for UMDIOTrace: " << opType << endl;
             break;

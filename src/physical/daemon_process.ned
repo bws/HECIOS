@@ -13,11 +13,12 @@ module DaemonProcess
         out: out;
 
     submodules:
-        mpi: MPIProcess;
+        //mpi: MPIProcess;
            
         //bmi: BMITransport;
 
-    connections:
-        mpi.netOut --> out;
-        mpi.netIn <-- in; 
+    connections nocheck:
+        //mpi.netOut --> out;
+        //mpi.netIn <-- in; 
+
 endmodule

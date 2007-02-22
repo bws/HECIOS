@@ -19,11 +19,9 @@ module IONode
 
         //hdd: Disk;
 
-    connections:
+    connections nocheck:
 
         ethIn --> hca.ethIn++;
         ethOut <-- hca.ethOut++;
 
-        server.out --> hca.ethIn++;
-        server.in <-- hca.ethOut++;
 endmodule

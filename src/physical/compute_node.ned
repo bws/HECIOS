@@ -22,8 +22,12 @@ module ComputeNode
 
     connections nocheck:
 
+        // Connect process to bmi transport
+        //jobProcess.out --> hca.tcpApp.msgIn;
+        //jobProcess.in <-- hca.tcpApp.msgOut;
+
         // Connect forwarding gates
-        jobProcess.out --> hca.ethIn++;
-        jobProcess.in <-- hca.ethOut++;
+        ethIn --> hca.ethIn++;
+        ethOut <-- hca.ethOut++;
 
 endmodule

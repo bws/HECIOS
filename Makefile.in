@@ -123,9 +123,11 @@ SIM_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_SRC)))
 SIM_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_SRC)))
 
 #
-# Include dependency makefiles
+# Include dependency makefiles if building source target
 #
+ifeq ($(filter all_clean clean doc ned_clean tests_clean, $(MAKECMDGOALS)), )
 -include $(SIM_DEPENDS)
+endif
 
 #
 # Testing macros
@@ -189,7 +191,9 @@ all_clean: clean tests_clean
 #
 doc: $(DOC_EPS) $(DOC_PDF)
 	@#echo "DOC_PDF: $(DOC_PDF) DOC_DIR: $(DOC_DIR)"
-	doxygen doc/Doxyfile
+	doxygen $(DOC_DIR)/Doxyfile
+	doxytag -t $(DOC_DIR)/Doxytag.xml $(DOC_DIR)/api-doc/html
+	opp_neddoc -d ../api-doc/html -t $(DOC_DIR)/Doxytag.xml -o $(DOC_DIR)/ned-doc $(SRC_DIR)
 
 #
 # Build unit test drivers
