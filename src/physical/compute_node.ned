@@ -18,7 +18,7 @@ module ComputeNode
         hca: StandardHost;
         parameters:
             numTcpApps = 1,
-            tcpAppType = "BMITransport";
+            tcpAppType = "BMITcpClient";
 
     connections nocheck:
 

@@ -16,6 +16,9 @@ module IONode
         server: DaemonProcess;
 
         hca: StandardHost;
+            parameters:
+                numTcpApps = 1,
+                tcpAppType = "BMITcpServer";
 
         //hdd: Disk;
 

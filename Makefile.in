@@ -59,6 +59,7 @@ INCLUDES = $(OMNET_DIR)/include \
 	$(INET_DIR)/NetworkInterfaces/Ethernet \
 	$(INET_DIR)/NetworkInterfaces/PPP \
         $(INET_DIR)/Nodes/INET \
+        $(INET_DIR)/Transport/Contract \
         $(INET_DIR)/Transport/TCP \
         $(INET_DIR)/Transport/UDP \
         $(INET_DIR)/Util

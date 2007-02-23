@@ -1,6 +1,9 @@
 
 // Implements the TCPApp interface (gates)
-simple BMITransport
+simple BMITcpClient
+
+    parameters:
+        connectPort: numeric const; // port to connect to
 
     gates:
         in: bmiIn;

@@ -15,8 +15,6 @@ module DaemonProcess
     submodules:
         //mpi: MPIProcess;
            
-        //bmi: BMITransport;
-
     connections nocheck:
         //mpi.netOut --> out;
         //mpi.netIn <-- in; 

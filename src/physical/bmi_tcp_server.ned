@@ -1,6 +1,9 @@
 
 // Implements the TCPApp interface (gates)
-simple BMITransport
+simple BMITcpServer
+
+    parameters:
+        listenPort: numeric const; // port to listen on
 
     gates:
         in: bmiIn;

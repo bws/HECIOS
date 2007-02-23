@@ -15,8 +15,6 @@ module JobProcess
     submodules:
         mpi: MPIProcess;
            
-        //bmi: BMITransport;
- 
     connections:
         mpi.netOut --> out;
         mpi.netIn <-- in;
