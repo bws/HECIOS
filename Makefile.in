@@ -139,7 +139,7 @@ TEST_COMMON_DIR := $(TEST_DIR)/common
 
 TEST_INCLUDES := -I$(TEST_COMMON_DIR)
 
-TEST_LIBS := -lcppunit -ldl
+TEST_LIBS := -lcppunit -ldl lib/inet.a
 
 #
 # Testing module includes
@@ -213,7 +213,7 @@ $(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
 #
 # common module unit tests
 #
-$(BIN_DIR)/common_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS)
+$(BIN_DIR)/common_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
 	@mkdir -p $(BIN_DIR)
 	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(SIM_TEST_OBJS) $(TEST_LIBS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
 
