@@ -69,7 +69,8 @@ void UMDIOTraceTest::testHasMoreRecords()
     for (int i = 0; i < 10; i++)
     {
         CPPUNIT_ASSERT(true == test.hasMoreRecords());
-        test.nextRecordAsMessage();
+        cMessage* msg = test.nextRecordAsMessage();
+        delete msg;
     }
 
     CPPUNIT_ASSERT(false == test.hasMoreRecords());
@@ -93,40 +94,36 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-
-    // Cast message and check it
     open = dynamic_cast<mpiFileOpenRequest*>(msg);
     CPPUNIT_ASSERT(0 != open);
+    delete open;
 
     //
     // 2nd record
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-
-    // Cast message and check it
     close = dynamic_cast<mpiFileCloseRequest*>(msg);
     CPPUNIT_ASSERT(0 != read);
+    delete close;
 
     //
     // 3rd record
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-
-    // Cast message and check it
     read = dynamic_cast<mpiFileReadAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != read);
+    delete read;
 
     //
     // 4th record
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-
-    // Cast message and check it
     write = dynamic_cast<mpiFileWriteAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != read);
+    delete write;
 
     //
     // 5th record -- seek
@@ -135,12 +132,14 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     CPPUNIT_ASSERT(0 != msg);
     read = dynamic_cast<mpiFileReadAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != read);
+    delete read;
 
     //
     // 6th record (at present listio_header messages return null)
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 == msg);
+    delete msg;
 
     //
     // 7th record
@@ -149,6 +148,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     CPPUNIT_ASSERT(0 != msg);
     open = dynamic_cast<mpiFileOpenRequest*>(msg);
     CPPUNIT_ASSERT(0 != open);
+    delete open;
 
     //
     // 8th record
@@ -157,6 +157,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     CPPUNIT_ASSERT(0 != msg);
     close = dynamic_cast<mpiFileCloseRequest*>(msg);
     CPPUNIT_ASSERT(0 != close);
+    delete close;
 
     //
     // 9th record
@@ -165,6 +166,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     CPPUNIT_ASSERT(0 != msg);
     read = dynamic_cast<mpiFileReadAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != read);
+    delete read;
 
     //
     // 10th record
@@ -173,6 +175,8 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     CPPUNIT_ASSERT(0 != msg);
     write = dynamic_cast<mpiFileWriteAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != write);
+    delete write;
+
 }
 
 #endif
