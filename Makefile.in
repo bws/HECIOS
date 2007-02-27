@@ -10,12 +10,6 @@ HECIOS_DIR := $(shell pwd)
 OMNET_DIR := @OMNET_DIR@
 
 #
-# Include all make system makefiles
-#
-include mf/rules.mk
-include mf/tools.mk
-
-#
 # Module locations
 #
 BIN_DIR = bin
@@ -139,7 +133,10 @@ TEST_COMMON_DIR := $(TEST_DIR)/common
 
 TEST_INCLUDES := -I$(TEST_COMMON_DIR)
 
-TEST_LIBS := -lcppunit -ldl lib/inet.a
+TEST_LIBS := -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
+	lib/inet.a \
+	-lenvir -ltkenv -ltk8.4 -ltcl8.4 -lsim_std -lnedxml -lxml2 \
+	-lcppunit -ldl
 
 #
 # Testing module includes
@@ -159,6 +156,13 @@ endif
 # Derived files for tests
 #
 SIM_TEST_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_TEST_SRC)))
+
+
+#
+# Include all make system makefiles
+#
+include mf/rules.mk
+include mf/tools.mk
 
 
 #
@@ -204,6 +208,8 @@ test: $(BIN_DIR)/common_test
 #
 # Targets to hecios build simulator
 #
+$(SIM_MSG_OUTPUT): $(THIRDPARTY_LIBS)
+
 $(SIM_OBJS): $(SIM_MSG_OUTPUT)
 
 $(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
@@ -215,7 +221,7 @@ $(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
 #
 $(BIN_DIR)/common_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(SIM_TEST_OBJS) $(TEST_LIBS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
+	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(SIM_TEST_OBJS) $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
 
 #
 # Psuedotargets (required by make for some dependencies)

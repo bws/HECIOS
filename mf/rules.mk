@@ -45,7 +45,7 @@ dirname = $(patsubst %/,%,$(dir $(1)))
 	@echo "Generating dependencies for $< . . ."
 	@$(DEPENDC) $(call dirname,$<) $(CC) -MM -MG $(DEPFLAGS) $< > $@
 
-%.d: %.cc
+%.d: %.cc $(SIM_MSG_OUTPUT)
 	@echo "Generating dependencies for $< . . ."
 	@$(DEPENDC) $(call dirname,$<) $(CXX) -MM -MG $(DEPFLAGS) $< > $@
 
