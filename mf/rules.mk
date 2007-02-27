@@ -30,13 +30,13 @@ dirname = $(patsubst %/,%,$(dir $(1)))
 # Generate source files from NED specs
 #
 %_n.cc: %.ned
-	$(NEDC) $(NEDFLAGS) $^
+	$(NEDC) $(NEDFLAGS) $<
 
 %_m.cc: %.msg
-	$(MSGC) $(NEDFLAGS) $^
+	$(MSGC) $(NEDFLAGS) $<
 
 %_m.h: %.msg
-	$(MSGC) $(NEDFLAGS) $^
+	$(MSGC) $(NEDFLAGS) $<
 
 #
 # Generate dependency information
