@@ -1,7 +1,7 @@
 
 import
     "job_process", 
-    "StandardHost";
+    "bmi_enhanced_host";
 
 //
 // Ethernet based compute node
@@ -15,16 +15,16 @@ module ComputeNode
     submodules:
         jobProcess: JobProcess;
 
-        hca: StandardHost;
+        hca: BMIEnhancedHost;
         parameters:
             numTcpApps = 1,
             tcpAppType = "BMITcpClient";
 
-    connections nocheck:
+    connections:
 
         // Connect process to bmi transport
-        //jobProcess.out --> hca.tcpApp.msgIn;
-        //jobProcess.in <-- hca.tcpApp.msgOut;
+        jobProcess.out --> hca.bmiIn++;
+        jobProcess.in <-- hca.bmiOut++;
 
         // Connect forwarding gates
         ethIn --> hca.ethIn++;
