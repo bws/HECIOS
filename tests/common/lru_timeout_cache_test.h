@@ -7,7 +7,7 @@
 #include "lru_timeout_cache.h"
 using namespace std;
 
-/** Unit test for UMDIOTrace */
+/** Unit test for LRUTimeoutCache */
 class LRUTimeoutCacheTest : public CppUnit::TestFixture
 {
     // Create generic unit test and register test functions for automatic
@@ -63,7 +63,7 @@ void LRUTimeoutCacheTest::tearDown()
 void LRUTimeoutCacheTest::testConstructor()
 {
     LRUTimeoutCache<int, int> cache(1, 1.0);
-    CPPUNIT_ASSERT(true);
+    CPPUNIT_ASSERT_EQUAL(0, cache.size());
 }
 
 void LRUTimeoutCacheTest::testInsert()
@@ -73,22 +73,23 @@ void LRUTimeoutCacheTest::testInsert()
     
     cache1_->insert(1, "value1");
     cache1_->insert(2, "Value2");
+    CPPUNIT_ASSERT_EQUAL(2, cache1_->size());
         
     cache2_->insert(101, "Value101");
     cache2_->insert(102, "Value102");
-    CPPUNIT_ASSERT(true);
+    CPPUNIT_ASSERT_EQUAL(2, cache2_->size());
 }
 
 void LRUTimeoutCacheTest::testRemove()
 {
     // Remove from an empty cache
     cache1_->remove(77);
-    CPPUNIT_ASSERT(true);
+    CPPUNIT_ASSERT_EQUAL(0, cache1_->size());
 
     // Remove an existing entry from a cache
     cache1_->insert(63, "value63");
     cache1_->remove(63);
-    CPPUNIT_ASSERT(true);
+    CPPUNIT_ASSERT_EQUAL(0, cache1_->size());
 }
 
 void LRUTimeoutCacheTest::testLookup()
@@ -98,9 +99,54 @@ void LRUTimeoutCacheTest::testLookup()
     CPPUNIT_ASSERT(0 == e77);
 
     // Find an existing entry
-    cache1_->insert(74, "value74");
-    LRUTimeoutCache<int,string>::EntryType* e74 = cache1_->lookup(74);
-    CPPUNIT_ASSERT("value74" == e74->data);
+    cache1_->insert(2000, "value2000");
+    LRUTimeoutCache<int,string>::EntryType* e2000 = cache1_->lookup(2000);
+    CPPUNIT_ASSERT("value2000" == e2000->data);
+
+    // Fill the cache and lookup all entries
+    cache1_->insert(2001, "value2001");
+    cache1_->insert(2002, "value2002");
+    cache1_->insert(2003, "value2003");
+    cache1_->insert(2004, "value2004");
+    cache1_->insert(2005, "value2005");
+    cache1_->insert(2006, "value2006");
+    cache1_->insert(2007, "value2007");
+    cache1_->insert(2008, "value2008");
+    cache1_->insert(2009, "value2009");
+
+    CPPUNIT_ASSERT(cache1_->lookup(2000));
+    CPPUNIT_ASSERT_EQUAL(string("value2000"), cache1_->lookup(2000)->data);
+    
+    CPPUNIT_ASSERT(cache1_->lookup(2001));
+    CPPUNIT_ASSERT_EQUAL(string("value2001"), cache1_->lookup(2001)->data);
+    
+    CPPUNIT_ASSERT(cache1_->lookup(2002));
+    CPPUNIT_ASSERT_EQUAL(string("value2002"), cache1_->lookup(2002)->data);
+    
+    CPPUNIT_ASSERT(cache1_->lookup(2003));
+    CPPUNIT_ASSERT_EQUAL(string("value2003"), cache1_->lookup(2003)->data);
+    
+    CPPUNIT_ASSERT(cache1_->lookup(2004));
+    CPPUNIT_ASSERT_EQUAL(string("value2004"), cache1_->lookup(2004)->data);
+    
+    CPPUNIT_ASSERT(cache1_->lookup(2005));
+    CPPUNIT_ASSERT_EQUAL(string("value2005"), cache1_->lookup(2005)->data);
+    
+    CPPUNIT_ASSERT(cache1_->lookup(2006));
+    CPPUNIT_ASSERT_EQUAL(string("value2006"), cache1_->lookup(2006)->data);
+    
+    CPPUNIT_ASSERT(cache1_->lookup(2007));
+    CPPUNIT_ASSERT_EQUAL(string("value2007"), cache1_->lookup(2007)->data);
+    
+    CPPUNIT_ASSERT(cache1_->lookup(2008));
+    CPPUNIT_ASSERT_EQUAL(string("value2008"), cache1_->lookup(2008)->data);
+    
+    CPPUNIT_ASSERT(cache1_->lookup(2009));
+    CPPUNIT_ASSERT_EQUAL(string("value2009"), cache1_->lookup(2009)->data);
+    
+    // Lookup a non-existant entry
+    CPPUNIT_ASSERT(0 == cache1_->lookup(2010));
+    
 }
 
 void LRUTimeoutCacheTest::testSize()
@@ -141,7 +187,39 @@ void LRUTimeoutCacheTest::testSize()
 
 void LRUTimeoutCacheTest::testLRUPolicy()
 {
-    CPPUNIT_ASSERT(false);
+    // Fill the cache
+    cache1_->insert(640, "val640");
+    cache1_->insert(641, "val641");
+    cache1_->insert(642, "val642");
+    cache1_->insert(643, "val643");
+    cache1_->insert(644, "val644");
+    cache1_->insert(645, "val645");
+    cache1_->insert(646, "val646");
+    cache1_->insert(647, "val647");
+    cache1_->insert(648, "val648");
+    cache1_->insert(649, "val649");
+    
+    // Test LRU after inserts
+    cache1_->insert(650, "val650");
+    CPPUNIT_ASSERT(0 == cache1_->lookup(640));
+    CPPUNIT_ASSERT(0 != cache1_->lookup(650));
+    
+    // Test LRU after lookups
+    cache1_->lookup(641);
+    cache1_->insert(651, "val651");
+    CPPUNIT_ASSERT(0 == cache1_->lookup(642));
+    CPPUNIT_ASSERT(0 != cache1_->lookup(641));
+    CPPUNIT_ASSERT(0 != cache1_->lookup(651));
+    
+    // Test LRU after removes
+    cache1_->remove(643);
+    CPPUNIT_ASSERT(0 == cache1_->lookup(643));
+
+    cache1_->insert(652, "val652");
+    cache1_->insert(653, "val653");
+    CPPUNIT_ASSERT(0 == cache1_->lookup(644));
+    CPPUNIT_ASSERT(0 != cache1_->lookup(652));
+    CPPUNIT_ASSERT(0 != cache1_->lookup(653));
 }
 
 #endif

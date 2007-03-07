@@ -186,6 +186,7 @@ LRUTimeoutCache<KeyType,ValueType>::lookup(const KeyType& key)
 template<class KeyType, class ValueType>
 int LRUTimeoutCache<KeyType,ValueType>::size() const
 {
+    assert(lruList.size() == keyEntryMap.size());
     if (lruList.size() != keyEntryMap.size())
     {
         std::cerr << "ERROR Size mismatch: lruList ->" << lruList.size()
