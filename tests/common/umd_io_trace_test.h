@@ -104,7 +104,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
     close = dynamic_cast<mpiFileCloseRequest*>(msg);
-    CPPUNIT_ASSERT(0 != read);
+    CPPUNIT_ASSERT(0 != close);
     delete close;
 
     //
@@ -122,7 +122,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
     write = dynamic_cast<mpiFileWriteAtRequest*>(msg);
-    CPPUNIT_ASSERT(0 != read);
+    CPPUNIT_ASSERT(0 != write);
     delete write;
 
     //

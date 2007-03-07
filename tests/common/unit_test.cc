@@ -1,6 +1,7 @@
 
 #include <cppunit/TextTestRunner.h>
 #include "umd_io_trace_test.h"
+#include "lru_timeout_cache_test.h"
 
 int main(int argc, char** argv)
 {
@@ -8,6 +9,7 @@ int main(int argc, char** argv)
 
     // Add all of the requisite tests
     runner.addTest( UMDIOTraceTest::suite() );
+    runner.addTest( LRUTimeoutCacheTest::suite() );
 
     bool success = runner.run();
     return (success ? 0 : 1);
