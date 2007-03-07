@@ -127,7 +127,7 @@ message mpiFilePreallocateRequest extends mpiRequest
 };
 
 // Delete file response
-message mpiFilepreallocateResponse extends mpiResponse
+message mpiFilePreallocateResponse extends mpiResponse
 {
 };
 
