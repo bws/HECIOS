@@ -31,6 +31,9 @@ private:
     
     IOTrace* trace_;
     int rank_;
+
+    int inGate_;
+    int outGate_;
 };
 
 // OMNet Registriation Method
@@ -43,6 +46,10 @@ static int rank_seed = 0;
  */
 void IOApplication::initialize()
 {
+    // Cache the gate descriptors
+    inGate_ = findGate("in");
+    outGate_ = findGate("out");
+    
     // Set the process rank
     rank_ = rank_seed++;
 
@@ -89,7 +96,7 @@ void IOApplication::handleMessage(cMessage* msg)
     if (msg->isSelfMessage())
     {
         // On a self message, forward the message to the "out" gate
-        send(msg, "out");
+        send(msg, outGate_);
     }
     else
     {
@@ -149,6 +156,9 @@ void IOApplication::handleMessage(cMessage* msg)
                 break;
         }
 
+        // Delete the message
+        delete msg;
+        
         // Send the next message
         getNextMessage();
     }
@@ -164,7 +174,7 @@ void IOApplication::getNextMessage()
 
     if (0 != msg)
     {
-        send(msg, "out");
+        send(msg, outGate_);
     }
     else
     {

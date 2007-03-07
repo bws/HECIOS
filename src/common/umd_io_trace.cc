@@ -136,7 +136,7 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
                 0, MPI_FILE_WRITE_AT_REQUEST);
             write->setCount(length);
             write->setOffset(offset);
-           mpiMsg = write;
+            mpiMsg = write;
             break;
         }
         case UMDIOTrace::SEEK:
