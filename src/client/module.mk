@@ -9,4 +9,5 @@ SIM_SRC += $(DIR)/fs_client.ned \
 	$(DIR)/mpi_process.ned \
 	$(DIR)/fs_client.cc \
 	$(DIR)/io_application.cc \
-	$(DIR)/middleware_cache.cc
+	$(DIR)/middleware_cache.cc \
+	$(DIR)/cache_module.cc

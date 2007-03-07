@@ -66,7 +66,8 @@ void IOApplication::initialize()
     cMessage* msg = trace_->nextRecordAsMessage();
 
     // Send the message
-    scheduleAt(5.0, msg);
+    //scheduleAt(5.0, msg);
+    send(msg, "out");
 }
 
 /**

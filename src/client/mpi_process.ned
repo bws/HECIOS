@@ -1,7 +1,7 @@
 
 import
     "io_application",
-    "middleware_cache",
+    "cache_module",
     "fs_client",
     "bmi_transport";
 
@@ -19,7 +19,7 @@ module MPIProcess
 
         app: IOApplication;
 
-        cache: MiddlewareCache;
+        cache: cacheModule;
 
         fsClient: FSClient;
 
