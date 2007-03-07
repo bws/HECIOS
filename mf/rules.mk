@@ -43,11 +43,11 @@ dirname = $(patsubst %/,%,$(dir $(1)))
 #
 %.d: %.c
 	@echo "Generating dependencies for $< . . ."
-	@$(DEPENDC) $(call dirname,$<) $(CC) -MM -MG $(DEPFLAGS) $< > $@
+	@$(DEPENDC) $(call dirname,$<) $(CC) -MM $(DEPFLAGS) $< > $@
 
 %.d: %.cc $(SIM_MSG_OUTPUT)
 	@echo "Generating dependencies for $< . . ."
-	@$(DEPENDC) $(call dirname,$<) $(CXX) -MM -MG $(DEPFLAGS) $< > $@
+	@$(DEPENDC) $(call dirname,$<) $(CXX) -MM $(DEPFLAGS) $< > $@
 
 #
 # Build rules for CppUnit tests
