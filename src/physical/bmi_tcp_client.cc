@@ -1,5 +1,7 @@
 #include <iostream>
+#include "IPvXAddress.h"
 #include "TCPSocket.h"
+#include "TCPSocketMap.h"
 #include "pvfs_proto_m.h"
 #include "umd_io_trace.h"
 #include <omnetpp.h>
@@ -28,8 +30,12 @@ protected:
     void socketDataArrived(int, void *, cMessage *msg, bool);
     
 private:
+
+    /** @return a socket with an open connection to the server */
+    TCPSocket* getConnectedSocket(int handle);
+    
     int connectPort_;
-    //TCPSocketMap socketMap_;
+    TCPSocketMap socketConnectionMap_;
 };
 
 // OMNet Registriation Method
@@ -48,9 +54,12 @@ void BMITcpClient::initialize()
  */
 void BMITcpClient::handleMessage(cMessage* msg)
 {
-    //if (socket.belongsToSocket(msg))
-    //    socket.processMessage(msg); // dispatch to socketXXXX() methods
-    //else
+    TCPSocket* socket = socketConnectionMap_.findSocketFor(msg);
+    if (0 != socket)
+    {
+        socket->processMessage(msg); // dispatch to socketXXXX() methods
+    }
+    else
     {
         switch(msg->kind())
         {
@@ -114,6 +123,19 @@ void BMITcpClient::socketDataArrived(int, void *, cMessage *msg, bool)
 {
     ev << "Received TCP data, " << msg->byteLength() << " bytes\\n";
     delete msg;
+}
+
+TCPSocket* BMITcpClient::getConnectedSocket(int handle)
+{
+    TCPSocket* clientSocket = new TCPSocket();
+    IPvXAddress serverAddress("192.168.1.1");
+
+    clientSocket->connect(serverAddress, connectPort_);
+
+    // Add open socket to bookkeeping maps
+    socketConnectionMap_.addSocket(clientSocket);
+
+    return clientSocket;
 }
 
 /*
