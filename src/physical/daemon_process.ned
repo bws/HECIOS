@@ -1,7 +1,7 @@
 
 import
-    "bmi_transport",
-    "mpi_process";
+    "bmi_tcp_server",
+    "fs_server";
 
 //
 // A UNIX Daemon process
@@ -13,10 +13,10 @@ module DaemonProcess
         out: out;
 
     submodules:
-        //mpi: MPIProcess;
+        server: FSServer;
            
     connections nocheck:
-        //mpi.netOut --> out;
-        //mpi.netIn <-- in; 
+        server.netOut --> out;
+        server.netIn <-- in; 
 
 endmodule

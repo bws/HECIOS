@@ -12,8 +12,8 @@ typedef int MPIDataType;
 /** A contguous handle range beginning at first and ending at last */
 struct HandleRange
 {
-    long first;
-    long last;
+    FSHandle first;
+    FSHandle last;
 };
 
 /** Metadata for a file */

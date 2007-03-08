@@ -24,7 +24,7 @@ module BeowulfCluster
 
         configurator: FlatNetworkConfigurator;
             parameters:
-                moduleTypes = "Router StandardHost",
+                moduleTypes = "Router StandardHost BMIEnhancedHost",
                 nonIPModuleTypes = "",
                 networkAddress = "192.168.0.0",
                 netmask = "255.255.0.0";

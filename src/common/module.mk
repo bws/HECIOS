@@ -3,4 +3,5 @@
 #
 DIR := src/common
 
-SIM_SRC += $(DIR)/umd_io_trace.cc
+SIM_SRC += $(DIR)/pfs_utils.cc \
+	$(DIR)/umd_io_trace.cc

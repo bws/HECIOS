@@ -20,6 +20,7 @@ CLIENT_DIR= $(SRC_DIR)/client
 COMMON_DIR= $(SRC_DIR)/common
 MESSAGES_DIR= $(SRC_DIR)/messages
 PHYSICAL_DIR= $(SRC_DIR)/physical
+SERVER_DIR= $(SRC_DIR)/server
 
 #
 # Master Makefile default targets
@@ -37,6 +38,7 @@ INCLUDES = $(OMNET_DIR)/include \
         $(COMMON_DIR) \
         $(MESSAGES_DIR) \
         $(PHYSICAL_DIR) \
+        $(SERVER_DIR) \
         $(INET_DIR) \
         $(INET_DIR)/Applications/Ethernet \
         $(INET_DIR)/Applications/Generic \
@@ -87,6 +89,7 @@ include $(CLIENT_DIR)/module.mk
 include $(COMMON_DIR)/module.mk
 include $(MESSAGES_DIR)/module.mk
 include $(PHYSICAL_DIR)/module.mk
+include $(SERVER_DIR)/module.mk
 
 #
 # Doc Module build targets
