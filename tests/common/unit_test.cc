@@ -6,6 +6,7 @@
 #include "umd_io_trace_test.h"
 #include "lru_timeout_cache_test.h"
 #include "pfs_utils_test.h"
+#include "ip_socket_map_test.h"
 
 
 /** Main test driver */
@@ -17,6 +18,7 @@ int main(int argc, char** argv)
     runner.addTest( UMDIOTraceTest::suite() );
     runner.addTest( LRUTimeoutCacheTest::suite() );
     runner.addTest( PFSUtilsTest::suite() );
+    runner.addTest( IPSocketMapTest::suite() );
 
     bool success = runner.run();
     return (success ? 0 : 1);
