@@ -68,7 +68,7 @@ void LRUTimeoutCacheTest::testConstructor()
 
 void LRUTimeoutCacheTest::testInsert()
 {
-    LRUTimeoutCache <int, int> cache(1, 1.0);
+    LRUTimeoutCache<int, int> cache(1, 1.0);
     cache.insert(1,1);
     
     cache1_->insert(1, "value1");

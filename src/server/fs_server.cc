@@ -1,5 +1,8 @@
+#include <cassert>
+#include <cstring>
 #include <iostream>
-#include "IPAddressResolver.h"
+#include "InterfaceTableAccess.h"
+#include "IPv4InterfaceData.h"
 #include "IPvXAddress.h"
 #include "mpiio_proto_m.h"
 #include "pvfs_proto_m.h"
@@ -71,6 +74,29 @@ void FSServer::initialize(int initStage)
     }
     else if (1 == initStage)
     {
+        /* This won't work.  It will have to be pulled into its own module
+           to ensure that it occurs after IP's have been assigned */
+        // Retrieve the interface table for this module
+        cModule* hca = parentModule()->parentModule()->submodule("hca");
+        assert(0 != hca);
+        InterfaceTable* ifTable =
+            dynamic_cast<InterfaceTable*>(hca->submodule("interfaceTable"));
+        assert(0 != ifTable);
+
+        // Find eth0
+        for (int i = 0; i < ifTable->numInterfaces(); i++)
+        {
+            InterfaceEntry* ie = ifTable->interfaceAt(i);
+            EV << serverName_ << " IE " << i << ": [" << ie->name() << "]\n";
+            if (0 == strcmp("eth0", ie->name()))
+            {
+                assert(0 != ie->ipv4());
+                EV << serverName_ << "IE Name: " << ie->name() << endl;
+                //IPAddress addr = ie->ipv4()->inetAddress();
+            }
+        }
+        //IPvXAddress addr = ie->ipv4()->inetAddress();
+        
         // Register the IP for this server's handles
         //cModule* hcaModule = parentModule()->parentModule()->submodule("hca");
         //cerr << "Found Module: " << hcaModule->fullName() <<endl;

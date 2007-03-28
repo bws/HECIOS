@@ -13,7 +13,7 @@ module IONode
         out: ethOut;
 
     submodules:
-        server: DaemonProcess;
+        daemon: DaemonProcess;
 
         hca: StandardHost;
             parameters:

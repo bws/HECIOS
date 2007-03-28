@@ -104,7 +104,6 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
     switch(opType) {
         case UMDIOTrace::OPEN:
         {
-            cout << "Creating Open message" << endl;
             mpiFileOpenRequest* open = new mpiFileOpenRequest(
                 0, MPI_FILE_OPEN_REQUEST);
             open->setFileName(fileNames_[fileId].c_str());
@@ -113,7 +112,6 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
         }
         case UMDIOTrace::CLOSE:
         {
-            cout << "Creating Close message" << endl;
             mpiFileCloseRequest* close = new mpiFileCloseRequest(
                 0, MPI_FILE_CLOSE_REQUEST);
             mpiMsg = close;
@@ -121,7 +119,6 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
         }
         case UMDIOTrace::READ:
         {
-            cout << "Creating ReadAt message" << endl;
             mpiFileReadAtRequest* read = new mpiFileReadAtRequest(
                 0, MPI_FILE_READ_AT_REQUEST);
             read->setCount(length);
@@ -131,7 +128,6 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
         }
         case UMDIOTrace::WRITE:
         {
-            cout << "Creating WriteAt message" << endl;
             mpiFileWriteAtRequest* write = new mpiFileWriteAtRequest(
                 0, MPI_FILE_WRITE_AT_REQUEST);
             write->setCount(length);
@@ -141,7 +137,6 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
         }
         case UMDIOTrace::SEEK:
         {
-            cout << "Creating WriteAt message" << endl;
             mpiFileReadAtRequest* seek = new mpiFileReadAtRequest(
                 0, MPI_FILE_READ_AT_REQUEST);
             seek->setCount(0);

@@ -103,53 +103,17 @@ void IOApplication::handleMessage(cMessage* msg)
         switch(msg->kind())
         {
             case MPI_FILE_OPEN_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_CLOSE_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_DELETE_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_SET_SIZE_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_PREALLOCATE_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_GET_SIZE_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_GET_INFO_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_SET_INFO_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_READ_AT_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_READ_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_WRITE_AT_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             case MPI_FILE_WRITE_RESPONSE:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
             default:
                 cerr << "IOApplication::handleMessage not yet implemented "
                      << "for kind: "<< msg->kind() << endl;

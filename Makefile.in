@@ -134,12 +134,13 @@ endif
 TEST_DIR := tests
 
 TEST_COMMON_DIR := $(TEST_DIR)/common
+TEST_SUPPORT_DIR := $(TEST_DIR)/support
 
 TEST_INCLUDES := -I$(TEST_COMMON_DIR)
 
 TEST_LIBS := -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
 	lib/inet.a \
-	-lenvir -ltkenv -ltk8.4 -ltcl8.4 -lsim_std -lnedxml -lxml2 \
+	-lsim_std -lnedxml -lxml2 \
 	-lcppunit -ldl
 
 #
@@ -147,6 +148,7 @@ TEST_LIBS := -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
 #
 SIM_TEST_SRC :=
 include $(TEST_COMMON_DIR)/module.mk
+include $(TEST_SUPPORT_DIR)/module.mk
 
 #
 # Testing dependencies
