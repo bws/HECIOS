@@ -60,12 +60,14 @@ void cEnvir::connectionCreated(cGate *srcgate)
 /** Not needed for test drivers */
 bool cEnvir::recordInOutputVector(void *vechandle, simtime_t t, double value)
 {
+    return false;
 }
 
 /** Not needed for test drivers */
 bool cEnvir::recordInOutputVector(void *vechandle, simtime_t t,
                                   double value1, double value2)
 {
+    return false;
 }
 
 /** Not needed for test drivers */

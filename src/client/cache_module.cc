@@ -444,6 +444,7 @@ int cacheAddFileName(const char* fileName)
 	// else, just add entry, no eviction right now
 	//CacheEntry newEntry = new CacheEntry(address, extent, state);
     //systemCache[address] = newEntry;
+    return -1;
 }
 
 int cacheAddHandle(int handle)
@@ -453,6 +454,7 @@ int cacheAddHandle(int handle)
 	// else, just add entry, no eviction right now
         //CacheEntry newEntry = new CacheEntry(address, extent, 0);
         //systemCache[address] = newEntry;
+    return -1;
 }
 
 // helper function to perform cache add
@@ -463,6 +465,7 @@ int cacheAdd(int address, int extent, int state)
 	// else, just add entry, no eviction right now
 	// CacheEntry newEntry = new CacheEntry(address, extent, state);
     // systemCache[address] = newEntry;
+    return -1;
 }
 
 

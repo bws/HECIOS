@@ -39,6 +39,12 @@ dirname = $(patsubst %/,%,$(dir $(1)))
 	$(MSGC) $(NEDFLAGS) $<
 
 #
+# Compile message files at a lower warning level
+#
+%_m.o: %_m.cc
+	$(CXX) $(UNSAFE_CXXFLAGS) -c -o $@ $<
+
+#
 # Generate dependency information
 #
 %.d: %.c

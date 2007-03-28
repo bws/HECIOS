@@ -55,7 +55,7 @@ void IOApplication::initialize()
 
     // Get the trace file name and perform the rank substitution
     string traceName = par("traceFile").stringValue();
-    int replaceIdx = traceName.find("%r");
+    string::size_type replaceIdx = traceName.find("%r");
     if (string::npos != replaceIdx)
     {
         long numTraceProcs = par("numTraceProcs").longValue();
