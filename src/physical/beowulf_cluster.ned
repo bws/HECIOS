@@ -2,6 +2,7 @@
 import
     "compute_node",
     "io_node",
+    "fs_server_configurator",
     "EtherSwitch",
     "FlatNetworkConfigurator";
 
@@ -21,6 +22,10 @@ module BeowulfCluster
 
         switch: EtherSwitch;
             display: "p=256,164;i=abstract/switch";
+
+        fsConfig: FSServerConfigurator;
+            parameters:
+                handlesPerServer = 10000;
 
         configurator: FlatNetworkConfigurator;
             parameters:

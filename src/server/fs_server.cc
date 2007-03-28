@@ -1,111 +1,33 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
-#include "InterfaceTableAccess.h"
-#include "IPv4InterfaceData.h"
-#include "IPvXAddress.h"
 #include "mpiio_proto_m.h"
 #include "pvfs_proto_m.h"
-#include "pfs_types.h"
 #include "pfs_utils.h"
-#include <omnetpp.h>
+#include "fs_server.h"
 using namespace std;
 
-/**
- * Model of a file system client library.
- */
-class FSServer : public cSimpleModule
-{
-public:
-    /** Constructor */
-    FSServer() : cSimpleModule() {};
-    
-protected:
-    /** Overload the number of init stages */
-    int numInitStages() const { return 2; };
-    
-    /** Implementation of initialize */
-    virtual void initialize(int stage);
-
-    /** Implementation of finish */
-    virtual void finish() {};
-
-    /** Implementation of handleMessage */
-    virtual void handleMessage(cMessage* msg);
-
-private:
-
-    /** */
-    static int serverNumber_;
-
-    /** */
-    string serverName_;
-
-    /** */
-    HandleRange range_;
-};
-
-// OMNet Registriation Method
+// OMNet Registration Method
 Define_Module(FSServer);
 
 int FSServer::serverNumber_ = 0;
 
 /**
- * Multi-stage initialization
- *
- * Stage 1 - Set the name and handle range
- * Stage 2 - register the assigned IP address
+ * Initialization - Set the name and handle range
  */
-void FSServer::initialize(int initStage)
+void FSServer::initialize()
 {
-    if (0 == initStage)
-    {
-        // Set the server's name
-        stringstream s;
-        s << serverNumber_;
-        serverName_ = "server" + s.str();
+    // Set the server's name
+    stringstream s;
+    s << serverNumber_;
+    serverName_ = "server" + s.str();
     
-        // Determine this server's handle range
-        range_.first = serverNumber_ * 1000;
-        range_.last = range_.first + 999;
+    // Determine this server's handle range
+    range_.first = serverNumber_ * 1000;
+    range_.last = range_.first + 999;
 
-        // Increment the server number counter
-        serverNumber_++;
-    }
-    else if (1 == initStage)
-    {
-        /* This won't work.  It will have to be pulled into its own module
-           to ensure that it occurs after IP's have been assigned */
-        // Retrieve the interface table for this module
-        cModule* hca = parentModule()->parentModule()->submodule("hca");
-        assert(0 != hca);
-        InterfaceTable* ifTable =
-            dynamic_cast<InterfaceTable*>(hca->submodule("interfaceTable"));
-        assert(0 != ifTable);
-
-        // Find eth0
-        for (int i = 0; i < ifTable->numInterfaces(); i++)
-        {
-            InterfaceEntry* ie = ifTable->interfaceAt(i);
-            EV << serverName_ << " IE " << i << ": [" << ie->name() << "]\n";
-            if (0 == strcmp("eth0", ie->name()))
-            {
-                assert(0 != ie->ipv4());
-                EV << serverName_ << "IE Name: " << ie->name() << endl;
-                //IPAddress addr = ie->ipv4()->inetAddress();
-            }
-        }
-        //IPvXAddress addr = ie->ipv4()->inetAddress();
-        
-        // Register the IP for this server's handles
-        //cModule* hcaModule = parentModule()->parentModule()->submodule("hca");
-        //cerr << "Found Module: " << hcaModule->fullName() <<endl;
-        //IPvXAddress addr = IPAddressResolver().addressOf(
-        //    hcaModule, IPAddressResolver::ADDR_PREFER_IPv4);
-        //cerr << serverName_ << " IP: " << addr << endl;
-        //PFSUtils& utils = PFSUtils::instance();
-        //utils.registerServerIP(0, range_);
-    }
+    // Increment the server number counter
+    serverNumber_++;
 }
 
 /**

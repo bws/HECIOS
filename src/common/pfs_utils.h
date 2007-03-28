@@ -17,7 +17,7 @@ public:
     void registerServerIP(const IPvXAddress& ip, HandleRange range);
     
     /** @return the Server IP address for handle */
-    const IPvXAddress* getServerIP(const FSHandle& handle) const;
+    IPvXAddress getServerIP(const FSHandle& handle) const;
     
 private:
 
@@ -30,8 +30,11 @@ private:
     /** Singleton instance */
     static PFSUtils* instance_;
 
-    /** */
-    std::map<HandleRange, IPvXAddress*> handleIPMap;
+    /**
+     * Map of handle ranges to IPs -- it is safe to assume that
+     * handle ranges do not overlap
+     */
+    std::map<HandleRange, IPvXAddress> handleIPMap;
 };
 
 #endif

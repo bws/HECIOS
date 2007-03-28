@@ -14,6 +14,16 @@ PFSUtils::PFSUtils()
 {
 }
 
+void PFSUtils::registerServerIP(const IPvXAddress& ip, HandleRange range)
+{
+}
+
+    
+IPvXAddress PFSUtils::getServerIP(const FSHandle& handle) const
+{
+    IPvXAddress addr;
+    return addr;
+}
 
 /*
  * Local variables:
