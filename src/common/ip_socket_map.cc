@@ -33,12 +33,10 @@ void IPSocketMap::addSocket(const string& ipAddr, TCPSocket* socket)
 
 void IPSocketMap::removeSocket(const string& ipAddr)
 {
-    // Determine if an entry for this IP already exists
-    TCPSocket* entry = getSocket(ipAddr);
-    if (0 != entry)
+    map<string, TCPSocket *>::iterator itr = ipSocketMap_.find(ipAddr);
+    if (ipSocketMap_.end() != itr)
     {
-        ipSocketMap_.erase(ipAddr);
-        delete entry;
+       ipSocketMap_.erase(ipAddr);
     }
 }
 

@@ -78,12 +78,27 @@ void IPSocketMapTest::testAddSocket()
 
 void IPSocketMapTest::testDeleteSocket()
 {
-    CPPUNIT_FAIL("no delete test yet");
+    //CPPUNIT_FAIL("no delete test yet");
+    string ip5 = "ip5";
+    TCPSocket* sock5 = new TCPSocket();
+
+    IPSocketMap socketMap5;
+    socketMap5.addSocket(ip5, sock5);
+    socketMap5.removeSocket(ip5);
+    CPPUNIT_ASSERT_EQUAL(sock5, socketMap5.getSocket(ip5));
 }
 
 void IPSocketMapTest::testGetSocket()
 {
-    CPPUNIT_FAIL("no get test yet");
+    // Create an ip and socket
+    string ip6 = "ip6";
+    TCPSocket* sock6 = new TCPSocket();
+
+    //CPPUNIT_FAIL("no get test yet");
+    IPSocketMap socketMap6;
+    socketMap6.addSocket(ip6, sock6);
+    CPPUNIT_ASSERT_EQUAL(sock6, socketMap6.getSocket(ip6));
+
 }
 
 #endif
