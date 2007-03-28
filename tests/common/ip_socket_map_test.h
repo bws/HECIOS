@@ -47,11 +47,8 @@ void IPSocketMapTest::testConstructor()
 void IPSocketMapTest::testAddSocket()
 {
     // Create an ip and socket
-    TCPCommand* cmd1 = new TCPCommand();
-    GenericAppMsg* msg1 = new GenericAppMsg();
-    msg1->setControlInfo(cmd1);
     string ip1 = "ip1";
-    TCPSocket* sock1 = new TCPSocket(msg1);
+    TCPSocket* sock1 = new TCPSocket();
 
     // Test for a single addition
     IPSocketMap socketMap1;
@@ -59,25 +56,24 @@ void IPSocketMapTest::testAddSocket()
     CPPUNIT_ASSERT_EQUAL(sock1, socketMap1.getSocket(ip1));
 
     // Test for multiple additions
-    TCPCommand* cmd2 = new TCPCommand();
-    GenericAppMsg* msg2 = new GenericAppMsg();
-    msg2->setControlInfo(cmd2);
     string ip2 = "ip2";
-    TCPSocket* sock2 = new TCPSocket(msg2);
+    TCPSocket* sock2 = new TCPSocket();
+    string ip3 = "ip3";
+    TCPSocket* sock3 = new TCPSocket();
 
     IPSocketMap socketMap2;
-    socketMap2.addSocket(ip1, sock1);
     socketMap2.addSocket(ip2, sock2);
+    socketMap2.addSocket(ip3, sock3);
     CPPUNIT_ASSERT_EQUAL(sock2, socketMap2.getSocket(ip2));
-    CPPUNIT_ASSERT_EQUAL(sock1, socketMap2.getSocket(ip1));
+    CPPUNIT_ASSERT_EQUAL(sock3, socketMap2.getSocket(ip3));
 
     // Test for identical additions
+    string ip4 = "ip4";
+    TCPSocket* sock4 = new TCPSocket();
     IPSocketMap socketMap3;
-    socketMap3.addSocket(ip1, sock1);
-    socketMap3.addSocket(ip1, sock1);
-    CPPUNIT_ASSERT_EQUAL(sock1, socketMap2.getSocket(ip1));
-    
-    
+    socketMap3.addSocket(ip4, sock4);
+    socketMap3.addSocket(ip4, sock4);
+    CPPUNIT_ASSERT_EQUAL(sock4, socketMap3.getSocket(ip4));
 }
 
 void IPSocketMapTest::testDeleteSocket()

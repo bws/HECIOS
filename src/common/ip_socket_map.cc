@@ -8,9 +8,8 @@ IPSocketMap::~IPSocketMap()
     map<string, TCPSocket *>::iterator iter;
     for (iter = ipSocketMap_.begin(); iter != ipSocketMap_.end(); ++iter)
     {
-        //cerr << "Key: " << iter->first << endl;
-        //delete iter->second;
-        //iter->second = 0;
+        delete iter->second;
+        iter->second = 0;
     }
 }
 
