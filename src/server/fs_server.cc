@@ -72,12 +72,12 @@ void FSServer::initialize(int initStage)
     else if (1 == initStage)
     {
         // Register the IP for this server's handles
-        cModule* hcaModule = parentModule()->parentModule()->submodule("hca");
-        cerr << "Found Module: " << hcaModule->fullName() <<endl;
-        IPvXAddress addr = IPAddressResolver().addressOf(
-            hcaModule, IPAddressResolver::ADDR_PREFER_IPv4);
-        cerr << serverName_ << " IP: " << addr << endl;
-        PFSUtils& utils = PFSUtils::instance();
+        //cModule* hcaModule = parentModule()->parentModule()->submodule("hca");
+        //cerr << "Found Module: " << hcaModule->fullName() <<endl;
+        //IPvXAddress addr = IPAddressResolver().addressOf(
+        //    hcaModule, IPAddressResolver::ADDR_PREFER_IPv4);
+        //cerr << serverName_ << " IP: " << addr << endl;
+        //PFSUtils& utils = PFSUtils::instance();
         //utils.registerServerIP(0, range_);
     }
 }
