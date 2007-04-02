@@ -148,8 +148,10 @@ TEST_LIBS := -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
 # Testing module includes
 #
 SIM_TEST_SRC :=
+include $(TEST_CLIENT_DIR)/module.mk
 include $(TEST_COMMON_DIR)/module.mk
 include $(TEST_SUPPORT_DIR)/module.mk
+
 
 #
 # Testing dependencies
