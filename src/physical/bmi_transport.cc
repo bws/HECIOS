@@ -36,55 +36,55 @@ void BMITransport::handleMessage(cMessage* msg)
     switch(msg->kind())
     {
         case FS_CREATE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         case FS_REMOVE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         case FS_READ_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         case FS_WRITE_REQUEST:
-             cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
            break;
         case FS_GET_ATTR_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         case FS_SET_ATTR_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         case FS_LOOKUP_PATH_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         case FS_CREATE_DIR_ENT_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         case FS_REMOVE_DIR_ENT_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         case FS_CHANGE_DIR_ENT_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         case FS_TRUNCATE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         case FS_MAKE_DIR_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
         default:
-            cerr << "handleMessage not yet implemented for kind: "
+            cerr << "BMITransport::handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
     }

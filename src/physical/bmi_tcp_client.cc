@@ -1,10 +1,14 @@
+#include <cassert>
 #include <iostream>
 #include "IPvXAddress.h"
 #include "TCPSocket.h"
 #include "TCPSocketMap.h"
+#include "bmi_proto_m.h"
 #include "mpiio_proto_m.h"
+#include "pfs_types.h"
+#include "pfs_utils.h"
 #include "pvfs_proto_m.h"
-#include "umd_io_trace.h"
+#include "ip_socket_map.h"
 #include <omnetpp.h>
 using namespace std;
 
@@ -33,10 +37,17 @@ protected:
 private:
 
     /** @return a socket with an open connection to the server */
-    TCPSocket* getConnectedSocket(int handle);
-    
+    TCPSocket* getConnectedSocket(const FSHandle& handle);
+
+    /** The server port to connect to */
     int connectPort_;
-    TCPSocketMap socketConnectionMap_;
+
+    /** Mapping of Server IP's to connected server sockets */
+    IPSocketMap serverConnectionMap_;
+
+    /** Map containing all connected sockets (for message handling) */
+    TCPSocketMap socketMap_;
+
 };
 
 // OMNet Registriation Method
@@ -55,163 +66,102 @@ void BMITcpClient::initialize()
  */
 void BMITcpClient::handleMessage(cMessage* msg)
 {
-    // For now, construct the appropriate response and simply send it back
-    cMessage* response;
-    switch(msg->kind())
+    // Determine if the msg originated from TCP
+    if (TCPSocket::belongsToAnyTCPSocket(msg))
     {
-        case MPI_FILE_OPEN_REQUEST:
-        {
-            response = new mpiFileOpenResponse(0, MPI_FILE_OPEN_RESPONSE);
-            break;
-        }
-        case MPI_FILE_CLOSE_REQUEST:
-        {
-            response = new mpiFileCloseResponse(0, MPI_FILE_OPEN_RESPONSE);
-            break;
-        }
-        case MPI_FILE_DELETE_REQUEST:
-        {
-            response = new mpiFileDeleteResponse(0, MPI_FILE_DELETE_RESPONSE);
-            break;
-        }
-        case MPI_FILE_SET_SIZE_REQUEST:
-        {
-            response = new mpiFileSetSizeResponse(0,
-                                                  MPI_FILE_SET_SIZE_RESPONSE);
-            break;
-        }
-        case MPI_FILE_PREALLOCATE_REQUEST:
-        {
-            response = new mpiFilePreallocateResponse(
-                0, MPI_FILE_PREALLOCATE_RESPONSE);
-            break;
-        }
-        case MPI_FILE_GET_SIZE_REQUEST:
-        {
-            response = new mpiFileGetSizeResponse(0,
-                                                  MPI_FILE_GET_SIZE_RESPONSE);
-            break;
-        }
-        case MPI_FILE_GET_INFO_REQUEST:
-        {
-            response = new mpiFileGetInfoResponse(0,
-                                                  MPI_FILE_GET_INFO_RESPONSE);
-            break;
-        }
-        case MPI_FILE_SET_INFO_REQUEST:
-        {
-            response = new mpiFileSetInfoResponse(0, MPI_FILE_OPEN_RESPONSE);
-            break;
-        }
-        case MPI_FILE_READ_AT_REQUEST:
-        {
-            response = new mpiFileReadAtResponse(0, MPI_FILE_READ_AT_RESPONSE);
-            break;
-        }
-        case MPI_FILE_READ_REQUEST:
-        {
-            response = new mpiFileReadResponse(0, MPI_FILE_READ_RESPONSE);
-            break;
-        }
-        case MPI_FILE_WRITE_AT_REQUEST:
-        {
-            response = new mpiFileWriteAtResponse(0,
-                                                  MPI_FILE_WRITE_AT_RESPONSE);
-            break;
-        }
-        case MPI_FILE_WRITE_REQUEST:
-        {
-            response = new mpiFileWriteResponse(0, MPI_FILE_WRITE_RESPONSE);
-            break;
-        }
-    }
-
-    delete msg;
-    send(response, "bmiOut");
-    return;
-    
-    TCPSocket* socket = socketConnectionMap_.findSocketFor(msg);
-    if (0 != socket)
-    {
-        socket->processMessage(msg); // dispatch to socketXXXX() methods
+        TCPSocket* sock = socketMap_.findSocketFor(msg);
+        assert(0 != sock);
+        sock->processMessage(msg);
     }
     else
     {
+        // Send requests to the server via TCP
         switch(msg->kind())
         {
-            case FS_CREATE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case FS_REMOVE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case FS_READ_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case FS_WRITE_REQUEST:
-             cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-           break;
-        case FS_GET_ATTR_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case FS_SET_ATTR_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case FS_LOOKUP_PATH_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case FS_CREATE_DIR_ENT_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case FS_REMOVE_DIR_ENT_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case FS_CHANGE_DIR_ENT_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case FS_TRUNCATE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case FS_MAKE_DIR_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        default:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
+            case MPI_FILE_OPEN_REQUEST:
+            case MPI_FILE_CLOSE_REQUEST:
+            case MPI_FILE_DELETE_REQUEST:
+            case MPI_FILE_SET_SIZE_REQUEST:
+            case MPI_FILE_PREALLOCATE_REQUEST:
+            case MPI_FILE_GET_SIZE_REQUEST:
+            case MPI_FILE_GET_INFO_REQUEST:
+            case MPI_FILE_SET_INFO_REQUEST:
+            case MPI_FILE_READ_AT_REQUEST:
+            case MPI_FILE_READ_REQUEST:
+            case MPI_FILE_WRITE_AT_REQUEST:
+            case MPI_FILE_WRITE_REQUEST:
+            {
+                cerr << "Sending packet from client!"
+                     << "Kind: " << msg->kind() << " info: " << msg->info()
+                     << endl;
+                
+                // Retrieve the socket for this handle
+                FSHandle handle = 0;
+                TCPSocket* sock = getConnectedSocket(handle);
+                
+                // Encapsulate the domain message and send via TCP
+                BMIClientSendMessage* pkt = new BMIClientSendMessage();
+                pkt->encapsulate(msg);
+                pkt->setByteLength(256);
+                pkt->setUniqueId(ev.getUniqueNumber());
+                sock->send(pkt);
+                break;
+            }
+            case MPI_FILE_OPEN_RESPONSE:
+            case MPI_FILE_CLOSE_RESPONSE:
+            case MPI_FILE_DELETE_RESPONSE:
+            case MPI_FILE_SET_SIZE_RESPONSE:
+            case MPI_FILE_PREALLOCATE_RESPONSE:
+            case MPI_FILE_GET_SIZE_RESPONSE:
+            case MPI_FILE_GET_INFO_RESPONSE:
+            case MPI_FILE_SET_INFO_RESPONSE:
+            case MPI_FILE_READ_AT_RESPONSE:
+            case MPI_FILE_READ_RESPONSE:
+            case MPI_FILE_WRITE_AT_RESPONSE:
+            case MPI_FILE_WRITE_RESPONSE:
+            {
+                // Send response to application
+                send(msg, "bmiOut");
+            }
+            default:
+                cerr << "Unknown message type in BMI client\n";
         }
     }
+}
+
+TCPSocket* BMITcpClient::getConnectedSocket(const FSHandle& handle)
+{
+    IPvXAddress serverIp = PFSUtils::instance().getServerIP(handle);
+    TCPSocket* sock = serverConnectionMap_.getSocket(serverIp.str());
+
+    // If a connected socket does not exist, create it
+    if (0 == sock)
+    {
+        sock = new TCPSocket();
+        sock->setOutputGate(gate("tcpOut"));
+        sock->setCallbackObject(this, NULL);
+        sock->connect(serverIp, connectPort_);
+
+        // Add open socket for use in later communication
+        serverConnectionMap_.addSocket(serverIp.str(), sock);
+
+        // Add open socket to TCPSocketMap for handling later TCP messages
+        socketMap_.addSocket(sock);
+    }
+
+    return sock;
 }
 
 void BMITcpClient::socketDataArrived(int, void *, cMessage *msg, bool)
 {
-    ev << "Received TCP data, " << msg->byteLength() << " bytes\\n";
+    // TCP settings should be set to tcp.sendQueueClass="TCPMsgBasedSendQueue"
+    // and tcp.receiveQueueClass="TCPMsgBasedRcvQueue" ensuring that only
+    // whole messages are received rather than message fragments
+
+    // Decapsulate the payload and call handleMessage with the payload
+    cMessage* payload = msg->decapsulate();
     delete msg;
-}
-
-TCPSocket* BMITcpClient::getConnectedSocket(int handle)
-{
-    TCPSocket* clientSocket = new TCPSocket();
-    IPvXAddress serverAddress("192.168.1.1");
-
-    clientSocket->connect(serverAddress, connectPort_);
-
-    // Add open socket to bookkeeping maps
-    socketConnectionMap_.addSocket(clientSocket);
-
-    return clientSocket;
+    handleMessage(payload);
 }
 
 /*

@@ -114,6 +114,13 @@ void IOApplication::handleMessage(cMessage* msg)
             case MPI_FILE_READ_RESPONSE:
             case MPI_FILE_WRITE_AT_RESPONSE:
             case MPI_FILE_WRITE_RESPONSE:
+            {
+                cerr << "IOApplication response recvd, sending next message"
+                     << endl;
+                // Send the next message
+                getNextMessage();
+                break;
+            }
             default:
                 cerr << "IOApplication::handleMessage not yet implemented "
                      << "for kind: "<< msg->kind() << endl;
@@ -123,8 +130,6 @@ void IOApplication::handleMessage(cMessage* msg)
         // Delete the message
         delete msg;
         
-        // Send the next message
-        getNextMessage();
     }
 }
 

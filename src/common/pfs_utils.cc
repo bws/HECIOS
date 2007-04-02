@@ -21,7 +21,7 @@ void PFSUtils::registerServerIP(const IPvXAddress& ip, HandleRange range)
     
 IPvXAddress PFSUtils::getServerIP(const FSHandle& handle) const
 {
-    IPvXAddress addr;
+    IPvXAddress addr("192.168.0.3");
     return addr;
 }
 
