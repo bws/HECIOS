@@ -11,13 +11,8 @@
 #include "cache_entry.h"
 #include "mpiio_proto_m.h"
 #include "umd_io_trace.h"
+#include "lru_simple_cache.h"
 
-// funciton declarations
-int cacheLookup(int address, int extent);
-int cacheLookupFileName(const char* fileName);
-int cacheLookupHandle(int handle);
-int cacheAddFileName(const char* fileName);
-int cacheAddHandle(int handle);
 
 
 using namespace std;
@@ -34,8 +29,8 @@ typedef struct cacheLine
 } *ptrSCacheLine;
 */
 
-map<int, CacheEntry> systemCache;
-map<int, CacheEntry>::iterator cacheIter;
+//map<int, CacheEntry> systemCache;
+//map<int, CacheEntry>::iterator cacheIter;
 
 class cacheModule : public cSimpleModule
 {
@@ -50,6 +45,9 @@ class cacheModule : public cSimpleModule
         ~cacheModule();
 	
 	private:
+                // create system cache
+                LRUSimpleCache<int, int>* systemCache;
+
 		// Request forward declerations
 		void cacheProcessTimer(cMessage *msg );
    		void cacheProcess_mpiFileOpenRequest(mpiFileOpenRequest *msg );
@@ -57,10 +55,13 @@ class cacheModule : public cSimpleModule
 		void cacheProcess_mpiFileDeleteRequest(mpiFileDeleteRequest *msg );
 		void cacheProcess_mpiFileSetSizeRequest(mpiFileSetSizeRequest *msg );
                 void cacheProcess_mpiFileGetInfoRequest(mpiFileGetInfoRequest *msg);
+                void cacheProcess_mpiFileSetInfoRequest(mpiFileSetInfoRequest *msg);
 		void cacheProcess_mpiFilePreallocateRequest( 
 											mpiFilePreallocateRequest *msg );
 		void cacheProcess_mpiFileGetSizeRequest(mpiFileGetSizeRequest *msg );
+		void cacheProcess_mpiFileReadAtRequest(mpiFileReadAtRequest *msg );
 		void cacheProcess_mpiFileReadRequest(mpiFileReadRequest *msg );
+		void cacheProcess_mpiFileWriteAtRequest(mpiFileWriteAtRequest *msg );
 		void cacheProcess_mpiFileWriteRequest(mpiFileWriteRequest *msg );
 		
 		// Response forward declerations
@@ -74,7 +75,13 @@ class cacheModule : public cSimpleModule
 		void cacheProcess_mpiFileWriteResponse(mpiFileWriteResponse*msg );
 	
 		// Other funcitons
-		void cacheUnknownMessage(void *msg);	
+		void cacheUnknownMessage(cMessage *msg);	
+                // funciton declarations
+                int cacheLookup(int address, int extent);
+                int cacheLookupFileName(const char* fileName);
+                int cacheLookupHandle(int handle);
+                int cacheAddFileName(const char* fileName);
+                int cacheAddHandle(int handle, int extent);
 		// delcare gates
 		int fsIn;
 		int fsOut;
@@ -95,8 +102,7 @@ void cacheModule::initialize()
 	fsOut = findGate("fsOut");
 	appIn = findGate("appIn");
 	appOut = findGate("appOut");
-	
-	
+        systemCache = new LRUSimpleCache<int, int>(10);	
 }
 
 void cacheModule::finish()
@@ -138,25 +144,20 @@ void cacheModule::handleMessage(cMessage *msg)
 			break;
 	        case MPI_FILE_GET_INFO_REQUEST:
                         cacheProcess_mpiFileGetInfoRequest((mpiFileGetInfoRequest*) msg);
-                //cerr << "handleMessage not yet implemented for kind: "
-                // << msg->kind() << endl;
-            break;
-        case MPI_FILE_SET_INFO_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-		case MPI_FILE_READ_AT_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
+                        break;
+                case MPI_FILE_SET_INFO_REQUEST:
+                        cacheProcess_mpiFileSetInfoRequest((mpiFileSetInfoRequest*) msg); 
+                        break;
+	        case MPI_FILE_READ_AT_REQUEST:
+			cacheProcess_mpiFileReadAtRequest((mpiFileReadAtRequest*) msg);
+                        break;
 
 		case MPI_FILE_READ_REQUEST:
 			cacheProcess_mpiFileReadRequest((mpiFileReadRequest*) msg);
 			break;
 		case MPI_FILE_WRITE_AT_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
+			cacheProcess_mpiFileWriteAtRequest((mpiFileWriteAtRequest*) msg);
+                        break;
 
 		case MPI_FILE_WRITE_REQUEST:
 			cacheProcess_mpiFileWriteRequest((mpiFileWriteRequest*) msg);
@@ -231,6 +232,7 @@ void cacheModule::cacheProcess_mpiFileCloseRequest( mpiFileCloseRequest *msg )
     }else
     {
         send(msg, fsOut);
+        cacheAddHandle(msg->getHandle(), 1);
     }
 }
 
@@ -246,6 +248,7 @@ void cacheModule::cacheProcess_mpiFileDeleteRequest( mpiFileDeleteRequest *msg )
     }else
     {
         send(msg, fsOut);
+        cacheAddFileName(msg->getFileName());
     }
 }
 
@@ -261,6 +264,7 @@ void cacheModule::cacheProcess_mpiFileSetSizeRequest( mpiFileSetSizeRequest *msg
     }else
     {
         send(msg, fsOut);
+        cacheAddHandle(msg->getHandle(), msg->getSize());
     }
 }
 
@@ -276,11 +280,29 @@ void cacheModule::cacheProcess_mpiFileGetInfoRequest(mpiFileGetInfoRequest *msg)
     }else
     {
         send(msg, fsOut);
+        cacheAddHandle(msg->getHandle(), 1);
     }
 
 
 
 }
+
+void cacheModule::cacheProcess_mpiFileSetInfoRequest(mpiFileSetInfoRequest *msg)
+{
+    // look in cache, if found, respond, if not found, sent to fs
+    if(cacheLookupHandle(msg->getHandle()))
+    {
+		// create new message and set message fields
+    	mpiFileSetInfoRequest *m = new 
+		    mpiFileSetInfoRequest("mpiFileSetInfoRequest");
+	send(m, appOut);
+    }else
+    {
+        send(msg, fsOut);
+        cacheAddHandle(msg->getHandle(), 1);
+    }
+}
+
 
 
 
@@ -296,6 +318,7 @@ void cacheModule::cacheProcess_mpiFilePreallocateRequest( mpiFilePreallocateRequ
     }else
     {
         send(msg, fsOut);
+        cacheAddHandle(msg->getHandle(),msg->getSize());
     }
 }
 
@@ -311,6 +334,22 @@ void cacheModule::cacheProcess_mpiFileGetSizeRequest( mpiFileGetSizeRequest *msg
     }else
     {
         send(msg, fsOut);
+        cacheAddFileName(msg->getFileName());
+    }
+}
+
+void cacheModule::cacheProcess_mpiFileReadAtRequest( mpiFileReadAtRequest *msg )
+{
+    // look in cache, if found, respond, if not found, sent to fs
+    if(cacheLookupHandle(msg->getHandle()))
+    {
+		// create new message and set message fields
+    	mpiFileReadAtResponse *m = new 
+				mpiFileReadAtResponse("mpiFileReadAtResponse");
+	send(m, appOut);
+    }else
+    {
+        send(msg, fsOut);
     }
 }
 
@@ -322,6 +361,21 @@ void cacheModule::cacheProcess_mpiFileReadRequest( mpiFileReadRequest *msg )
 		// create new message and set message fields
     	mpiFileReadResponse *m = new 
 				mpiFileReadResponse("mpiFileReadResponse");
+	send(m, appOut);
+    }else
+    {
+        send(msg, fsOut);
+    }
+}
+
+void cacheModule::cacheProcess_mpiFileWriteAtRequest( mpiFileWriteAtRequest *msg )
+{
+    // look in cache, if found, respond, if not found, sent to fs
+    if(cacheLookupHandle(msg->getHandle()))
+    {
+		// create new message and set message fields
+    	mpiFileWriteAtResponse *m = new 
+				mpiFileWriteAtResponse("mpiFileWriteAtResponse");
 	send(m, appOut);
     }else
     {
@@ -349,14 +403,14 @@ void cacheModule::cacheProcess_mpiFileWriteRequest( mpiFileWriteRequest *msg )
 void cacheModule::cacheProcess_mpiFileOpenResponse( mpiFileOpenResponse *msg )
 {
     // send response through 
-    cacheAddFileName(msg->getFileName());
+    //cacheAddFileName(msg->getFileName());
     send(msg, appOut);
 }
 
 void cacheModule::cacheProcess_mpiFileCloseResponse( mpiFileCloseResponse *msg )
 {
     // send response through 
-    cacheAddHandle(msg->getHandle());
+    cacheAddHandle(msg->getHandle(),1);
     send(msg, appOut);
     
 }
@@ -404,8 +458,10 @@ void cacheModule::cacheProcess_mpiFileWriteResponse( mpiFileWriteResponse*msg )
 }
 
 // defualt message for unknown message type
-void cacheModule::cacheUnknownMessage(void *msg)
+void cacheModule::cacheUnknownMessage(cMessage *msg)
 {
+              cerr << "unknown message found"
+                 << msg->kind() << endl;
 }
 
 
@@ -414,22 +470,23 @@ void cacheModule::cacheProcessTimer( cMessage *msg )
 {
 }
 
-int cacheLookupFileName(const char* fileName)
+int cacheModule::cacheLookupFileName(const char* fileName)
 {
     int toReturnFound = 0;  // holds if found and return variable
     // go through cache map and find entry     
     return toReturnFound;
 }
 
-int cacheLookupHandle(int handle)
+int cacheModule::cacheLookupHandle(int handle)
 {
     int toReturnFound = 0;  // holds if found and return variable
+    //if(systemCache->lookup(handle) != 0) toReturnFound = 1;
 	// go through cache map and find entry     
     return toReturnFound;
 }
 
 // helper function to perform cache lookup
-int cacheLookup(int address, int extent)
+int cacheModule::cacheLookup(int address, int extent)
 {
     int toReturnFound = 0;  // holds if found and return variable
 	// go through cache map and find entry     
@@ -437,24 +494,29 @@ int cacheLookup(int address, int extent)
 }
 
 
-int cacheAddFileName(const char* fileName)
+int cacheModule::cacheAddFileName(const char* fileName)
 {
+    int toReturnAdded = 0;
 	// go through map look for closest entry
 	// if entry exists, combine with current,
 	// else, just add entry, no eviction right now
 	//CacheEntry newEntry = new CacheEntry(address, extent, state);
     //systemCache[address] = newEntry;
-    return -1;
+    return toReturnAdded;
 }
 
-int cacheAddHandle(int handle)
+int cacheModule::cacheAddHandle(int handle, int extent)
 {
-	// go through map look for closest entry
-	// if entry exists, combine with current,
-	// else, just add entry, no eviction right now
-        //CacheEntry newEntry = new CacheEntry(address, extent, 0);
-        //systemCache[address] = newEntry;
-    return -1;
+    int toReturnAdded = 0;
+    // add to used cache
+    systemCache->insert(handle, extent);	
+    cerr << "inserting message with handle"
+    << handle << endl;
+    // if entry exists, combine with current,
+    // else, just add entry, no eviction right now
+    //CacheEntry newEntry = new CacheEntry(address, extent, 0);
+    //systemCache[address] = newEntry;
+    return toReturnAdded;
 }
 
 // helper function to perform cache add
@@ -465,7 +527,7 @@ int cacheAdd(int address, int extent, int state)
 	// else, just add entry, no eviction right now
 	// CacheEntry newEntry = new CacheEntry(address, extent, state);
     // systemCache[address] = newEntry;
-    return -1;
+    return 1;
 }
 
 

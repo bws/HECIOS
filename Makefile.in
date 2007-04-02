@@ -135,6 +135,7 @@ TEST_DIR := tests
 
 TEST_COMMON_DIR := $(TEST_DIR)/common
 TEST_SUPPORT_DIR := $(TEST_DIR)/support
+TEST_CLIENT_DIR := $(TEST_DIR)/client
 
 TEST_INCLUDES := -I$(TEST_COMMON_DIR)
 
@@ -209,7 +210,7 @@ doc: $(DOC_EPS) $(DOC_PDF)
 #
 # Build unit test drivers
 #
-test: $(BIN_DIR)/common_test
+test: $(BIN_DIR)/common_test $(BIN_DIR)/client_test
 
 #
 # Targets to hecios build simulator
@@ -225,9 +226,14 @@ $(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
 #
 # common module unit tests
 #
+
+
 $(BIN_DIR)/common_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(SIM_TEST_OBJS) $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
+	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) tests/common/unit_test.o tests/support/test_cenvir.o $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
+$(BIN_DIR)/client_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
+	@mkdir -p $(BIN_DIR)
+	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) tests/client/unit_test.o tests/support/test_cenvir.o $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
 
 #
 # Psuedotargets (required by make for some dependencies)
