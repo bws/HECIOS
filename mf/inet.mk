@@ -288,3 +288,11 @@ lib/libzebra.a: $(INET_DIR)/bin/INET
 	mkdir -p lib
 	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/lib/libzebra.a $@
 
+#
+# Clean out INET build
+#
+inet_clean:
+	cd INET && make ROOT=$(shell pwd)/$(INET_DIR) clean
+	$(RM) lib/inet.a lib/ospfd.a lib/ripd.a lib/zebra.a lib/libzebra.a
+
+.PHONY: inet_clean

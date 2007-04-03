@@ -198,7 +198,7 @@ tests_clean:
 	$(RM) $(SIM_TEST_DEPENDS)
 	@echo "Derived files deleted."
 
-all_clean: clean tests_clean
+all_clean: clean tests_clean inet_clean
 
 #
 # Build targets for documentation
@@ -228,14 +228,22 @@ $(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
 #
 # common module unit tests
 #
-
+COMMON_TEST_OBJS = $(TEST_COMMON_DIR)/unit_test.o \
+	$(TEST_SUPPORT_DIR)/test_cenvir.o
 
 $(BIN_DIR)/common_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) tests/common/unit_test.o tests/support/test_cenvir.o $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
+	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(COMMON_TEST_OBJS) $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
+
+#
+# client module unit tests
+#
+CLIENT_TEST_OBJS = $(TEST_CLIENT_DIR)/unit_test.o \
+	$(TEST_SUPPORT_DIR)/test_cenvir.o
+
 $(BIN_DIR)/client_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) tests/client/unit_test.o tests/support/test_cenvir.o $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
+	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(CLIENT_TEST_OBJS) $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
 
 #
 # Psuedotargets (required by make for some dependencies)
