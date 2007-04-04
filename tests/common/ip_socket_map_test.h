@@ -78,27 +78,84 @@ void IPSocketMapTest::testAddSocket()
 
 void IPSocketMapTest::testDeleteSocket()
 {
-    //CPPUNIT_FAIL("no delete test yet");
+    // Create a null socket
+    TCPSocket* nullSocket = 0;
+    
+    // Test for socket stored in map
     string ip5 = "ip5";
     TCPSocket* sock5 = new TCPSocket();
-
     IPSocketMap socketMap5;
     socketMap5.addSocket(ip5, sock5);
     socketMap5.removeSocket(ip5);
-    CPPUNIT_ASSERT_EQUAL(sock5, socketMap5.getSocket(ip5));
+    CPPUNIT_ASSERT_EQUAL( nullSocket, socketMap5.getSocket(ip5));
+
+    // Test for socket not stored in map
+    string ip6 = "ip6";
+    IPSocketMap socketMap6;
+    socketMap6.removeSocket(ip6);
+    CPPUNIT_ASSERT_EQUAL( nullSocket, socketMap6.getSocket(ip6));
+
+    // Test for multiple deletions
+    string ip7 = "ip7";
+    string ip8 = "ip8";
+    TCPSocket* sock7 = new TCPSocket();
+    TCPSocket* sock8 = new TCPSocket();
+    IPSocketMap socketMap7;
+    socketMap7.addSocket(ip7, sock7);
+    socketMap7.addSocket(ip8, sock8);
+    socketMap7.removeSocket(ip7);
+    socketMap7.removeSocket(ip8);
+    CPPUNIT_ASSERT_EQUAL( nullSocket, socketMap7.getSocket(ip7));
+    CPPUNIT_ASSERT_EQUAL( nullSocket, socketMap7.getSocket(ip8));
+
+    // Test for identical deletions
+    string ip9 = "ip9";
+    TCPSocket* sock9 = new TCPSocket();
+    IPSocketMap socketMap9;
+    socketMap9.addSocket(ip9, sock9);
+    socketMap9.removeSocket(ip9);
+    socketMap9.removeSocket(ip9);
+    CPPUNIT_ASSERT_EQUAL( nullSocket, socketMap9.getSocket(ip9));
 }
 
 void IPSocketMapTest::testGetSocket()
 {
-    // Create an ip and socket
-    string ip6 = "ip6";
-    TCPSocket* sock6 = new TCPSocket();
+    // Create a null socket
+    TCPSocket* nullSocket = 0;
+    
+    // Test for socket stored in map
+    string ip10 = "ip10";
+    TCPSocket* sock10 = new TCPSocket();
+    IPSocketMap socketMap10;
+    socketMap10.addSocket(ip10, sock10);
+    CPPUNIT_ASSERT_EQUAL(sock10, socketMap10.getSocket(ip10));
 
-    //CPPUNIT_FAIL("no get test yet");
-    IPSocketMap socketMap6;
-    socketMap6.addSocket(ip6, sock6);
-    CPPUNIT_ASSERT_EQUAL(sock6, socketMap6.getSocket(ip6));
+    // Test for socket not stored in map
+    string ip11 = "ip11";
+    TCPSocket* sock11 = new TCPSocket();
+    IPSocketMap socketMap11;
+    socketMap11.addSocket(ip11, sock11);
+    string ip20 = "ip20";
+    CPPUNIT_ASSERT_EQUAL( nullSocket, socketMap11.getSocket(ip20));
 
+    // Test for multiple retrieve
+    string ip12 = "ip12";
+    string ip13 = "ip13";
+    TCPSocket* sock12 = new TCPSocket();
+    TCPSocket* sock13 = new TCPSocket();
+    IPSocketMap socketMap12;
+    socketMap12.addSocket(ip12, sock12);
+    socketMap12.addSocket(ip13, sock13);
+    CPPUNIT_ASSERT_EQUAL( sock12, socketMap12.getSocket(ip12));
+    CPPUNIT_ASSERT_EQUAL( sock13, socketMap12.getSocket(ip13));
+    
+    // Test for identical retrieve
+    string ip14 = "ip14";
+    TCPSocket* sock14 = new TCPSocket();
+    IPSocketMap socketMap14;
+    socketMap14.addSocket(ip14, sock14);
+    CPPUNIT_ASSERT_EQUAL( sock14, socketMap14.getSocket(ip14));
+    CPPUNIT_ASSERT_EQUAL( sock14, socketMap14.getSocket(ip14));
 }
 
 #endif
