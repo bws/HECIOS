@@ -13,7 +13,7 @@ public:
     /** Singleton accessor */
     static PFSUtils& instance();
 
-    /** */
+    /** Register a mapping between an IP address and a rang of handles */
     void registerServerIP(const IPvXAddress& ip, HandleRange range);
     
     /** @return the Server IP address for handle */
