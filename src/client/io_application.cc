@@ -139,7 +139,7 @@ void IOApplication::getNextMessage()
     
     do {
         msg = trace_->nextRecordAsMessage();
-    } while (0 != msg && trace_->hasMoreRecords());
+    } while (0 == msg && trace_->hasMoreRecords());
 
     if (0 != msg)
     {

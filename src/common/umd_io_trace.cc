@@ -144,6 +144,7 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
             mpiMsg = seek;
             break;
         }
+        case UMDIOTrace::LISTIO_HEADER:
         default:
             cerr << "Ignored IO OpType for UMDIOTrace: " << opType << endl;
             break;

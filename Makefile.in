@@ -72,7 +72,7 @@ THIRDPARTY_LIBS = \
 	$(LIB_DIR)/zebra.a
 
 LIBS = -L$(OMNET_DIR)/lib -L$(LIB_DIR) -lzebra \
-        -lenvir -ltkenv -ltk8.4 -ltcl8.4 -lsim_std -lnedxml -lxml2 -ldl \
+        -lenvir -ltkenv -ltk -ltcl -lsim_std -lnedxml -lxml2 -ldl \
         -lstdc++
 
 #
