@@ -222,8 +222,9 @@ void cacheModule::cacheProcess_mpiFileOpenRequest( mpiFileOpenRequest *msg )
 
 void cacheModule::cacheProcess_mpiFileCloseRequest( mpiFileCloseRequest *msg )
 {
-	// look in cache, if found, respond, if not found, sent to fs
-    if(cacheLookupHandle(msg->getHandle()))
+    // look in cache, if found, respond, if not found, sent to fs
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    if(cacheLookupHandle(handle))
     {
 	// create new message and set message fields
     	mpiFileCloseResponse *m = new 
@@ -232,7 +233,7 @@ void cacheModule::cacheProcess_mpiFileCloseRequest( mpiFileCloseRequest *msg )
     }else
     {
         send(msg, fsOut);
-        cacheAddHandle(msg->getHandle(), 1);
+        cacheAddHandle(handle, 1);
     }
 }
 
@@ -255,7 +256,8 @@ void cacheModule::cacheProcess_mpiFileDeleteRequest( mpiFileDeleteRequest *msg )
 void cacheModule::cacheProcess_mpiFileSetSizeRequest( mpiFileSetSizeRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    if(cacheLookupHandle(msg->getHandle()))
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    if(cacheLookupHandle(handle))
     {
     	// create new message and set message fields
         mpiFileSetSizeResponse *m = new 
@@ -264,14 +266,15 @@ void cacheModule::cacheProcess_mpiFileSetSizeRequest( mpiFileSetSizeRequest *msg
     }else
     {
         send(msg, fsOut);
-        cacheAddHandle(msg->getHandle(), msg->getSize());
+        cacheAddHandle(handle, msg->getSize());
     }
 }
 
 void cacheModule::cacheProcess_mpiFileGetInfoRequest(mpiFileGetInfoRequest *msg)
 {
     // look in cache, if found, respond, if not found, sent to fs
-    if(cacheLookupHandle(msg->getHandle()))
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
     	mpiFileGetInfoRequest *m = new 
@@ -280,7 +283,7 @@ void cacheModule::cacheProcess_mpiFileGetInfoRequest(mpiFileGetInfoRequest *msg)
     }else
     {
         send(msg, fsOut);
-        cacheAddHandle(msg->getHandle(), 1);
+        cacheAddHandle(handle, 1);
     }
 
 
@@ -290,7 +293,8 @@ void cacheModule::cacheProcess_mpiFileGetInfoRequest(mpiFileGetInfoRequest *msg)
 void cacheModule::cacheProcess_mpiFileSetInfoRequest(mpiFileSetInfoRequest *msg)
 {
     // look in cache, if found, respond, if not found, sent to fs
-    if(cacheLookupHandle(msg->getHandle()))
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
     	mpiFileSetInfoRequest *m = new 
@@ -299,7 +303,7 @@ void cacheModule::cacheProcess_mpiFileSetInfoRequest(mpiFileSetInfoRequest *msg)
     }else
     {
         send(msg, fsOut);
-        cacheAddHandle(msg->getHandle(), 1);
+        cacheAddHandle(handle, 1);
     }
 }
 
@@ -309,7 +313,8 @@ void cacheModule::cacheProcess_mpiFileSetInfoRequest(mpiFileSetInfoRequest *msg)
 void cacheModule::cacheProcess_mpiFilePreallocateRequest( mpiFilePreallocateRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    if(cacheLookupHandle(msg->getHandle()))
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
     	mpiFilePreallocateResponse *m = new 
@@ -318,7 +323,7 @@ void cacheModule::cacheProcess_mpiFilePreallocateRequest( mpiFilePreallocateRequ
     }else
     {
         send(msg, fsOut);
-        cacheAddHandle(msg->getHandle(),msg->getSize());
+        cacheAddHandle(handle,msg->getSize());
     }
 }
 
@@ -341,7 +346,8 @@ void cacheModule::cacheProcess_mpiFileGetSizeRequest( mpiFileGetSizeRequest *msg
 void cacheModule::cacheProcess_mpiFileReadAtRequest( mpiFileReadAtRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    if(cacheLookupHandle(msg->getHandle()))
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
     	mpiFileReadAtResponse *m = new 
@@ -356,7 +362,8 @@ void cacheModule::cacheProcess_mpiFileReadAtRequest( mpiFileReadAtRequest *msg )
 void cacheModule::cacheProcess_mpiFileReadRequest( mpiFileReadRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    if(cacheLookupHandle(msg->getHandle()))
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
     	mpiFileReadResponse *m = new 
@@ -371,7 +378,8 @@ void cacheModule::cacheProcess_mpiFileReadRequest( mpiFileReadRequest *msg )
 void cacheModule::cacheProcess_mpiFileWriteAtRequest( mpiFileWriteAtRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    if(cacheLookupHandle(msg->getHandle()))
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
     	mpiFileWriteAtResponse *m = new 
@@ -386,7 +394,8 @@ void cacheModule::cacheProcess_mpiFileWriteAtRequest( mpiFileWriteAtRequest *msg
 void cacheModule::cacheProcess_mpiFileWriteRequest( mpiFileWriteRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    if(cacheLookupHandle(msg->getHandle()))
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
     	mpiFileWriteResponse *m = new 
@@ -410,7 +419,7 @@ void cacheModule::cacheProcess_mpiFileOpenResponse( mpiFileOpenResponse *msg )
 void cacheModule::cacheProcess_mpiFileCloseResponse( mpiFileCloseResponse *msg )
 {
     // send response through 
-    cacheAddHandle(msg->getHandle(),1);
+    //cacheAddHandle(handle,1);
     send(msg, appOut);
     
 }
