@@ -26,7 +26,12 @@ void ClientFSState::removeAttr(FSHandle metaHandle)
 FSMetaData ClientFSState::lookupAttr(FSHandle metaHandle)
 {
     FSMetaData metaData;
-    attrCache_.lookup(metaHandle);
+    AttributeEntry* entry = attrCache_.lookup(metaHandle);
+    if (0 != entry)
+    {
+        // Need to check expiration
+        metaData = entry->data;
+    }
     return metaData;
 }
 
@@ -42,8 +47,13 @@ void ClientFSState::removeDir(std::string path)
 
 FSHandle ClientFSState::lookupDir(std::string path)
 {
-    FSHandle metaHandle;
-    dirCache_.lookup(path);
+    FSHandle metaHandle = 0;
+    DirectoryEntry* entry = dirCache_.lookup(path);
+    if (0 != entry)
+    {
+        // Need to check expiration
+        metaHandle = entry->data;
+    }
     return metaHandle;
 }
 
