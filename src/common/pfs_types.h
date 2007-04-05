@@ -3,9 +3,7 @@
 
 #include <vector>
 #include <string>
-
-class fileSystem;
-class fsModule;
+class ClientFSState;
 
 #define MAXSEG 16  /* maximum number of entries in a path */
 
@@ -48,7 +46,7 @@ struct FSMetaData
 /** Descriptor for an open file */
 struct FSOpenFile
 {
-    fileSystem *fs;      /* pointer to client unique fs struct */
+    ClientFSState *fs;   /* pointer to client unique fs struct */
     FSHandle handle;     /* handle of the file - the metadata object */
     int state;           /* I don't think we need this - WBL */
     FSMetaData metaData; /* pointer to file unique metadata */

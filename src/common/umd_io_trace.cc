@@ -107,6 +107,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
             mpiFileOpenRequest* open = new mpiFileOpenRequest(
                 0, MPI_FILE_OPEN_REQUEST);
             open->setFileName(fileNames_[fileId].c_str());
+            // FIXME just adding a descript to avoid core dumps for now
+            open->setFiledes(new FSOpenFile());
             mpiMsg = open;
             break;
         }
@@ -123,6 +125,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
                 0, MPI_FILE_READ_AT_REQUEST);
             read->setCount(length);
             read->setOffset(offset);
+            // FIXME just adding a descript to avoid core dumps for now
+            read->setFiledes(new FSOpenFile());
             mpiMsg = read;
             break;
         }
@@ -132,6 +136,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
                 0, MPI_FILE_WRITE_AT_REQUEST);
             write->setCount(length);
             write->setOffset(offset);
+            // FIXME just adding a descript to avoid core dumps for now
+            write->setFiledes(new FSOpenFile());
             mpiMsg = write;
             break;
         }
@@ -141,6 +147,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
                 0, MPI_FILE_READ_AT_REQUEST);
             seek->setCount(0);
             seek->setOffset(offset);
+            // FIXME just adding a descript to avoid core dumps for now
+            seek->setFiledes(new FSOpenFile());
             mpiMsg = seek;
             break;
         }

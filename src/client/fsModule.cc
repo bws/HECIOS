@@ -4,6 +4,7 @@
 #include <pvfs_proto_m.h>
 #include <mpiio_proto_m.h>
 #include <client_fs_state.h>
+class fsModule;
 
 // local function decls
 static void fsUnknownMessage(cMessage *req, cMessage *resp,
@@ -27,6 +28,7 @@ static void fsProcess_mpiFileReadRequest( mpiFileReadRequest *mpireq,
                      cMessage *resp, fsModule *client );
 static void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *mpireq,
                      cMessage *resp, fsModule *client );
+/*
 static void fsProcess_fsCreateResponse( fsCreateResponse *msg );
 static void fsProcess_fsRemoveResponse( fsRemoveResponse *msg );
 static void fsProcess_fsReadResponse( fsReadResponse *msg );
@@ -48,6 +50,7 @@ static void fsProcess_fsWriteCompletionResponse(
 static void fsProcess_fsFlushResponse( fsFlushResponse *msg );
 static void fsProcess_fsStatResponse( fsStatResponse *msg );
 static void fsProcess_fsListAttrResponse( fsListAttrResponse *msg );
+*/
 static void fsProcessTimer( cMessage *msg );
 static void fsParsePath(struct FSOpenFile *fdes);
 
@@ -184,7 +187,7 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 		/* create open file descriptor */
 		filedes = new FSOpenFile;
 		mpireq->setFiledes(filedes);
-		filedes->fs = (fileSystem *)mpireq->getFs();
+		filedes->fs = (ClientFSState*)mpireq->getFs();
 		/* look for dir in cache */
 		filedes->handle = filedes->fs->lookupDir(mpireq->getFileName());
 		if (filedes->handle == 0) // how to do this?
@@ -474,11 +477,12 @@ void fsProcess_mpiFileGetSizeRequest( mpiFileGetSizeRequest *mpireq,
 
 void fsProcess_mpiFileReadRequest( mpiFileReadRequest *mpireq,
                                    cMessage *resp, fsModule *client )
-{ /* process MPI file read request {{{1 */
-	FSOpenFile *filedes;
-	int count;
-	MPIDataType dtype;
-	int snum;
+{
+/* process MPI file read request {{{1 */
+    FSOpenFile *filedes;
+    int count;
+    MPIDataType dtype;
+    unsigned int snum;
     cFSM state;
     enum{
         INIT = 0,
@@ -506,7 +510,7 @@ void fsProcess_mpiFileReadRequest( mpiFileReadRequest *mpireq,
 	    /* send request to each server */
 	    for (snum = 0; snum < filedes->metaData.dataHandles.size(); snum++)
 	    {
-		    if (filedes->fs->fsServerNotUsed(snum, filedes->metaData.dist,
+		    if (filedes->fs->serverNotUsed(snum, filedes->metaData.dist,
 						 count, dtype))
 			    /* don't send if no data on server */
 			    continue;
@@ -532,7 +536,7 @@ void fsProcess_mpiFileReadRequest( mpiFileReadRequest *mpireq,
         respcnt = mpireq->getResponses() - 1;
         if (respcnt <= 0)
         {
-            void *mpi_context;
+            //void *mpi_context;
             /* done with this request */
             mpiFileReadResponse *mpiresp;
             mpiresp = new mpiFileReadResponse(0, MPI_FILE_READ_RESPONSE);
@@ -557,11 +561,12 @@ void fsProcess_mpiFileReadRequest( mpiFileReadRequest *mpireq,
 
 void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *mpireq,
                                    cMessage *resp, fsModule *client )
-{ /* process MPI file read request {{{1 */
-	FSOpenFile *filedes;
-	int count;
-	MPIDataType dtype;
-	int snum;
+{
+    /* process MPI file read request {{{1 */
+    FSOpenFile *filedes;
+    int count;
+    MPIDataType dtype;
+    unsigned int snum;
     cFSM state;
     enum{
         INIT = 0,
@@ -589,7 +594,7 @@ void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *mpireq,
 	    /* send request to each server */
 	    for (snum = 0; snum < filedes->metaData.dataHandles.size(); snum++)
 	    {
-		    if (filedes->fs->fsServerNotUsed(snum, filedes->metaData.dist,
+		    if (filedes->fs->serverNotUsed(snum, filedes->metaData.dist,
 						 count, dtype))
 			    /* don't send if no data on server */
 			    continue;
@@ -615,7 +620,7 @@ void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *mpireq,
         respcnt = mpireq->getResponses() - 1;
         if (respcnt <= 0)
         {
-            void *mpi_context;
+            //void *mpi_context;
             /* done with this request */
             mpiFileWriteResponse *mpiresp;
             mpiresp = new mpiFileWriteResponse(0, MPI_FILE_WRITE_RESPONSE);
@@ -639,7 +644,7 @@ void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *mpireq,
 } /* }}}1 */
 
 // messages from server/INET
-
+/*
 void fsProcess_fsCreateResponse( fsCreateResponse *msg )
 {
 }
@@ -707,7 +712,7 @@ void fsProcess_fsStatResponse( fsStatResponse *msg )
 void fsProcess_fsListAttrResponse( fsListAttrResponse *msg )
 {
 }
-
+*/
 // timers from self
 void fsProcessTimer( cMessage *msg )
 {
@@ -718,11 +723,11 @@ void fsProcessTimer( cMessage *msg )
 
 void fsParsePath(struct FSOpenFile *fdes)
 {
-	bool absolute;
-	int size, seg;
-	std::string::size_type index;
-	size = fdes->path.size();
-	index = 0;
+    //bool absolute;
+    int size, seg;
+    std::string::size_type index;
+    size = fdes->path.size();
+    index = 0;
     for (seg = 0; index != std::string::npos && seg < MAXSEG; seg++)
     {
         index = fdes->path.find_first_not_of('/', index);

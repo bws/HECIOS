@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "client_fs_state.h"
 #include "mpiio_proto_m.h"
 #include "umd_io_trace.h"
 #include <omnetpp.h>
@@ -31,6 +32,7 @@ private:
     
     IOTrace* trace_;
     int rank_;
+    ClientFSState clientState;
 
     int inGate_;
     int outGate_;

@@ -48,20 +48,21 @@ FSHandle ClientFSState::lookupDir(std::string path)
 }
 
 /** returns true is the server has data in the given request */
-bool serverNotUsed(int serverNum, int dist, int count, MPIDataType dtype)
+bool ClientFSState::serverNotUsed(int serverNum, int dist,
+                                  int count, MPIDataType dtype)
 {
     return false;
 }
                                                                                 
 /** called during create to select servers for new file */
 /** randomly selects a server from 0 to S-1 where S is totalNumServers */
-int fsSelectServer()
+int ClientFSState::selectServer()
 {
     return 0;
 }
                                                                                 
 /** hashes path to a number from 0 to S-1 where S is totalNumServers */
-int fsHashPath(std::string path)
+int ClientFSState::fsHashPath(std::string path)
 {
     return 0;
 }

@@ -17,6 +17,8 @@ class ClientFSState
 {
 public:
 
+    std::vector<HandleRange> servers;
+    
     /** Attribute Cache Type */
     typedef LRUTimeoutCache<FSHandle, FSMetaData> AttributeCache;
     
@@ -67,7 +69,7 @@ public:
 
     /** called during create to select servers for new file */
     /** randomly selects a server from 0 to S-1 where S is totalNumServers */
-    int fsSelectServer();
+    int selectServer();
 
     /** hashes path to a number from 0 to S-1 where S is totalNumServers */
     int fsHashPath(std::string path);
