@@ -63,7 +63,26 @@ public:
     FSHandle lookupDir(std::string path);
 
     /** I have no idea what this function is for (BWS) */
-    bool serverNotUsed(int serverNum, int dist, int count, MPIDataType) {return false;};
+    bool serverNotUsed(int serverNum, int dist, int count, MPIDataType dtype);
+
+    /** called during create to select servers for new file */
+    /** randomly selects a server from 0 to S-1 where S is totalNumServers */
+    int fsSelectServer();
+
+    /** hashes path to a number from 0 to S-1 where S is totalNumServers */
+    int fsHashPath(std::string path);
+
+    /** access function for HandleRange_ vector */
+    HandleRange fsServers(int num);
+
+    /** access function for totalNumServers */
+    int fsTotalNumServers();
+
+    /** access function for defaultNumServers */
+    int fsDefaultNumServers();
+
+    /** access function for root */
+    int fsRoot();
     
 private:
     /** Copy constructor disabled */
@@ -77,6 +96,15 @@ private:
 
     /** Server handle ranges */
     std::vector<HandleRange> handleRanges_;
+
+    /** number of servers in file system */
+    int totalNumServers;
+
+    /** default number of servers for 1 file */
+    int defaultNumServers;
+
+    /** server with root directory */
+    int root;
 };
 
 #endif

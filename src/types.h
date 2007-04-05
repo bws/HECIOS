@@ -5,22 +5,27 @@ typedef long long fsHandle;
 
 typedef struct fsMetaData
 {
-   int mode;
+   int mode;            /* standard Posix file metadata */
    int owner;
    int group;
    int nlinks;
-   int size;
-   int meta_handle;
+   int size;            /* number of bytes in file */
+   int meta_handle;     /* handle of the metadata object */
    vector<int> handles; /* size of handles is server count */
-   int dist; /* for now just strip size in bytes */
+   int dist;            /* for now just strip size in bytes */
 } fsMetaData;
                                                                                 
 typedef struct fsOpenFile
 {
    fileSystem fs;
-   int handle;
-   int state;
+   int handle;          /* hand of the file - the metadata object */
    fsMetaData meta;
-   int fileptr;
+   int fileptr;         /* offset of current position in file */
 } fsOpenFile;
+
+typedef struct handleRange
+{
+   fsHandle first;
+   fsHandle last;
+} handleRange;
 

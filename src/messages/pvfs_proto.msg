@@ -2,6 +2,14 @@
 // Parallel File System request proto message definitions
 //
 
+cplusplus {{
+#include <pfs_types.h>
+}}
+
+struct FSMetaData;
+struct HandleRange;
+class noncobject MPIDataType; // this is an int
+
 // PVFS Request Protocol Messages
 enum fsRequestTypes {
     FS_CREATE_REQUEST = 201;
@@ -55,6 +63,8 @@ message fsRequest
 {
     fields:
         int fsId;
+		  int serverNo; // which logical server
+		  int handle;   // indicates server address and object
 };
 
 // File system response abstract base class
@@ -62,15 +72,15 @@ message fsResponse
 {
     fields:
         bool requestSucceeded;
+		  int serverNo; // which logical server - copy from request
 };
 
 // Create a file system object
 message fsCreateRequest extends fsRequest
 {
     fields:
-        int parent_handle;
-        int handle_extent_array[];
-        string entry;
+        int objectType;
+        HandleRange handleRng;
 };
 
 // Create a file system object
@@ -84,7 +94,6 @@ message fsCreateResponse extends fsResponse
 message fsRemoveRequest extends fsRequest
 {
     fields:
-        int handle;
 };
 
 // Remove a file system object
@@ -96,38 +105,36 @@ message fsRemoveResponse extends fsResponse
 message fsReadRequest extends fsRequest
 {
     fields:
-        int handle;
-        int server_nr;
-        int server_cnt;
+        int serverNo;
+        int serverCnt;
         unsigned long offset;
-	int count;
-	//mpiDatatype dtype;
+		  int count;
+	     MPIDataType dtype;
 };
 
 // Read file data
 message fsReadResponse extends fsResponse
 {
     fields:
-        unsigned long bstream_size;
+        unsigned long bytes_read;
 };
 
 // Write object data
 message fsWriteRequest extends fsRequest
 {
     fields:
-        int handle;
         int server_nr;
         int server_cnt;
         unsigned long offset;
-	int count;
-	//mpiDatatype dtype;
+	     int count;
+	     MPIDataType dtype;
 };
 
 // Write file data
 message fsWriteResponse extends fsResponse
 {
     fields:
-        unsigned long bstream_size;
+        unsigned long bytes_written;
 };
 
 // Write completion
@@ -139,28 +146,28 @@ message fsWriteCompletionResponse extends fsResponse
 message fsGetAttrRequest extends fsRequest
 {
     fields:
-        string path;
+        string path; // remove this ???
 };
 
 // Get attributes
 message fsGetAttrResponse extends fsResponse
 {
     fields:
-        string attr;
+        FSMetaData meta;
 };
 
 // Set file attributes
 message fsSetAttrRequest extends fsRequest
 {
     fields:
-        string path;
+        FSMetaData meta;
 };
 
 // Set attributes
 message fsSetAttrResponse extends fsResponse
 {
     fields:
-        string attr[];
+        string attr[]; // remove this ???
 };
 
 // Resolve a filesystem path
@@ -198,7 +205,6 @@ message fsCreateDirEntResponse extends fsResponse
 message fsRemoveDirEntRequest extends fsRequest
 {
     fields:
-        int handle;
         string entry;
 };
 
@@ -229,7 +235,6 @@ message fsChangeDirEntResponse extends fsResponse
 message fsTruncateRequest extends fsRequest
 {
     fields:
-        int handle;
         unsigned long new_size;
         int flags;
 };
@@ -250,14 +255,12 @@ message fsMakeDirRequest extends fsRequest
 message fsMakeDirResponse extends fsResponse
 {
     fields:
-        int handle;
 };
 
 // Resolve a filesystem path
 message fsReadDirRequest extends fsRequest
 {
     fields:
-        int handle;
         unsigned long dir_offset;
         unsigned long dirent_count;
 };
@@ -266,7 +269,6 @@ message fsReadDirRequest extends fsRequest
 message fsReadDirResponse extends fsResponse
 {
     fields:
-        int handle;
         unsigned long dir_offset;
         string entries[];
         int entry_count;
@@ -289,7 +291,6 @@ message fsFlushResponse extends fsResponse
 message fsStatRequest extends fsRequest
 {
     fields:
-        int handle;
         int flags;
 };
 

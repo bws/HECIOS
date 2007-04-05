@@ -4,10 +4,13 @@
 
 // allow a pointer field in a message 
 cplusplus {{
-	typedef void *voidPtr;
+#include <pfs_types.h>
+typedef void *voidPtr;
 }}
 
+class cFSM;
 class noncobject voidPtr;
+class noncobject MPIDataType;  // this is an int type
 
 enum mpiRequestTypes
 {
@@ -50,7 +53,7 @@ message mpiRequest
         int size = 1;
         int comm_members[] = 0;
 		  // internal fields
-		  int state = 0;
+		  cFSM state;
 		  int responses = 0;
 };
 
@@ -65,6 +68,7 @@ message mpiResponse
 message mpiFileOpenRequest extends mpiRequest
 {
     fields:
+	     voidPtr fs;    // pointer to fileSystem class 
         string fileName;
         int mode;
 		  // internal fields
@@ -75,22 +79,20 @@ message mpiFileOpenRequest extends mpiRequest
 message mpiFileOpenResponse extends mpiResponse
 {
     fields:
-        string fileName;
-        int mode;
+		  voidPtr filedes;
 };
 
 // Request to close a file
 message mpiFileCloseRequest extends mpiRequest
 {
     fields:
-        int handle;
+		  voidPtr filedes;
 };
 
 // Close file response
 message mpiFileCloseResponse extends mpiResponse
 {
     fields:
-        int handle;
 };
 
 // Request to delete a file
@@ -109,7 +111,7 @@ message mpiFileDeleteResponse extends mpiResponse
 message mpiFileSetSizeRequest extends mpiRequest
 {
     fields:
-        int handle;
+		  voidPtr filedes;
         int size;
 };
 
@@ -122,7 +124,7 @@ message mpiFileSetSizeResponse extends mpiResponse
 message mpiFilePreallocateRequest extends mpiRequest
 {
     fields:
-        int handle;
+		  voidPtr filedes;
         int size;
 };
 
@@ -141,13 +143,15 @@ message mpiFileGetSizeRequest extends mpiRequest
 // Get file size response
 message mpiFileGetSizeResponse
 {
+    fields:
+	     int fileSize;
 };
 
 // Request to get the file info object
 message mpiFileGetInfoRequest extends mpiRequest
 {
     fields:
-        int handle;
+		  voidPtr filedes;
 };
 
 // Get file info response
@@ -161,7 +165,7 @@ message mpiFileGetInfoResponse extends mpiResponse
 message mpiFileSetInfoRequest extends mpiRequest
 {
     fields:
-        int handle;
+		  voidPtr filedes;
         string info[];
 };
 
@@ -174,9 +178,9 @@ message mpiFileSetInfoResponse extends mpiResponse
 message mpiFileReadAtRequest extends mpiRequest
 {
     fields:
-        int handle;
-	int count;
-	//mpiDatatype dtype;
+		  voidPtr filedes;
+	     int count;
+	     MPIDataType dtype;
         long offset = 0;
 };
 
@@ -192,9 +196,9 @@ message mpiFileReadAtResponse extends mpiResponse
 message mpiFileReadRequest extends mpiRequest
 {
     fields:
-        int handle;
-	int count;
-	//mpiDatatype dtype;
+		  voidPtr filedes;
+	     int count;
+	     MPIDataType dtype;
 };
 
 // File read response
@@ -209,9 +213,9 @@ message mpiFileReadResponse extends mpiResponse
 message mpiFileWriteAtRequest extends mpiRequest
 {
     fields:
-        int handle;
-	int count;
-	//mpiDatatype dtype;
+		  voidPtr filedes;
+	     int count;
+	     MPIDataType dtype;
         long offset;
         char data[];
 };
@@ -227,9 +231,9 @@ message mpiFileWriteAtResponse extends mpiResponse
 message mpiFileWriteRequest extends mpiRequest
 {
     fields:
-        int handle;
-	int count;
-	//mpiDatatype dtype;
+		  voidPtr filedes;
+	     int count;
+	     MPIDataType dtype;
         char data[];
 };
 

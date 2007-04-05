@@ -7,4 +7,5 @@ SIM_SRC += $(DIR)/client_fs_state.cc \
 	$(DIR)/fs_client.cc \
 	$(DIR)/io_application.cc \
 	$(DIR)/middleware_cache.cc \
-	$(DIR)/cache_module.cc
+	$(DIR)/cache_module.cc \
+	$(DIR)/fsModule.cc

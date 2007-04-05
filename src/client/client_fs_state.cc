@@ -8,6 +8,9 @@ ClientFSState::ClientFSState()
     : attrCache_(MAX_ATTR_ENTRIES, MAX_ATTR_TIME),
       dirCache_(MAX_ATTR_ENTRIES, MAX_ATTR_TIME)
 {
+    totalNumServers = 64;
+    defaultNumServers = 16;
+    root = 0;
 }
 
 void ClientFSState::insertAttr(FSHandle metaHandle, FSMetaData metaData)
@@ -42,6 +45,45 @@ FSHandle ClientFSState::lookupDir(std::string path)
     FSHandle metaHandle;
     dirCache_.lookup(path);
     return metaHandle;
+}
+
+/** returns true is the server has data in the given request */
+bool serverNotUsed(int serverNum, int dist, int count, MPIDataType dtype)
+{
+    return false;
+}
+                                                                                
+/** called during create to select servers for new file */
+/** randomly selects a server from 0 to S-1 where S is totalNumServers */
+int fsSelectServer()
+{
+    return 0;
+}
+                                                                                
+/** hashes path to a number from 0 to S-1 where S is totalNumServers */
+int fsHashPath(std::string path)
+{
+    return 0;
+}
+
+HandleRange ClientFSState::fsServers(int num)
+{
+    return handleRanges_[num];
+}
+
+int ClientFSState::fsTotalNumServers()
+{
+    return totalNumServers;
+}
+
+int ClientFSState::fsDefaultNumServers()
+{
+    return defaultNumServers;
+}
+
+int ClientFSState::fsRoot()
+{
+    return root;
 }
 
 /*
