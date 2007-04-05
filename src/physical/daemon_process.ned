@@ -9,8 +9,8 @@ import
 module DaemonProcess
 
     gates:
-        in: in;
-        out: out;
+        in: in, storageIn;
+        out: out, storageOut;
 
     submodules:
         server: FSServer;
@@ -18,5 +18,8 @@ module DaemonProcess
     connections nocheck:
         server.netOut --> out;
         server.netIn <-- in; 
+
+        server.storageOut --> storageOut;
+        server.storageIn <-- storageIn;
 
 endmodule

@@ -1,7 +1,8 @@
 
 import
     "daemon_process", 
-    "StandardHost";
+    "StandardHost",
+    "Storagelayer";
 
 //
 // Ethernet based compute node
@@ -20,11 +21,14 @@ module IONode
                 numTcpApps = 1,
                 tcpAppType = "BMITcpServer";
 
-        //hdd: Disk;
+        storage: StorageLayer;
 
     connections nocheck:
 
         ethIn --> hca.ethIn++;
         ethOut <-- hca.ethOut++;
+
+        daemon.storageOut --> storage.in;
+        daemon.storageIn <-- storage.out;
 
 endmodule
