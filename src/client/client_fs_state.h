@@ -17,8 +17,6 @@ class ClientFSState
 {
 public:
 
-    std::vector<HandleRange> servers;
-    
     /** Attribute Cache Type */
     typedef LRUTimeoutCache<FSHandle, FSMetaData> AttributeCache;
     
@@ -72,20 +70,20 @@ public:
     int selectServer();
 
     /** hashes path to a number from 0 to S-1 where S is totalNumServers */
-    int fsHashPath(std::string path);
+    int hashPath(std::string path);
 
     /** access function for HandleRange_ vector */
-    HandleRange fsServers(int num);
-
-    /** access function for totalNumServers */
-    int fsTotalNumServers();
-
-    /** access function for defaultNumServers */
-    int fsDefaultNumServers();
+    HandleRange servers(int num);
 
     /** access function for root */
-    int fsRoot();
+    int root();
     
+    /** access function for totalNumServers */
+    int totalNumServers();
+
+    /** access function for defaultNumServers */
+    int defaultNumServers();
+
 private:
     /** Copy constructor disabled */
     ClientFSState(ClientFSState& orig);
@@ -100,13 +98,13 @@ private:
     std::vector<HandleRange> handleRanges_;
 
     /** number of servers in file system */
-    int totalNumServers;
+    int totalNumServers_;
 
     /** default number of servers for 1 file */
-    int defaultNumServers;
+    int defaultNumServers_;
 
     /** server with root directory */
-    int root;
+    int root_;
 };
 
 #endif

@@ -6,11 +6,11 @@ using namespace std;
 
 ClientFSState::ClientFSState()
     : attrCache_(MAX_ATTR_ENTRIES, MAX_ATTR_TIME),
-      dirCache_(MAX_ATTR_ENTRIES, MAX_ATTR_TIME)
+      dirCache_(MAX_ATTR_ENTRIES, MAX_ATTR_TIME),
+      totalNumServers_(64),
+      defaultNumServers_(2),
+      root_(0)
 {
-    totalNumServers = 64;
-    defaultNumServers = 16;
-    root = 0;
 }
 
 void ClientFSState::insertAttr(FSHandle metaHandle, FSMetaData metaData)
@@ -64,37 +64,39 @@ bool ClientFSState::serverNotUsed(int serverNum, int dist,
     return false;
 }
                                                                                 
-/** called during create to select servers for new file */
-/** randomly selects a server from 0 to S-1 where S is totalNumServers */
+/**
+ * called during create to select servers for new file
+ * randomly selects a server from 0 to S-1 where S is totalNumServers
+ */
 int ClientFSState::selectServer()
 {
     return 0;
 }
                                                                                 
 /** hashes path to a number from 0 to S-1 where S is totalNumServers */
-int ClientFSState::fsHashPath(std::string path)
+int ClientFSState::hashPath(std::string path)
 {
     return 0;
 }
 
-HandleRange ClientFSState::fsServers(int num)
+HandleRange ClientFSState::servers(int num)
 {
     return handleRanges_[num];
 }
 
-int ClientFSState::fsTotalNumServers()
+int ClientFSState::root()
 {
-    return totalNumServers;
+    return root_;
 }
 
-int ClientFSState::fsDefaultNumServers()
+int ClientFSState::totalNumServers()
 {
-    return defaultNumServers;
+    return totalNumServers_;
 }
 
-int ClientFSState::fsRoot()
+int ClientFSState::defaultNumServers()
 {
-    return root;
+    return defaultNumServers_;
 }
 
 /*

@@ -84,17 +84,17 @@ void UMDIOTraceTest::testNextRecordAsMessage()
 {
     UMDIOTrace test1(1, "tests/support/umd_io_trace.tra");
     cMessage* msg;
-    mpiFileOpenRequest* open;
-    mpiFileCloseRequest* close;
-    mpiFileReadAtRequest* read;
-    mpiFileWriteAtRequest* write;
+    spfsMPIFileOpenRequest* open;
+    spfsMPIFileCloseRequest* close;
+    spfsMPIFileReadAtRequest* read;
+    spfsMPIFileWriteAtRequest* write;
 
     //
     // 1st record
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-    open = dynamic_cast<mpiFileOpenRequest*>(msg);
+    open = dynamic_cast<spfsMPIFileOpenRequest*>(msg);
     CPPUNIT_ASSERT(0 != open);
     delete open;
 
@@ -103,7 +103,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-    close = dynamic_cast<mpiFileCloseRequest*>(msg);
+    close = dynamic_cast<spfsMPIFileCloseRequest*>(msg);
     CPPUNIT_ASSERT(0 != close);
     delete close;
 
@@ -112,7 +112,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-    read = dynamic_cast<mpiFileReadAtRequest*>(msg);
+    read = dynamic_cast<spfsMPIFileReadAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != read);
     delete read;
 
@@ -121,7 +121,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-    write = dynamic_cast<mpiFileWriteAtRequest*>(msg);
+    write = dynamic_cast<spfsMPIFileWriteAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != write);
     delete write;
 
@@ -130,7 +130,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-    read = dynamic_cast<mpiFileReadAtRequest*>(msg);
+    read = dynamic_cast<spfsMPIFileReadAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != read);
     delete read;
 
@@ -146,7 +146,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-    open = dynamic_cast<mpiFileOpenRequest*>(msg);
+    open = dynamic_cast<spfsMPIFileOpenRequest*>(msg);
     CPPUNIT_ASSERT(0 != open);
     delete open;
 
@@ -155,7 +155,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-    close = dynamic_cast<mpiFileCloseRequest*>(msg);
+    close = dynamic_cast<spfsMPIFileCloseRequest*>(msg);
     CPPUNIT_ASSERT(0 != close);
     delete close;
 
@@ -164,7 +164,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-    read = dynamic_cast<mpiFileReadAtRequest*>(msg);
+    read = dynamic_cast<spfsMPIFileReadAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != read);
     delete read;
 
@@ -173,7 +173,7 @@ void UMDIOTraceTest::testNextRecordAsMessage()
     //
     msg = test1.nextRecordAsMessage();
     CPPUNIT_ASSERT(0 != msg);
-    write = dynamic_cast<mpiFileWriteAtRequest*>(msg);
+    write = dynamic_cast<spfsMPIFileWriteAtRequest*>(msg);
     CPPUNIT_ASSERT(0 != write);
     delete write;
 

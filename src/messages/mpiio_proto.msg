@@ -52,9 +52,10 @@ message spfsMPIRequest
         int rank = 0;
         int size = 1;
         int comm_members[] = 0;
-		  // internal fields
-		  cFSM state;
-		  int responses = 0;
+
+        // internal fields
+        cFSM state;
+        int responses = 0;
 };
 
 // The abstract base class for all MPI IO message responses
@@ -68,25 +69,26 @@ message spfsMPIResponse
 message spfsMPIFileOpenRequest extends spfsMPIRequest
 {
     fields:
-	     voidPtr fs;    // pointer to fileSystem class 
+        voidPtr fs;    // pointer to fileSystem class 
         string fileName;
         int mode;
-		  // internal fields
-		  voidPtr filedes;
+
+        // internal fields
+        voidPtr filedes;
 };
 
 // Open file response
 message spfsMPIFileOpenResponse extends spfsMPIResponse
 {
     fields:
-		  voidPtr filedes;
+        voidPtr filedes;
 };
 
 // Request to close a file
 message spfsMPIFileCloseRequest extends spfsMPIRequest
 {
     fields:
-		  voidPtr filedes;
+        voidPtr filedes;
 };
 
 // Close file response
@@ -111,7 +113,7 @@ message spfsMPIFileDeleteResponse extends spfsMPIResponse
 message spfsMPIFileSetSizeRequest extends spfsMPIRequest
 {
     fields:
-		  voidPtr filedes;
+        voidPtr filedes;
         int size;
 };
 
@@ -124,7 +126,7 @@ message spfsMPIFileSetSizeResponse extends spfsMPIResponse
 message spfsMPIFilePreallocateRequest extends spfsMPIRequest
 {
     fields:
-		  voidPtr filedes;
+        voidPtr filedes;
         int size;
 };
 
@@ -151,7 +153,7 @@ message spfsMPIFileGetSizeResponse extends spfsMPIResponse
 message spfsMPIFileGetInfoRequest extends spfsMPIRequest
 {
     fields:
-		  voidPtr filedes;
+        voidPtr filedes;
 };
 
 // Get file info response
@@ -165,7 +167,7 @@ message spfsMPIFileGetInfoResponse extends spfsMPIResponse
 message spfsMPIFileSetInfoRequest extends spfsMPIRequest
 {
     fields:
-		  voidPtr filedes;
+        voidPtr filedes;
         string info[];
 };
 
@@ -213,9 +215,9 @@ message spfsMPIFileReadResponse extends spfsMPIResponse
 message spfsMPIFileWriteAtRequest extends spfsMPIRequest
 {
     fields:
-		  voidPtr filedes;
-	     int count;
-	     MPIDataType dtype;
+        voidPtr filedes;
+        int count;
+        MPIDataType dtype;
         long offset;
         char data[];
 };
@@ -231,9 +233,9 @@ message spfsMPIFileWriteAtResponse extends spfsMPIResponse
 message spfsMPIFileWriteRequest extends spfsMPIRequest
 {
     fields:
-		  voidPtr filedes;
-	     int count;
-	     MPIDataType dtype;
+        voidPtr filedes;
+        int count;
+        MPIDataType dtype;
         char data[];
 };
 
@@ -244,3 +246,11 @@ message spfsMPIFileWriteResponse extends spfsMPIResponse
         unsigned long bytes_written;
 };
 
+//
+// Local variables:
+//  c-indent-level: 4
+//  c-basic-offset: 4
+// End:
+//
+// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+//
