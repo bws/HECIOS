@@ -89,92 +89,92 @@ void BMITcpServer::handleMessage(cMessage* msg)
         cMessage* response = 0;
         switch(msg->kind())
         {
-            case MPI_FILE_OPEN_REQUEST:
+            case SPFS_MPI_FILE_OPEN_REQUEST:
             {
-                response = new mpiFileOpenResponse(0, MPI_FILE_OPEN_RESPONSE);
+                response = new spfsMPIFileOpenResponse(0, SPFS_MPI_FILE_OPEN_RESPONSE);
                 break;
             }
-            case MPI_FILE_CLOSE_REQUEST:
+            case SPFS_MPI_FILE_CLOSE_REQUEST:
             {
-                response = new mpiFileOpenResponse(0, MPI_FILE_OPEN_RESPONSE);
+                response = new spfsMPIFileOpenResponse(0, SPFS_MPI_FILE_OPEN_RESPONSE);
                 break;
             }
-            case MPI_FILE_DELETE_REQUEST:
+            case SPFS_MPI_FILE_DELETE_REQUEST:
             {
-                response = new mpiFileDeleteResponse(
-                    0, MPI_FILE_DELETE_RESPONSE);
+                response = new spfsMPIFileDeleteResponse(
+                    0, SPFS_MPI_FILE_DELETE_RESPONSE);
                 break;
             }
-            case MPI_FILE_SET_SIZE_REQUEST:
+            case SPFS_MPI_FILE_SET_SIZE_REQUEST:
             {
-                response = new mpiFileSetSizeResponse(
-                    0, MPI_FILE_SET_SIZE_RESPONSE);
+                response = new spfsMPIFileSetSizeResponse(
+                    0, SPFS_MPI_FILE_SET_SIZE_RESPONSE);
                 break;
             }
-            case MPI_FILE_PREALLOCATE_REQUEST:
+            case SPFS_MPI_FILE_PREALLOCATE_REQUEST:
             {
-                response = new mpiFilePreallocateResponse(
-                    0, MPI_FILE_PREALLOCATE_RESPONSE);
+                response = new spfsMPIFilePreallocateResponse(
+                    0, SPFS_MPI_FILE_PREALLOCATE_RESPONSE);
                 break;
             }
-            case MPI_FILE_GET_SIZE_REQUEST:
-            {
-                response =
-                    new mpiFileGetSizeResponse(0, MPI_FILE_GET_SIZE_RESPONSE);
-                break;
-            }
-            case MPI_FILE_GET_INFO_REQUEST:
+            case SPFS_MPI_FILE_GET_SIZE_REQUEST:
             {
                 response =
-                    new mpiFileGetInfoResponse(0, MPI_FILE_GET_INFO_RESPONSE);
+                    new spfsMPIFileGetSizeResponse(0, SPFS_MPI_FILE_GET_SIZE_RESPONSE);
                 break;
             }
-            case MPI_FILE_SET_INFO_REQUEST:
+            case SPFS_MPI_FILE_GET_INFO_REQUEST:
+            {
+                response =
+                    new spfsMPIFileGetInfoResponse(0, SPFS_MPI_FILE_GET_INFO_RESPONSE);
+                break;
+            }
+            case SPFS_MPI_FILE_SET_INFO_REQUEST:
             {
                  response =
-                     new mpiFileSetInfoResponse(0, MPI_FILE_SET_INFO_RESPONSE);
+                     new spfsMPIFileSetInfoResponse(0, SPFS_MPI_FILE_SET_INFO_RESPONSE);
                break;
             }
-            case MPI_FILE_READ_AT_REQUEST:
+            case SPFS_MPI_FILE_READ_AT_REQUEST:
             {
                  response =
-                     new mpiFileReadAtResponse(0, MPI_FILE_READ_AT_RESPONSE);
+                     new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
                 break;
             }
-            case MPI_FILE_READ_REQUEST:
+            case SPFS_MPI_FILE_READ_REQUEST:
             {
                 response =
-                     new mpiFileReadResponse(0, MPI_FILE_READ_RESPONSE);
+                     new spfsMPIFileReadResponse(0, SPFS_MPI_FILE_READ_RESPONSE);
                 break;
             }
-            case MPI_FILE_WRITE_AT_REQUEST:
+            case SPFS_MPI_FILE_WRITE_AT_REQUEST:
             {
                 response =
-                     new mpiFileWriteAtResponse(0, MPI_FILE_WRITE_AT_RESPONSE);
+                     new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
                 break;
             }
-            case MPI_FILE_WRITE_REQUEST:
+            case SPFS_MPI_FILE_WRITE_REQUEST:
             {
                 response =
-                     new mpiFileWriteResponse(0, MPI_FILE_WRITE_RESPONSE);
+                     new spfsMPIFileWriteResponse(0, SPFS_MPI_FILE_WRITE_RESPONSE);
                 break;
             }
-            case FS_CREATE_REQUEST:
+            case SPFS_CREATE_REQUEST:
             {
-                response = new fsCreateResponse(0, FS_CREATE_RESPONSE);
+                response = new spfsCreateResponse(0, SPFS_CREATE_RESPONSE);
                 break;
             }
-            case FS_REMOVE_REQUEST:
-            case FS_READ_REQUEST:
-            case FS_WRITE_REQUEST:
-            case FS_GET_ATTR_REQUEST:
-            case FS_SET_ATTR_REQUEST:
-            case FS_LOOKUP_PATH_REQUEST:
-            case FS_CREATE_DIR_ENT_REQUEST:
-            case FS_REMOVE_DIR_ENT_REQUEST:
-            case FS_CHANGE_DIR_ENT_REQUEST:
-            case FS_TRUNCATE_REQUEST:
-            case FS_MAKE_DIR_REQUEST:
+            case SPFS_REMOVE_REQUEST:
+            case SPFS_READ_REQUEST:
+            case SPFS_WRITE_REQUEST:
+            case SPFS_GET_ATTR_REQUEST:
+            case SPFS_SET_ATTR_REQUEST:
+            case SPFS_LOOKUP_PATH_REQUEST:
+            case SPFS_CREATE_DIR_ENT_REQUEST:
+            case SPFS_REMOVE_DIR_ENT_REQUEST:
+            case SPFS_CHANGE_DIR_ENT_REQUEST:
+            case SPFS_TRUNCATE_REQUEST:
+            case SPFS_MAKE_DIR_REQUEST:
             default:
                 cerr << "BMI Server not yet implemented for "
                      << " name: " << msg->name()

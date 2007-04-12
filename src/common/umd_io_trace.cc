@@ -104,8 +104,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
     switch(opType) {
         case UMDIOTrace::OPEN:
         {
-            mpiFileOpenRequest* open = new mpiFileOpenRequest(
-                0, MPI_FILE_OPEN_REQUEST);
+            spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
+                0, SPFS_MPI_FILE_OPEN_REQUEST);
             open->setFileName(fileNames_[fileId].c_str());
             // FIXME just adding a descript to avoid core dumps for now
             open->setFiledes(new FSOpenFile());
@@ -114,15 +114,15 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
         }
         case UMDIOTrace::CLOSE:
         {
-            mpiFileCloseRequest* close = new mpiFileCloseRequest(
-                0, MPI_FILE_CLOSE_REQUEST);
+            spfsMPIFileCloseRequest* close = new spfsMPIFileCloseRequest(
+                0, SPFS_MPI_FILE_CLOSE_REQUEST);
             mpiMsg = close;
             break;
         }
         case UMDIOTrace::READ:
         {
-            mpiFileReadAtRequest* read = new mpiFileReadAtRequest(
-                0, MPI_FILE_READ_AT_REQUEST);
+            spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
+                0, SPFS_MPI_FILE_READ_AT_REQUEST);
             read->setCount(length);
             read->setOffset(offset);
             // FIXME just adding a descript to avoid core dumps for now
@@ -132,8 +132,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
         }
         case UMDIOTrace::WRITE:
         {
-            mpiFileWriteAtRequest* write = new mpiFileWriteAtRequest(
-                0, MPI_FILE_WRITE_AT_REQUEST);
+            spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
+                0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
             write->setCount(length);
             write->setOffset(offset);
             // FIXME just adding a descript to avoid core dumps for now
@@ -143,8 +143,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
         }
         case UMDIOTrace::SEEK:
         {
-            mpiFileReadAtRequest* seek = new mpiFileReadAtRequest(
-                0, MPI_FILE_READ_AT_REQUEST);
+            spfsMPIFileReadAtRequest* seek = new spfsMPIFileReadAtRequest(
+                0, SPFS_MPI_FILE_READ_AT_REQUEST);
             seek->setCount(0);
             seek->setOffset(offset);
             // FIXME just adding a descript to avoid core dumps for now

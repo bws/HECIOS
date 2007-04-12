@@ -78,18 +78,18 @@ void BMITcpClient::handleMessage(cMessage* msg)
         // Send requests to the server via TCP
         switch(msg->kind())
         {
-            case MPI_FILE_OPEN_REQUEST:
-            case MPI_FILE_CLOSE_REQUEST:
-            case MPI_FILE_DELETE_REQUEST:
-            case MPI_FILE_SET_SIZE_REQUEST:
-            case MPI_FILE_PREALLOCATE_REQUEST:
-            case MPI_FILE_GET_SIZE_REQUEST:
-            case MPI_FILE_GET_INFO_REQUEST:
-            case MPI_FILE_SET_INFO_REQUEST:
-            case MPI_FILE_READ_AT_REQUEST:
-            case MPI_FILE_READ_REQUEST:
-            case MPI_FILE_WRITE_AT_REQUEST:
-            case MPI_FILE_WRITE_REQUEST:
+            case SPFS_MPI_FILE_OPEN_REQUEST:
+            case SPFS_MPI_FILE_CLOSE_REQUEST:
+            case SPFS_MPI_FILE_DELETE_REQUEST:
+            case SPFS_MPI_FILE_SET_SIZE_REQUEST:
+            case SPFS_MPI_FILE_PREALLOCATE_REQUEST:
+            case SPFS_MPI_FILE_GET_SIZE_REQUEST:
+            case SPFS_MPI_FILE_GET_INFO_REQUEST:
+            case SPFS_MPI_FILE_SET_INFO_REQUEST:
+            case SPFS_MPI_FILE_READ_AT_REQUEST:
+            case SPFS_MPI_FILE_READ_REQUEST:
+            case SPFS_MPI_FILE_WRITE_AT_REQUEST:
+            case SPFS_MPI_FILE_WRITE_REQUEST:
             {
                 cerr << "Sending packet from client!"
                      << "Kind: " << msg->kind() << " info: " << msg->info()
@@ -107,18 +107,18 @@ void BMITcpClient::handleMessage(cMessage* msg)
                 sock->send(pkt);
                 break;
             }
-            case MPI_FILE_OPEN_RESPONSE:
-            case MPI_FILE_CLOSE_RESPONSE:
-            case MPI_FILE_DELETE_RESPONSE:
-            case MPI_FILE_SET_SIZE_RESPONSE:
-            case MPI_FILE_PREALLOCATE_RESPONSE:
-            case MPI_FILE_GET_SIZE_RESPONSE:
-            case MPI_FILE_GET_INFO_RESPONSE:
-            case MPI_FILE_SET_INFO_RESPONSE:
-            case MPI_FILE_READ_AT_RESPONSE:
-            case MPI_FILE_READ_RESPONSE:
-            case MPI_FILE_WRITE_AT_RESPONSE:
-            case MPI_FILE_WRITE_RESPONSE:
+            case SPFS_MPI_FILE_OPEN_RESPONSE:
+            case SPFS_MPI_FILE_CLOSE_RESPONSE:
+            case SPFS_MPI_FILE_DELETE_RESPONSE:
+            case SPFS_MPI_FILE_SET_SIZE_RESPONSE:
+            case SPFS_MPI_FILE_PREALLOCATE_RESPONSE:
+            case SPFS_MPI_FILE_GET_SIZE_RESPONSE:
+            case SPFS_MPI_FILE_GET_INFO_RESPONSE:
+            case SPFS_MPI_FILE_SET_INFO_RESPONSE:
+            case SPFS_MPI_FILE_READ_AT_RESPONSE:
+            case SPFS_MPI_FILE_READ_RESPONSE:
+            case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
+            case SPFS_MPI_FILE_WRITE_RESPONSE:
             {
                 // Send response to application
                 send(msg, "bmiOut");

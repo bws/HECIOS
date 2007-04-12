@@ -12,71 +12,71 @@ class noncobject MPIDataType; // this is an int
 
 // PVFS Request Protocol Messages
 enum fsRequestTypes {
-    FS_CREATE_REQUEST = 201;
-    FS_REMOVE_REQUEST = 202;
-    FS_READ_REQUEST = 203;
-    FS_WRITE_REQUEST = 204;
-    FS_GET_ATTR_REQUEST = 205;
-    FS_SET_ATTR_REQUEST = 206;
-    FS_LOOKUP_PATH_REQUEST = 207;
-    FS_CREATE_DIR_ENT_REQUEST = 208;
-    FS_REMOVE_DIR_ENT_REQUEST = 209;
-    FS_CHANGE_DIR_ENT_REQUEST = 210;
-    FS_TRUNCATE_REQUEST = 211;
-    FS_MAKE_DIR_REQUEST = 212;
-    FS_READ_DIR_REQUEST = 213;
-    FS_FLUSH_REQUEST = 214;
-    FS_STAT_REQUEST = 215;
-    FS_LIST_ATTR_REQUEST = 216;
+    SPFS_CREATE_REQUEST = 201;
+    SPFS_REMOVE_REQUEST = 202;
+    SPFS_READ_REQUEST = 203;
+    SPFS_WRITE_REQUEST = 204;
+    SPFS_GET_ATTR_REQUEST = 205;
+    SPFS_SET_ATTR_REQUEST = 206;
+    SPFS_LOOKUP_PATH_REQUEST = 207;
+    SPFS_CREATE_DIR_ENT_REQUEST = 208;
+    SPFS_REMOVE_DIR_ENT_REQUEST = 209;
+    SPFS_CHANGE_DIR_ENT_REQUEST = 210;
+    SPFS_TRUNCATE_REQUEST = 211;
+    SPFS_MAKE_DIR_REQUEST = 212;
+    SPFS_READ_DIR_REQUEST = 213;
+    SPFS_FLUSH_REQUEST = 214;
+    SPFS_STAT_REQUEST = 215;
+    SPFS_LIST_ATTR_REQUEST = 216;
 };
 
 // PVFS Response Protocol Messages
 enum fsResponseTypes {
-    FS_CREATE_RESPONSE = 301;
-    FS_REMOVE_RESPONSE = 302;
-    FS_READ_RESPONSE = 303;
-    FS_WRITE_RESPONSE = 304;
-    FS_GET_ATTR_RESPONSE = 305;
-    FS_SET_ATTR_RESPONSE = 306;
-    FS_LOOKUP_PATH_RESPONSE = 307;
-    FS_CREATE_DIR_ENT_RESPONSE = 308;
-    FS_REMOVE_DIR_ENT_RESPONSE = 309;
-    FS_CHANGE_DIR_ENT_RESPONSE = 310;
-    FS_TRUNCATE_RESPONSE = 311;
-    FS_MAKE_DIR_RESPONSE = 312;
-    FS_READ_DIR_RESPONSE = 313;
-    FS_WRITE_COMPLETION_RESPONSE = 314;
-    FS_FLUSH_RESPONSE = 315;
-    FS_STAT_RESPONSE = 316;
-    FS_LIST_ATTR_RESPONSE = 317;
+    SPFS_CREATE_RESPONSE = 301;
+    SPFS_REMOVE_RESPONSE = 302;
+    SPFS_READ_RESPONSE = 303;
+    SPFS_WRITE_RESPONSE = 304;
+    SPFS_GET_ATTR_RESPONSE = 305;
+    SPFS_SET_ATTR_RESPONSE = 306;
+    SPFS_LOOKUP_PATH_RESPONSE = 307;
+    SPFS_CREATE_DIR_ENT_RESPONSE = 308;
+    SPFS_REMOVE_DIR_ENT_RESPONSE = 309;
+    SPFS_CHANGE_DIR_ENT_RESPONSE = 310;
+    SPFS_TRUNCATE_RESPONSE = 311;
+    SPFS_MAKE_DIR_RESPONSE = 312;
+    SPFS_READ_DIR_RESPONSE = 313;
+    SPFS_WRITE_COMPLETION_RESPONSE = 314;
+    SPFS_FLUSH_RESPONSE = 315;
+    SPFS_STAT_RESPONSE = 316;
+    SPFS_LIST_ATTR_RESPONSE = 317;
 }
 
-enum fsLookupStatus {
-    FS_FOUND = 1;
-	 FS_PARTIAL = 2;
-	 FS_NOTFOUND = 3;
+enum spfsLookupStatus {
+    SPFS_FOUND = 1;
+    SPFS_PARTIAL = 2;
+    SPFS_NOTFOUND = 3;
 }
 
 
 // File request abstract base class
-message fsRequest
+message spfsRequest
 {
     fields:
         int fsId;
-		  int serverNo; // which logical server
-		  int handle;   // indicates server address and object
+        int serverNo; // which logical server
+        int handle;   // indicates server address and object
 };
 
 // File system response abstract base class
-message fsResponse
+message spfsResponse
 {
     fields:
         bool requestSucceeded;
-		  int serverNo; // which logical server - copy from request
+        int serverNo; // which logical server - copy from request
 };
 
 // Create a file system object
-message fsCreateRequest extends fsRequest
+message spfsCreateRequest extends spfsRequest
 {
     fields:
         int objectType;
@@ -84,111 +84,111 @@ message fsCreateRequest extends fsRequest
 };
 
 // Create a file system object
-message fsCreateResponse extends fsResponse
+message spfsCreateResponse extends spfsResponse
 {
     fields:
         int handle;
 };
 
 // Remove a file system object
-message fsRemoveRequest extends fsRequest
+message spfsRemoveRequest extends spfsRequest
 {
     fields:
 };
 
 // Remove a file system object
-message fsRemoveResponse extends fsResponse
+message spfsRemoveResponse extends spfsResponse
 {
 };
 
 // Read object data
-message fsReadRequest extends fsRequest
+message spfsReadRequest extends spfsRequest
 {
     fields:
         int serverNo;
         int serverCnt;
         unsigned long offset;
-		  int count;
-	     MPIDataType dtype;
+        int count;
+        MPIDataType dtype;
 };
 
 // Read file data
-message fsReadResponse extends fsResponse
+message spfsReadResponse extends spfsResponse
 {
     fields:
         unsigned long bytes_read;
 };
 
 // Write object data
-message fsWriteRequest extends fsRequest
+message spfsWriteRequest extends spfsRequest
 {
     fields:
         int server_nr;
         int server_cnt;
         unsigned long offset;
-	     int count;
-	     MPIDataType dtype;
+        int count;
+        MPIDataType dtype;
 };
 
 // Write file data
-message fsWriteResponse extends fsResponse
+message spfsWriteResponse extends spfsResponse
 {
     fields:
         unsigned long bytes_written;
 };
 
 // Write completion
-message fsWriteCompletionResponse extends fsResponse
+message spfsWriteCompletionResponse extends spfsResponse
 {
 };
 
 // Get file attributes
-message fsGetAttrRequest extends fsRequest
+message spfsGetAttrRequest extends spfsRequest
 {
     fields:
         string path; // remove this ???
 };
 
 // Get attributes
-message fsGetAttrResponse extends fsResponse
+message spfsGetAttrResponse extends spfsResponse
 {
     fields:
         FSMetaData meta;
 };
 
 // Set file attributes
-message fsSetAttrRequest extends fsRequest
+message spfsSetAttrRequest extends spfsRequest
 {
     fields:
         FSMetaData meta;
 };
 
 // Set attributes
-message fsSetAttrResponse extends fsResponse
+message spfsSetAttrResponse extends spfsResponse
 {
     fields:
         string attr[]; // remove this ???
 };
 
 // Resolve a filesystem path
-message fsLookupPathRequest extends fsRequest
+message spfsLookupPathRequest extends spfsRequest
 {
     fields:
         string path;
 };
 
 // Lookup a path
-message fsLookupPathResponse extends fsResponse
+message spfsLookupPathResponse extends spfsResponse
 {
     fields:
-	     int status enum(fsLookupStatus);
+        int status enum(spfsLookupStatus);
         int handles[];
         int handle_count;
         int attr_count;
 };
 
 // Create a directory entry
-message fsCreateDirEntRequest extends fsRequest
+message spfsCreateDirEntRequest extends spfsRequest
 {
     fields:
         int parent_handle;
@@ -197,26 +197,26 @@ message fsCreateDirEntRequest extends fsRequest
 };
 
 // Create a directory entry
-message fsCreateDirEntResponse extends fsResponse
+message spfsCreateDirEntResponse extends spfsResponse
 {
 };
 
 // Remove a directory entry
-message fsRemoveDirEntRequest extends fsRequest
+message spfsRemoveDirEntRequest extends spfsRequest
 {
     fields:
         string entry;
 };
 
 // Remove a directory entry
-message fsRemoveDirEntResponse extends fsResponse
+message spfsRemoveDirEntResponse extends spfsResponse
 {
     fields:
         int removedHandle;
 };
 
 // Resolve a filesystem path
-message fsChangeDirEntRequest extends fsRequest
+message spfsChangeDirEntRequest extends spfsRequest
 {
     fields:
         int parent_handle;
@@ -225,14 +225,14 @@ message fsChangeDirEntRequest extends fsRequest
 };
 
 // Change a directory entry
-message fsChangeDirEntResponse extends fsResponse
+message spfsChangeDirEntResponse extends spfsResponse
 {
     fields:
         int old_dirent_handle;
 };
 
 // Resolve a filesystem path
-message fsTruncateRequest extends fsRequest
+message spfsTruncateRequest extends spfsRequest
 {
     fields:
         unsigned long new_size;
@@ -240,25 +240,25 @@ message fsTruncateRequest extends fsRequest
 };
 
 // Truncate a data object
-message fsTruncateResponse extends fsResponse
+message spfsTruncateResponse extends spfsResponse
 {
 };
 
 // Resolve a filesystem path
-message fsMakeDirRequest extends fsRequest
+message spfsMakeDirRequest extends spfsRequest
 {
     fields:
         int handle_extents[];
 };
 
 // Create a directory
-message fsMakeDirResponse extends fsResponse
+message spfsMakeDirResponse extends spfsResponse
 {
     fields:
 };
 
 // Resolve a filesystem path
-message fsReadDirRequest extends fsRequest
+message spfsReadDirRequest extends spfsRequest
 {
     fields:
         unsigned long dir_offset;
@@ -266,7 +266,7 @@ message fsReadDirRequest extends fsRequest
 };
 
 // Read a directory
-message fsReadDirResponse extends fsResponse
+message spfsReadDirResponse extends spfsResponse
 {
     fields:
         unsigned long dir_offset;
@@ -276,33 +276,33 @@ message fsReadDirResponse extends fsResponse
 };
 
 // Resolve a filesystem path
-message fsFlushRequest extends fsRequest
+message spfsFlushRequest extends spfsRequest
 {
     fields:
         string path;
 };
 
 // Flush a data object
-message fsFlushResponse extends fsResponse
+message spfsFlushResponse extends spfsResponse
 {
 };
 
-// Resolve a filesystem path
-message fsStatRequest extends fsRequest
+// Resolve a parallel filesystem path
+message spfsStatRequest extends spfsRequest
 {
     fields:
         int flags;
 };
 
-// Stat filesystem
-message fsStatResponse extends fsResponse
+// Stat parallel filesystem
+message spfsStatResponse extends spfsResponse
 {
     fields:
         string stat;
 };
 
-// Resolve a filesystem path
-message fsListAttrRequest extends fsRequest
+// Resolve a parallel filesystem path
+message spfsListAttrRequest extends spfsRequest
 {
     fields:
         int handles[];
@@ -311,7 +311,7 @@ message fsListAttrRequest extends fsRequest
 };
 
 // List data object attributes
-message fsListAttrResponse extends fsResponse
+message spfsListAttrResponse extends spfsResponse
 {
     fields:
         unsigned long num_handles;

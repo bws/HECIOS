@@ -11,10 +11,10 @@ class noncobject voidPtr;
 
 enum BMIMessageTypes
 {
-    BMI_CLIENT_SEND = 401;
-    BMI_CLIENT_RECV = 402;
-    BMI_SERVER_SEND = 403;
-    BMI_SERVER_RECV = 404;
+    SPFS_BMI_CLIENT_SEND = 401;
+    SPFS_BMI_CLIENT_RECV = 402;
+    SPFS_BMI_SERVER_SEND = 403;
+    SPFS_BMI_SERVER_RECV = 404;
 };
 
 // The abstract base class for all BMI Messages

@@ -14,38 +14,38 @@ class noncobject MPIDataType;  // this is an int type
 
 enum mpiRequestTypes
 {
-    MPI_FILE_OPEN_REQUEST = 1;
-    MPI_FILE_CLOSE_REQUEST = 2;
-    MPI_FILE_DELETE_REQUEST = 3;
-    MPI_FILE_SET_SIZE_REQUEST = 4;
-    MPI_FILE_PREALLOCATE_REQUEST = 5;
-    MPI_FILE_GET_SIZE_REQUEST = 6;
-    MPI_FILE_GET_INFO_REQUEST = 7;
-    MPI_FILE_SET_INFO_REQUEST = 8;
-    MPI_FILE_READ_AT_REQUEST = 9;
-    MPI_FILE_READ_REQUEST = 10;
-    MPI_FILE_WRITE_AT_REQUEST = 11;
-    MPI_FILE_WRITE_REQUEST = 12;
+    SPFS_MPI_FILE_OPEN_REQUEST = 1;
+    SPFS_MPI_FILE_CLOSE_REQUEST = 2;
+    SPFS_MPI_FILE_DELETE_REQUEST = 3;
+    SPFS_MPI_FILE_SET_SIZE_REQUEST = 4;
+    SPFS_MPI_FILE_PREALLOCATE_REQUEST = 5;
+    SPFS_MPI_FILE_GET_SIZE_REQUEST = 6;
+    SPFS_MPI_FILE_GET_INFO_REQUEST = 7;
+    SPFS_MPI_FILE_SET_INFO_REQUEST = 8;
+    SPFS_MPI_FILE_READ_AT_REQUEST = 9;
+    SPFS_MPI_FILE_READ_REQUEST = 10;
+    SPFS_MPI_FILE_WRITE_AT_REQUEST = 11;
+    SPFS_MPI_FILE_WRITE_REQUEST = 12;
 };
 
 enum mpiResponseTypes
 {
-    MPI_FILE_OPEN_RESPONSE = 101;
-    MPI_FILE_CLOSE_RESPONSE = 102;
-    MPI_FILE_DELETE_RESPONSE = 103;
-    MPI_FILE_SET_SIZE_RESPONSE = 104;
-    MPI_FILE_PREALLOCATE_RESPONSE = 105;
-    MPI_FILE_GET_SIZE_RESPONSE = 106;
-    MPI_FILE_GET_INFO_RESPONSE = 107;
-    MPI_FILE_SET_INFO_RESPONSE = 108;
-    MPI_FILE_READ_AT_RESPONSE = 109;
-    MPI_FILE_READ_RESPONSE = 110;
-    MPI_FILE_WRITE_AT_RESPONSE = 111;
-    MPI_FILE_WRITE_RESPONSE = 112;
+    SPFS_MPI_FILE_OPEN_RESPONSE = 101;
+    SPFS_MPI_FILE_CLOSE_RESPONSE = 102;
+    SPFS_MPI_FILE_DELETE_RESPONSE = 103;
+    SPFS_MPI_FILE_SET_SIZE_RESPONSE = 104;
+    SPFS_MPI_FILE_PREALLOCATE_RESPONSE = 105;
+    SPFS_MPI_FILE_GET_SIZE_RESPONSE = 106;
+    SPFS_MPI_FILE_GET_INFO_RESPONSE = 107;
+    SPFS_MPI_FILE_SET_INFO_RESPONSE = 108;
+    SPFS_MPI_FILE_READ_AT_RESPONSE = 109;
+    SPFS_MPI_FILE_READ_RESPONSE = 110;
+    SPFS_MPI_FILE_WRITE_AT_RESPONSE = 111;
+    SPFS_MPI_FILE_WRITE_RESPONSE = 112;
 };
 
 // The abstract base class for all MPI IO message requests
-message mpiRequest
+message spfsMPIRequest
 {
     fields:
         bool isCollective = false;
@@ -58,14 +58,14 @@ message mpiRequest
 };
 
 // The abstract base class for all MPI IO message responses
-message mpiResponse
+message spfsMPIResponse
 {
     fields:
         bool isSuccessful;
 };
 
 // Request to open a file 
-message mpiFileOpenRequest extends mpiRequest
+message spfsMPIFileOpenRequest extends spfsMPIRequest
 {
     fields:
 	     voidPtr fs;    // pointer to fileSystem class 
@@ -76,39 +76,39 @@ message mpiFileOpenRequest extends mpiRequest
 };
 
 // Open file response
-message mpiFileOpenResponse extends mpiResponse
+message spfsMPIFileOpenResponse extends spfsMPIResponse
 {
     fields:
 		  voidPtr filedes;
 };
 
 // Request to close a file
-message mpiFileCloseRequest extends mpiRequest
+message spfsMPIFileCloseRequest extends spfsMPIRequest
 {
     fields:
 		  voidPtr filedes;
 };
 
 // Close file response
-message mpiFileCloseResponse extends mpiResponse
+message spfsMPIFileCloseResponse extends spfsMPIResponse
 {
     fields:
 };
 
 // Request to delete a file
-message mpiFileDeleteRequest extends mpiRequest
+message spfsMPIFileDeleteRequest extends spfsMPIRequest
 {
     fields:
         string fileName;
 };
 
 // Delete file response
-message mpiFileDeleteResponse extends mpiResponse
+message spfsMPIFileDeleteResponse extends spfsMPIResponse
 {
 };
 
 // Request to resize a file
-message mpiFileSetSizeRequest extends mpiRequest
+message spfsMPIFileSetSizeRequest extends spfsMPIRequest
 {
     fields:
 		  voidPtr filedes;
@@ -116,12 +116,12 @@ message mpiFileSetSizeRequest extends mpiRequest
 };
 
 // Resize file response
-message mpiFileSetSizeResponse extends mpiResponse
+message spfsMPIFileSetSizeResponse extends spfsMPIResponse
 {
 };
 
 // Request to preallocate file space
-message mpiFilePreallocateRequest extends mpiRequest
+message spfsMPIFilePreallocateRequest extends spfsMPIRequest
 {
     fields:
 		  voidPtr filedes;
@@ -129,40 +129,40 @@ message mpiFilePreallocateRequest extends mpiRequest
 };
 
 // Delete file response
-message mpiFilePreallocateResponse extends mpiResponse
+message spfsMPIFilePreallocateResponse extends spfsMPIResponse
 {
 };
 
 // Request to get the size of a file
-message mpiFileGetSizeRequest extends mpiRequest
+message spfsMPIFileGetSizeRequest extends spfsMPIRequest
 {
     fields:
         string fileName;
 };
 
 // Get file size response
-message mpiFileGetSizeResponse
+message spfsMPIFileGetSizeResponse extends spfsMPIResponse
 {
     fields:
-	     int fileSize;
+        int fileSize;
 };
 
 // Request to get the file info object
-message mpiFileGetInfoRequest extends mpiRequest
+message spfsMPIFileGetInfoRequest extends spfsMPIRequest
 {
     fields:
 		  voidPtr filedes;
 };
 
 // Get file info response
-message mpiFileGetInfoResponse extends mpiResponse
+message spfsMPIFileGetInfoResponse extends spfsMPIResponse
 {
     fields:
         string info[];
 };
 
 // Request to set the file info object
-message mpiFileSetInfoRequest extends mpiRequest
+message spfsMPIFileSetInfoRequest extends spfsMPIRequest
 {
     fields:
 		  voidPtr filedes;
@@ -170,22 +170,22 @@ message mpiFileSetInfoRequest extends mpiRequest
 };
 
 // Set file info response
-message mpiFileSetInfoResponse extends mpiResponse
+message spfsMPIFileSetInfoResponse extends spfsMPIResponse
 {
 };
 
 // Request to read at a file offset
-message mpiFileReadAtRequest extends mpiRequest
+message spfsMPIFileReadAtRequest extends spfsMPIRequest
 {
     fields:
-		  voidPtr filedes;
-	     int count;
-	     MPIDataType dtype;
+	voidPtr filedes;
+	int count;
+	MPIDataType dtype;
         long offset = 0;
 };
 
 // File readAt response
-message mpiFileReadAtResponse extends mpiResponse
+message spfsMPIFileReadAtResponse extends spfsMPIResponse
 {
     fields:
         char data[];
@@ -193,16 +193,16 @@ message mpiFileReadAtResponse extends mpiResponse
 };
 
 // Request to read from a file
-message mpiFileReadRequest extends mpiRequest
+message spfsMPIFileReadRequest extends spfsMPIRequest
 {
     fields:
-		  voidPtr filedes;
-	     int count;
-	     MPIDataType dtype;
+	voidPtr filedes;
+	int count;
+	MPIDataType dtype;
 };
 
 // File read response
-message mpiFileReadResponse extends mpiResponse
+message spfsMPIFileReadResponse extends spfsMPIResponse
 {
     fields:
         char data[];
@@ -210,7 +210,7 @@ message mpiFileReadResponse extends mpiResponse
 };
 
 // Request to write at a file offset
-message mpiFileWriteAtRequest extends mpiRequest
+message spfsMPIFileWriteAtRequest extends spfsMPIRequest
 {
     fields:
 		  voidPtr filedes;
@@ -221,14 +221,14 @@ message mpiFileWriteAtRequest extends mpiRequest
 };
 
 // File writeAt response
-message mpiFileWriteAtResponse extends mpiResponse
+message spfsMPIFileWriteAtResponse extends spfsMPIResponse
 {
     fields:
         unsigned long bytes_written;
 };
 
 // Request to write to a file
-message mpiFileWriteRequest extends mpiRequest
+message spfsMPIFileWriteRequest extends spfsMPIRequest
 {
     fields:
 		  voidPtr filedes;
@@ -238,7 +238,7 @@ message mpiFileWriteRequest extends mpiRequest
 };
 
 // File write response
-message mpiFileWriteResponse extends mpiResponse
+message spfsMPIFileWriteResponse extends spfsMPIResponse
 {
     fields:
         unsigned long bytes_written;

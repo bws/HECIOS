@@ -50,29 +50,30 @@ class cacheModule : public cSimpleModule
 
 		// Request forward declerations
 		void cacheProcessTimer(cMessage *msg );
-   		void cacheProcess_mpiFileOpenRequest(mpiFileOpenRequest *msg );
-		void cacheProcess_mpiFileCloseRequest(mpiFileCloseRequest *msg );
-		void cacheProcess_mpiFileDeleteRequest(mpiFileDeleteRequest *msg );
-		void cacheProcess_mpiFileSetSizeRequest(mpiFileSetSizeRequest *msg );
-                void cacheProcess_mpiFileGetInfoRequest(mpiFileGetInfoRequest *msg);
-                void cacheProcess_mpiFileSetInfoRequest(mpiFileSetInfoRequest *msg);
+   		void cacheProcess_mpiFileOpenRequest(spfsMPIFileOpenRequest *msg );
+		void cacheProcess_mpiFileCloseRequest(spfsMPIFileCloseRequest *msg );
+		void cacheProcess_mpiFileDeleteRequest(spfsMPIFileDeleteRequest *msg );
+		void cacheProcess_mpiFileSetSizeRequest(spfsMPIFileSetSizeRequest *msg );
+                void cacheProcess_mpiFileGetInfoRequest(spfsMPIFileGetInfoRequest *msg);
+                void cacheProcess_mpiFileSetInfoRequest(spfsMPIFileSetInfoRequest *msg);
 		void cacheProcess_mpiFilePreallocateRequest( 
-											mpiFilePreallocateRequest *msg );
-		void cacheProcess_mpiFileGetSizeRequest(mpiFileGetSizeRequest *msg );
-		void cacheProcess_mpiFileReadAtRequest(mpiFileReadAtRequest *msg );
-		void cacheProcess_mpiFileReadRequest(mpiFileReadRequest *msg );
-		void cacheProcess_mpiFileWriteAtRequest(mpiFileWriteAtRequest *msg );
-		void cacheProcess_mpiFileWriteRequest(mpiFileWriteRequest *msg );
+											spfsMPIFilePreallocateRequest *msg );
+		void cacheProcess_mpiFileGetSizeRequest(spfsMPIFileGetSizeRequest *msg );
+		void cacheProcess_mpiFileReadAtRequest(spfsMPIFileReadAtRequest *msg );
+		void cacheProcess_mpiFileReadRequest(spfsMPIFileReadRequest *msg );
+		void cacheProcess_mpiFileWriteAtRequest(spfsMPIFileWriteAtRequest *msg );
+		void cacheProcess_mpiFileWriteRequest(spfsMPIFileWriteRequest *msg );
 		
 		// Response forward declerations
-		void cacheProcess_mpiFileOpenResponse(mpiFileOpenResponse *msg );
-		void cacheProcess_mpiFileCloseResponse(mpiFileCloseResponse *msg );
-		void cacheProcess_mpiFileDeleteResponse(mpiFileDeleteResponse *msg );
-		void cacheProcess_mpiFileSetSizeResponse(mpiFileSetSizeResponse *msg );		void cacheProcess_mpiFilePreallocateResponse( 
-				mpiFilePreallocateResponse *msg );
-		void cacheProcess_mpiFileGetSizeResponse(mpiFileGetSizeResponse *msg );
-		void cacheProcess_mpiFileReadResponse(mpiFileReadResponse *msg );
-		void cacheProcess_mpiFileWriteResponse(mpiFileWriteResponse*msg );
+		void cacheProcess_mpiFileOpenResponse(spfsMPIFileOpenResponse *msg );
+		void cacheProcess_mpiFileCloseResponse(spfsMPIFileCloseResponse *msg );
+		void cacheProcess_mpiFileDeleteResponse(spfsMPIFileDeleteResponse *msg );
+    void cacheProcess_mpiFileSetSizeResponse(spfsMPIFileSetSizeResponse *msg );
+    void cacheProcess_mpiFilePreallocateResponse( 
+        spfsMPIFilePreallocateResponse *msg );
+		void cacheProcess_mpiFileGetSizeResponse(spfsMPIFileGetSizeResponse *msg );
+		void cacheProcess_mpiFileReadResponse(spfsMPIFileReadResponse *msg );
+		void cacheProcess_mpiFileWriteResponse(spfsMPIFileWriteResponse*msg );
 	
 		// Other funcitons
 		void cacheUnknownMessage(cMessage *msg);	
@@ -124,68 +125,68 @@ void cacheModule::handleMessage(cMessage *msg)
 		switch(msg->kind())
 		{
 		// cases for request handling
-		case MPI_FILE_OPEN_REQUEST:  
-			cacheProcess_mpiFileOpenRequest((mpiFileOpenRequest*) msg);
+		case SPFS_MPI_FILE_OPEN_REQUEST:  
+			cacheProcess_mpiFileOpenRequest((spfsMPIFileOpenRequest*) msg);
 			break;
-		case MPI_FILE_CLOSE_REQUEST:
-			cacheProcess_mpiFileCloseRequest((mpiFileCloseRequest*) msg);
+		case SPFS_MPI_FILE_CLOSE_REQUEST:
+			cacheProcess_mpiFileCloseRequest((spfsMPIFileCloseRequest*) msg);
 			break;
-		case MPI_FILE_DELETE_REQUEST:
-			cacheProcess_mpiFileDeleteRequest((mpiFileDeleteRequest*) msg);
+		case SPFS_MPI_FILE_DELETE_REQUEST:
+			cacheProcess_mpiFileDeleteRequest((spfsMPIFileDeleteRequest*) msg);
 			break;
-		case MPI_FILE_SET_SIZE_REQUEST:
-			cacheProcess_mpiFileSetSizeRequest((mpiFileSetSizeRequest*) msg);
+		case SPFS_MPI_FILE_SET_SIZE_REQUEST:
+			cacheProcess_mpiFileSetSizeRequest((spfsMPIFileSetSizeRequest*) msg);
 			break;
-		case MPI_FILE_PREALLOCATE_REQUEST:
-			cacheProcess_mpiFilePreallocateRequest((mpiFilePreallocateRequest*)  msg);
+		case SPFS_MPI_FILE_PREALLOCATE_REQUEST:
+			cacheProcess_mpiFilePreallocateRequest((spfsMPIFilePreallocateRequest*)  msg);
 			break;
-		case MPI_FILE_GET_SIZE_REQUEST:
-			cacheProcess_mpiFileGetSizeRequest((mpiFileGetSizeRequest*) msg);
+		case SPFS_MPI_FILE_GET_SIZE_REQUEST:
+			cacheProcess_mpiFileGetSizeRequest((spfsMPIFileGetSizeRequest*) msg);
 			break;
-	        case MPI_FILE_GET_INFO_REQUEST:
-                        cacheProcess_mpiFileGetInfoRequest((mpiFileGetInfoRequest*) msg);
+	        case SPFS_MPI_FILE_GET_INFO_REQUEST:
+                        cacheProcess_mpiFileGetInfoRequest((spfsMPIFileGetInfoRequest*) msg);
                         break;
-                case MPI_FILE_SET_INFO_REQUEST:
-                        cacheProcess_mpiFileSetInfoRequest((mpiFileSetInfoRequest*) msg); 
+                case SPFS_MPI_FILE_SET_INFO_REQUEST:
+                        cacheProcess_mpiFileSetInfoRequest((spfsMPIFileSetInfoRequest*) msg); 
                         break;
-	        case MPI_FILE_READ_AT_REQUEST:
-			cacheProcess_mpiFileReadAtRequest((mpiFileReadAtRequest*) msg);
-                        break;
-
-		case MPI_FILE_READ_REQUEST:
-			cacheProcess_mpiFileReadRequest((mpiFileReadRequest*) msg);
-			break;
-		case MPI_FILE_WRITE_AT_REQUEST:
-			cacheProcess_mpiFileWriteAtRequest((mpiFileWriteAtRequest*) msg);
+	        case SPFS_MPI_FILE_READ_AT_REQUEST:
+			cacheProcess_mpiFileReadAtRequest((spfsMPIFileReadAtRequest*) msg);
                         break;
 
-		case MPI_FILE_WRITE_REQUEST:
-			cacheProcess_mpiFileWriteRequest((mpiFileWriteRequest*) msg);
+		case SPFS_MPI_FILE_READ_REQUEST:
+			cacheProcess_mpiFileReadRequest((spfsMPIFileReadRequest*) msg);
+			break;
+		case SPFS_MPI_FILE_WRITE_AT_REQUEST:
+			cacheProcess_mpiFileWriteAtRequest((spfsMPIFileWriteAtRequest*) msg);
+                        break;
+
+		case SPFS_MPI_FILE_WRITE_REQUEST:
+			cacheProcess_mpiFileWriteRequest((spfsMPIFileWriteRequest*) msg);
 			break;
 		// cases for response handling
-		case MPI_FILE_OPEN_RESPONSE:
-			cacheProcess_mpiFileOpenResponse((mpiFileOpenResponse*) msg);
+		case SPFS_MPI_FILE_OPEN_RESPONSE:
+			cacheProcess_mpiFileOpenResponse((spfsMPIFileOpenResponse*) msg);
 			break;
-		case MPI_FILE_CLOSE_RESPONSE:
-			cacheProcess_mpiFileCloseResponse((mpiFileCloseResponse*) msg);
+		case SPFS_MPI_FILE_CLOSE_RESPONSE:
+			cacheProcess_mpiFileCloseResponse((spfsMPIFileCloseResponse*) msg);
 			break;
-		case MPI_FILE_DELETE_RESPONSE:
-			cacheProcess_mpiFileDeleteResponse((mpiFileDeleteResponse*) msg);
+		case SPFS_MPI_FILE_DELETE_RESPONSE:
+			cacheProcess_mpiFileDeleteResponse((spfsMPIFileDeleteResponse*) msg);
 			break;
-		case MPI_FILE_SET_SIZE_RESPONSE:
-			cacheProcess_mpiFileSetSizeResponse((mpiFileSetSizeResponse*) msg);
+		case SPFS_MPI_FILE_SET_SIZE_RESPONSE:
+			cacheProcess_mpiFileSetSizeResponse((spfsMPIFileSetSizeResponse*) msg);
 			break;
-		case MPI_FILE_PREALLOCATE_RESPONSE:
-			cacheProcess_mpiFilePreallocateResponse((mpiFilePreallocateResponse*) msg);
+		case SPFS_MPI_FILE_PREALLOCATE_RESPONSE:
+			cacheProcess_mpiFilePreallocateResponse((spfsMPIFilePreallocateResponse*) msg);
 			break;
-		case MPI_FILE_GET_SIZE_RESPONSE:
-			cacheProcess_mpiFileGetSizeResponse((mpiFileGetSizeResponse*) msg);
+		case SPFS_MPI_FILE_GET_SIZE_RESPONSE:
+			cacheProcess_mpiFileGetSizeResponse((spfsMPIFileGetSizeResponse*) msg);
 			break;
-		case MPI_FILE_READ_RESPONSE:
-			cacheProcess_mpiFileReadResponse((mpiFileReadResponse*) msg);
+		case SPFS_MPI_FILE_READ_RESPONSE:
+			cacheProcess_mpiFileReadResponse((spfsMPIFileReadResponse*) msg);
 			break;
-		case MPI_FILE_WRITE_RESPONSE:
-			cacheProcess_mpiFileWriteResponse((mpiFileWriteResponse*) msg);
+		case SPFS_MPI_FILE_WRITE_RESPONSE:
+			cacheProcess_mpiFileWriteResponse((spfsMPIFileWriteResponse*) msg);
 			break;
 		default :
 			cacheUnknownMessage(msg);
@@ -197,7 +198,7 @@ void cacheModule::handleMessage(cMessage *msg)
 // messages from app/fs - request
 // in simplist cases, just send a response for now
 
-void cacheModule::cacheProcess_mpiFileOpenRequest( mpiFileOpenRequest *msg )
+void cacheModule::cacheProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *msg )
 {
 
   // new response message to schedule
@@ -212,7 +213,7 @@ void cacheModule::cacheProcess_mpiFileOpenRequest( mpiFileOpenRequest *msg )
     if(cacheLookupFileName(msg->getFileName()))
     {
 		// create new message and set message fields
-    	mpiFileOpenResponse *m = new mpiFileOpenResponse("mpiFileOpenResponse");
+    	spfsMPIFileOpenResponse *m = new spfsMPIFileOpenResponse("mpiFileOpenResponse");
 	send(m, appOut);
     }else
     {
@@ -220,15 +221,15 @@ void cacheModule::cacheProcess_mpiFileOpenRequest( mpiFileOpenRequest *msg )
     }
 }
 
-void cacheModule::cacheProcess_mpiFileCloseRequest( mpiFileCloseRequest *msg )
+void cacheModule::cacheProcess_mpiFileCloseRequest( spfsMPIFileCloseRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
     if(cacheLookupHandle(handle))
     {
 	// create new message and set message fields
-    	mpiFileCloseResponse *m = new 
-                            mpiFileCloseResponse("mpiFileCloseResponse");
+    	spfsMPIFileCloseResponse *m = new 
+                            spfsMPIFileCloseResponse("mpiFileCloseResponse");
 	send(m, appOut);
     }else
     {
@@ -237,14 +238,14 @@ void cacheModule::cacheProcess_mpiFileCloseRequest( mpiFileCloseRequest *msg )
     }
 }
 
-void cacheModule::cacheProcess_mpiFileDeleteRequest( mpiFileDeleteRequest *msg )
+void cacheModule::cacheProcess_mpiFileDeleteRequest( spfsMPIFileDeleteRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     if(cacheLookupFileName(msg->getFileName()))
     {
 	// create new message and set message fields
-        mpiFileDeleteResponse *m = new 
-			    mpiFileDeleteResponse("mpiFileDeleteResponse");
+        spfsMPIFileDeleteResponse *m = new 
+			    spfsMPIFileDeleteResponse("mpiFileDeleteResponse");
 	send(m, appOut);
     }else
     {
@@ -253,15 +254,15 @@ void cacheModule::cacheProcess_mpiFileDeleteRequest( mpiFileDeleteRequest *msg )
     }
 }
 
-void cacheModule::cacheProcess_mpiFileSetSizeRequest( mpiFileSetSizeRequest *msg )
+void cacheModule::cacheProcess_mpiFileSetSizeRequest( spfsMPIFileSetSizeRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
     if(cacheLookupHandle(handle))
     {
     	// create new message and set message fields
-        mpiFileSetSizeResponse *m = new 
-            		    mpiFileSetSizeResponse("mpiFileSetSizeResponse");
+        spfsMPIFileSetSizeResponse *m = new 
+            		    spfsMPIFileSetSizeResponse("mpiFileSetSizeResponse");
 	send(m, appOut);
     }else
     {
@@ -270,15 +271,15 @@ void cacheModule::cacheProcess_mpiFileSetSizeRequest( mpiFileSetSizeRequest *msg
     }
 }
 
-void cacheModule::cacheProcess_mpiFileGetInfoRequest(mpiFileGetInfoRequest *msg)
+void cacheModule::cacheProcess_mpiFileGetInfoRequest(spfsMPIFileGetInfoRequest *msg)
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
-    	mpiFileGetInfoRequest *m = new 
-		    mpiFileGetInfoRequest("mpiFileGetInfoRequest");
+    	spfsMPIFileGetInfoRequest *m = new 
+		    spfsMPIFileGetInfoRequest("mpiFileGetInfoRequest");
 	send(m, appOut);
     }else
     {
@@ -290,15 +291,15 @@ void cacheModule::cacheProcess_mpiFileGetInfoRequest(mpiFileGetInfoRequest *msg)
 
 }
 
-void cacheModule::cacheProcess_mpiFileSetInfoRequest(mpiFileSetInfoRequest *msg)
+void cacheModule::cacheProcess_mpiFileSetInfoRequest(spfsMPIFileSetInfoRequest *msg)
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
-    	mpiFileSetInfoRequest *m = new 
-		    mpiFileSetInfoRequest("mpiFileSetInfoRequest");
+    	spfsMPIFileSetInfoRequest *m = new 
+		    spfsMPIFileSetInfoRequest("mpiFileSetInfoRequest");
 	send(m, appOut);
     }else
     {
@@ -310,15 +311,15 @@ void cacheModule::cacheProcess_mpiFileSetInfoRequest(mpiFileSetInfoRequest *msg)
 
 
 
-void cacheModule::cacheProcess_mpiFilePreallocateRequest( mpiFilePreallocateRequest *msg )
+void cacheModule::cacheProcess_mpiFilePreallocateRequest( spfsMPIFilePreallocateRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
-    	mpiFilePreallocateResponse *m = new 
-				mpiFilePreallocateResponse("mpiFilePreallocateResponse");
+    	spfsMPIFilePreallocateResponse *m = new 
+				spfsMPIFilePreallocateResponse("mpiFilePreallocateResponse");
 	send(m, appOut);
     }else
     {
@@ -327,14 +328,14 @@ void cacheModule::cacheProcess_mpiFilePreallocateRequest( mpiFilePreallocateRequ
     }
 }
 
-void cacheModule::cacheProcess_mpiFileGetSizeRequest( mpiFileGetSizeRequest *msg )
+void cacheModule::cacheProcess_mpiFileGetSizeRequest( spfsMPIFileGetSizeRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     if(cacheLookupFileName(msg->getFileName()))
     {
 		// create new message and set message fields
-    	mpiFileGetSizeResponse *m = new 
-				mpiFileGetSizeResponse("mpiFileGetSizeResponse");
+    	spfsMPIFileGetSizeResponse *m = new 
+				spfsMPIFileGetSizeResponse("mpiFileGetSizeResponse");
 	send(m, appOut);
     }else
     {
@@ -343,15 +344,15 @@ void cacheModule::cacheProcess_mpiFileGetSizeRequest( mpiFileGetSizeRequest *msg
     }
 }
 
-void cacheModule::cacheProcess_mpiFileReadAtRequest( mpiFileReadAtRequest *msg )
+void cacheModule::cacheProcess_mpiFileReadAtRequest( spfsMPIFileReadAtRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
-    	mpiFileReadAtResponse *m = new 
-				mpiFileReadAtResponse("mpiFileReadAtResponse");
+    	spfsMPIFileReadAtResponse *m = new 
+				spfsMPIFileReadAtResponse("mpiFileReadAtResponse");
 	send(m, appOut);
     }else
     {
@@ -359,15 +360,15 @@ void cacheModule::cacheProcess_mpiFileReadAtRequest( mpiFileReadAtRequest *msg )
     }
 }
 
-void cacheModule::cacheProcess_mpiFileReadRequest( mpiFileReadRequest *msg )
+void cacheModule::cacheProcess_mpiFileReadRequest( spfsMPIFileReadRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
-    	mpiFileReadResponse *m = new 
-				mpiFileReadResponse("mpiFileReadResponse");
+    	spfsMPIFileReadResponse *m = new 
+				spfsMPIFileReadResponse("mpiFileReadResponse");
 	send(m, appOut);
     }else
     {
@@ -375,15 +376,15 @@ void cacheModule::cacheProcess_mpiFileReadRequest( mpiFileReadRequest *msg )
     }
 }
 
-void cacheModule::cacheProcess_mpiFileWriteAtRequest( mpiFileWriteAtRequest *msg )
+void cacheModule::cacheProcess_mpiFileWriteAtRequest( spfsMPIFileWriteAtRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
-    	mpiFileWriteAtResponse *m = new 
-				mpiFileWriteAtResponse("mpiFileWriteAtResponse");
+    	spfsMPIFileWriteAtResponse *m = new 
+				spfsMPIFileWriteAtResponse("mpiFileWriteAtResponse");
 	send(m, appOut);
     }else
     {
@@ -391,15 +392,15 @@ void cacheModule::cacheProcess_mpiFileWriteAtRequest( mpiFileWriteAtRequest *msg
     }
 }
 
-void cacheModule::cacheProcess_mpiFileWriteRequest( mpiFileWriteRequest *msg )
+void cacheModule::cacheProcess_mpiFileWriteRequest( spfsMPIFileWriteRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
-    	mpiFileWriteResponse *m = new 
-				mpiFileWriteResponse("mpiFileWriteResponse");
+    	spfsMPIFileWriteResponse *m = new 
+				spfsMPIFileWriteResponse("mpiFileWriteResponse");
 	send(m, appOut);
     }else
     {
@@ -409,14 +410,14 @@ void cacheModule::cacheProcess_mpiFileWriteRequest( mpiFileWriteRequest *msg )
 
 // messages to fs - responses
 
-void cacheModule::cacheProcess_mpiFileOpenResponse( mpiFileOpenResponse *msg )
+void cacheModule::cacheProcess_mpiFileOpenResponse( spfsMPIFileOpenResponse *msg )
 {
     // send response through 
     //cacheAddFileName(msg->getFileName());
     send(msg, appOut);
 }
 
-void cacheModule::cacheProcess_mpiFileCloseResponse( mpiFileCloseResponse *msg )
+void cacheModule::cacheProcess_mpiFileCloseResponse( spfsMPIFileCloseResponse *msg )
 {
     // send response through 
     //cacheAddHandle(handle,1);
@@ -424,42 +425,42 @@ void cacheModule::cacheProcess_mpiFileCloseResponse( mpiFileCloseResponse *msg )
     
 }
 
-void cacheModule::cacheProcess_mpiFileDeleteResponse( mpiFileDeleteResponse *msg )
+void cacheModule::cacheProcess_mpiFileDeleteResponse( spfsMPIFileDeleteResponse *msg )
 {
     // send response through 
     //cacheAdd(msg->);
     send(msg, appOut);
 }
 
-void cacheModule::cacheProcess_mpiFileSetSizeResponse( mpiFileSetSizeResponse *msg )
+void cacheModule::cacheProcess_mpiFileSetSizeResponse( spfsMPIFileSetSizeResponse *msg )
 {
     // send response through 
     //cacheAdd(msg->); // exclusive
     send(msg, appOut);
 }
 
-void cacheModule::cacheProcess_mpiFilePreallocateResponse( mpiFilePreallocateResponse *msg )
+void cacheModule::cacheProcess_mpiFilePreallocateResponse( spfsMPIFilePreallocateResponse *msg )
 {
     // send response through 
     //cacheAddHandle(msg->getHandle()); // exclusive
     send(msg, appOut);
 }
 
-void cacheModule::cacheProcess_mpiFileGetSizeResponse( mpiFileGetSizeResponse *msg )
+void cacheModule::cacheProcess_mpiFileGetSizeResponse( spfsMPIFileGetSizeResponse *msg )
 {
     // send response through 
     //cacheAdd(msg->); // valid
     send(msg, appOut);
 }
 
-void cacheModule::cacheProcess_mpiFileReadResponse( mpiFileReadResponse *msg )
+void cacheModule::cacheProcess_mpiFileReadResponse( spfsMPIFileReadResponse *msg )
 {
     // send response through
     //cacheAddHandle(msg->getHandle()); // valid
     send(msg, appOut);
 }
 
-void cacheModule::cacheProcess_mpiFileWriteResponse( mpiFileWriteResponse*msg )
+void cacheModule::cacheProcess_mpiFileWriteResponse( spfsMPIFileWriteResponse*msg )
 {
     // send response through 
     //cacheAdd(msg->); // exclusive

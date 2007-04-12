@@ -39,69 +39,69 @@ void FSServer::handleMessage(cMessage* msg)
     cMessage* response;
     switch(msg->kind())
     {
-        case MPI_FILE_OPEN_REQUEST:
+        case SPFS_MPI_FILE_OPEN_REQUEST:
         {
-            response = new mpiFileOpenResponse(0, MPI_FILE_OPEN_RESPONSE);
+            response = new spfsMPIFileOpenResponse(0, SPFS_MPI_FILE_OPEN_RESPONSE);
             break;
         }
-        case MPI_FILE_CLOSE_REQUEST:
+        case SPFS_MPI_FILE_CLOSE_REQUEST:
         {
-            response = new mpiFileCloseResponse(0, MPI_FILE_OPEN_RESPONSE);
+            response = new spfsMPIFileCloseResponse(0, SPFS_MPI_FILE_OPEN_RESPONSE);
             break;
         }
-        case MPI_FILE_DELETE_REQUEST:
+        case SPFS_MPI_FILE_DELETE_REQUEST:
         {
-            response = new mpiFileDeleteResponse(0, MPI_FILE_DELETE_RESPONSE);
+            response = new spfsMPIFileDeleteResponse(0, SPFS_MPI_FILE_DELETE_RESPONSE);
             break;
         }
-        case MPI_FILE_SET_SIZE_REQUEST:
+        case SPFS_MPI_FILE_SET_SIZE_REQUEST:
         {
-            response = new mpiFileSetSizeResponse(0,
-                                                  MPI_FILE_SET_SIZE_RESPONSE);
+            response = new spfsMPIFileSetSizeResponse(0,
+                                                  SPFS_MPI_FILE_SET_SIZE_RESPONSE);
             break;
         }
-        case MPI_FILE_PREALLOCATE_REQUEST:
+        case SPFS_MPI_FILE_PREALLOCATE_REQUEST:
         {
-            response = new mpiFilePreallocateResponse(
-                0, MPI_FILE_PREALLOCATE_RESPONSE);
+            response = new spfsMPIFilePreallocateResponse(
+                0, SPFS_MPI_FILE_PREALLOCATE_RESPONSE);
             break;
         }
-        case MPI_FILE_GET_SIZE_REQUEST:
+        case SPFS_MPI_FILE_GET_SIZE_REQUEST:
         {
-            response = new mpiFileGetSizeResponse(0,
-                                                  MPI_FILE_GET_SIZE_RESPONSE);
+            response = new spfsMPIFileGetSizeResponse(0,
+                                                  SPFS_MPI_FILE_GET_SIZE_RESPONSE);
             break;
         }
-        case MPI_FILE_GET_INFO_REQUEST:
+        case SPFS_MPI_FILE_GET_INFO_REQUEST:
         {
-            response = new mpiFileGetInfoResponse(0,
-                                                  MPI_FILE_GET_INFO_RESPONSE);
+            response = new spfsMPIFileGetInfoResponse(0,
+                                                  SPFS_MPI_FILE_GET_INFO_RESPONSE);
             break;
         }
-        case MPI_FILE_SET_INFO_REQUEST:
+        case SPFS_MPI_FILE_SET_INFO_REQUEST:
         {
-            response = new mpiFileSetInfoResponse(0, MPI_FILE_OPEN_RESPONSE);
+            response = new spfsMPIFileSetInfoResponse(0, SPFS_MPI_FILE_OPEN_RESPONSE);
             break;
         }
-        case MPI_FILE_READ_AT_REQUEST:
+        case SPFS_MPI_FILE_READ_AT_REQUEST:
         {
-            response = new mpiFileReadAtResponse(0, MPI_FILE_READ_AT_RESPONSE);
+            response = new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
             break;
         }
-        case MPI_FILE_READ_REQUEST:
+        case SPFS_MPI_FILE_READ_REQUEST:
         {
-            response = new mpiFileReadResponse(0, MPI_FILE_READ_RESPONSE);
+            response = new spfsMPIFileReadResponse(0, SPFS_MPI_FILE_READ_RESPONSE);
             break;
         }
-        case MPI_FILE_WRITE_AT_REQUEST:
+        case SPFS_MPI_FILE_WRITE_AT_REQUEST:
         {
-            response = new mpiFileWriteAtResponse(0,
-                                                  MPI_FILE_WRITE_AT_RESPONSE);
+            response = new spfsMPIFileWriteAtResponse(0,
+                                                  SPFS_MPI_FILE_WRITE_AT_RESPONSE);
             break;
         }
-        case MPI_FILE_WRITE_REQUEST:
+        case SPFS_MPI_FILE_WRITE_REQUEST:
         {
-            response = new mpiFileWriteResponse(0, MPI_FILE_WRITE_RESPONSE);
+            response = new spfsMPIFileWriteResponse(0, SPFS_MPI_FILE_WRITE_RESPONSE);
             break;
         }
     }

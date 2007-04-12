@@ -11,22 +11,22 @@ static void fsUnknownMessage(cMessage *req, cMessage *resp,
                      fsModule *client);
 static void fsProcessMessage(cMessage *req, cMessage *resp,
                      fsModule *client);
-static void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
+static void fsProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *mpireq,
                      cMessage *resp, fsModule *client );
-static void fsProcess_mpiFileCloseRequest( mpiFileCloseRequest *mpireq,
+static void fsProcess_mpiFileCloseRequest( spfsMPIFileCloseRequest *mpireq,
                      cMessage *resp, fsModule *client );
-static void fsProcess_mpiFileDeleteRequest( mpiFileDeleteRequest *mpireq,
+static void fsProcess_mpiFileDeleteRequest( spfsMPIFileDeleteRequest *mpireq,
                      cMessage *resp, fsModule *client );
-static void fsProcess_mpiFileSetSizeRequest( mpiFileSetSizeRequest *mpireq,
+static void fsProcess_mpiFileSetSizeRequest( spfsMPIFileSetSizeRequest *mpireq,
                      cMessage *resp, fsModule *client );
 static void fsProcess_mpiFilePreallocateRequest(
-                     mpiFilePreallocateRequest *mpireq, cMessage *resp,
+                     spfsMPIFilePreallocateRequest *mpireq, cMessage *resp,
                      fsModule *client);
-static void fsProcess_mpiFileGetSizeRequest( mpiFileGetSizeRequest *mpireq,
+static void fsProcess_mpiFileGetSizeRequest( spfsMPIFileGetSizeRequest *mpireq,
                      cMessage *resp, fsModule *client );
-static void fsProcess_mpiFileReadRequest( mpiFileReadRequest *mpireq,
+static void fsProcess_mpiFileReadRequest( spfsMPIFileReadRequest *mpireq,
                      cMessage *resp, fsModule *client );
-static void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *mpireq,
+static void fsProcess_mpiFileWriteRequest( spfsMPIFileWriteRequest *mpireq,
                      cMessage *resp, fsModule *client );
 /*
 static void fsProcess_fsCreateResponse( fsCreateResponse *msg );
@@ -96,57 +96,57 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
 { /* Call message specific hander {{{1 */
 		switch(req->kind())
 		{
-		case MPI_FILE_OPEN_REQUEST :
-			fsProcess_mpiFileOpenRequest((mpiFileOpenRequest *)req,
+		case SPFS_MPI_FILE_OPEN_REQUEST :
+			fsProcess_mpiFileOpenRequest((spfsMPIFileOpenRequest *)req,
                                       resp, client);
 			break;
-		case MPI_FILE_CLOSE_REQUEST :
-			fsProcess_mpiFileCloseRequest((mpiFileCloseRequest *)req,
+		case SPFS_MPI_FILE_CLOSE_REQUEST :
+			fsProcess_mpiFileCloseRequest((spfsMPIFileCloseRequest *)req,
                                       resp, client);
 			break;
-		case MPI_FILE_DELETE_REQUEST :
-			fsProcess_mpiFileDeleteRequest((mpiFileDeleteRequest *)req,
+		case SPFS_MPI_FILE_DELETE_REQUEST :
+			fsProcess_mpiFileDeleteRequest((spfsMPIFileDeleteRequest *)req,
                                       resp, client);
 			break;
-		case MPI_FILE_SET_SIZE_REQUEST :
-			fsProcess_mpiFileSetSizeRequest((mpiFileSetSizeRequest *)req,
+		case SPFS_MPI_FILE_SET_SIZE_REQUEST :
+			fsProcess_mpiFileSetSizeRequest((spfsMPIFileSetSizeRequest *)req,
                                       resp, client);
 			break;
-		case MPI_FILE_PREALLOCATE_REQUEST :
+		case SPFS_MPI_FILE_PREALLOCATE_REQUEST :
 			fsProcess_mpiFilePreallocateRequest((
-                                      mpiFilePreallocateRequest *)req,
+                                      spfsMPIFilePreallocateRequest *)req,
                                       resp, client);
 			break;
-		case MPI_FILE_GET_SIZE_REQUEST :
-			fsProcess_mpiFileGetSizeRequest((mpiFileGetSizeRequest *)req,
+		case SPFS_MPI_FILE_GET_SIZE_REQUEST :
+			fsProcess_mpiFileGetSizeRequest((spfsMPIFileGetSizeRequest *)req,
                                       resp, client);
 			break;
-		case MPI_FILE_READ_REQUEST :
-			fsProcess_mpiFileReadRequest((mpiFileReadRequest *)req,
+		case SPFS_MPI_FILE_READ_REQUEST :
+			fsProcess_mpiFileReadRequest((spfsMPIFileReadRequest *)req,
                                       resp, client);
 			break;
-		case MPI_FILE_WRITE_REQUEST :
-			fsProcess_mpiFileWriteRequest((mpiFileWriteRequest *)req,
+		case SPFS_MPI_FILE_WRITE_REQUEST :
+			fsProcess_mpiFileWriteRequest((spfsMPIFileWriteRequest *)req,
                                       resp, client);
 			break;
 		// response messages
-		case FS_CREATE_RESPONSE :
-		case FS_REMOVE_RESPONSE :
-		case FS_READ_RESPONSE :
-		case FS_WRITE_RESPONSE :
-		case FS_GET_ATTR_RESPONSE :
-		case FS_SET_ATTR_RESPONSE :
-		case FS_LOOKUP_PATH_RESPONSE :
-		case FS_CREATE_DIR_ENT_RESPONSE :
-		case FS_REMOVE_DIR_ENT_RESPONSE :
-		case FS_CHANGE_DIR_ENT_RESPONSE :
-		case FS_TRUNCATE_RESPONSE :
-		case FS_MAKE_DIR_RESPONSE :
-		case FS_READ_DIR_RESPONSE :
-		case FS_WRITE_COMPLETION_RESPONSE :
-		case FS_FLUSH_RESPONSE :
-		case FS_STAT_RESPONSE :
-		case FS_LIST_ATTR_RESPONSE :
+		case SPFS_CREATE_RESPONSE :
+		case SPFS_REMOVE_RESPONSE :
+		case SPFS_READ_RESPONSE :
+		case SPFS_WRITE_RESPONSE :
+		case SPFS_GET_ATTR_RESPONSE :
+		case SPFS_SET_ATTR_RESPONSE :
+		case SPFS_LOOKUP_PATH_RESPONSE :
+		case SPFS_CREATE_DIR_ENT_RESPONSE :
+		case SPFS_REMOVE_DIR_ENT_RESPONSE :
+		case SPFS_CHANGE_DIR_ENT_RESPONSE :
+		case SPFS_TRUNCATE_RESPONSE :
+		case SPFS_MAKE_DIR_RESPONSE :
+		case SPFS_READ_DIR_RESPONSE :
+		case SPFS_WRITE_COMPLETION_RESPONSE :
+		case SPFS_FLUSH_RESPONSE :
+		case SPFS_STAT_RESPONSE :
+		case SPFS_LIST_ATTR_RESPONSE :
 			fsProcessMessage((cMessage *)req->contextPointer(), req, client);
 			break;
 		default :
@@ -161,7 +161,7 @@ void fsUnknownMessage(cMessage *req, cMessage *resp, fsModule *client)
 
 // messages from user/cache
 
-void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
+void fsProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *mpireq,
                                    cMessage *resp, fsModule *client )
 { /* Handle MPI open request {{{1 */
     /* assume for the moment this is a response */
@@ -219,8 +219,8 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 	case FSM_Enter(LOOKUP):
 	{ /* LOOKUP STATE {{{2 */
 		/* send request to lookup file handle */
-		fsLookupPathRequest *req;
-		req = new fsLookupPathRequest(0, FS_LOOKUP_PATH_REQUEST);
+		spfsLookupPathRequest *req;
+		req = new spfsLookupPathRequest(0, SPFS_LOOKUP_PATH_REQUEST);
 		req->setContextPointer(mpireq);
 		/* copy path to look up */
 		req->setPath(filedes->path.substr(filedes->segstart[filedes->curseg],
@@ -230,9 +230,9 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 		client->send(req, client->fsNetOut);
 		break;
 	}
-	case FSM_Exit(LOOKUP):
-    {
-	    fsLookupPathResponse *fsresp = (fsLookupPathResponse *)resp;
+            case FSM_Exit(LOOKUP):
+            {
+                spfsLookupPathResponse *fsresp = (spfsLookupPathResponse *)resp;
         int i;
         /* save handles found */
         int handle_count = fsresp->getHandle_count();
@@ -242,7 +242,7 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
         }
 		switch (fsresp->getStatus())
 		{
-        case FS_FOUND :
+        case SPFS_FOUND :
 			filedes->handle = filedes->handles[filedes->curseg];
 			/* enter handle in cache */
 			filedes->fs->insertDir(filedes->path, filedes->handle);
@@ -264,11 +264,11 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 			    }
             }
             break;
-        case FS_PARTIAL :
+        case SPFS_PARTIAL :
 			/* set up next lookup */
 			FSM_Goto(state, LOOKUP);
             break;
-        case FS_NOTFOUND :
+        case SPFS_NOTFOUND :
             if (mpireq->getMode() & MPI_MODE_CREATE &&
                     filedes->curseg == filedes->segcnt - 1)
                 /* we found parent dir */
@@ -286,9 +286,9 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
     { /* CREATE_META STATE {{{2 */
         int metaserver;
         /* create metadata object */
-        fsCreateRequest *req;
+        spfsCreateRequest *req;
 	    /* build a request message */
-	    req = new fsCreateRequest(0, FS_CREATE_REQUEST);
+	    req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
 	    req->setContextPointer(mpireq);
         /* hash path to meta server number */
 		metaserver = filedes->fs->fsHashPath(mpireq->getFileName());
@@ -300,8 +300,8 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
     }
 	case FSM_Exit(CREATE_META):
     {
-        fsCreateResponse *fsresp;
-        fsresp = (fsCreateResponse *)resp;
+        spfsCreateResponse *fsresp;
+        fsresp = (spfsCreateResponse *)resp;
         filedes->handle = fsresp->getHandle();
         filedes->metaData.metaHandle = filedes->handle;
         FSM_Goto(state, CREATE_DATA);
@@ -311,18 +311,18 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 	case FSM_Enter(CREATE_DATA):
     { /* CREATE_DATA STATE {{{2 */
 		/* send request to create data file */
-        fsCreateRequest *req;
+        spfsCreateRequest *req;
         int numservers;
         int snum;
 	    /* build a request message */
-	    req = new fsCreateRequest(0, FS_CREATE_REQUEST);
+	    req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
 	    req->setContextPointer(mpireq);
         numservers = filedes->fs->fsDefaultNumServers();
 	    /* send request to each server */
 	    for (snum = 0; snum < numservers; snum++)
 	    {
             int dataserver;
-		    fsCreateRequest *newreq = (fsCreateRequest *)req->dup();
+            spfsCreateRequest *newreq = (spfsCreateRequest *)req->dup();
             newreq->setServerNo(snum);
             /* randomly select a server from 0 to S-1 */
 		    dataserver = filedes->fs->selectServer();
@@ -342,8 +342,8 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
     {
         /* handle create data object response */
         int respcnt;
-        fsCreateResponse *fsresp;
-        fsresp = (fsCreateResponse *)resp;
+        spfsCreateResponse *fsresp;
+        fsresp = (spfsCreateResponse *)resp;
         respcnt = mpireq->getResponses() - 1;
         /* record the new data object handle in metadata */
         filedes->handles[fsresp->getServerNo()] = fsresp->getHandle();
@@ -365,8 +365,8 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 	case FSM_Enter(WRITE_ATTR):
 	{ /* WRITE_ATTR STATE {{{2 */
 	    /* send request to write metadata */
-		fsSetAttrRequest *req;
-		req = new fsSetAttrRequest(0, FS_SET_ATTR_REQUEST);
+		spfsSetAttrRequest *req;
+		req = new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
 		req->setContextPointer(mpireq);
 		req->setHandle(filedes->handle);
         req->setMeta(filedes->metaData);
@@ -375,8 +375,8 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 	}
 	case FSM_Exit(WRITE_ATTR):
 	{
-	    fsSetAttrResponse *fsresp;
-		fsresp = (fsSetAttrResponse *)resp;
+	    spfsSetAttrResponse *fsresp;
+		fsresp = (spfsSetAttrResponse *)resp;
         /* do anything ?? */
 		FSM_Goto(state, WRITE_DIRENT);
 		/* free get attr resp message */
@@ -385,8 +385,8 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 	} /* }}}2 */
 	case FSM_Enter(WRITE_DIRENT):
 	{ /* WRITE_DIRENT STATE {{{2 */
-        fsCreateDirEntRequest *req;
-        req = new fsCreateDirEntRequest(0, FS_CREATE_DIR_ENT_REQUEST);
+        spfsCreateDirEntRequest *req;
+        req = new spfsCreateDirEntRequest(0, SPFS_CREATE_DIR_ENT_REQUEST);
         req->setContextPointer(mpireq);
         /* this addresses the server with the dir on it */
         req->setHandle(filedes->handles[filedes->curseg]);
@@ -402,8 +402,8 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 	}
 	case FSM_Exit(WRITE_DIRENT):
 	{
-	    fsCreateDirEntResponse *fsresp;
-		fsresp = (fsCreateDirEntResponse *)resp;
+	    spfsCreateDirEntResponse *fsresp;
+		fsresp = (spfsCreateDirEntResponse *)resp;
         /* do anything ?? */
 		FSM_Goto(state, FINISH);
 		/* free create dirent response message */
@@ -413,8 +413,8 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 	case FSM_Enter(READ_ATTR):
 	{ /* READ_ATTR STATE {{{2 */
 	    /* send request to read metadata */
-		fsGetAttrRequest *req;
-		req = new fsGetAttrRequest(0, FS_GET_ATTR_REQUEST);
+		spfsGetAttrRequest *req;
+		req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
 		req->setContextPointer(mpireq);
 		req->setHandle(filedes->handle);
 		client->send(req, client->fsNetOut);
@@ -422,8 +422,8 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 	}
 	case FSM_Exit(READ_ATTR):
 	{
-	    fsGetAttrResponse *fsresp;
-		fsresp = (fsGetAttrResponse *)resp;
+	    spfsGetAttrResponse *fsresp;
+		fsresp = (spfsGetAttrResponse *)resp;
         /* install attributes into attribute cache */
 		FSM_Goto(state, FINISH);
 		/* free get attr resp message */
@@ -433,8 +433,8 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
 	case FSM_Enter(FINISH):
 	{ /* FINISH STATE {{{2 */
 		/* return descriptor to caller */
-		mpiFileOpenResponse *mpiresp;
-		mpiresp = new mpiFileOpenResponse(0, MPI_FILE_OPEN_RESPONSE);
+		spfsMPIFileOpenResponse *mpiresp;
+		mpiresp = new spfsMPIFileOpenResponse(0, SPFS_MPI_FILE_OPEN_RESPONSE);
 		mpiresp->setContextPointer(mpireq->contextPointer());
 		mpiresp->setFiledes(filedes);
 		client->send(mpiresp, client->fsMpiOut);
@@ -449,33 +449,33 @@ void fsProcess_mpiFileOpenRequest( mpiFileOpenRequest *mpireq,
         mpireq->setState(state);
 }  /* }}}1 */
 
-void fsProcess_mpiFileCloseRequest( mpiFileCloseRequest *mpireq,
+void fsProcess_mpiFileCloseRequest( spfsMPIFileCloseRequest *mpireq,
                                       cMessage *resp, fsModule *client )
 {
 	/* free open file descriptor */
 }
 
-void fsProcess_mpiFileDeleteRequest( mpiFileDeleteRequest *mpireq,
+void fsProcess_mpiFileDeleteRequest( spfsMPIFileDeleteRequest *mpireq,
                                       cMessage *resp, fsModule *client )
 {
 }
 
-void fsProcess_mpiFileSetSizeRequest( mpiFileSetSizeRequest *mpireq,
+void fsProcess_mpiFileSetSizeRequest( spfsMPIFileSetSizeRequest *mpireq,
                                       cMessage *resp, fsModule *client )
 {
 }
 
-void fsProcess_mpiFilePreallocateRequest( mpiFilePreallocateRequest *mpireq,
+void fsProcess_mpiFilePreallocateRequest( spfsMPIFilePreallocateRequest *mpireq,
                                       cMessage *resp, fsModule *client )
 {
 }
 
-void fsProcess_mpiFileGetSizeRequest( mpiFileGetSizeRequest *mpireq,
+void fsProcess_mpiFileGetSizeRequest( spfsMPIFileGetSizeRequest *mpireq,
                                       cMessage *resp, fsModule *client )
 {
 }
 
-void fsProcess_mpiFileReadRequest( mpiFileReadRequest *mpireq,
+void fsProcess_mpiFileReadRequest( spfsMPIFileReadRequest *mpireq,
                                    cMessage *resp, fsModule *client )
 {
 /* process MPI file read request {{{1 */
@@ -491,75 +491,76 @@ void fsProcess_mpiFileReadRequest( mpiFileReadRequest *mpireq,
     state = mpireq->getState();
     FSM_Switch (state)
     {
-    case FSM_Exit(INIT) :
+        case FSM_Exit(INIT) :
 	    filedes = (FSOpenFile *)mpireq->getFiledes();
 	    count = mpireq->getCount();
 	    dtype = mpireq->getDtype();
-        FSM_Goto(state, READ);
-        break;
-    case FSM_Enter(READ) :
-    { /* READ STATE {{{2 */
-	    fsReadRequest *req;
-	    /* build a request  */
-	    req = new fsReadRequest(0, FS_READ_REQUEST);
-	    req->setContextPointer(mpireq);
-	    req->setServerCnt(filedes->metaData.dataHandles.size());
-	    req->setOffset(filedes->filePtr);
-	    req->setCount(count);
-	    req->setDtype(dtype);
-	    /* send request to each server */
+            FSM_Goto(state, READ);
+            break;
+        case FSM_Enter(READ) :
+        {
+            /* READ STATE {{{2 */
+            spfsReadRequest *req;
+            /* build a request  */
+            req = new spfsReadRequest(0, SPFS_READ_REQUEST);
+            req->setContextPointer(mpireq);
+            req->setServerCnt(filedes->metaData.dataHandles.size());
+            req->setOffset(filedes->filePtr);
+            req->setCount(count);
+            req->setDtype(dtype);
+            /* send request to each server */
 	    for (snum = 0; snum < filedes->metaData.dataHandles.size(); snum++)
 	    {
-		    if (filedes->fs->serverNotUsed(snum, filedes->metaData.dist,
-						 count, dtype))
-			    /* don't send if no data on server */
-			    continue;
-		    else
-		    {
-			    fsReadRequest *newreq = (fsReadRequest *)req->dup();
-			    newreq->setHandle(filedes->metaData.dataHandles[snum]);
-			    req->setServerNo(snum);
-			    client->send(newreq, client->fsNetOut);
-		    }
+                if (filedes->fs->serverNotUsed(snum, filedes->metaData.dist,
+                                               count, dtype))
+                    /* don't send if no data on server */
+                    continue;
+                else
+                {
+                    spfsReadRequest *newreq = (spfsReadRequest *)req->dup();
+                    newreq->setHandle(filedes->metaData.dataHandles[snum]);
+                    req->setServerNo(snum);
+                    client->send(newreq, client->fsNetOut);
+                }
 	    }
-        /* free req */
-        delete req;
-        /* indicates how many responses we are waiting for */
-        mpireq->setResponses(filedes->metaData.dataHandles.size());
-        break;
-    }
-    case FSM_Exit(READ) :
-    {
-        int respcnt;
-        /* handle read response */
-        fsReadResponse *fsresp = (fsReadResponse *)resp;
-        respcnt = mpireq->getResponses() - 1;
-        if (respcnt <= 0)
-        {
-            //void *mpi_context;
-            /* done with this request */
-            mpiFileReadResponse *mpiresp;
-            mpiresp = new mpiFileReadResponse(0, MPI_FILE_READ_RESPONSE);
-            mpiresp->setContextPointer(mpireq->contextPointer());
-            mpiresp->setIsSuccessful(true);
-            mpiresp->setBytes_read(fsresp->getBytes_read());
-            client->send(mpiresp, client->fsMpiOut);
+            /* free req */
+            delete req;
+            /* indicates how many responses we are waiting for */
+            mpireq->setResponses(filedes->metaData.dataHandles.size());
+            break;
         }
-        else
+        case FSM_Exit(READ) :
         {
-            /* more responses comming */
-            mpireq->setResponses(respcnt);
-        }
-        delete resp;
-        break;
-    } /* }}}2 */
-    default :
+            int respcnt;
+            /* handle read response */
+            spfsReadResponse *fsresp = (spfsReadResponse *)resp;
+            respcnt = mpireq->getResponses() - 1;
+            if (respcnt <= 0)
+            {
+                //void *mpi_context;
+                /* done with this request */
+                spfsMPIFileReadResponse *mpiresp;
+                mpiresp = new spfsMPIFileReadResponse(0, SPFS_MPI_FILE_READ_RESPONSE);
+                mpiresp->setContextPointer(mpireq->contextPointer());
+                mpiresp->setIsSuccessful(true);
+                mpiresp->setBytes_read(fsresp->getBytes_read());
+                client->send(mpiresp, client->fsMpiOut);
+            }
+            else
+            {
+                /* more responses comming */
+                mpireq->setResponses(respcnt);
+            }
+            delete resp;
+            break;
+        } /* }}}2 */
+        default :
         break;
     }
     mpireq->setState(state);
 } /* }}}1 */
 
-void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *mpireq,
+void fsProcess_mpiFileWriteRequest( spfsMPIFileWriteRequest *mpireq,
                                    cMessage *resp, fsModule *client )
 {
     /* process MPI file read request {{{1 */
@@ -583,9 +584,9 @@ void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *mpireq,
         break;
     case FSM_Enter(WRITE) :
     { /* WRITE STATE {{{2 */
-	    fsWriteRequest *req;
+	    spfsWriteRequest *req;
 	    /* build a request  */
-	    req = new fsWriteRequest(0, FS_WRITE_REQUEST);
+	    req = new spfsWriteRequest(0, SPFS_WRITE_REQUEST);
 	    req->setContextPointer(mpireq);
 	    req->setServer_cnt(filedes->metaData.dataHandles.size());
 	    req->setOffset(filedes->filePtr);
@@ -600,7 +601,7 @@ void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *mpireq,
 			    continue;
 		    else
 		    {
-			    fsWriteRequest *newreq = (fsWriteRequest *)req->dup();
+			    spfsWriteRequest *newreq = (spfsWriteRequest *)req->dup();
 			    newreq->setHandle(filedes->metaData.dataHandles[snum]);
 			    req->setServer_nr(snum);
 			    client->send(newreq, client->fsNetOut);
@@ -616,14 +617,14 @@ void fsProcess_mpiFileWriteRequest( mpiFileWriteRequest *mpireq,
     {
         int respcnt;
         /* handle read response */
-        fsWriteResponse *fsresp = (fsWriteResponse *)resp;
+        spfsWriteResponse *fsresp = (spfsWriteResponse *)resp;
         respcnt = mpireq->getResponses() - 1;
         if (respcnt <= 0)
         {
             //void *mpi_context;
             /* done with this request */
-            mpiFileWriteResponse *mpiresp;
-            mpiresp = new mpiFileWriteResponse(0, MPI_FILE_WRITE_RESPONSE);
+            spfsMPIFileWriteResponse *mpiresp;
+            mpiresp = new spfsMPIFileWriteResponse(0, SPFS_MPI_FILE_WRITE_RESPONSE);
             mpiresp->setContextPointer(mpireq->contextPointer());
             mpiresp->setIsSuccessful(true);
             mpiresp->setBytes_written(fsresp->getBytes_written());
