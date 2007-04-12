@@ -3,5 +3,3 @@ config.log
 config.status
 lib
 Makefile
-src/messages/*_m.h
-src/messages/*_m.cc
