@@ -1,15 +1,8 @@
 //
-// User request messages for MPI IO
+// BMI wrapper messages for transporting data from the client to server
 //
 
-// allow a pointer field in a message 
-cplusplus {{
-	typedef void *voidPtr;
-}}
-
-class noncobject voidPtr;
-
-enum BMIMessageTypes
+enum spfsBMIMessageTypes
 {
     SPFS_BMI_CLIENT_SEND = 401;
     SPFS_BMI_CLIENT_RECV = 402;
