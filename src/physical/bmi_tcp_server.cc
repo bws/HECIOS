@@ -184,7 +184,7 @@ void BMITcpServer::handleMessage(cMessage* msg)
         }
 
         // Encapsulate the file system response and send it to the client
-        BMIServerSendMessage* pkt = new BMIServerSendMessage();
+        spfsBMIServerSendMessage* pkt = new spfsBMIServerSendMessage();
         pkt->encapsulate(response);
         pkt->setByteLength(256);
         pkt->setUniqueId(ev.getUniqueNumber());

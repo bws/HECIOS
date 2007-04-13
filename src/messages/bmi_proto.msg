@@ -18,19 +18,19 @@ enum BMIMessageTypes
 };
 
 // The abstract base class for all BMI Messages
-message BMIMessage
+message spfsBMIMessage
 {
     fields:
         unsigned long uniqueId;
 };
 
 // Message sent from a BMI client 
-message BMIClientSendMessage extends BMIMessage
+message spfsBMIClientSendMessage extends spfsBMIMessage
 {
 };
 
 // Message sent from a BMI server 
-message BMIServerSendMessage extends BMIMessage
+message spfsBMIServerSendMessage extends spfsBMIMessage
 {
 };
 

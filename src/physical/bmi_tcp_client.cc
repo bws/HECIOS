@@ -100,7 +100,7 @@ void BMITcpClient::handleMessage(cMessage* msg)
                 TCPSocket* sock = getConnectedSocket(handle);
                 
                 // Encapsulate the domain message and send via TCP
-                BMIClientSendMessage* pkt = new BMIClientSendMessage();
+                spfsBMIClientSendMessage* pkt = new spfsBMIClientSendMessage();
                 pkt->encapsulate(msg);
                 pkt->setByteLength(256);
                 pkt->setUniqueId(ev.getUniqueNumber());
