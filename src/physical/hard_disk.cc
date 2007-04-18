@@ -10,11 +10,9 @@
 #include <string.h>
 #include "hard_disk.h"
 
-
-AbstractDisk::
-    AbstractDisk( const char *namestr, cModule *parent, size_t stack):
-cSimpleModule( namestr, parent, stack),
-queue("queue")
+AbstractDisk::AbstractDisk()
+    : cSimpleModule(),
+      queue("queue")
 {
   diskAccess = new cOutVector( "disk-accesses", 2 );
   AccessStdDev = new cStdDev( "disk-access-time-stddev" );
@@ -38,29 +36,6 @@ void AbstractDisk::initialize()
 
 void AbstractDisk::finish()
 {
-  ev << className() << ": End of Simulation" << endl;
-  // ev << className() << ": Access Time Statistics" << endl;
-  // ev << className() << ": Quantity: "  << AccessStdDev->samples() << endl;
-  // ev << className() << ": Minimum:  "  << AccessStdDev->min() << endl;
-  // ev << className() << ": Maximum:  "  << AccessStdDev->max() << endl;
-  // ev << className() << ": Mean:     "  << AccessStdDev->mean() << endl;
-  // ev << className() << ": Variance: "  << AccessStdDev->variance() << endl;
-  // ev << className() << ": Standard Deviation: " <<
-  //       AccessStdDev->stddev() << endl;
-
-  // ev << className() << ": Seek Distance Statistics" << endl;
-  // ev << className() << ": Total:    " << total_distance << endl;
-  // ev << className() << ": Quantity: " << SeekStdDev->samples() << endl;
-  // ev << className() << ": Minimum:  " << SeekStdDev->min() << endl;
-  // ev << className() << ": Maximum:  " << SeekStdDev->max() << endl;
-  // ev << className() << ": Mean:     " << SeekStdDev->mean() << endl;
-  // ev << className() << ": Variance: " << SeekStdDev->variance() << endl;
-  // ev << className() << ": Standard Deviation: " <<
-  //       SeekStdDev->stddev() << endl;
-
-  AccessStdDev->recordScalar("Disk Access Time");
-  SeekStdDev->recordScalar("Disk Seek Distance");
-  recordScalar( "Disk Total Seek Distance", total_distance );
 }
 
 void AbstractDisk::handleMessage(cMessage *msg)
@@ -113,9 +88,8 @@ void AbstractDisk::handleMessage(cMessage *msg)
 
 Define_Module_Like( ACPDisk, APhysicalDisk )
 
-ACPDisk::
-    ACPDisk( const char *namestr, cModule *parent, size_t stack):
-AbstractDisk( namestr, parent, stack)
+ACPDisk::ACPDisk()
+    : AbstractDisk()
 {
 }
 
@@ -134,9 +108,8 @@ double ACPDisk::service(cMessage *msg)
 
 Define_Module_Like( HP97560Disk, APhysicalDisk )
 
-HP97560Disk::
-    HP97560Disk( const char *namestr, cModule *parent, size_t stack):
-AbstractDisk( namestr, parent, stack)
+HP97560Disk::HP97560Disk()
+    : AbstractDisk()
 {
   last_cylinder = 0;
   last_time = 0;
@@ -248,3 +221,113 @@ double HP97560Disk::service(cMessage *msg)
   return totalDelay;
 }
 
+
+//
+// Create BasicModelDisk module -- this not code originally developed as part
+// of FSS
+//
+Define_Module(BasicModelDisk);
+
+void BasicModelDisk::handleMessage(cMessage* msg)
+{
+    AbstractDisk::handleMessage(msg);
+}
+
+void BasicModelDisk::initialize()
+{
+    fixedControllerReadOverheadSecs_ =
+        par("fixedControllerReadOverheadSecs").doubleValue();
+    fixedControllerWriteOverheadSecs_ =
+        par("fixedControllerWriteOverheadSecs").doubleValue();
+    trackSwitchTimeSecs_ = par("trackSwitchTimeSecs").doubleValue();
+    averageReadSeekSecs_ = par("averageReadSeekSecs").doubleValue();
+    averageWriteSeekSecs_ = par("averageWriteSeekSecs").doubleValue();
+    numCylinders_ = par("numCylinders").longValue();
+    tracksPerCylinder_ = par("tracksPerCylinder").longValue();
+    sectorsPerTrack_ = par("sectorsPerTrack").longValue();
+    rpms_ = par("rpms").longValue();
+
+    sectorsPerCylinder_ = sectorsPerTrack_ * tracksPerCylinder_;
+    numSectors_ = sectorsPerCylinder_ * numCylinders_;
+    timePerRevolution_ = 1.0 / rpms_;
+    timePerSector_ = timePerRevolution_ / sectorsPerCylinder_;
+}
+
+double BasicModelDisk::service(cMessage* msg)
+{
+    // Message data
+    bool isRead = msg->par("is_read").boolValue();
+    
+    // Service delay
+    double totalDelay = 0.0;
+
+    // Determine physical destination 
+    long destBlock = ((cPar&)msg->par("block")).longValue();
+    long destCylinder = destBlock / sectorsPerCylinder_;
+    long destSector = destBlock % sectorsPerCylinder_;
+
+    // Account for fixed controller overhead
+    double delay = 0.0;
+    if ( msg->par("is_read").boolValue() )
+    {
+      delay = fixedControllerReadOverheadSecs_;
+    }
+    else
+    {
+      delay = fixedControllerWriteOverheadSecs_;
+    }
+    totalDelay += delay;
+
+    // get to the right cylinder
+    long cylindersToMove = abs(destCylinder - lastCylinder_);
+    if (0 != cylindersToMove)
+    {
+        // Simply use the average seek time to calculate cylinder location
+        // (a bad choice, but arm acceleration data is not currently available
+        // this is a serious departure from the paper's model, possibly leading
+        // to double digit inaccuracies)
+        if (isRead)
+            totalDelay += averageReadSeekSecs_;
+        else
+            totalDelay += averageWriteSeekSecs_;
+    }
+
+    // Account for the rotational delay
+    long sectorsToMove = 0;
+    long currentSector =
+        static_cast<long>(fmod(simTime(), timePerRevolution_)/timePerSector_);
+    if ( currentSector != destSector )
+    {
+        if ( currentSector < destSector )
+        {
+            sectorsToMove = destSector - currentSector;
+        }
+        else
+        {
+            // Must wrap around to sector 0
+            sectorsToMove  = sectorsPerCylinder_ - currentSector;
+            sectorsToMove += destSector;
+        }
+        totalDelay += sectorsToMove * timePerSector_;
+    }
+    
+    // Account for movement between tracks
+    if ( sectorsToMove > 0 )
+    {
+        long currentTrack = currentSector / sectorsPerTrack_;
+        long destTrack = destSector / sectorsPerTrack_;
+        if ( currentTrack != destTrack )
+        {
+            long numTracks = abs(destTrack - currentTrack);
+            totalDelay += numTracks * trackSwitchTimeSecs_;
+        }
+    }
+
+    // Add delay to transfer the data off the media
+    totalDelay += timePerSector_;
+
+    // Update disk state
+    lastCylinder_ = destCylinder;
+    
+    return totalDelay;
+}

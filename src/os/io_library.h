@@ -11,6 +11,7 @@
  */
 
 #include <omnetpp.h>
+class NativeFileSystem;
 
 /**
  * Abstract base class for I/O library models
@@ -18,14 +19,6 @@
 class AbstractIOLibrary : public cSimpleModule
 {
   public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    AbstractIOLibrary(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
 
     cQueue queue;
 
@@ -49,15 +42,40 @@ class AbstractIOLibrary : public cSimpleModule
  */
 class PassThroughIOLibrary : public AbstractIOLibrary
 {
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    PassThroughIOLibrary(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+};
+
+/**
+ *
+ */
+class PFSIOLibrary : public AbstractIOLibrary
+{
+public:
+
+    /** */
+    virtual void initialize();
+    
+    /** Translate messages from FSS style to hecios style messages */
+    virtual void handleMessage(cMessage *msg);
+
+private:
+
+    /** in gate connection */
+    int inGateId_;
+
+    /** out gate connection */
+    int outGateId_;
+
+    /** Disk model */
+    NativeFileSystem* localFileSystem_;
 };
 
 #endif
+
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=8 sts=4 sw=4 expandtab
+ */

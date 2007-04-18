@@ -7,7 +7,6 @@
  * http://www.omnetpp.org/doc/FSS-doc/neddoc/index.html
  */
 
-#include <string.h>
 #include "file_system.h"
 
 AbstractFileSystem::AbstractFileSystem( const char *namestr, cModule *parent, size_t stack):
@@ -45,3 +44,31 @@ PassThroughFileSystem::
 AbstractFileSystem(namestr, parent, stack)
 {
 }
+
+
+Define_Module_Like(NativeFileSystem, AFileSystem);
+
+std::vector<long> NativeFileSystem::getBlocks(FSHandle handle,
+                                              size_t offset,
+                                              size_t bytes)
+{
+    std::vector<long> blocks;
+
+    // for now assume all files start at block zero
+    long startBlock = offset % BLOCK_SIZE_BYTES;
+    long numBlocks = bytes % BLOCK_SIZE_BYTES;
+    for (int i = startBlock; i < numBlocks; i++)
+    {
+        blocks.push_back(i);
+    }
+    return blocks;
+}
+
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=8 sts=4 sw=4 expandtab
+ */

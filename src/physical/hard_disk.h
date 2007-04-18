@@ -11,7 +11,7 @@
  */
 
 /*
- *  $Id: hard_disk.h,v 1.1 2007/04/05 22:57:17 bradles Exp $
+ *  $Id: hard_disk.h,v 1.2 2007/04/18 15:00:48 bradles Exp $
  */
 
 #include <omnetpp.h>
@@ -29,12 +29,32 @@ class AbstractDisk : public cSimpleModule
      *  @param parent (in) is the parent of this module
      *  @param stack (in) is the size in bytes of the stack for this module
      */
-    AbstractDisk(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    AbstractDisk();
 
     /**
      *  This is the destructor for this simulation module.
      */
-    ~AbstractDisk();
+    virtual ~AbstractDisk();
+
+    /**
+     *  This is the initialization routine for this simulation module.
+     */
+    virtual void initialize();
+
+    /**
+     *  This is the finalization routine for this simulation module.
+     */
+    virtual void finish();
+
+    /**
+     *  This is the finalization routine for this simulation module.
+     */
+    virtual void handleMessage(cMessage *msg);
+
+protected:
+    
+    // hook functions to (re)define behaviour
+    virtual double service(cMessage *msg) = 0;
 
     cMessage *msgServiced;
     cMessage *endServiceMsg;
@@ -53,23 +73,6 @@ class AbstractDisk : public cSimpleModule
     cMessage *cDiskDelayMessage;
     cMessage *cPendingRequestMessage;
 
-    /**
-     *  This is the initialization routine for this simulation module.
-     */
-    virtual void initialize();
-
-    /**
-     *  This is the finalization routine for this simulation module.
-     */
-    virtual void finish();
-
-    /**
-     *  This is the finalization routine for this simulation module.
-     */
-    virtual void handleMessage(cMessage *msg);
-
-    // hook functions to (re)define behaviour
-    virtual double service(cMessage *msg) = 0;
 };
 
 /**
@@ -85,7 +88,7 @@ class ACPDisk : public AbstractDisk
      *  @param parent (in) is the parent of this module
      *  @param stack (in) is the size in bytes of the stack for this module
      */
-    ACPDisk(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    ACPDisk();
 
     /**
      *  This is the destructor for this simulation module.
@@ -147,10 +150,65 @@ class HP97560Disk : public AbstractDisk
      *  @param parent (in) is the parent of this module
      *  @param stack (in) is the size in bytes of the stack for this module
      */
-    HP97560Disk(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    HP97560Disk();
 
     virtual double service(cMessage *msg);
 };
 
+/**
+ * Hard disk drive with the performance characteristics of a Hitachi Deskstar
+ * T7K500 with NCQ (500GB SATA) released in 2006.  Performance characteristics
+ * downloaded from Hitachi as t7k500_sp.pdf
+ *
+ * http://www.hitachigst.com/tech/techlib.nsf/products/Deskstar_T7K500
+ */
+class BasicModelDisk : public AbstractDisk
+{
+public:
+
+    /** Initialize Omnet model */
+    virtual void initialize();
+
+protected:
+    
+    /** Concrete implementation of service method */
+    virtual double service(cMessage* msg);
+
+    virtual void handleMessage(cMessage* msg);
+    
+private:
+
+    // Data descibing disk characteristics
+    double fixedControllerReadOverheadSecs_;
+    double fixedControllerWriteOverheadSecs_;
+    double trackSwitchTimeSecs_;
+    double averageReadSeekSecs_;
+    double averageWriteSeekSecs_;
+    long numCylinders_;
+    long tracksPerCylinder_;
+    long sectorsPerTrack_;
+    long rpms_;
+
+    // Data derived from disk characteristics
+    long sectorsPerCylinder_;
+    long numSectors_;
+    double timePerRevolution_;
+    double timePerSector_;
+
+    // Disk state
+    long lastCylinder_;
+    double lastTime_;
+};
+
 #endif
+
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=8 sts=4 sw=4 expandtab
+ */
+
 

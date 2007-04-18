@@ -21,4 +21,32 @@ simple APhysicalDisk
     out: out;
 endsimple
 
+//
+// Hard Disk Model simplifed from the model used in HP97560Disk
+//
+simple BasicModelDisk
+    parameters:
+        fixedControllerReadOverheadSecs: const,
+        fixedControllerWriteOverheadSecs: const,
+        trackSwitchTimeSecs: const,
+        averageReadSeekSecs: const,
+        averageWriteSeekSecs: const,
+        numCylinders: const,
+        tracksPerCylinder: const,
+        sectorsPerTrack: const,
+        rpms: const;
 
+    gates:
+        in: in;
+        out: out;
+endsimple  
+
+
+//
+// Local variables:
+//  c-indent-level: 4
+//  c-basic-offset: 4
+// End:
+//
+// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+//

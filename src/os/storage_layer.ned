@@ -41,7 +41,7 @@ module StorageLayer
 
         accessManager: accessManagerType like AAccessManager;
 
-        hardDisk: physicalDiskType like APhysicalDisk;
+        hardDisk: physicalDiskType like BasicModelDisk;
 
     connections:
 
