@@ -41,6 +41,7 @@ Define_Module_Like(PFSIOLibrary, AIOLibrary);
 void PFSIOLibrary::initialize()
 {
     inGateId_ = gate("in")->id();
+    requestGateId_ = gate("request")->id();
     outGateId_ = gate("out")->id();
     localFileSystem_ = dynamic_cast<NativeFileSystem*>(
         parentModule()->submodule("fileSystem"));
@@ -71,6 +72,7 @@ void PFSIOLibrary::handleMessage(cMessage* msg)
                     fssReadReq->addPar("priority").setLongValue(-1);
                     fssReadReq->addPar("is_read").setBoolValue(true);
                     fssReadReq->addPar("jobId").setLongValue(read->getJobId());
+                    send(fssReadReq, requestGateId_);
                 }
                 break;
             }
@@ -93,6 +95,7 @@ void PFSIOLibrary::handleMessage(cMessage* msg)
                     fssWriteReq->addPar("is_read").setBoolValue(false);
                     fssWriteReq->addPar("jobId").setLongValue(
                         write->getJobId());
+                    send(fssWriteReq, requestGateId_);
                 }
                 break;
             }
@@ -102,9 +105,22 @@ void PFSIOLibrary::handleMessage(cMessage* msg)
     }
     else
     {
-        // Translate message into an OS message
-        //cMessage* readResp =
-        //    new spfsOSFileReadResponse(0, SPFS_OS_FILE_READ_RESPONSE);
+        // Translate outgoing message into an OS message
+        bool isRead = msg->par("is_read").boolValue();
+        if (isRead)
+        {
+            spfsOSFileReadResponse* readResp =
+                new spfsOSFileReadResponse(0, SPFS_OS_FILE_READ_RESPONSE);
+            readResp->setFileHandle(0);
+            send(readResp, outGateId_);
+        }
+        else
+        {
+            spfsOSFileWriteResponse* writeResp =
+                new spfsOSFileWriteResponse(0, SPFS_OS_FILE_WRITE_RESPONSE);
+            writeResp->setFileHandle(0);
+            send(writeResp, outGateId_);
+        }
     }
 
     // Cleanup

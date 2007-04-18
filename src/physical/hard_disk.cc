@@ -17,7 +17,6 @@ AbstractDisk::AbstractDisk()
   diskAccess = new cOutVector( "disk-accesses", 2 );
   AccessStdDev = new cStdDev( "disk-access-time-stddev" );
   SeekStdDev = new cStdDev( "disk-seek-distance-stddev" );
-  cDiskDelayMessage = new cMessage( "disk-operation-delay" );
 }
 
 AbstractDisk::~AbstractDisk()
@@ -29,6 +28,7 @@ AbstractDisk::~AbstractDisk()
 
 void AbstractDisk::initialize()
 {
+  cDiskDelayMessage = new cMessage( "disk-operation-delay" );
   current_block = 0;
   total_distance = 0;
   start_time = simTime();
@@ -36,6 +36,7 @@ void AbstractDisk::initialize()
 
 void AbstractDisk::finish()
 {
+    delete cDiskDelayMessage;
 }
 
 void AbstractDisk::handleMessage(cMessage *msg)

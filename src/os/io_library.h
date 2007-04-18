@@ -65,6 +65,9 @@ private:
     /** out gate connection */
     int outGateId_;
 
+    /** request gate connection */
+    int requestGateId_;
+
     /** Disk model */
     NativeFileSystem* localFileSystem_;
 };

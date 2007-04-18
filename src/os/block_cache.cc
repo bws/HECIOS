@@ -32,7 +32,6 @@ void AbstractCache::finish()
   double hit_ratio;
 
   hit_ratio = (double) number_of_hits / (double) number_of_misses;
-  ev << className() << ": End of Simulation" << endl;
 
   // ev << className() << ": Statistics" << endl;
   // ev << className() << ": Accesses: "           << number_of_requests << endl;
