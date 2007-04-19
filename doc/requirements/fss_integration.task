@@ -1,0 +1,15 @@
+Intro:
+  The FSS code needs to be integrated into our tree.
+
+Status: In process(bradles)
+
+Responsibilities:
+  The FSS code needs to be tested for correctness at some level.  It also
+needs to be extended so that the block cache is not quite so resource
+intensive.
+
+Detailed Requirements:
+  Testing the code will be fairly involved.  OTOH, changing the cache 
+structure so that it evicts when the number_of_elements is full rather than
+simply searching the whole thing for a dirty element will be faster and way
+less resource intensive during startup.

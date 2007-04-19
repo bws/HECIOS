@@ -1,0 +1,15 @@
+Intro:
+  The application code needs the ability to communicate.
+
+Status: Unassigned
+
+Responsibilities:
+  The application needs to provide support for client generated 
+synchronization primitives.  At the very least an MPI Barrier call.  This
+will allow cache synchronization to occur using relaxed consistency semantics.
+
+Detailed Requirements:
+  I doubt this needs to use an actual ethernet transport.  It would be
+technically feasible, but then a correct tree based all to all algorithm
+would need to be implemented also.  At some point a tree based all to all
+will be neccesary.
