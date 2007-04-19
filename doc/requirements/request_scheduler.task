@@ -1,0 +1,32 @@
+Intro:
+  We need a request scheduler for the parallel file system server.
+
+Status: Unassigned
+
+Responsibilities:
+  Upon receiving an incoming request from the client, the request scheduler
+will determine if the request can be immediately scheduled, and if it can
+be scheduled connect to the correct server functionality to service the
+request.  If the request cannot be scheduled, it will be queued until it is
+possible to service the request.
+
+Detailed Requirements:
+  The existing PVFS2 scheduler works as follows:
+
+	1.  An request queue is constructed (as needed) for each file
+		system handle.
+	2.  No queued operation can be serviced if all the operations
+		preceding it in the queue are not in service (checked by
+		determining if the first and last queued operation are in
+		service)
+
+	3.  An operation satisfying (2) may only be allowed to proceed
+		under the following conditions:
+		a)  All operations in service including this one are I/O
+		b)  This operation is read-only
+		c)  If the operation is a CRDIRENT or RMDIRENT
+	4.  Otherwise, the operation is queued.		
+		
+  Many possible improvements upon this design are possible and desirable.
+Please discuss improvements before implementing them so that we can 
+document the behavior.
