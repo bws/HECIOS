@@ -5,6 +5,18 @@
 #include "IPvXAddress.h"
 #include "pfs_types.h"
 
+inline bool operator<(HandleRange lhs, HandleRange rhs)
+{
+    // HandleRange's cannot overlap
+    return lhs.first < rhs.first && lhs.last < rhs.last;
+}
+
+inline bool operator>(HandleRange lhs, HandleRange rhs)
+{
+    // HandleRange's cannot overlap
+    return lhs.first > rhs.first && lhs.last > rhs.last;
+}
+
 /** Utility functions for parallel file systems */
 class PFSUtils
 {
@@ -35,6 +47,7 @@ private:
      * handle ranges do not overlap
      */
     std::map<HandleRange, IPvXAddress> handleIPMap;
+    
 };
 
 #endif

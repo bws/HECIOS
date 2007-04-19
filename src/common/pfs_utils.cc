@@ -1,5 +1,6 @@
 
 #include "pfs_utils.h"
+using namespace std;
 
 PFSUtils* PFSUtils::instance_ = 0;
 
@@ -16,13 +17,39 @@ PFSUtils::PFSUtils()
 
 void PFSUtils::registerServerIP(const IPvXAddress& ip, HandleRange range)
 {
+    map< HandleRange , IPvXAddress >::const_iterator itr = handleIPMap.find(range);
+    
+    // If duplicate exists, erase the element
+    if ( itr != handleIPMap.end() && itr->second != ip)
+    {
+        handleIPMap.erase(range);
+    }
+
+    // Add ip
+    handleIPMap[range] = ip;
 }
 
     
 IPvXAddress PFSUtils::getServerIP(const FSHandle& handle) const
 {
-    IPvXAddress addr("192.168.0.3");
-    return addr;
+    // Create a HandleRange whose first and last elements are equal to the parameter handle
+    HandleRange newRange;
+    newRange.first = handle;
+    newRange.last  = handle;
+    
+    // If the handle lies outside handle-ranges stored in map, return "0.0.0.0"
+    IPvXAddress ipaddr("0.0.0.0");
+
+    // Find the first element in map whose handle-range is lesser than newRange
+    map< HandleRange , IPvXAddress >::const_iterator itr_lower = handleIPMap.lower_bound(newRange);
+    if(itr_lower != handleIPMap.end())
+    {
+        return itr_lower->second;
+    }
+    else
+    {
+        return ipaddr;
+    }
 }
 
 /*
