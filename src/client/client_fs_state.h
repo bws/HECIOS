@@ -51,16 +51,16 @@ public:
     void removeAttr(FSHandle metaHandle);
 
     /** @return the meta data for the handle */
-    FSMetaData lookupAttr(FSHandle metaHandle);
+    FSMetaData* lookupAttr(FSHandle metaHandle);
 
     /** Add an entry to the directory cache */
-    void insertDir(std::string path, FSHandle metaHandle);
+    void insertDir(const std::string& path, FSHandle metaHandle);
 
     /** Remove an entry from the directory cache */
-    void removeDir(std::string path);
+    void removeDir(const std::string& path);
 
     /** @return the meta data handle for the directory */
-    FSHandle lookupDir(std::string path);
+    FSHandle* lookupDir(const std::string& path);
 
     /** I have no idea what this function is for (BWS) */
     bool serverNotUsed(int serverNum, int dist, int count, MPIDataType dtype);
@@ -86,7 +86,7 @@ public:
 
 private:
     /** Copy constructor disabled */
-    ClientFSState(ClientFSState& orig);
+    ClientFSState(const ClientFSState& orig);
 
     /** Attribute cache */
     AttributeCache attrCache_;

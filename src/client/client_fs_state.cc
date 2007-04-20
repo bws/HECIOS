@@ -7,7 +7,7 @@ using namespace std;
 ClientFSState::ClientFSState()
     : attrCache_(MAX_ATTR_ENTRIES, MAX_ATTR_TIME),
       dirCache_(MAX_ATTR_ENTRIES, MAX_ATTR_TIME),
-      totalNumServers_(64),
+      totalNumServers_(2),
       defaultNumServers_(2),
       root_(0)
 {
@@ -23,36 +23,36 @@ void ClientFSState::removeAttr(FSHandle metaHandle)
     attrCache_.remove(metaHandle);
 }
 
-FSMetaData ClientFSState::lookupAttr(FSHandle metaHandle)
+FSMetaData* ClientFSState::lookupAttr(FSHandle metaHandle)
 {
-    FSMetaData metaData;
+    FSMetaData* metaData = 0;
     AttributeEntry* entry = attrCache_.lookup(metaHandle);
     if (0 != entry)
     {
         // Need to check expiration
-        metaData = entry->data;
+        metaData = &(entry->data);
     }
     return metaData;
 }
 
-void ClientFSState::insertDir(std::string path, FSHandle metaHandle)
+void ClientFSState::insertDir(const string& path, FSHandle metaHandle)
 {
     dirCache_.insert(path, metaHandle);
 }
 
-void ClientFSState::removeDir(std::string path)
+void ClientFSState::removeDir(const string& path)
 {
     dirCache_.remove(path);
 }
 
-FSHandle ClientFSState::lookupDir(std::string path)
+FSHandle* ClientFSState::lookupDir(const string& path)
 {
-    FSHandle metaHandle = 0;
+    FSHandle* metaHandle = 0;
     DirectoryEntry* entry = dirCache_.lookup(path);
     if (0 != entry)
     {
         // Need to check expiration
-        metaHandle = entry->data;
+        metaHandle = &(entry->data);
     }
     return metaHandle;
 }

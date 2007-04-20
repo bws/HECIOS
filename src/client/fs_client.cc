@@ -26,7 +26,7 @@ protected:
 };
 
 // OMNet Registriation Method
-Define_Module(FSClient);
+//Define_Module(FSClient);
 
 /**
  * Handle MPI-IO Response messages

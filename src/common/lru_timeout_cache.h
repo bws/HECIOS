@@ -65,12 +65,12 @@ public:
     
 private:
 
-    std::map<KeyType, EntryType*> keyEntryMap;
-    std::list<KeyType> lruList;
+    std::map<KeyType, EntryType*> keyEntryMap_;
+    std::list<KeyType> lruList_;
 
-    const int maxEntries_;
+    const size_t maxEntries_;
     const double maxTime_;
-    int numEntries_;
+    size_t numEntries_;
 };
 
 template <class KeyType, class ValueType>
@@ -89,15 +89,15 @@ LRUTimeoutCache<KeyType,ValueType>::~LRUTimeoutCache()
 {
     // Delete any EntryTypes still contained in the map
     typename std::map<KeyType, EntryType*>::iterator iter;
-    for (iter = keyEntryMap.begin(); iter != keyEntryMap.end(); ++iter)
+    for (iter = keyEntryMap_.begin(); iter != keyEntryMap_.end(); ++iter)
     {
         //std::cerr << "Want to delete" << iter->first << endl;
         delete iter->second;
     }
 
     // Clear containers
-    lruList.clear();
-    keyEntryMap.clear();
+    lruList_.clear();
+    keyEntryMap_.clear();
 }
 
 
@@ -107,24 +107,24 @@ void LRUTimeoutCache<KeyType,ValueType>::insert(const KeyType& key,
 {
     // Check to see if the entry already exists
     typename std::map<KeyType, EntryType*>::iterator pos;
-    pos = keyEntryMap.find(key);
-    if (pos != keyEntryMap.end())
+    pos = keyEntryMap_.find(key);
+    if (pos != keyEntryMap_.end())
     {
         // Entry already exists, update it
         pos->second->data = value;
         pos->second->timeStamp = simulation.simTime();
 
         // Update the LRU data
-        lruList.erase(pos->second->lruRef);
-        lruList.push_front(key);
-        pos->second->lruRef = lruList.begin();
+        lruList_.erase(pos->second->lruRef);
+        lruList_.push_front(key);
+        pos->second->lruRef = lruList_.begin();
     }
     else
     {
         // If the cache is full, evict an item according to LRU policy
         if (numEntries_ == maxEntries_)
         {
-            KeyType key = *(lruList.rbegin());
+            KeyType key = *(lruList_.rbegin());
             this->remove(key);
         }
 
@@ -134,11 +134,11 @@ void LRUTimeoutCache<KeyType,ValueType>::insert(const KeyType& key,
         entry->timeStamp = simulation.simTime();
 
         // Add to the LRU list
-        lruList.push_front(key);
-        entry->lruRef = lruList.begin();
+        lruList_.push_front(key);
+        entry->lruRef = lruList_.begin();
 
         // Insert the cache entry
-        keyEntryMap.insert(std::make_pair(key, entry));
+        keyEntryMap_.insert(std::make_pair(key, entry));
         numEntries_++;
     }
 }
@@ -147,17 +147,17 @@ template<class KeyType, class ValueType>
 void LRUTimeoutCache<KeyType,ValueType>::remove(const KeyType& key)
 {
     typename std::map<KeyType, EntryType*>::iterator pos;
-    pos = keyEntryMap.find(key);
-    if (pos != keyEntryMap.end())
+    pos = keyEntryMap_.find(key);
+    if (pos != keyEntryMap_.end())
     {
         // Cleanup the lru list
-        lruList.erase(pos->second->lruRef);
+        lruList_.erase(pos->second->lruRef);
 
         // Cleanup the EntryType memory
         delete pos->second;
 
         // Remove from the map
-        keyEntryMap.erase(pos);
+        keyEntryMap_.erase(pos);
         numEntries_--;
     }
 }
@@ -170,15 +170,15 @@ LRUTimeoutCache<KeyType,ValueType>::lookup(const KeyType& key)
     typename std::map<KeyType, EntryType*>::iterator pos;
 
     // Search the map for key
-    pos = keyEntryMap.find(key);
-    if (pos != keyEntryMap.end())
+    pos = keyEntryMap_.find(key);
+    if (pos != keyEntryMap_.end())
     {
         entry = pos->second;
 
         // Refresh the LRU list
-        lruList.erase(entry->lruRef);
-        lruList.push_front(key);
-        entry->lruRef = lruList.begin();
+        lruList_.erase(entry->lruRef);
+        lruList_.push_front(key);
+        entry->lruRef = lruList_.begin();
     }
     return entry;
 }
@@ -186,12 +186,8 @@ LRUTimeoutCache<KeyType,ValueType>::lookup(const KeyType& key)
 template<class KeyType, class ValueType>
 int LRUTimeoutCache<KeyType,ValueType>::size() const
 {
-    assert(lruList.size() == keyEntryMap.size());
-    if (lruList.size() != keyEntryMap.size())
-    {
-        std::cerr << "ERROR Size mismatch: lruList ->" << lruList.size()
-                  << " map-->" << keyEntryMap.size() << endl;
-    }
+    assert(lruList_.size() == keyEntryMap_.size());
+    assert(lruList_.size() == numEntries_);
     return numEntries_;
 }
 #endif

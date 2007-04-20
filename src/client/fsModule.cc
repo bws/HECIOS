@@ -73,10 +73,10 @@ Define_Module(fsModule);
 
 void fsModule::initialize()
 {
-    fsMpiOut = findGate("fsMpiOut");
-    fsMpiIn = findGate("fsMpiIn");
-    fsNetOut = findGate("fsNetOut");
-    fsNetIn = findGate("fsNetIn");
+    fsMpiOut = findGate("appOut");
+    fsMpiIn = findGate("appIn");
+    fsNetOut = findGate("netOut");
+    fsNetIn = findGate("netIn");
 }
 
 void fsModule::finish()
@@ -189,10 +189,11 @@ void fsProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *mpireq,
             mpireq->setFiledes(filedes);
             filedes->fs = (ClientFSState*)mpireq->getFs();
             /* look for dir in cache */
-            filedes->handle = filedes->fs->lookupDir(mpireq->getFileName());
-            if (filedes->handle == 0) // how to do this?
+            FSHandle* lookup = filedes->fs->lookupDir(mpireq->getFileName());
+            if (0 != lookup) // how to do this?
             {
                 /* dir entry not in cache go do lookup */
+                filedes->handle = *lookup;
                 filedes->path = mpireq->getFileName();
                 fsParsePath(filedes);
                 filedes->handles[0] = filedes->fs->root();
@@ -202,8 +203,8 @@ void fsProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *mpireq,
             else
             {
                 /* dir entry in cache look for metadata in cache */
-                filedes->metaData = filedes->fs->lookupAttr(filedes->handle);
-                if (filedes->metaData.metaHandle == 0)
+                FSMetaData* meta = filedes->fs->lookupAttr(filedes->handle);
+                if (0 == meta)
                 {
                     /* metadata not in cache go read attributes */
                     FSM_Goto(state, READ_ATTR);
@@ -211,6 +212,7 @@ void fsProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *mpireq,
                 else
                 {
                     /* metadata in cache, were all done */
+                    filedes->metaData = *meta;
                     FSM_Goto(state, FINISH);
                 }
             }
@@ -251,8 +253,9 @@ void fsProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *mpireq,
                     else
                     {
                         /* look for metadata in cache */
-                        filedes->metaData = filedes->fs->lookupAttr(filedes->handle);
-                        if (filedes->metaData.metaHandle == 0)
+                        FSMetaData* meta =
+                            filedes->fs->lookupAttr(filedes->handle);
+                        if (0 == meta)
                         {
                             /* not in cache go to lookup state */
                             FSM_Goto(state, READ_ATTR);
@@ -260,6 +263,7 @@ void fsProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *mpireq,
                         else
                         {
                             /* in cache go to readdir state */
+                            filedes->metaData = *meta;
                             FSM_Goto(state, FINISH);
                         }
                     }

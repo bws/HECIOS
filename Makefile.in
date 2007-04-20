@@ -234,7 +234,7 @@ $(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
 COMMON_TEST_OBJS = $(TEST_COMMON_DIR)/unit_test.o \
 	$(TEST_SUPPORT_DIR)/test_cenvir.o
 
-$(BIN_DIR)/common_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
+$(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
 	@mkdir -p $(BIN_DIR)
 	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(COMMON_TEST_OBJS) $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
 
@@ -244,7 +244,7 @@ $(BIN_DIR)/common_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
 CLIENT_TEST_OBJS = $(TEST_CLIENT_DIR)/unit_test.o \
 	$(TEST_SUPPORT_DIR)/test_cenvir.o
 
-$(BIN_DIR)/client_test: $(SIM_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
+$(BIN_DIR)/client_test: $(CLIENT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
 	@mkdir -p $(BIN_DIR)
 	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(CLIENT_TEST_OBJS) $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
 

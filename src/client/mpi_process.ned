@@ -21,7 +21,7 @@ module MPIProcess
 
         cache: cacheModule;
 
-        fsClient: FSClient;
+        fsClient: fsModule;
 
     connections:
 

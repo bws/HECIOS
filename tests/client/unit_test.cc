@@ -1,6 +1,6 @@
 
 #include <cppunit/TextTestRunner.h>
-//#include "umd_io_trace_test.h"
+#include "client_fs_state_test.h"
 #include "lru_simple_cache_test.h"
 
 int main(int argc, char** argv)
@@ -8,8 +8,7 @@ int main(int argc, char** argv)
     CppUnit::TextTestRunner runner;
 
     // Add all of the requisite tests
-    //runner.addTest( UMDIOTraceTest::suite() );
-    //runner.addTest( LRUTimeoutCacheTest::suite() );
+    runner.addTest( ClientFSStateTest::suite() );
     runner.addTest( LRUSimpleCacheTest::suite() );
 
     bool success = runner.run();

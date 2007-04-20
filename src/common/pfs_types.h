@@ -5,7 +5,8 @@
 #include <string>
 class ClientFSState;
 
-#define MAXSEG 16  /* maximum number of entries in a path */
+/** Maximum number of entries in a path */
+#define MAXSEG 16
 
 /** File system handle data type */
 typedef long long FSHandle;
@@ -13,13 +14,7 @@ typedef long long FSHandle;
 /** MPI Data type -- currently indicates number of bytes */
 typedef int MPIDataType;
 
-/** A contguous handle range beginning at first and ending at last */
-struct HandleRange
-{
-    FSHandle first;
-    FSHandle last;
-};
-
+/** MPI modes (not exactly sure what these are for) */
 enum MPI_Modes
 {
     MPI_MODE_RDONLY = 1,
@@ -29,6 +24,29 @@ enum MPI_Modes
     MPI_MODE_EXCL = 16,
 };
 
+/** A contguous handle range beginning at first and ending at last */
+struct HandleRange
+{
+    FSHandle first;
+    FSHandle last;
+};
+
+/** Equality operation for HandleRanges */
+inline bool operator==(const HandleRange& lhs, const HandleRange& rhs)
+{
+    return (lhs.first == rhs.first && lhs.last == rhs.last);
+}
+
+/**
+ * Less than operation for HandleRanges
+ *
+ * Only provided so that HandleRanges can be inserted into maps,
+ * Note:  Assumes that HandleRanges do not overlap!!
+ */
+inline bool operator<(const HandleRange& lhs, const HandleRange& rhs)
+{
+    return (lhs.first < rhs.first);
+}
 
 /** Metadata for a file */
 struct FSMetaData
@@ -42,6 +60,12 @@ struct FSMetaData
     std::vector<FSHandle> dataHandles; /* size of handles is server count */
     int dist;            /* for now just strip size in bytes */
 };
+
+/** Equality operation for Metadata */
+inline bool operator==(const FSMetaData& lhs, const FSMetaData& rhs)
+{
+    return (lhs.metaHandle == rhs.metaHandle);
+}
 
 /** Descriptor for an open file */
 struct FSOpenFile
