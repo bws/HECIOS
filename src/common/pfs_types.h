@@ -45,7 +45,7 @@ inline bool operator==(const HandleRange& lhs, const HandleRange& rhs)
  */
 inline bool operator<(const HandleRange& lhs, const HandleRange& rhs)
 {
-    return (lhs.first < rhs.first);
+    return (lhs.first < rhs.first && lhs.last < rhs.last);
 }
 
 /** Metadata for a file */

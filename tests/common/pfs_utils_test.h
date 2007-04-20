@@ -111,20 +111,19 @@ void PFSUtilsTest::testGetServerIP()
     // create an invalid ip address
     IPvXAddress ip0("0.0.0.0");
 
-    // test for handle outside the handle-ranges of map
+    // test for handle in and outside the handle-ranges of map
     IPvXAddress ip7("192.168.0.7");
     HandleRange r7;
     r7.first = 60;
     r7.last = 70;
     FSHandle h7_1(1000);
-    // FSHandle h7_2(55);
-    // FSHanlde h7_3(0);
+    FSHandle h7_2(55);
+    FSHandle h7_3(0);
     
     PFSUtils::instance().registerServerIP(ip7, r7);
     CPPUNIT_ASSERT_EQUAL(ip0 , PFSUtils::instance().getServerIP(h7_1));
-    // Failed test:
-    // CPPUNIT_ASSERT_EQUAL(ip0 , PFSUtils::instance().getServerIP(h7_2));
-    // CPPUNIT_ASSERT_EQUAL(ip0 , PFSUtils::instance().getServerIP(h7_3));
+    CPPUNIT_ASSERT_EQUAL(ip0 , PFSUtils::instance().getServerIP(h7_2));
+    CPPUNIT_ASSERT_EQUAL(ip0 , PFSUtils::instance().getServerIP(h7_3));
 
 }
 #endif

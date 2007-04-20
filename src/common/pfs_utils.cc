@@ -44,12 +44,13 @@ IPvXAddress PFSUtils::getServerIP(const FSHandle& handle) const
     map< HandleRange , IPvXAddress >::const_iterator itr_lower = handleIPMap.lower_bound(newRange);
     if(itr_lower != handleIPMap.end())
     {
-        return itr_lower->second;
+        if( handle >= itr_lower->first.first && handle <= itr_lower->first.last)
+        {
+            return itr_lower->second;
+        }
     }
-    else
-    {
-        return ipaddr;
-    }
+
+    return ipaddr;
 }
 
 /*
