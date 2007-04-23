@@ -72,8 +72,10 @@ class cacheModule : public cSimpleModule
     void cacheProcess_mpiFilePreallocateResponse( 
         spfsMPIFilePreallocateResponse *msg );
 		void cacheProcess_mpiFileGetSizeResponse(spfsMPIFileGetSizeResponse *msg );
+		void cacheProcess_mpiFileReadAtResponse(spfsMPIFileReadAtResponse *msg );
 		void cacheProcess_mpiFileReadResponse(spfsMPIFileReadResponse *msg );
 		void cacheProcess_mpiFileWriteResponse(spfsMPIFileWriteResponse*msg );
+		void cacheProcess_mpiFileWriteAtResponse(spfsMPIFileWriteAtResponse*msg );
 	
 		// Other funcitons
 		void cacheUnknownMessage(cMessage *msg);	
@@ -185,8 +187,14 @@ void cacheModule::handleMessage(cMessage *msg)
 		case SPFS_MPI_FILE_READ_RESPONSE:
 			cacheProcess_mpiFileReadResponse((spfsMPIFileReadResponse*) msg);
 			break;
+		case SPFS_MPI_FILE_READ_AT_RESPONSE:
+			cacheProcess_mpiFileReadAtResponse((spfsMPIFileReadAtResponse*) msg);
+			break;
 		case SPFS_MPI_FILE_WRITE_RESPONSE:
 			cacheProcess_mpiFileWriteResponse((spfsMPIFileWriteResponse*) msg);
+			break;
+		case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
+			cacheProcess_mpiFileWriteAtResponse((spfsMPIFileWriteAtResponse*) msg);
 			break;
 		default :
 			cacheUnknownMessage(msg);
@@ -213,7 +221,10 @@ void cacheModule::cacheProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *msg )
     if(cacheLookupFileName(msg->getFileName()))
     {
 		// create new message and set message fields
-    	spfsMPIFileOpenResponse *m = new spfsMPIFileOpenResponse("mpiFileOpenResponse");
+    	spfsMPIFileOpenResponse *m = new spfsMPIFileOpenResponse("mpiFileOpenResponse",
+                                    SPFS_MPI_FILE_OPEN_RESPONSE);
+        m->setFiledes(msg->getFiledes());
+        
 	send(m, appOut);
     }else
     {
@@ -229,7 +240,8 @@ void cacheModule::cacheProcess_mpiFileCloseRequest( spfsMPIFileCloseRequest *msg
     {
 	// create new message and set message fields
     	spfsMPIFileCloseResponse *m = new 
-                            spfsMPIFileCloseResponse("mpiFileCloseResponse");
+                            spfsMPIFileCloseResponse("mpiFileCloseResponse",
+                                    SPFS_MPI_FILE_CLOSE_RESPONSE);
 	send(m, appOut);
     }else
     {
@@ -245,7 +257,9 @@ void cacheModule::cacheProcess_mpiFileDeleteRequest( spfsMPIFileDeleteRequest *m
     {
 	// create new message and set message fields
         spfsMPIFileDeleteResponse *m = new 
-			    spfsMPIFileDeleteResponse("mpiFileDeleteResponse");
+			    spfsMPIFileDeleteResponse("mpiFileDeleteResponse",
+                                                SPFS_MPI_FILE_DELETE_RESPONSE);
+        //m->kind = 
 	send(m, appOut);
     }else
     {
@@ -262,7 +276,7 @@ void cacheModule::cacheProcess_mpiFileSetSizeRequest( spfsMPIFileSetSizeRequest 
     {
     	// create new message and set message fields
         spfsMPIFileSetSizeResponse *m = new 
-            		    spfsMPIFileSetSizeResponse("mpiFileSetSizeResponse");
+            		    spfsMPIFileSetSizeResponse("mpiFileSetSizeResponse",                               SPFS_MPI_FILE_SET_SIZE_RESPONSE);
 	send(m, appOut);
     }else
     {
@@ -278,8 +292,9 @@ void cacheModule::cacheProcess_mpiFileGetInfoRequest(spfsMPIFileGetInfoRequest *
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
-    	spfsMPIFileGetInfoRequest *m = new 
-		    spfsMPIFileGetInfoRequest("mpiFileGetInfoRequest");
+    	spfsMPIFileGetInfoResponse *m = new 
+		    spfsMPIFileGetInfoResponse("mpiFileGetInfoResponse",
+                                        SPFS_MPI_FILE_GET_INFO_RESPONSE);
 	send(m, appOut);
     }else
     {
@@ -298,8 +313,9 @@ void cacheModule::cacheProcess_mpiFileSetInfoRequest(spfsMPIFileSetInfoRequest *
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
-    	spfsMPIFileSetInfoRequest *m = new 
-		    spfsMPIFileSetInfoRequest("mpiFileSetInfoRequest");
+    	spfsMPIFileSetInfoResponse *m = new 
+		    spfsMPIFileSetInfoResponse("mpiFileSetInfoResponse",
+                        SPFS_MPI_FILE_SET_INFO_RESPONSE);
 	send(m, appOut);
     }else
     {
@@ -319,7 +335,8 @@ void cacheModule::cacheProcess_mpiFilePreallocateRequest( spfsMPIFilePreallocate
     {
 		// create new message and set message fields
     	spfsMPIFilePreallocateResponse *m = new 
-				spfsMPIFilePreallocateResponse("mpiFilePreallocateResponse");
+				spfsMPIFilePreallocateResponse("mpiFilePreallocateResponse",
+                                SPFS_MPI_FILE_PREALLOCATE_RESPONSE);
 	send(m, appOut);
     }else
     {
@@ -335,7 +352,8 @@ void cacheModule::cacheProcess_mpiFileGetSizeRequest( spfsMPIFileGetSizeRequest 
     {
 		// create new message and set message fields
     	spfsMPIFileGetSizeResponse *m = new 
-				spfsMPIFileGetSizeResponse("mpiFileGetSizeResponse");
+				spfsMPIFileGetSizeResponse("mpiFileGetSizeResponse",
+                                SPFS_MPI_FILE_GET_SIZE_RESPONSE);
 	send(m, appOut);
     }else
     {
@@ -352,7 +370,8 @@ void cacheModule::cacheProcess_mpiFileReadAtRequest( spfsMPIFileReadAtRequest *m
     {
 		// create new message and set message fields
     	spfsMPIFileReadAtResponse *m = new 
-				spfsMPIFileReadAtResponse("mpiFileReadAtResponse");
+				spfsMPIFileReadAtResponse("mpiFileReadAtResponse",
+                                SPFS_MPI_FILE_READ_AT_RESPONSE);
 	send(m, appOut);
     }else
     {
@@ -368,7 +387,8 @@ void cacheModule::cacheProcess_mpiFileReadRequest( spfsMPIFileReadRequest *msg )
     {
 		// create new message and set message fields
     	spfsMPIFileReadResponse *m = new 
-				spfsMPIFileReadResponse("mpiFileReadResponse");
+				spfsMPIFileReadResponse("mpiFileReadResponse",
+                                SPFS_MPI_FILE_READ_RESPONSE);
 	send(m, appOut);
     }else
     {
@@ -384,7 +404,8 @@ void cacheModule::cacheProcess_mpiFileWriteAtRequest( spfsMPIFileWriteAtRequest 
     {
 		// create new message and set message fields
     	spfsMPIFileWriteAtResponse *m = new 
-				spfsMPIFileWriteAtResponse("mpiFileWriteAtResponse");
+				spfsMPIFileWriteAtResponse("mpiFileWriteAtResponse",
+                                SPFS_MPI_FILE_WRITE_AT_RESPONSE);
 	send(m, appOut);
     }else
     {
@@ -400,7 +421,8 @@ void cacheModule::cacheProcess_mpiFileWriteRequest( spfsMPIFileWriteRequest *msg
     {
 		// create new message and set message fields
     	spfsMPIFileWriteResponse *m = new 
-				spfsMPIFileWriteResponse("mpiFileWriteResponse");
+				spfsMPIFileWriteResponse("mpiFileWriteResponse",
+                                SPFS_MPI_FILE_WRITE_RESPONSE);
 	send(m, appOut);
     }else
     {
@@ -460,7 +482,22 @@ void cacheModule::cacheProcess_mpiFileReadResponse( spfsMPIFileReadResponse *msg
     send(msg, appOut);
 }
 
+
+void cacheModule::cacheProcess_mpiFileReadAtResponse( spfsMPIFileReadAtResponse *msg )
+{
+    // send response through
+    //cacheAddHandle(msg->getHandle()); // valid
+    send(msg, appOut);
+}
+
 void cacheModule::cacheProcess_mpiFileWriteResponse( spfsMPIFileWriteResponse*msg )
+{
+    // send response through 
+    //cacheAdd(msg->); // exclusive
+    send(msg, appOut);
+}
+
+void cacheModule::cacheProcess_mpiFileWriteAtResponse( spfsMPIFileWriteAtResponse*msg )
 {
     // send response through 
     //cacheAdd(msg->); // exclusive

@@ -14,7 +14,8 @@
 template <class KeyType, class ValueType>
 struct LRUSimpleCacheEntry
 {
-    ValueType data;
+    ValueType extent;
+    int address;
     double timeStamp;
     typename std::list<KeyType>::iterator lruRef;
 };
@@ -104,12 +105,19 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
                                                 const ValueType& value)
 {
     // Check to see if the entry already exists
+    printf("in the begin of insert\n");
+    fflush(stdout);
+    int entrySize = (int) value;
+    int prevPosEmpty, nextPosEmpty;
+    prevPosEmpty = nextPosEmpty = 0;
+    typename std::map<KeyType, EntryType*>::iterator prevPos;
+    typename std::map<KeyType, EntryType*>::iterator nextPos;
     typename std::map<KeyType, EntryType*>::iterator pos;
     pos = keyEntryMap.find(key);
-    if (pos != keyEntryMap.end())
+    if (pos != keyEntryMap.end())  // if entry already exists
     {
         // Entry already exists, update it
-        pos->second->data = value;
+        pos->second->extent = value;
         pos->second->timeStamp = simulation.simTime();
 
         // Update the LRU data
@@ -117,7 +125,75 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
         lruList.push_front(key);
         pos->second->lruRef = lruList.begin();
     }
-    else
+    else if(numEntries_ == 0) // if no entreis in the list
+    {
+        // Fill out the Cache entry data
+        EntryType* entry = new EntryType();
+        entry->extent = value;
+        entry->address = key;
+        entry->timeStamp = simulation.simTime();
+
+        // Add to the LRU list
+        lruList.push_front(key);
+        entry->lruRef = lruList.begin();
+
+        // Insert the cache entry
+        keyEntryMap.insert(std::make_pair(key, entry));
+
+
+        
+        // increment number of entries 
+        numEntries_ = 1;
+    }else if(numEntries_ == 1)
+    {
+        printf("in numEntries == 1\n");
+        // Fill out the Cache entry data
+        EntryType* entry = new EntryType();
+        entry->extent = value;
+        entry->address = key;
+        entry->timeStamp = simulation.simTime();
+        pos--;
+        printf("adding element with address %d and extent %d\n", 
+                key, value);
+        printf("pos values are address %d and extent %d\n", 
+                pos->second->address, pos->second->extent);
+
+        // check if overlapping
+        if(key < pos->second->address && 
+                pos->second->address < entrySize + key)
+        {   // if new entry overlaps current entry from right, new has smaller add
+            printf("got in here 1112\n");
+            pos->second->extent = pos->second->extent +
+                            pos->second->address - key;
+            pos->second->address = key;
+            // Add to the LRU list
+            lruList.push_front(key);
+            entry->lruRef = lruList.begin();
+
+            // Insert the cache entry
+            keyEntryMap.insert(std::make_pair(key, entry));
+
+
+        }else if(pos->second->address < key &&
+                    pos->second->address+pos->second->extent > key)
+        {   // overlap from left into element, new is less
+            // Add to the LRU list
+            printf("second position combining \n");
+            pos->second->extent = value + key - pos->second->address;
+
+        }else // just add entry if there are no overlaps
+        {
+            printf("just adding \n");
+            // Add to the LRU list
+            lruList.push_front(key);
+            entry->lruRef = lruList.begin();
+
+            // Insert the cache entry
+            keyEntryMap.insert(std::make_pair(key, entry));
+
+            numEntries_++;
+        }
+    }else
     {
         // If the cache is full, evict an item according to LRU policy
         if (numEntries_ == maxEntries_)
@@ -128,8 +204,84 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
 
         // Fill out the Cache entry data
         EntryType* entry = new EntryType();
-        entry->data = value;
+        entry->extent = value;
+        entry->address = key;
         entry->timeStamp = simulation.simTime();
+
+        //printf("got in here\n");
+        
+        // check if overlapping
+        // if current entry overlaps next entries, while non-are overlapping
+        if(entrySize+key > pos->second->address) // while
+        {
+            EntryType* entry = new EntryType();
+            entry->extent = pos->second->extent+(pos->second->address-key);
+            entry->timeStamp = simulation.simTime();
+            if(numEntries_ > 0) lruList.erase(pos->second->lruRef);
+
+            // Remove from the map
+            //nextPos = pos+1;
+            //pos--;
+            if(numEntries_ > 1) 
+            {
+                keyEntryMap.erase(nextPos);
+                numEntries_--;
+            }
+            
+    printf("in the while loop 12\n");
+    fflush(stdout);
+            //prevPos = pos;
+            //pos++;
+            
+            // Cleanup the EntryType memory
+            if(numEntries_ > 1) delete prevPos->second;
+            
+            
+        }
+
+        // if previous entry overlaps current entry
+        printf("more towars end of adding to list\n");
+        fflush(stdout);
+        if((keyEntryMap.end()--)->second->extent != pos->second->extent)
+        {
+            prevPos = pos--;
+            pos++;
+        }else
+        {
+            prevPosEmpty = 1;;
+
+        }
+
+
+        if(keyEntryMap.begin()->second->extent != pos->second->extent)
+        {     
+            nextPos= pos++;
+            pos--;
+        }else
+        {
+            nextPosEmpty = 1;
+        }
+        
+        if(!prevPosEmpty &&
+            prevPos->second->extent+prevPos->second->address > key)
+        {
+
+            EntryType* entry = new EntryType();
+            entry->extent = prevPos->second->extent+
+                ((entrySize+key) - 
+                (prevPos->second->extent+prevPos->second->address));
+            entry->timeStamp = simulation.simTime();
+            lruList.erase(prevPos->second->lruRef);
+
+
+            // Remove from the map
+            keyEntryMap.erase(prevPos);
+            numEntries_--;
+
+            // Cleanup the EntryType memory
+            delete prevPos->second;
+
+        }
 
         // Add to the LRU list
         lruList.push_front(key);
@@ -139,6 +291,8 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
         keyEntryMap.insert(std::make_pair(key, entry));
         numEntries_++;
     }
+    printf("end of function \n");
+    fflush(stdout);
 }
 
 template<class KeyType, class ValueType>
@@ -160,6 +314,7 @@ void LRUSimpleCache<KeyType,ValueType>::remove(const KeyType& key)
     }
 }
 
+
 template<class KeyType, class ValueType>
 typename LRUSimpleCache<KeyType,ValueType>::EntryType*
 LRUSimpleCache<KeyType,ValueType>::lookup(const KeyType& key)
@@ -178,6 +333,7 @@ LRUSimpleCache<KeyType,ValueType>::lookup(const KeyType& key)
         lruList.push_front(key);
         entry->lruRef = lruList.begin();
     }
+    printf("returning %d\n", (int) entry);
     return entry;
 }
 
