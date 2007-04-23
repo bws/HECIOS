@@ -32,7 +32,8 @@ void PFSUtils::registerServerIP(const IPvXAddress& ip, HandleRange range)
     
 IPvXAddress PFSUtils::getServerIP(const FSHandle& handle) const
 {
-    // Create a HandleRange whose first and last elements are equal to the parameter handle
+    // Create a HandleRange whose first and last elements are equal to the
+    // parameter handle
     HandleRange newRange;
     newRange.first = handle;
     newRange.last  = handle;
@@ -41,16 +42,32 @@ IPvXAddress PFSUtils::getServerIP(const FSHandle& handle) const
     IPvXAddress ipaddr("0.0.0.0");
 
     // Find the first element in map whose handle-range is lesser than newRange
-    map< HandleRange , IPvXAddress >::const_iterator itr_lower = handleIPMap.lower_bound(newRange);
+    map< HandleRange , IPvXAddress >::const_iterator itr_lower =
+        handleIPMap.lower_bound(newRange);
     if(itr_lower != handleIPMap.end())
     {
-        if( handle >= itr_lower->first.first && handle <= itr_lower->first.last)
+        if( handle >= itr_lower->first.first &&
+            handle <= itr_lower->first.last)
         {
             return itr_lower->second;
         }
     }
 
     return ipaddr;
+}
+
+void PFSUtils::parsePath(FSOpenFile* descriptor) const
+{
+    int size, seg;
+    std::string::size_type index;
+    size = descriptor->path.size();
+    index = 0;
+    for (seg = 0; index != std::string::npos && seg < MAXSEG; seg++)
+    {
+        index = descriptor->path.find_first_not_of('/', index);
+        descriptor->segstart[seg] = index;
+        descriptor->seglen[seg] = size - index;
+    }
 }
 
 /*

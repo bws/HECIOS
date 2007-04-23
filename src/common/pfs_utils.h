@@ -18,6 +18,9 @@ public:
     
     /** @return the Server IP address for handle */
     IPvXAddress getServerIP(const FSHandle& handle) const;
+
+    /** Not sure what this does yet */
+    void parsePath(FSOpenFile* descriptor) const;
     
 private:
 

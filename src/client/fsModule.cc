@@ -4,6 +4,7 @@
 #include <pvfs_proto_m.h>
 #include <mpiio_proto_m.h>
 #include <client_fs_state.h>
+#include "fs_module.h"
 class fsModule;
 
 // local function decls
@@ -53,21 +54,6 @@ static void fsProcess_fsListAttrResponse( fsListAttrResponse *msg );
 */
 static void fsProcessTimer( cMessage *msg );
 static void fsParsePath(struct FSOpenFile *fdes);
-
-// omnet++ module decl
-class fsModule : public cSimpleModule
-{
-protected:
-    virtual void initialize();
-    virtual void finish();
-    virtual void handleMessage(cMessage *msg);
-
-public:
-    int fsMpiOut;
-    int fsMpiIn;
-    int fsNetOut;
-    int fsNetIn;
-};
 
 Define_Module(fsModule);
 
