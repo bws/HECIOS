@@ -4,6 +4,7 @@
 #include <pvfs_proto_m.h>
 #include <mpiio_proto_m.h>
 #include <client_fs_state.h>
+#include "fs_open.h"
 #include "fs_module.h"
 class fsModule;
 
@@ -82,10 +83,16 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
 { /* Call message specific hander {{{1 */
     switch(req->kind())
     {
-        case SPFS_MPI_FILE_OPEN_REQUEST :
-            fsProcess_mpiFileOpenRequest((spfsMPIFileOpenRequest *)req,
-                                         resp, client);
+        case SPFS_MPI_FILE_OPEN_REQUEST:
+        {
+            FSOpen open;
+            open.handleFSRequest(static_cast<spfsMPIFileOpenRequest*>(req),
+                                 client);
+            if (0)
+                fsProcess_mpiFileOpenRequest((spfsMPIFileOpenRequest *)req,
+                                             resp, client);
             break;
+        }
         case SPFS_MPI_FILE_CLOSE_REQUEST :
             fsProcess_mpiFileCloseRequest((spfsMPIFileCloseRequest *)req,
                                           resp, client);

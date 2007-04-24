@@ -20,6 +20,7 @@ protected:
      * @return The next state transition, see implementation for details
      */
     void exitInit(spfsMPIFileOpenRequest* openReq,
+                  fsModule* module,
                   bool& outIsInDirCache,
                   bool& outIsInAttrCache);
 

@@ -32,7 +32,7 @@ private:
     
     IOTrace* trace_;
     int rank_;
-    ClientFSState clientState;
+    ClientFSState clientState_;
 
     int inGate_;
     int outGate_;

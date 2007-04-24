@@ -1,5 +1,5 @@
-
 #include <iostream>
+#define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
 #include "client_fs_state.h"
 #include "fs_module.h"
@@ -31,7 +31,7 @@ void FSOpen::handleFSRequest(spfsMPIFileOpenRequest* openReq,
         case FSM_Exit(INIT):
         {    
             bool isInDirCache, isInAttrCache;
-            exitInit(openReq, isInDirCache, isInAttrCache);
+            exitInit(openReq, module, isInDirCache, isInAttrCache);
             if (isInDirCache && isInAttrCache)
                 FSM_Goto(currentState_, FINISH);
             else if (isInDirCache)
@@ -92,27 +92,30 @@ void FSOpen::handleFSRequest(spfsMPIFileOpenRequest* openReq,
 }
 
 void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
-                     bool& outIsInDirCache,
-                     bool& outIsInAttrCache)
+                      fsModule* module,
+                      bool& outIsInDirCache,
+                      bool& outIsInAttrCache)
 {
+    // Preconditions
+    assert(0 != openReq->getFileName());
+    assert(0 != openReq->getFiledes());
+    assert(0 != module);
+    cerr << "File: " << openReq->getFileName() << endl;
+    
     // Initialize outbound variable
     outIsInDirCache = false;
     outIsInAttrCache = false;
     
-    FSOpenFile* filedes = new FSOpenFile;
-    openReq->setFiledes(filedes);
-    filedes->fs = (ClientFSState*)openReq->getFs();
-
     /* look for dir in cache */
-    FSHandle* lookup = filedes->fs->lookupDir(openReq->getFileName());
-    if (0 == lookup) // how to do this?
+    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq->getFiledes());
+    FSHandle* lookup = module->fsState().lookupDir(openReq->getFileName());
+    if (0 == lookup)
     {
         /* dir entry not in cache go do lookup */
-        filedes->handle = *lookup;
-        filedes->path = openReq->getFileName();
-        PFSUtils::instance().parsePath(filedes);
-        filedes->handles[0] = filedes->fs->root();
-        filedes->curseg = 0;
+        fd->path = openReq->getFileName();
+        PFSUtils::instance().parsePath(fd);
+        fd->handles[0] = module->fsState().root();
+        fd->curseg = 0;
     }
     else
     {
@@ -120,14 +123,14 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
         outIsInDirCache = true;
         
         /* dir entry in cache look for metadata in cache */
-        FSMetaData* meta = filedes->fs->lookupAttr(filedes->handle);
+        FSMetaData* meta = module->fsState().lookupAttr(fd->handle);
         if (0 != meta)
         {
             // Found attribute cache entry
             outIsInAttrCache = true;
             
             /* metadata in cache, were all done */
-            filedes->metaData = *meta;
+            fd->metaData = *meta;
         }
     }
 }
@@ -135,6 +138,8 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
 void FSOpen::enterLookup(spfsMPIFileOpenRequest* openReq,
                          fsModule* module)
 {
+    cerr << "enterLookup" << endl;
+    // Create the new request
     spfsLookupPathRequest* req = new spfsLookupPathRequest(
         0, SPFS_LOOKUP_PATH_REQUEST);
     req->setContextPointer(openReq);

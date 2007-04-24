@@ -5,16 +5,24 @@
 
 class fsModule : public cSimpleModule
 {
-protected:
-    virtual void initialize();
-    virtual void finish();
-    virtual void handleMessage(cMessage *msg);
-
 public:
     int fsMpiOut;
     int fsMpiIn;
     int fsNetOut;
     int fsNetIn;
+
+    /** @return a reference to the client filesystem state */
+    ClientFSState& fsState() { return clientState_; };
+    
+protected:
+    virtual void initialize();
+    virtual void finish();
+    virtual void handleMessage(cMessage *msg);
+
+private:
+    
+    ClientFSState clientState_;
+
 };
 
 #endif

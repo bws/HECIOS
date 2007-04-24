@@ -90,6 +90,7 @@ void BMITcpClient::handleMessage(cMessage* msg)
             case SPFS_MPI_FILE_READ_REQUEST:
             case SPFS_MPI_FILE_WRITE_AT_REQUEST:
             case SPFS_MPI_FILE_WRITE_REQUEST:
+            case SPFS_LOOKUP_PATH_REQUEST:
             {
                 cerr << "Sending packet from client!"
                      << "Kind: " << msg->kind() << " info: " << msg->info()

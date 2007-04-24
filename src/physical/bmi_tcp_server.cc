@@ -89,9 +89,9 @@ void BMITcpServer::handleMessage(cMessage* msg)
         cMessage* response = 0;
         switch(msg->kind())
         {
-            case SPFS_MPI_FILE_OPEN_REQUEST:
+            case SPFS_LOOKUP_PATH_REQUEST:
             {
-                response = new spfsMPIFileOpenResponse(0, SPFS_MPI_FILE_OPEN_RESPONSE);
+                response = new spfsLookupPathResponse(0, SPFS_MPI_FILE_OPEN_RESPONSE);
                 break;
             }
             case SPFS_MPI_FILE_CLOSE_REQUEST:
@@ -169,7 +169,6 @@ void BMITcpServer::handleMessage(cMessage* msg)
             case SPFS_WRITE_REQUEST:
             case SPFS_GET_ATTR_REQUEST:
             case SPFS_SET_ATTR_REQUEST:
-            case SPFS_LOOKUP_PATH_REQUEST:
             case SPFS_CREATE_DIR_ENT_REQUEST:
             case SPFS_REMOVE_DIR_ENT_REQUEST:
             case SPFS_CHANGE_DIR_ENT_REQUEST:
