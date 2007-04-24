@@ -17,7 +17,6 @@
 
 using namespace std;
 
-
 /*typedef struct cacheEntry
 {
 
@@ -110,7 +109,7 @@ void cacheModule::initialize()
 
 void cacheModule::finish()
 {
-	//free(systemCache);
+	free(systemCache);
 }
 
 cacheModule::~cacheModule()
@@ -354,6 +353,8 @@ void cacheModule::cacheProcess_mpiFileGetSizeRequest( spfsMPIFileGetSizeRequest 
     	spfsMPIFileGetSizeResponse *m = new 
 				spfsMPIFileGetSizeResponse("mpiFileGetSizeResponse",
                                 SPFS_MPI_FILE_GET_SIZE_RESPONSE);
+        // not sure if i should be setting this or not
+        //m->setFileSize(msg->size);
 	send(m, appOut);
     }else
     {
@@ -366,6 +367,7 @@ void cacheModule::cacheProcess_mpiFileReadAtRequest( spfsMPIFileReadAtRequest *m
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    // should probably not cache this ----------_>>>><<<<<_---------------
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
@@ -383,6 +385,7 @@ void cacheModule::cacheProcess_mpiFileReadRequest( spfsMPIFileReadRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    //should probably not cache this --------_>>>>><<<<<_---------
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
@@ -400,6 +403,7 @@ void cacheModule::cacheProcess_mpiFileWriteAtRequest( spfsMPIFileWriteAtRequest 
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    // should probably not cache this or lookup in cache ------_>>>><<<_----
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
@@ -417,6 +421,7 @@ void cacheModule::cacheProcess_mpiFileWriteRequest( spfsMPIFileWriteRequest *msg
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    // should probably not cache this -------_>>>>>><<<<<_--------
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
@@ -524,11 +529,11 @@ int cacheModule::cacheLookupFileName(const char* fileName)
     return toReturnFound;
 }
 
-int cacheModule::cacheLookupHandle(int handle)
+int cacheModule::cacheLookupHandle(int address)
 {
     int toReturnFound = 0;  // holds if found and return variable
-    //if(systemCache->lookup(handle) != 0) toReturnFound = 1;
-	// go through cache map and find entry     
+    // go through cache map and find entry     
+    toReturnFound = systemCache->findOnlyKey(address); 
     return toReturnFound;
 }
 
@@ -536,7 +541,8 @@ int cacheModule::cacheLookupHandle(int handle)
 int cacheModule::cacheLookup(int address, int extent)
 {
     int toReturnFound = 0;  // holds if found and return variable
-	// go through cache map and find entry     
+    // go through cache map and find entry     
+    toReturnFound = systemCache->findOnlyKeyValue(address, extent);
     return toReturnFound;
 }
 
@@ -552,22 +558,18 @@ int cacheModule::cacheAddFileName(const char* fileName)
     return toReturnAdded;
 }
 
-int cacheModule::cacheAddHandle(int handle, int extent)
+int cacheModule::cacheAddHandle(int handle, int extent) // would probably include mode in here in the future also
 {
     int toReturnAdded = 0;
     // add to used cache
     systemCache->insert(handle, extent);	
     cerr << "inserting message with handle"
     << handle << endl;
-    // if entry exists, combine with current,
-    // else, just add entry, no eviction right now
-    //CacheEntry newEntry = new CacheEntry(address, extent, 0);
-    //systemCache[address] = newEntry;
     return toReturnAdded;
 }
 
 // helper function to perform cache add
-int cacheAdd(int address, int extent, int state)
+/*int cacheAdd(int address, int extent, int state)
 {
 	// go through map look for closest entry
 	// if entry exists, combine with current,
@@ -575,7 +577,7 @@ int cacheAdd(int address, int extent, int state)
 	// CacheEntry newEntry = new CacheEntry(address, extent, state);
     // systemCache[address] = newEntry;
     return 1;
-}
+}*/
 
 
 // Main function for testing funcitonality of requests

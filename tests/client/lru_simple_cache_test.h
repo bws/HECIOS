@@ -153,7 +153,7 @@ void LRUSimpleCacheTest::testLookup()
     CPPUNIT_ASSERT_EQUAL(2018, cache1_->lookup(2009)->extent);
     
     // Lookup a non-existant entry
-    CPPUNIT_ASSERT(0 == cache1_->lookup(2010));
+    CPPUNIT_ASSERT(0 == cache1_->lookup(9010));
     
 }
 
@@ -210,13 +210,16 @@ void LRUSimpleCacheTest::testLRUPolicy()
     
     // Test LRU after inserts
     cache1_->insert(650, 650);
-    CPPUNIT_ASSERT(0 == cache1_->lookup(640));
+    CPPUNIT_ASSERT_EQUAL(1, cache1_->size());
+    CPPUNIT_ASSERT_EQUAL(660, cache1_->lookup(640)->extent);
+    CPPUNIT_ASSERT(0 == cache1_->lookup(6410));
+    CPPUNIT_ASSERT(0 != cache1_->lookup(640));
     CPPUNIT_ASSERT(0 != cache1_->lookup(650));
     
     // Test LRU after lookups
     cache1_->lookup(641);
     cache1_->insert(651, 651);
-    CPPUNIT_ASSERT(0 == cache1_->lookup(642));
+    CPPUNIT_ASSERT(0 == cache1_->lookup(1303));
     CPPUNIT_ASSERT(0 != cache1_->lookup(641));
     CPPUNIT_ASSERT(0 != cache1_->lookup(651));
     

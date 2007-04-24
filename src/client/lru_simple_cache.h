@@ -58,7 +58,8 @@ public:
      * If no entry exists for key, return 0
      */
     EntryType* lookup(const KeyType& key);
-
+    int findOnlyKey(const KeyType& key);
+    int findOnlyKeyValue(const KeyType& key, const ValueType& value);
     /**
      * @return the number of entries in the cache
      */
@@ -105,8 +106,8 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
                                                 const ValueType& value)
 {
     // Check to see if the entry already exists
-    printf("in the begin of insert\n");
-    fflush(stdout);
+    //printf("in the begin of insert\n");
+    //fflush(stdout);
     int entrySize = (int) value;
     int prevPosEmpty, nextPosEmpty;
     prevPosEmpty = nextPosEmpty = 0;
@@ -146,23 +147,23 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
         numEntries_ = 1;
     }else if(numEntries_ == 1)
     {
-        printf("in numEntries == 1\n");
+        //printf("in numEntries == 1\n");
         // Fill out the Cache entry data
         EntryType* entry = new EntryType();
         entry->extent = value;
         entry->address = key;
         entry->timeStamp = simulation.simTime();
         pos--;
-        printf("adding element with address %d and extent %d\n", 
-                key, value);
-        printf("pos values are address %d and extent %d\n", 
-                pos->second->address, pos->second->extent);
+        //printf("adding element with address %d and extent %d\n", 
+        //        key, value);
+        //printf("pos values are address %d and extent %d\n", 
+        //        pos->second->address, pos->second->extent);
 
         // check if overlapping
         if(key < pos->second->address && 
                 pos->second->address < entrySize + key)
         {   // if new entry overlaps current entry from right, new has smaller add
-            printf("got in here 1112\n");
+            // printf("got in here 1112\n");
             pos->second->extent = pos->second->extent +
                             pos->second->address - key;
             pos->second->address = key;
@@ -178,12 +179,12 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
                     pos->second->address+pos->second->extent > key)
         {   // overlap from left into element, new is less
             // Add to the LRU list
-            printf("second position combining \n");
+            //printf("second position combining \n");
             pos->second->extent = value + key - pos->second->address;
 
         }else // just add entry if there are no overlaps
         {
-            printf("just adding \n");
+            //printf("just adding \n");
             // Add to the LRU list
             lruList.push_front(key);
             entry->lruRef = lruList.begin();
@@ -228,8 +229,6 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
                 numEntries_--;
             }
             
-    printf("in the while loop 12\n");
-    fflush(stdout);
             //prevPos = pos;
             //pos++;
             
@@ -240,8 +239,8 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
         }
 
         // if previous entry overlaps current entry
-        printf("more towars end of adding to list\n");
-        fflush(stdout);
+        //printf("more towars end of adding to list\n");
+        //fflush(stdout);
         if((keyEntryMap.end()--)->second->extent != pos->second->extent)
         {
             prevPos = pos--;
@@ -312,7 +311,51 @@ void LRUSimpleCache<KeyType,ValueType>::remove(const KeyType& key)
         keyEntryMap.erase(pos);
         numEntries_--;
     }
+    
+    if(pos != keyEntryMap.begin())pos--;
+    if(pos->second->address <= key &&
+        pos->second->address+pos->second->extent >= key)
+    {
+        // Cleanup the lru list
+        lruList.erase(pos->second->lruRef);
+
+        // Cleanup the EntryType memory
+        delete pos->second;
+
+        // Remove from the map
+        keyEntryMap.erase(pos);
+        numEntries_--;
+
+    }
 }
+
+
+
+// return 0 if not found in cache, 1 if found
+template<class KeyType, class ValueType>
+int LRUSimpleCache<KeyType,ValueType>::findOnlyKey(const KeyType& key)
+{
+    int toReturn = 0;
+    if(lookup(key) != 0) toReturn = 1;    
+    return toReturn;
+}
+
+
+// return - if not found in cache, 1 if found
+template<class KeyType, class ValueType>
+int  LRUSimpleCache<KeyType,ValueType>::findOnlyKeyValue(const KeyType& key, const ValueType& value)
+{
+    int toReturn = 0;
+    EntryType* foundEntry = lookup(key);
+    if(foundEntry != 0 && 
+    ((foundEntry->address+foundEntry->extent) < (key+value)))
+    {
+        toReturn = 1;
+
+    }
+    return toReturn;
+}
+
 
 
 template<class KeyType, class ValueType>
@@ -333,7 +376,17 @@ LRUSimpleCache<KeyType,ValueType>::lookup(const KeyType& key)
         lruList.push_front(key);
         entry->lruRef = lruList.begin();
     }
-    printf("returning %d\n", (int) entry);
+    if(pos != keyEntryMap.begin())pos--;
+    
+    if(pos->second->address <= key &&
+        pos->second->address+pos->second->extent >= key)
+    {
+         entry = pos->second;
+        // Refresh the LRU list
+        lruList.erase(entry->lruRef);
+        lruList.push_front(key);
+        entry->lruRef = lruList.begin();
+    }
     return entry;
 }
 
