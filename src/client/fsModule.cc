@@ -85,9 +85,8 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
     {
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
-            FSOpen open;
-            open.handleFSRequest(static_cast<spfsMPIFileOpenRequest*>(req),
-                                 client);
+            FSOpen open(client, static_cast<spfsMPIFileOpenRequest*>(req));
+            open.handleMessage(req);
             if (0)
                 fsProcess_mpiFileOpenRequest((spfsMPIFileOpenRequest *)req,
                                              resp, client);
@@ -146,6 +145,7 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
             fsUnknownMessage(req, resp, client);
             break;
     }
+
 } /* }}}1 */
 
 void fsUnknownMessage(cMessage *req, cMessage *resp, fsModule *client)

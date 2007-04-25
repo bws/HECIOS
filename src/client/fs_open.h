@@ -6,13 +6,18 @@ class cFSM;
 class fsModule;
 class spfsMPIFileOpenRequest;
 
+/**
+ * Class responsible for opening a file
+ */
 class FSOpen
 {
 public:
 
-    /** Handle Open Message */
-    void handleFSRequest(spfsMPIFileOpenRequest* openReq,
-                         fsModule* module);
+    /** Constructor */
+    FSOpen(fsModule* module, spfsMPIFileOpenRequest* openReq);
+    
+    /** Handle MPI-Open Message */
+    void handleMessage(cMessage* msg);
 
 protected:
 
@@ -20,49 +25,53 @@ protected:
      * @return The next state transition, see implementation for details
      */
     void exitInit(spfsMPIFileOpenRequest* openReq,
-                  fsModule* module,
                   bool& outIsInDirCache,
                   bool& outIsInAttrCache);
 
     /** Lookup */
-    void enterLookup(spfsMPIFileOpenRequest* openReq, fsModule* module);
+    void enterLookup(spfsMPIFileOpenRequest* openReq);
 
     void exitLookup(spfsMPIFileOpenRequest* openReq);
 
     /** Create meta objects */
-    void enterCreateMeta(spfsMPIFileOpenRequest* openReq);
+    void enterCreateMeta();
 
-    void exitCreateMeta(spfsMPIFileOpenRequest* openReq);
+    void exitCreateMeta(spfsCreateResponse* createResp);
 
     /** Create data objects */
-    void enterCreateData(spfsMPIFileOpenRequest* openReq);
+    void enterCreateData();
 
-    void exitCreateData(spfsMPIFileOpenRequest* openReq);
+    void exitCreateData(spfsCreateResponse* createResp);
 
     /** Set attributes */
-    void enterWriteAttr(spfsMPIFileOpenRequest* openReq);
+    void enterWriteAttr();
 
-    void exitWriteAttr(spfsMPIFileOpenRequest* openReq);
+    void exitWriteAttr(spfsSetAttrResponse* sattrResp);
 
     /** Write directory entry */
-    void enterWriteDirEnt(spfsMPIFileOpenRequest* openReq);
+    void enterWriteDirEnt();
 
-    void exitWriteDirEnt(spfsMPIFileOpenRequest* openReq);
+    void exitWriteDirEnt(spfsCreateDirEntResponse* wdirentResp);
 
     /** Read attributes */
-    void enterReadAttr(spfsMPIFileOpenRequest* openReq);
+    void enterReadAttr();
 
-    void exitReadAttr(spfsMPIFileOpenRequest* openReq);
+    void exitReadAttr(spfsGetAttrResponse* gattrResp);
 
     /** Finalize operation */
-    void enterFinish(spfsMPIFileOpenRequest* openReq);
+    void enterFinish();
     
     void errorNF(spfsMPIFileOpenRequest* openReq);
 
     void errorExcl(spfsMPIFileOpenRequest* openReq);
     
 private:
-    cFSM currentState_;
+
+    /** The filesystem module */
+    fsModule* fsModule_;
+
+    /** The originating MPI Open request */
+    spfsMPIFileOpenRequest* openReq_;
 };
 
 #endif
