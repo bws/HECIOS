@@ -14,10 +14,10 @@ public:
     static PFSUtils& instance();
 
     /** Register a mapping between an IP address and a rang of handles */
-    void registerServerIP(const IPvXAddress& ip, HandleRange range);
+    void registerServerIP(IPvXAddress* ip, HandleRange range);
     
     /** @return the Server IP address for handle */
-    IPvXAddress getServerIP(const FSHandle& handle) const;
+    IPvXAddress* getServerIP(const FSHandle& handle);
 
     /** Not sure what this does yet */
     void parsePath(FSOpenFile* descriptor) const;
@@ -37,7 +37,7 @@ private:
      * Map of handle ranges to IPs -- it is safe to assume that
      * handle ranges do not overlap
      */
-    std::map<HandleRange, IPvXAddress> handleIPMap;
+    std::map<HandleRange, IPvXAddress*> handleIPMap;
     
 };
 

@@ -15,9 +15,9 @@ PFSUtils::PFSUtils()
 {
 }
 
-void PFSUtils::registerServerIP(const IPvXAddress& ip, HandleRange range)
+void PFSUtils::registerServerIP(IPvXAddress* ip, HandleRange range)
 {
-    map< HandleRange , IPvXAddress >::const_iterator itr = handleIPMap.find(range);
+    map< HandleRange , IPvXAddress* >::const_iterator itr = handleIPMap.find(range);
     
     // If duplicate exists, erase the element
     if ( itr != handleIPMap.end() && itr->second != ip)
@@ -29,21 +29,18 @@ void PFSUtils::registerServerIP(const IPvXAddress& ip, HandleRange range)
     handleIPMap[range] = ip;
 }
 
-    
-IPvXAddress PFSUtils::getServerIP(const FSHandle& handle) const
+IPvXAddress* PFSUtils::getServerIP(const FSHandle& handle) 
 {
-    // Create a HandleRange whose first and last elements are equal to the
-    // parameter handle
+    // Create a HandleRange whose first and last elements are equal to the handle
     HandleRange newRange;
     newRange.first = handle;
     newRange.last  = handle;
     
-    // If the handle lies outside handle-ranges stored in map, return "0.0.0.0"
-    IPvXAddress ipaddr("0.0.0.0");
+    // If the handle lies outside handle-ranges of map, return null ip
+    IPvXAddress* null_ip = 0;
 
     // Find the first element in map whose handle-range is lesser than newRange
-    map< HandleRange , IPvXAddress >::const_iterator itr_lower =
-        handleIPMap.lower_bound(newRange);
+    map< HandleRange , IPvXAddress* >::const_iterator itr_lower = handleIPMap.lower_bound(newRange);
     if(itr_lower != handleIPMap.end())
     {
         if( handle >= itr_lower->first.first &&
@@ -52,8 +49,7 @@ IPvXAddress PFSUtils::getServerIP(const FSHandle& handle) const
             return itr_lower->second;
         }
     }
-
-    return ipaddr;
+    return null_ip;
 }
 
 void PFSUtils::parsePath(FSOpenFile* descriptor) const

@@ -52,7 +52,7 @@ void PFSUtilsTest::testInstance()
 void PFSUtilsTest::testRegisterServerIP()
 {
     // test for single addition
-    IPvXAddress ip1("192.168.0.1");
+    IPvXAddress* ip1 = new IPvXAddress("192.168.0.1");
     HandleRange r1;
     r1.first = 1;
     r1.last = 10;
@@ -66,8 +66,8 @@ void PFSUtilsTest::testRegisterServerIP()
     CPPUNIT_ASSERT_EQUAL(ip1 , PFSUtils::instance().getServerIP(h1_3));
 
     // test for multiple additions
-    IPvXAddress ip2("192.168.0.2");
-    IPvXAddress ip3("192.168.0.3");
+    IPvXAddress* ip2 = new IPvXAddress("192.168.0.2");
+    IPvXAddress* ip3 = new IPvXAddress("192.168.0.3");
     HandleRange r2;
     r2.first = 11;
     r2.last  = 20;
@@ -83,7 +83,7 @@ void PFSUtilsTest::testRegisterServerIP()
     CPPUNIT_ASSERT_EQUAL(ip3 , PFSUtils::instance().getServerIP(h3_1));
 
     // test for duplicate additions
-    IPvXAddress ip4("192.168.0.4");
+    IPvXAddress* ip4 = new IPvXAddress("192.168.0.4");
     HandleRange r4;
     r4.first = 31;
     r4.last  = 40;
@@ -94,8 +94,8 @@ void PFSUtilsTest::testRegisterServerIP()
     CPPUNIT_ASSERT_EQUAL(ip4 , PFSUtils::instance().getServerIP(h4));
 
     // test for overwrite
-    IPvXAddress ip5_1("192.168.0.5");
-    IPvXAddress ip5_2("192.168.0.6");
+    IPvXAddress* ip5_1 = new IPvXAddress("192.168.0.5");
+    IPvXAddress* ip5_2 = new IPvXAddress("192.168.0.6");
     HandleRange r5;
     r5.first = 41;
     r5.last  = 50;
@@ -108,22 +108,25 @@ void PFSUtilsTest::testRegisterServerIP()
 
 void PFSUtilsTest::testGetServerIP()
 {
-    // create an invalid ip address
-    IPvXAddress ip0("0.0.0.0");
+    // null ip
+    IPvXAddress* ip0 = 0;
 
     // test for handle in and outside the handle-ranges of map
-    IPvXAddress ip7("192.168.0.7");
+    IPvXAddress* ip7 = new IPvXAddress("192.168.0.7");
     HandleRange r7;
     r7.first = 60;
     r7.last = 70;
     FSHandle h7_1(1000);
     FSHandle h7_2(55);
     FSHandle h7_3(0);
+    FSHandle h7_4(60);
     
     PFSUtils::instance().registerServerIP(ip7, r7);
     CPPUNIT_ASSERT_EQUAL(ip0 , PFSUtils::instance().getServerIP(h7_1));
+    CPPUNIT_ASSERT_EQUAL(ip0 , PFSUtils::instance().getServerIP(h7_1));
     CPPUNIT_ASSERT_EQUAL(ip0 , PFSUtils::instance().getServerIP(h7_2));
     CPPUNIT_ASSERT_EQUAL(ip0 , PFSUtils::instance().getServerIP(h7_3));
+    CPPUNIT_ASSERT_EQUAL(ip7 , PFSUtils::instance().getServerIP(h7_4));
 
 }
 #endif

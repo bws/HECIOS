@@ -88,10 +88,10 @@ void FSServerConfigurator::initialize(int stage)
                        << " IP: " << ie->ipv4()->inetAddress() << endl;
                     // Register the IP for the handle range
                     PFSUtils& utils = PFSUtils::instance();
-                    utils.registerServerIP(ie->ipv4()->inetAddress(),
-                                           server->getHandleRange());
+                    IPvXAddress* addr = new IPvXAddress(ie->ipv4()->inetAddress());
+                    utils.registerServerIP(addr,server->getHandleRange());
                     break;
-                }
+                    }
             }
         }
     }

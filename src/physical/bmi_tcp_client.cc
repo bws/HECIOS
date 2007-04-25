@@ -132,8 +132,8 @@ void BMITcpClient::handleMessage(cMessage* msg)
 
 TCPSocket* BMITcpClient::getConnectedSocket(const FSHandle& handle)
 {
-    IPvXAddress serverIp = PFSUtils::instance().getServerIP(handle);
-    TCPSocket* sock = serverConnectionMap_.getSocket(serverIp.str());
+    IPvXAddress* serverIp = PFSUtils::instance().getServerIP(handle);
+    TCPSocket* sock = serverConnectionMap_.getSocket(serverIp->str());
 
     // If a connected socket does not exist, create it
     if (0 == sock)
@@ -141,10 +141,10 @@ TCPSocket* BMITcpClient::getConnectedSocket(const FSHandle& handle)
         sock = new TCPSocket();
         sock->setOutputGate(gate("tcpOut"));
         sock->setCallbackObject(this, NULL);
-        sock->connect(serverIp, connectPort_);
+        sock->connect(serverIp->get4(), connectPort_);
 
         // Add open socket for use in later communication
-        serverConnectionMap_.addSocket(serverIp.str(), sock);
+        serverConnectionMap_.addSocket(serverIp->str(), sock);
 
         // Add open socket to TCPSocketMap for handling later TCP messages
         socketMap_.addSocket(sock);
