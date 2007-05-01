@@ -16,7 +16,7 @@ module IONode
     submodules:
         daemon: DaemonProcess;
 
-        hca: StandardHost;
+        hca: BMIEnhancedHost;
             parameters:
                 numTcpApps = 1,
                 tcpAppType = "BMITcpServer";
@@ -25,10 +25,16 @@ module IONode
 
     connections nocheck:
 
-        ethIn --> hca.ethIn++;
-        ethOut <-- hca.ethOut++;
+        // Connect process to bmi transport
+        daemon.out --> hca.bmiIn++;
+        daemon.in <-- hca.bmiOut++;
 
+        // Connect storage gates
         daemon.storageOut --> storage.in;
         daemon.storageIn <-- storage.out;
+
+        // Connect networking gates
+        ethIn --> hca.ethIn++;
+        ethOut <-- hca.ethOut++;
 
 endmodule

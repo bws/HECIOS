@@ -86,94 +86,57 @@ void BMITcpServer::handleMessage(cMessage* msg)
     }
     else
     {
-        cMessage* response = 0;
         switch(msg->kind())
         {
-            case SPFS_LOOKUP_PATH_REQUEST:
-            {
-                response = new spfsLookupPathResponse(0, SPFS_MPI_FILE_OPEN_RESPONSE);
-                break;
-            }
-            case SPFS_MPI_FILE_CLOSE_REQUEST:
-            {
-                response = new spfsMPIFileOpenResponse(0, SPFS_MPI_FILE_OPEN_RESPONSE);
-                break;
-            }
-            case SPFS_MPI_FILE_DELETE_REQUEST:
-            {
-                response = new spfsMPIFileDeleteResponse(
-                    0, SPFS_MPI_FILE_DELETE_RESPONSE);
-                break;
-            }
-            case SPFS_MPI_FILE_SET_SIZE_REQUEST:
-            {
-                response = new spfsMPIFileSetSizeResponse(
-                    0, SPFS_MPI_FILE_SET_SIZE_RESPONSE);
-                break;
-            }
-            case SPFS_MPI_FILE_PREALLOCATE_REQUEST:
-            {
-                response = new spfsMPIFilePreallocateResponse(
-                    0, SPFS_MPI_FILE_PREALLOCATE_RESPONSE);
-                break;
-            }
-            case SPFS_MPI_FILE_GET_SIZE_REQUEST:
-            {
-                response =
-                    new spfsMPIFileGetSizeResponse(0, SPFS_MPI_FILE_GET_SIZE_RESPONSE);
-                break;
-            }
-            case SPFS_MPI_FILE_GET_INFO_REQUEST:
-            {
-                response =
-                    new spfsMPIFileGetInfoResponse(0, SPFS_MPI_FILE_GET_INFO_RESPONSE);
-                break;
-            }
-            case SPFS_MPI_FILE_SET_INFO_REQUEST:
-            {
-                 response =
-                     new spfsMPIFileSetInfoResponse(0, SPFS_MPI_FILE_SET_INFO_RESPONSE);
-               break;
-            }
-            case SPFS_MPI_FILE_READ_AT_REQUEST:
-            {
-                 response =
-                     new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
-                break;
-            }
-            case SPFS_MPI_FILE_READ_REQUEST:
-            {
-                response =
-                     new spfsMPIFileReadResponse(0, SPFS_MPI_FILE_READ_RESPONSE);
-                break;
-            }
-            case SPFS_MPI_FILE_WRITE_AT_REQUEST:
-            {
-                response =
-                     new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
-                break;
-            }
-            case SPFS_MPI_FILE_WRITE_REQUEST:
-            {
-                response =
-                     new spfsMPIFileWriteResponse(0, SPFS_MPI_FILE_WRITE_RESPONSE);
-                break;
-            }
             case SPFS_CREATE_REQUEST:
-            {
-                response = new spfsCreateResponse(0, SPFS_CREATE_RESPONSE);
-                break;
-            }
             case SPFS_REMOVE_REQUEST:
             case SPFS_READ_REQUEST:
             case SPFS_WRITE_REQUEST:
             case SPFS_GET_ATTR_REQUEST:
             case SPFS_SET_ATTR_REQUEST:
+            case SPFS_LOOKUP_PATH_REQUEST:
             case SPFS_CREATE_DIR_ENT_REQUEST:
             case SPFS_REMOVE_DIR_ENT_REQUEST:
             case SPFS_CHANGE_DIR_ENT_REQUEST:
             case SPFS_TRUNCATE_REQUEST:
             case SPFS_MAKE_DIR_REQUEST:
+            case SPFS_READ_DIR_REQUEST:
+            case SPFS_FLUSH_REQUEST:
+            case SPFS_STAT_REQUEST:
+            case SPFS_LIST_ATTR_REQUEST:
+            {
+                send(msg, "bmiOut");
+                break;
+            }
+            case SPFS_CREATE_RESPONSE:
+            case SPFS_LOOKUP_PATH_RESPONSE:
+            case SPFS_REMOVE_RESPONSE:
+            case SPFS_READ_RESPONSE:
+            case SPFS_WRITE_RESPONSE:
+            case SPFS_GET_ATTR_RESPONSE:
+            case SPFS_SET_ATTR_RESPONSE:
+            case SPFS_CREATE_DIR_ENT_RESPONSE:
+            case SPFS_REMOVE_DIR_ENT_RESPONSE:
+            case SPFS_CHANGE_DIR_ENT_RESPONSE:
+            case SPFS_TRUNCATE_RESPONSE:
+            case SPFS_MAKE_DIR_RESPONSE:
+            case SPFS_READ_DIR_RESPONSE:
+            case SPFS_WRITE_COMPLETION_RESPONSE:
+            case SPFS_FLUSH_RESPONSE:
+            case SPFS_STAT_RESPONSE:
+            case SPFS_LIST_ATTR_RESPONSE:
+            {
+                // Encapsulate the file system response and send to the client
+                spfsBMIServerSendMessage* pkt = new spfsBMIServerSendMessage();
+                pkt->encapsulate(static_cast<cMessage*>(msg->dup()));
+                pkt->setByteLength(256);
+                pkt->setUniqueId(ev.getUniqueNumber());
+
+                TCPSocket* responseSocket =
+                    static_cast<TCPSocket*>(msg->contextPointer());
+                responseSocket->send(pkt);
+                break;
+            }
             default:
                 cerr << "BMI Server not yet implemented for "
                      << " name: " << msg->name()
@@ -181,17 +144,7 @@ void BMITcpServer::handleMessage(cMessage* msg)
                      << " info: " << msg->info() << endl;
                 break;
         }
-
-        // Encapsulate the file system response and send it to the client
-        spfsBMIServerSendMessage* pkt = new spfsBMIServerSendMessage();
-        pkt->encapsulate(response);
-        pkt->setByteLength(256);
-        pkt->setUniqueId(ev.getUniqueNumber());
-
-        TCPSocket* responseSocket =
-            static_cast<TCPSocket*>(msg->contextPointer());
-        responseSocket->send(pkt);
-        delete msg;
+        
     }
 }
 

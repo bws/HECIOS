@@ -79,21 +79,28 @@ void FSOpen::handleMessage(cMessage* msg)
             break;
         }
         case FSM_Enter(CREATE_DATA):
+        {
             assert(0 != dynamic_cast<spfsCreateResponse*>(msg));
             enterCreateData();
             break;
+        }
         case FSM_Exit(CREATE_DATA):
             assert(0 != dynamic_cast<spfsCreateResponse*>(msg));
             exitCreateData(static_cast<spfsCreateResponse*>(msg));
             break;
         case FSM_Enter(WRITE_ATTR):
+        {
             assert(0 != dynamic_cast<spfsSetAttrResponse*>(msg));
             enterWriteAttr();
             break;
+        }
         case FSM_Exit(WRITE_ATTR):
+        {
             assert(0 != dynamic_cast<spfsSetAttrResponse*>(msg));
             exitWriteAttr(static_cast<spfsSetAttrResponse*>(msg));
+            FSM_Goto(currentState, WRITE_DIRENT);
             break;
+        }
         case FSM_Enter(WRITE_DIRENT):
         {
             assert(0 != dynamic_cast<spfsCreateDirEntResponse*>(msg));
