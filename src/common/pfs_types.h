@@ -11,19 +11,6 @@ class ClientFSState;
 /** File system handle data type */
 typedef long long FSHandle;
 
-/** MPI Data type -- currently indicates number of bytes */
-typedef int MPIDataType;
-
-/** MPI modes (not exactly sure what these are for) */
-enum MPI_Modes
-{
-    MPI_MODE_RDONLY = 1,
-    MPI_MODE_WRONLY = 2,
-    MPI_MODE_RDWR = 4,
-    MPI_MODE_CREATE = 8,
-    MPI_MODE_EXCL = 16,
-};
-
 /** A contguous handle range beginning at first and ending at last */
 struct HandleRange
 {

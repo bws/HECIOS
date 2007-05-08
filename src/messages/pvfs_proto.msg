@@ -4,14 +4,19 @@
 
 cplusplus {{
 #include <pfs_types.h>
+
+class TCPSocket;
+typedef TCPSocket* TCPSocketPtr;
 }}
 
 struct FSMetaData;
 struct HandleRange;
 class noncobject MPIDataType; // this is an int
+class noncobject TCPSocketPtr;
+
 
 // PVFS Request Protocol Messages
-enum fsRequestTypes {
+enum fsRequestType {
     SPFS_CREATE_REQUEST = 201;
     SPFS_REMOVE_REQUEST = 202;
     SPFS_READ_REQUEST = 203;
@@ -31,7 +36,7 @@ enum fsRequestTypes {
 };
 
 // PVFS Response Protocol Messages
-enum fsResponseTypes {
+enum fsResponseType {
     SPFS_CREATE_RESPONSE = 301;
     SPFS_REMOVE_RESPONSE = 302;
     SPFS_READ_RESPONSE = 303;
@@ -65,6 +70,7 @@ message spfsRequest
         int fsId;
         int serverNo; // which logical server
         int handle;   // indicates server address and object
+        TCPSocketPtr socket;
 };
 
 // File system response abstract base class
@@ -109,7 +115,7 @@ message spfsReadRequest extends spfsRequest
         int serverCnt;
         unsigned long offset;
         int count;
-        MPIDataType dtype;
+        int dtype;
 };
 
 // Read file data
@@ -127,7 +133,7 @@ message spfsWriteRequest extends spfsRequest
         int server_cnt;
         unsigned long offset;
         int count;
-        MPIDataType dtype;
+        int dtype;
 };
 
 // Write file data
@@ -183,16 +189,16 @@ message spfsLookupPathResponse extends spfsResponse
     fields:
         int status enum(spfsLookupStatus);
         int handles[];
-        int handle_count;
-        int attr_count;
+        int handleCount;
+        int attrCount;
 };
 
 // Create a directory entry
 message spfsCreateDirEntRequest extends spfsRequest
 {
     fields:
-        int parent_handle;
-        int new_handle;
+        int parentHandle;
+        int newHandle;
         string entry;
 };
 
@@ -219,8 +225,8 @@ message spfsRemoveDirEntResponse extends spfsResponse
 message spfsChangeDirEntRequest extends spfsRequest
 {
     fields:
-        int parent_handle;
-        int new_handle;
+        int parentHandle;
+        int newHandle;
         string entry;
 };
 
@@ -228,14 +234,14 @@ message spfsChangeDirEntRequest extends spfsRequest
 message spfsChangeDirEntResponse extends spfsResponse
 {
     fields:
-        int old_dirent_handle;
+        int oldDirEntHandle;
 };
 
 // Resolve a filesystem path
 message spfsTruncateRequest extends spfsRequest
 {
     fields:
-        unsigned long new_size;
+        unsigned long newSize;
         int flags;
 };
 
@@ -248,7 +254,7 @@ message spfsTruncateResponse extends spfsResponse
 message spfsMakeDirRequest extends spfsRequest
 {
     fields:
-        int handle_extents[];
+        int handleExtents[];
 };
 
 // Create a directory
@@ -261,8 +267,8 @@ message spfsMakeDirResponse extends spfsResponse
 message spfsReadDirRequest extends spfsRequest
 {
     fields:
-        unsigned long dir_offset;
-        unsigned long dirent_count;
+        unsigned long dirOffset;
+        unsigned long dirEntCount;
 };
 
 // Read a directory
@@ -271,8 +277,8 @@ message spfsReadDirResponse extends spfsResponse
     fields:
         unsigned long dir_offset;
         string entries[];
-        int entry_count;
-        unsigned long directory_version;
+        int entryCount;
+        unsigned long directoryVersion;
 };
 
 // Resolve a filesystem path
@@ -306,8 +312,8 @@ message spfsListAttrRequest extends spfsRequest
 {
     fields:
         int handles[];
-        int handle_count;
-        int attr_mask;
+        int handleCount;
+        int attrMask;
 };
 
 // List data object attributes

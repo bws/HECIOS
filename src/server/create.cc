@@ -39,8 +39,8 @@ cMessage* Create::handleServerMessage(cMessage* msg)
 
 cMessage* Create::enterFinish()
 {
-    spfsCreateResponse* resp = new spfsCreateResponse();
-    //resp->setContext(createReq_);
+    spfsCreateResponse* resp = new spfsCreateResponse(0, SPFS_CREATE_RESPONSE);
+    resp->setContextPointer(createReq_->contextPointer());
     return resp;
 }
 

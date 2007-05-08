@@ -39,8 +39,14 @@ cMessage* Lookup::handleServerMessage(cMessage* msg)
 
 cMessage* Lookup::enterFinish()
 {
-    spfsLookupPathResponse* resp = new spfsLookupPathResponse();
-    //resp->setContext(lookupReq_);
+    spfsLookupPathResponse* resp = new spfsLookupPathResponse(
+        0, SPFS_LOOKUP_PATH_RESPONSE);
+    resp->setContextPointer(lookupReq_->contextPointer());
+    resp->setStatus(SPFS_FOUND);
+    resp->setHandleCount(1);
+    resp->setAttrCount(0);
+    resp->setHandlesArraySize(1);
+    resp->setHandles(0, 1200);
     return resp;
 }
 

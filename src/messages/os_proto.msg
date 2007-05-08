@@ -2,7 +2,7 @@
 // BMI wrapper messages for transporting data from the client to server
 //
 
-enum spfsOSMessageTypes
+enum spfsOSMessageType
 {
     SPFS_OS_FILE_READ_REQUEST = 601;
     SPFS_OS_FILE_READ_RESPONSE = 602;

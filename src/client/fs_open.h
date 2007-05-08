@@ -1,10 +1,15 @@
 #ifndef FS_OPEN_H
 #define FS_OPEN_H
 
-#include <omnetpp.h>
 class cFSM;
+class cMessage;
 class fsModule;
 class spfsMPIFileOpenRequest;
+class spfsCreateResponse;
+class spfsCreateDirEntResponse;
+class spfsGetAttrResponse;
+class spfsLookupPathResponse;
+class spfsSetAttrResponse;
 
 /**
  * Class responsible for opening a file
@@ -29,9 +34,11 @@ protected:
                   bool& outIsInAttrCache);
 
     /** Lookup */
-    void enterLookup(spfsMPIFileOpenRequest* openReq);
+    void enterLookup();
 
-    void exitLookup(spfsMPIFileOpenRequest* openReq);
+    void exitLookup(spfsLookupPathResponse* lookupResponse,
+                    bool& outIsCreate, bool& outIsFullLookup,
+                    bool& outIsMissingAttr, bool& outIsPartialLookup);
 
     /** Create meta objects */
     void enterCreateMeta();
@@ -41,7 +48,8 @@ protected:
     /** Create data objects */
     void enterCreateData();
 
-    void exitCreateData(spfsCreateResponse* createResp);
+    void exitCreateData(spfsCreateResponse* createResp,
+                        bool& outIsDoneCreatingDataObjects);
 
     /** Set attributes */
     void enterWriteAttr();

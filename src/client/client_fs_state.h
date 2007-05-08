@@ -7,6 +7,7 @@
 #include <vector>
 #include <omnetpp.h>
 #include "lru_timeout_cache.h"
+#include "mpiio_proto_m.h"
 #include "pfs_types.h"
 
 /**

@@ -31,7 +31,7 @@ protected:
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
 
-    /** */
+    /** Extract the payload from a completed socket message */
     void socketDataArrived(int, void *, cMessage *msg, bool);
     
 private:
@@ -48,6 +48,11 @@ private:
     /** Map containing all connected sockets (for message handling) */
     TCPSocketMap socketMap_;
 
+    /** Gate id for bmiIn */
+    int bmiInGateId_;
+
+    /** Gate id for tcpIn */
+    int tcpInGateId_;
 };
 
 // OMNet Registriation Method
@@ -59,6 +64,8 @@ Define_Module(BMITcpClient);
 void BMITcpClient::initialize()
 {
     connectPort_ = par("connectPort").longValue();
+    bmiInGateId_ = gate("bmiIn")->id();
+    tcpInGateId_ = gate("tcpIn")->id();
 }
 
 /**
@@ -73,60 +80,39 @@ void BMITcpClient::handleMessage(cMessage* msg)
         assert(0 != sock);
         sock->processMessage(msg);
     }
+    else if (0 != dynamic_cast<spfsRequest*>(msg))
+    {
+        cerr << "Sending packet from client!"
+             << "Kind: " << msg->kind() << " info: " << msg->info()
+             << endl;
+                
+        // Retrieve the socket for this handle
+        FSHandle handle = 0;
+        TCPSocket* sock = getConnectedSocket(handle);
+                
+        // Encapsulate the domain message and send via TCP
+        spfsBMIClientSendMessage* pkt = new spfsBMIClientSendMessage();
+        pkt->encapsulate(msg);
+        pkt->setByteLength(256);
+        pkt->setUniqueId(ev.getUniqueNumber());
+        sock->send(pkt);
+
+        // A mostly ineffective hack to disable excessive INET output
+        ev.disable_tracing = true;
+    }
+    else if (0 != dynamic_cast<spfsResponse*>(msg))
+    {
+        cerr << "BMI Forwarding response" << endl;
+        
+        // Send response to application
+        send(msg, "bmiOut");
+                
+        // A mostly ineffective hack to disable excessive INET output
+        ev.disable_tracing = false;
+    }
     else
     {
-        // Send requests to the server via TCP
-        switch(msg->kind())
-        {
-            case SPFS_MPI_FILE_OPEN_REQUEST:
-            case SPFS_MPI_FILE_CLOSE_REQUEST:
-            case SPFS_MPI_FILE_DELETE_REQUEST:
-            case SPFS_MPI_FILE_SET_SIZE_REQUEST:
-            case SPFS_MPI_FILE_PREALLOCATE_REQUEST:
-            case SPFS_MPI_FILE_GET_SIZE_REQUEST:
-            case SPFS_MPI_FILE_GET_INFO_REQUEST:
-            case SPFS_MPI_FILE_SET_INFO_REQUEST:
-            case SPFS_MPI_FILE_READ_AT_REQUEST:
-            case SPFS_MPI_FILE_READ_REQUEST:
-            case SPFS_MPI_FILE_WRITE_AT_REQUEST:
-            case SPFS_MPI_FILE_WRITE_REQUEST:
-            case SPFS_LOOKUP_PATH_REQUEST:
-            {
-                cerr << "Sending packet from client!"
-                     << "Kind: " << msg->kind() << " info: " << msg->info()
-                     << endl;
-                
-                // Retrieve the socket for this handle
-                FSHandle handle = 0;
-                TCPSocket* sock = getConnectedSocket(handle);
-                
-                // Encapsulate the domain message and send via TCP
-                spfsBMIClientSendMessage* pkt = new spfsBMIClientSendMessage();
-                pkt->encapsulate(msg);
-                pkt->setByteLength(256);
-                pkt->setUniqueId(ev.getUniqueNumber());
-                sock->send(pkt);
-                break;
-            }
-            case SPFS_MPI_FILE_OPEN_RESPONSE:
-            case SPFS_MPI_FILE_CLOSE_RESPONSE:
-            case SPFS_MPI_FILE_DELETE_RESPONSE:
-            case SPFS_MPI_FILE_SET_SIZE_RESPONSE:
-            case SPFS_MPI_FILE_PREALLOCATE_RESPONSE:
-            case SPFS_MPI_FILE_GET_SIZE_RESPONSE:
-            case SPFS_MPI_FILE_GET_INFO_RESPONSE:
-            case SPFS_MPI_FILE_SET_INFO_RESPONSE:
-            case SPFS_MPI_FILE_READ_AT_RESPONSE:
-            case SPFS_MPI_FILE_READ_RESPONSE:
-            case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
-            case SPFS_MPI_FILE_WRITE_RESPONSE:
-            {
-                // Send response to application
-                send(msg, "bmiOut");
-            }
-            default:
-                cerr << "Unknown message type in BMI client\n";
-        }
+        cerr << "Unknown message type in BMI client\n";
     }
 }
 

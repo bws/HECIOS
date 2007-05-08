@@ -5,14 +5,32 @@
 // allow a pointer field in a message 
 cplusplus {{
 #include <pfs_types.h>
-typedef void *voidPtr;
+
+typedef FSOpenFile* FileDescriptorPtr;
+
+/** MPI Data type -- currently indicates number of bytes */
+typedef int MPIDataType;
+
 }}
 
 class cFSM;
-class noncobject voidPtr;
 class noncobject MPIDataType;  // this is an int type
+class noncobject FileDescriptorPtr;
 
-enum mpiRequestTypes
+enum mpiAccessMode
+{
+    MPI_MODE_CREATE = 1;
+    MPI_MODE_RDONLY = 2;
+    MPI_MODE_WRONLY = 4;
+    MPI_MODE_RDWR = 8;
+    MPI_MODE_DELETE_ON_CLOSE = 16;
+    MPI_MODE_UNIQUE_OPEN = 32;
+    MPI_MODE_EXCL = 64;
+    MPI_MODE_APPEND = 128;
+    MPI_MODE_SEQUENTIAL = 256;
+};
+
+enum mpiRequestType
 {
     SPFS_MPI_FILE_OPEN_REQUEST = 1;
     SPFS_MPI_FILE_CLOSE_REQUEST = 2;
@@ -28,7 +46,7 @@ enum mpiRequestTypes
     SPFS_MPI_FILE_WRITE_REQUEST = 12;
 };
 
-enum mpiResponseTypes
+enum mpiResponseType
 {
     SPFS_MPI_FILE_OPEN_RESPONSE = 101;
     SPFS_MPI_FILE_CLOSE_RESPONSE = 102;
@@ -69,26 +87,25 @@ message spfsMPIResponse
 message spfsMPIFileOpenRequest extends spfsMPIRequest
 {
     fields:
-        voidPtr fs;    // pointer to fileSystem class 
         string fileName;
         int mode;
 
         // internal fields
-        voidPtr filedes;
+        FileDescriptorPtr filedes;
 };
 
 // Open file response
 message spfsMPIFileOpenResponse extends spfsMPIResponse
 {
     fields:
-        voidPtr filedes;
+        FileDescriptorPtr filedes;
 };
 
 // Request to close a file
 message spfsMPIFileCloseRequest extends spfsMPIRequest
 {
     fields:
-        voidPtr filedes;
+        FileDescriptorPtr filedes;
 };
 
 // Close file response
@@ -113,7 +130,7 @@ message spfsMPIFileDeleteResponse extends spfsMPIResponse
 message spfsMPIFileSetSizeRequest extends spfsMPIRequest
 {
     fields:
-        voidPtr filedes;
+        FileDescriptorPtr filedes;
         int size;
 };
 
@@ -126,7 +143,7 @@ message spfsMPIFileSetSizeResponse extends spfsMPIResponse
 message spfsMPIFilePreallocateRequest extends spfsMPIRequest
 {
     fields:
-        voidPtr filedes;
+        FileDescriptorPtr filedes;
         int size;
 };
 
@@ -153,7 +170,7 @@ message spfsMPIFileGetSizeResponse extends spfsMPIResponse
 message spfsMPIFileGetInfoRequest extends spfsMPIRequest
 {
     fields:
-        voidPtr filedes;
+        FileDescriptorPtr filedes;
 };
 
 // Get file info response
@@ -167,7 +184,7 @@ message spfsMPIFileGetInfoResponse extends spfsMPIResponse
 message spfsMPIFileSetInfoRequest extends spfsMPIRequest
 {
     fields:
-        voidPtr filedes;
+        FileDescriptorPtr filedes;
         string info[];
 };
 
@@ -180,7 +197,7 @@ message spfsMPIFileSetInfoResponse extends spfsMPIResponse
 message spfsMPIFileReadAtRequest extends spfsMPIRequest
 {
     fields:
-	voidPtr filedes;
+	FileDescriptorPtr filedes;
 	int count;
 	MPIDataType dtype;
         long offset = 0;
@@ -198,7 +215,7 @@ message spfsMPIFileReadAtResponse extends spfsMPIResponse
 message spfsMPIFileReadRequest extends spfsMPIRequest
 {
     fields:
-	voidPtr filedes;
+	FileDescriptorPtr filedes;
 	int count;
 	MPIDataType dtype;
 };
@@ -215,7 +232,7 @@ message spfsMPIFileReadResponse extends spfsMPIResponse
 message spfsMPIFileWriteAtRequest extends spfsMPIRequest
 {
     fields:
-        voidPtr filedes;
+        FileDescriptorPtr filedes;
         int count;
         MPIDataType dtype;
         long offset;
@@ -233,7 +250,7 @@ message spfsMPIFileWriteAtResponse extends spfsMPIResponse
 message spfsMPIFileWriteRequest extends spfsMPIRequest
 {
     fields:
-        voidPtr filedes;
+        FileDescriptorPtr filedes;
         int count;
         MPIDataType dtype;
         char data[];

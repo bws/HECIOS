@@ -1,12 +1,11 @@
 // file fsModule.cc
-#include <omnetpp.h>
-#include <pfs_types.h>
-#include <pvfs_proto_m.h>
-#include <mpiio_proto_m.h>
-#include <client_fs_state.h>
-#include "fs_open.h"
+#include <iostream>
 #include "fs_module.h"
-class fsModule;
+#include "pfs_types.h"
+#include "pvfs_proto_m.h"
+#include "mpiio_proto_m.h"
+#include "fs_open.h"
+using namespace std;
 
 // local function decls
 static void fsUnknownMessage(cMessage *req, cMessage *resp,
@@ -86,7 +85,11 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
             FSOpen open(client, static_cast<spfsMPIFileOpenRequest*>(req));
-            open.handleMessage(req);
+            if (resp)
+                open.handleMessage(resp);
+            else
+                open.handleMessage(req);
+            
             if (0)
                 fsProcess_mpiFileOpenRequest((spfsMPIFileOpenRequest *)req,
                                              resp, client);
@@ -139,6 +142,7 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
         case SPFS_FLUSH_RESPONSE :
         case SPFS_STAT_RESPONSE :
         case SPFS_LIST_ATTR_RESPONSE :
+            cerr << "Calling process message after unpacking" << endl;
             fsProcessMessage((cMessage *)req->contextPointer(), req, client);
             break;
         default :
@@ -150,6 +154,8 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
 
 void fsUnknownMessage(cMessage *req, cMessage *resp, fsModule *client)
 {
+    cerr << "FsModule: Unknown Message: " << req->kind()
+         << " " << req->info() << endl;
 }
 
 // messages from user/cache
@@ -180,7 +186,7 @@ void fsProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *mpireq,
             /* create open file descriptor */
             filedes = new FSOpenFile;
             mpireq->setFiledes(filedes);
-            filedes->fs = (ClientFSState*)mpireq->getFs();
+            // BWS filedes->fs = (ClientFSState*)mpireq->getFs();
             /* look for dir in cache */
             FSHandle* lookup = filedes->fs->lookupDir(mpireq->getFileName());
             if (0 != lookup) // how to do this?
@@ -230,7 +236,7 @@ void fsProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *mpireq,
             spfsLookupPathResponse *fsresp = (spfsLookupPathResponse *)resp;
             int i;
             /* save handles found */
-            int handle_count = fsresp->getHandle_count();
+            int handle_count = fsresp->getHandleCount();
             for (i = 0; i < handle_count; i++)
             {
                 filedes->handles[++filedes->curseg] = fsresp->getHandles(i);
@@ -389,9 +395,9 @@ void fsProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *mpireq,
             req->setHandle(filedes->handles[filedes->curseg]);
             /* this is the same handle, the handle of the parent dir */
             /* can we get rid of this field?  WBL */
-            req->setParent_handle(filedes->handles[filedes->curseg]);
+            req->setParentHandle(filedes->handles[filedes->curseg]);
             /* this is the handle of the new file goes in dirent */
-            req->setNew_handle(filedes->metaData.metaHandle);
+            req->setNewHandle(filedes->metaData.metaHandle);
             /* this is the name of the file */
             req->setEntry(mpireq->getFileName());
             client->send(req, client->fsNetOut);

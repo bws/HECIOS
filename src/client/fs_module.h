@@ -2,6 +2,7 @@
 #define FS_MODULE_H
 
 #include <omnetpp.h>
+#include "client_fs_state.h"
 
 class fsModule : public cSimpleModule
 {
