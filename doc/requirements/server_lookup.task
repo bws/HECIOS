@@ -1,0 +1,11 @@
+Intro:
+  A simple one line description of the task goes here.
+
+Status: Unassigned|In process(username)|Passes all tests(username)
+
+Responsibilities:
+  A paragraph or two describing what this task needs to do
+
+Detailed Requirements:
+  Any specific technical details required to accomplish this task including
+neccesary optimizations, tricky bits, or important nomenclature.

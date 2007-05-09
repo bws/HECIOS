@@ -1,0 +1,17 @@
+Intro:
+  Perform client processing to open a file.
+
+Status: In process(bradles)
+
+Responsibilities:
+  Do the client process to open a file.  Requires lookup of all path components
+up to the filename -- which needs to include a client side name and attribute cache.  In addition, open may possible require file creation depending on the MPI mode flags.  
+
+  Create entails first creating the metadata.  If the file is a file and not
+a directory then data objects will also need to created.
+
+Detailed Requirements:
+  Several tricky undocumented requirements exist within this task.  Namely,
+creating files that are assumed to exist by the trace.  This step will need
+to occur, and will require the creation of file bookkeeping entries that
+can be done without simulation time.

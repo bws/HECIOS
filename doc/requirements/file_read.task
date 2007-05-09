@@ -1,0 +1,11 @@
+Intro:
+  Write the client side file read components.
+
+Status: Unassigned
+
+Responsibilities:
+  Perform the client side processing to perform a file read.
+
+Detailed Requirements:
+  The sending of data must be packetized in such a way that it can be
+received and written to disk at the same time.
