@@ -43,7 +43,7 @@ struct FSMetaData
     int group;
     int nlinks;
     int size;            /* number of bytes in file */
-    FSHandle metaHandle; /* handle of the metadata object */
+    FSHandle handle; /* handle of the metadata object */
     std::vector<FSHandle> dataHandles; /* size of handles is server count */
     int dist;            /* for now just strip size in bytes */
 };
@@ -51,19 +51,20 @@ struct FSMetaData
 /** Equality operation for Metadata */
 inline bool operator==(const FSMetaData& lhs, const FSMetaData& rhs)
 {
-    return (lhs.metaHandle == rhs.metaHandle);
+    return (lhs.handle == rhs.handle);
 }
 
 /** Descriptor for an open file */
 struct FSOpenFile
 {
     ClientFSState *fs;   /* pointer to client unique fs struct */
-    FSHandle handle;     /* handle of the file - the metadata object */
-    int state;           /* I don't think we need this - WBL */
     FSMetaData metaData; /* pointer to file unique metadata */
     std::string path;    /* the complete path to the file */
     int filePtr;         /* offset of current position in file */
-    FSHandle handles[MAXSEG]; /* handles of all dirs along path */
+    
+    FSHandle handle; // Is this field really neccesary
+
+    FSHandle handles[MAXSEG]; /* handles of all dirs along path */    
     int segstart[MAXSEG];/* index to start of each dir name */
     int seglen[MAXSEG];  /* length to end of path for each segment */
     int curseg;          /* which segment is being looked up */
