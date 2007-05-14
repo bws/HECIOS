@@ -3,6 +3,7 @@
 #include <string>
 #include "client_fs_state.h"
 #include "mpiio_proto_m.h"
+#include "pfs_utils.h"
 #include "umd_io_trace.h"
 #include <omnetpp.h>
 using namespace std;
@@ -26,10 +27,11 @@ protected:
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
 
+    /** Get the next message to send */
+    virtual cMessage* getNextMessage();
+    
 private:
 
-    void getNextMessage();
-    
     IOTrace* trace_;
     int rank_;
     ClientFSState clientState_;
@@ -117,10 +119,17 @@ void IOApplication::handleMessage(cMessage* msg)
             case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
             case SPFS_MPI_FILE_WRITE_RESPONSE:
             {
-                cerr << "IOApplication response recvd, sending next message"
-                     << endl;
                 // Send the next message
-                getNextMessage();
+                cMessage* nextMsg = getNextMessage();
+                if (0 != nextMsg)
+                {
+                    send(nextMsg, outGate_);
+                }
+                else
+                {
+                    cerr << "IOApplication: No more messages to post."
+                         << endl;
+                }
                 break;
             }
             default:
@@ -135,7 +144,7 @@ void IOApplication::handleMessage(cMessage* msg)
     }
 }
 
-void IOApplication::getNextMessage()
+cMessage* IOApplication::getNextMessage()
 {
     cMessage* msg = 0;
     
@@ -143,14 +152,16 @@ void IOApplication::getNextMessage()
         msg = trace_->nextRecordAsMessage();
     } while (0 == msg && trace_->hasMoreRecords());
 
-    if (0 != msg)
+    // Create the requested file if neccesary and it does not exist
+    spfsMPIFileOpenRequest* open = 0;
+    if ((open = dynamic_cast<spfsMPIFileOpenRequest*>(msg)) &&
+        (open->getMode() == MPI_MODE_CREATE) &&
+        (!PFSUtils::instance().fileExists(open->getFileName())) )
     {
-        send(msg, outGate_);
+        PFSUtils::instance().createFile(open->getFileName(), 1, 1);
     }
-    else
-    {
-        cerr << "IOApplication: No more messages to post." << endl;
-    }
+    
+    return msg;
 }
 /*
  * Local variables:

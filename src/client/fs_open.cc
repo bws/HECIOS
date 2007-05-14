@@ -164,16 +164,18 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
     // Initialize outbound variable
     outIsInDirCache = false;
     outIsInAttrCache = false;
+
+    // Retrieve the data from the simulator bookkeeper
+    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq->getFiledes());
     
     /* look for dir in cache */
-    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq->getFiledes());
     FSHandle* lookup = fsModule_->fsState().lookupDir(openReq->getFileName());
     if (0 == lookup)
     {
         /* dir entry not in cache go do lookup */
         fd->path = openReq->getFileName();
         PFSUtils::instance().parsePath(fd);
-        fd->handles[0] = fsModule_->fsState().root();
+        //FIXME fd->handles[0] = fsModule_->fsState().root();
         fd->curseg = 0;
     }
     else
@@ -182,7 +184,7 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
         outIsInDirCache = true;
         
         /* dir entry in cache look for metadata in cache */
-        FSMetaData* meta = fsModule_->fsState().lookupAttr(fd->handle);
+        FSMetaData* meta = fsModule_->fsState().lookupAttr(*lookup);
         if (0 != meta)
         {
             // Found attribute cache entry
@@ -208,7 +210,7 @@ void FSOpen::enterLookup()
                              filedes->seglen[filedes->curseg]).c_str());
     
     /* get handle for root dir */
-    req->setHandle(filedes->handles[filedes->curseg]);
+    req->setHandle(filedes->fs->root());
     fsModule_->send(req, fsModule_->fsNetOut);
 }
 
@@ -238,9 +240,8 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
     {
         case SPFS_FOUND:
         {
-            filedes->handle = filedes->handles[filedes->curseg];
             /* enter handle in cache */
-            filedes->fs->insertDir(filedes->path, filedes->handle);
+            filedes->fs->insertDir(filedes->path, filedes->metaData.handle);
             if (openReq_->getMode() & MPI_MODE_EXCL)
             {
                 cerr << "FIXME: What the heck does this mean???";
@@ -249,7 +250,8 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
             else
             {
                 /* look for metadata in cache */
-                FSMetaData* meta = filedes->fs->lookupAttr(filedes->handle);
+                FSMetaData* meta =
+                    filedes->fs->lookupAttr(filedes->metaData.handle);
                 if (0 == meta)
                 {
                     outIsMissingAttr = true;
@@ -304,9 +306,7 @@ void FSOpen::enterCreateMeta()
 
 void FSOpen::exitCreateMeta(spfsCreateResponse* createResp)
 {
-    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFiledes());
-    fd->handle = createResp->getHandle();
-    fd->metaData.metaHandle = fd->handle;
+    // Don't need to do anything, data already exists in simulation
 }
 
 void FSOpen::enterCreateData()
@@ -351,7 +351,7 @@ void FSOpen::enterWriteAttr()
     FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFiledes());
     spfsSetAttrRequest *req = new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
-    req->setHandle(fd->handle);
+    req->setHandle(fd->metaData.handle);
     req->setMeta(fd->metaData);
     fsModule_->send(req, fsModule_->fsNetOut);
 }
@@ -372,7 +372,7 @@ void FSOpen::enterWriteDirEnt()
     /* can we get rid of this field?  WBL */
     req->setParentHandle(fd->handles[fd->curseg]);
     /* this is the handle of the new file goes in dirent */
-    req->setNewHandle(fd->metaData.metaHandle);
+    req->setNewHandle(fd->metaData.handle);
     /* this is the name of the file */
     req->setEntry(openReq_->getFileName());
     fsModule_->send(req, fsModule_->fsNetOut);   
@@ -391,7 +391,7 @@ void FSOpen::enterReadAttr()
     FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFiledes());
     spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
-    req->setHandle(fd->handle);
+    req->setHandle(fd->metaData.handle);
     fsModule_->send(req, fsModule_->fsNetOut);
 }
 

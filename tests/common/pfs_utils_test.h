@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
+#include "IPvXAddress.h"
 #include "pfs_utils.h"
 using namespace std;
 
@@ -13,10 +14,17 @@ class PFSUtilsTest : public CppUnit::TestFixture
     // Create generic unit test and register test functions for automatic
     // exercise
     CPPUNIT_TEST_SUITE(PFSUtilsTest);
-    //CPPUNIT_TEST(testConstructor);
+    CPPUNIT_TEST(testInstance);
     CPPUNIT_TEST(testRegisterServerIP);
     CPPUNIT_TEST(testGetServerIP);
-    CPPUNIT_TEST(testInstance);
+    CPPUNIT_TEST(testRegisterFSServer);
+    CPPUNIT_TEST(testGetMetaServers);
+    CPPUNIT_TEST(testGetNextHandle);
+    CPPUNIT_TEST(testFileExists);
+    CPPUNIT_TEST(testGetMetaData);
+    CPPUNIT_TEST(testGetDescriptor);
+    CPPUNIT_TEST(testCreateDirectory);
+    CPPUNIT_TEST(testCreateFile);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -26,13 +34,18 @@ public:
 
     /** Called after each test function */
     void tearDown();
-    
+
     void testInstance();
-    
-    //void testConstructor();
     void testRegisterServerIP();
     void testGetServerIP();
-
+    void testRegisterFSServer();
+    void testGetMetaServers();
+    void testGetNextHandle();
+    void testFileExists();
+    void testGetMetaData();
+    void testGetDescriptor();
+    void testCreateDirectory();
+    void testCreateFile();
 };
 
 void PFSUtilsTest::setUp()
@@ -41,6 +54,8 @@ void PFSUtilsTest::setUp()
 
 void PFSUtilsTest::tearDown()
 {
+    // Clear the singleton state between tests
+    PFSUtils::clearState();
 }
 
 void PFSUtilsTest::testInstance()
@@ -129,6 +144,77 @@ void PFSUtilsTest::testGetServerIP()
     CPPUNIT_ASSERT_EQUAL(ip7 , PFSUtils::instance().getServerIP(h7_4));
 
 }
+
+void PFSUtilsTest::testRegisterFSServer()
+{
+    HandleRange h1, h2;
+    PFSUtils::instance().registerFSServer(h1, true);
+    PFSUtils::instance().registerFSServer(h2, false);
+    CPPUNIT_ASSERT(true);
+}
+
+void PFSUtilsTest::testGetMetaServers()
+{
+    // Register 3 servers with servers 1 and 3 set as Meta servers
+    HandleRange h1, h2, h3;
+    PFSUtils::instance().registerFSServer(h1, true);
+    PFSUtils::instance().registerFSServer(h2, false);
+    PFSUtils::instance().registerFSServer(h3, true);
+    vector<int> metaServers = PFSUtils::instance().getMetaServers();
+    CPPUNIT_ASSERT_EQUAL(0, metaServers[0]);
+    CPPUNIT_ASSERT_EQUAL(2, metaServers[1]);
+}
+
+void PFSUtilsTest::testGetNextHandle()
+{
+    HandleRange h1 = {100, 200}, h2 = {2000, 3000};
+    PFSUtils::instance().registerFSServer(h1, true);
+    PFSUtils::instance().registerFSServer(h2, false);
+    CPPUNIT_ASSERT_EQUAL(h1.first, PFSUtils::instance().getNextHandle(0));
+    CPPUNIT_ASSERT_EQUAL(h1.first + 1, PFSUtils::instance().getNextHandle(0));
+    CPPUNIT_ASSERT_EQUAL(h2.first, PFSUtils::instance().getNextHandle(1));
+    CPPUNIT_ASSERT_EQUAL(h2.first + 1, PFSUtils::instance().getNextHandle(1));
+}
+
+void PFSUtilsTest::testFileExists()
+{
+    // Register servers
+    HandleRange h1 = {100, 200}, h2 = {2000, 3000};
+    PFSUtils::instance().registerFSServer(h1, true);
+    PFSUtils::instance().registerFSServer(h2, false);
+
+    // Create files
+    string file1 = "/test1";
+    string file2 = "/test2";
+    string dir1 = "/dir1";
+    PFSUtils::instance().createFile(file1, 0, 1);
+    PFSUtils::instance().createDirectory(dir1, 0);
+    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(file1));
+    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(dir1));
+    CPPUNIT_ASSERT(!PFSUtils::instance().fileExists(file2));
+}
+
+void PFSUtilsTest::testGetMetaData()
+{
+    string file1 = "/test1";
+    //CPPUNIT_FAIL("Not implemented");
+}
+
+void PFSUtilsTest::testGetDescriptor()
+{
+    //CPPUNIT_FAIL("Not implemented");
+}
+
+void PFSUtilsTest::testCreateDirectory()
+{
+    CPPUNIT_FAIL("Not implemented");
+}
+
+void PFSUtilsTest::testCreateFile()
+{
+    CPPUNIT_FAIL("Not implemented");
+}
+
 #endif
 
 /*
