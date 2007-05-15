@@ -5,6 +5,7 @@
 #include <vector>
 #include "pfs_types.h"
 class IPvXAddress;
+class Filename;
 
 /** Utility functions for parallel file systems */
 class PFSUtils
@@ -30,25 +31,25 @@ public:
     std::vector<int> getMetaServers() const;
     
     /** @return true if the filename exists within the PFS */
-    bool fileExists(const std::string& fileName) const;
+    bool fileExists(const Filename& fileName) const;
 
     /** @return Metadata for a PFS file */
-    FSMetaData* getMetaData(const std::string& fileName) const;
+    FSMetaData* getMetaData(const Filename& fileName) const;
 
     /** @return Descriptor for a PFS file */
-    FSOpenFile* getDescriptor(const std::string& fileName) const;
+    FSOpenFile* getDescriptor(const Filename& fileName) const;
     
     /** @return the next handle for server */
-    FSHandle getNextHandle(int serverNumber);
+    FSHandle getNextHandle(size_t serverNumber);
     
     /** @return the server id for the registering server */
     int registerFSServer(const HandleRange& range, bool isMetaServer);
 
     /** Create the named directory in the file system */
-    void createDirectory(const std::string& dirName, int metaServer);
+    void createDirectory(const Filename& dirName, int metaServer);
     
     /** Create the named file in the file system */
-    void createFile(const std::string& fileName, int metaServer,
+    void createFile(const Filename& fileName, int metaServer,
                     int numDataServers);
 
 private:
@@ -70,7 +71,7 @@ private:
 
     std::map<std::string, FSHandle> nameToHandleMap_;
 
-    std::map<FSHandle, FSOpenFile*> handleToDescriptorMap_;
+    std::map<FSHandle, FSMetaData*> handleToMetaMap_;
 
     size_t nextServerNumber_;
 

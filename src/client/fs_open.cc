@@ -3,6 +3,7 @@
 #define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
 #include "client_fs_state.h"
+#include "filename.h"
 #include "fs_module.h"
 #include "mpiio_proto_m.h"
 #include "pfs_utils.h"
@@ -160,20 +161,23 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
     // Preconditions
     assert(0 != openReq->getFileName());
     assert(0 != openReq->getFiledes());
+    assert(0 == (openReq->getMode() & MPI_MODE_EXCL));
     
     // Initialize outbound variable
     outIsInDirCache = false;
     outIsInAttrCache = false;
 
     // Retrieve the data from the simulator bookkeeper
+    Filename openFile(openReq->getFileName());
     FSOpenFile* fd = static_cast<FSOpenFile*>(openReq->getFiledes());
+    fd->metaData = PFSUtils::instance().getMetaData(openFile);
+    fd->path = openFile.str();
     
     /* look for dir in cache */
-    FSHandle* lookup = fsModule_->fsState().lookupDir(openReq->getFileName());
+    FSHandle* lookup = fsModule_->fsState().lookupDir(fd->path);
     if (0 == lookup)
     {
         /* dir entry not in cache go do lookup */
-        fd->path = openReq->getFileName();
         PFSUtils::instance().parsePath(fd);
         //FIXME fd->handles[0] = fsModule_->fsState().root();
         fd->curseg = 0;
@@ -188,10 +192,7 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
         if (0 != meta)
         {
             // Found attribute cache entry
-            outIsInAttrCache = true;
-            
-            /* metadata in cache, were all done */
-            fd->metaData = *meta;
+            outIsInAttrCache = true;            
         }
     }
 }
@@ -210,7 +211,9 @@ void FSOpen::enterLookup()
                              filedes->seglen[filedes->curseg]).c_str());
     
     /* get handle for root dir */
-    req->setHandle(filedes->fs->root());
+    Filename root("/");
+    FSMetaData* rootMeta = PFSUtils::instance().getMetaData(root);
+    req->setHandle(rootMeta->handle);
     fsModule_->send(req, fsModule_->fsNetOut);
 }
 
@@ -241,27 +244,18 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
         case SPFS_FOUND:
         {
             /* enter handle in cache */
-            filedes->fs->insertDir(filedes->path, filedes->metaData.handle);
-            if (openReq_->getMode() & MPI_MODE_EXCL)
+            fsModule_->fsState().insertDir(filedes->path,
+                                           filedes->metaData->handle);
+            /* look for metadata in cache */
+            FSMetaData* meta =
+                fsModule_->fsState().lookupAttr(filedes->metaData->handle);
+            if (0 == meta)
             {
-                cerr << "FIXME: What the heck does this mean???";
-                assert(0);
+                outIsMissingAttr = true;
             }
             else
             {
-                /* look for metadata in cache */
-                FSMetaData* meta =
-                    filedes->fs->lookupAttr(filedes->metaData.handle);
-                if (0 == meta)
-                {
-                    outIsMissingAttr = true;
-                }
-                else
-                {
-                    /* in cache go to readdir state */
-                    filedes->metaData = *meta;
-                    outIsFullLookup = true;
-                }
+                outIsFullLookup = true;
             }
             break;
         }
@@ -351,8 +345,8 @@ void FSOpen::enterWriteAttr()
     FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFiledes());
     spfsSetAttrRequest *req = new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
-    req->setHandle(fd->metaData.handle);
-    req->setMeta(fd->metaData);
+    req->setHandle(fd->metaData->handle);
+    req->setMeta(*fd->metaData);
     fsModule_->send(req, fsModule_->fsNetOut);
 }
 
@@ -372,7 +366,7 @@ void FSOpen::enterWriteDirEnt()
     /* can we get rid of this field?  WBL */
     req->setParentHandle(fd->handles[fd->curseg]);
     /* this is the handle of the new file goes in dirent */
-    req->setNewHandle(fd->metaData.handle);
+    req->setNewHandle(fd->metaData->handle);
     /* this is the name of the file */
     req->setEntry(openReq_->getFileName());
     fsModule_->send(req, fsModule_->fsNetOut);   
@@ -391,7 +385,7 @@ void FSOpen::enterReadAttr()
     FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFiledes());
     spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
-    req->setHandle(fd->metaData.handle);
+    req->setHandle(fd->metaData->handle);
     fsModule_->send(req, fsModule_->fsNetOut);
 }
 

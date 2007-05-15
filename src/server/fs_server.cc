@@ -12,26 +12,31 @@ using namespace std;
 // OMNet Registration Method
 Define_Module(FSServer);
 
-int FSServer::serverNumber_ = 0;
-
 /**
  * Initialization - Set the name and handle range
  */
 void FSServer::initialize()
 {
+    // Determine this server's handle range
+    range_.first = serverNumber_ * 1000;
+    range_.last = range_.first + 999;
+
+    // Set the number and name to invalid values
+    serverNumber_ = -1;
+    serverName_ = "uninitialized";
+}
+
+void FSServer::setNumber(size_t number)
+{
+    // Set the server number
+    serverNumber_ = number;
+
     // Set the server's name
     stringstream s;
     s << serverNumber_;
     serverName_ = "server" + s.str();
     
-    // Determine this server's handle range
-    range_.first = serverNumber_ * 1000;
-    range_.last = range_.first + 999;
-
-    // Increment the server number counter
-    serverNumber_++;
 }
-
 /**
  * Handle MPI-IO Response messages
  */

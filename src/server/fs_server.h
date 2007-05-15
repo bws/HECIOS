@@ -17,6 +17,8 @@ public:
     std::string getName() const { return serverName_; };
     
     HandleRange getHandleRange() const { return range_; };
+
+    void setNumber(size_t number);
     
 protected:
     
@@ -31,13 +33,13 @@ protected:
 
 private:
 
-    /** */
-    static int serverNumber_;
+    /** Unique server number */
+    size_t serverNumber_;
 
-    /** */
+    /** Unique server name */
     std::string serverName_;
 
-    /** */
+    /** The handle range for this server */
     HandleRange range_;
 };
 

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdlib>
 #include "IPvXAddress.h"
+#include "filename.h"
 using namespace std;
 
 PFSUtils* PFSUtils::instance_ = 0;
@@ -84,25 +85,36 @@ vector<int> PFSUtils::getMetaServers() const
     return metaServers_;
 }
 
-bool PFSUtils::fileExists( const string& fileName) const
+bool PFSUtils::fileExists(const Filename& fileName) const
 {
     std::map<std::string, FSHandle>::const_iterator pos;
-    pos = nameToHandleMap_.find(fileName);
+    pos = nameToHandleMap_.find(fileName.str());
     return (nameToHandleMap_.end() != pos);
 }
 
-FSMetaData* PFSUtils::getMetaData(const string& fileName) const
+FSMetaData* PFSUtils::getMetaData(const Filename& fileName) const
+{
+    FSMetaData* md = 0;
+    std::map<std::string, FSHandle>::const_iterator p1;
+    p1 = nameToHandleMap_.find(fileName.str());
+    if (nameToHandleMap_.end() != p1)
+    {
+        std::map<FSHandle, FSMetaData*>::const_iterator p2;
+        p2 = handleToMetaMap_.find(p1->second);
+        md = p2->second;
+    }
+    
+    return md;
+}
+
+FSOpenFile* PFSUtils::getDescriptor(const Filename& fileName) const
 {
     return 0;
 }
 
-FSOpenFile* PFSUtils::getDescriptor(const string& fileName) const
+FSHandle PFSUtils::getNextHandle(size_t serverNumber)
 {
-    return 0;
-}
-
-FSHandle PFSUtils::getNextHandle(int serverNumber)
-{
+    assert(serverNumber < nextServerNumber_);
     return nextHandleByServer_[serverNumber]++;
 }
 
@@ -119,51 +131,68 @@ int PFSUtils::registerFSServer(const HandleRange& range, bool isMetaServer)
     return nextServerNumber_++;
 }
 
-void PFSUtils::createDirectory(const string& fileName, int metaServer)
+void PFSUtils::createDirectory(const Filename& dirName, int metaServer)
 {
-    assert('/' == fileName[0]);
-    
-    // Create the MetaData for the directory
-    FSMetaData* meta = new FSMetaData();
-    meta->mode = 777;
-    meta->owner = 0;
-    meta->group = 0;
-    meta->nlinks = 0;
-    meta->size = 0;
-    meta->handle = getNextHandle(metaServer);
-    meta->dist = 0;
+    if (!fileExists(dirName))
+    {
+        // Create implied parent directories recursively
+        size_t numSegs = dirName.getNumPathSegments();
+        if (1 < numSegs)
+            createDirectory(dirName.getSegment(numSegs - 2), metaServer);
 
-    // Record bookkeeping information
-    nameToHandleMap_[fileName] = meta->handle;
+        // Create the MetaData for the directory
+        FSMetaData* meta = new FSMetaData();
+        meta->mode = 777;
+        meta->owner = 0;
+        meta->group = 0;
+        meta->nlinks = 0;
+        meta->size = 0;
+        meta->handle = getNextHandle(metaServer);
+        meta->dist = 0;
+
+        // Record bookkeeping information
+        nameToHandleMap_[dirName.str()] = meta->handle;
+        handleToMetaMap_[meta->handle] = meta;
+    }
 }
 
-void PFSUtils::createFile(const string& fileName, int metaServer,
-                          int numServers)
+void PFSUtils::createFile(const Filename& fileName, int metaServer, int numServers)
 {
-    assert('/' == fileName[0]);
-
-    // Create the MetaData for the file
-    FSMetaData* meta = new FSMetaData();
-    meta->mode = 777;
-    meta->owner = 0;
-    meta->group = 0;
-    meta->nlinks = 0;
-    meta->size = 0;
-    meta->handle = getNextHandle(metaServer);
-    meta->dist = 0;
-
-    // Construct the data handles
-    int firstServer = rand() % nextServerNumber_;
-    vector<FSHandle> dataHandles;
-    for (size_t i = 0; i < nextServerNumber_; i++)
+    if (!fileExists(fileName))
     {
-        int serverNum = (firstServer + i) % nextServerNumber_;
-        dataHandles.push_back(getNextHandle(serverNum));
+        // Create implied parent directories recursively
+        size_t numSegs = fileName.getNumPathSegments();
+        if (1 < numSegs)
+            createDirectory(fileName.getSegment(numSegs - 2), metaServer);
+        
+        // Create the MetaData for the file
+        FSMetaData* meta = new FSMetaData();
+        meta->mode = 777;
+        meta->owner = 0;
+        meta->group = 0;
+        meta->nlinks = 0;
+        meta->size = 0;
+        meta->handle = getNextHandle(metaServer);
+        meta->dist = 0;
+
+        // Construct the data handles
+        int firstServer = rand() % nextServerNumber_;
+        vector<FSHandle> dataHandles;
+        for (size_t i = 0; i < nextServerNumber_; i++)
+        {
+            int serverNum = (firstServer + i) % nextServerNumber_;
+            dataHandles.push_back(getNextHandle(serverNum));
+        }
+        meta->dataHandles = dataHandles;
+
+        // Record bookeeping information
+        nameToHandleMap_[fileName.str()] = meta->handle;
+        handleToMetaMap_[meta->handle] = meta;
     }
-    meta->dataHandles = dataHandles;
-    
-    // Record bookeeping information
-    nameToHandleMap_[fileName] = meta->handle;
+    else
+    {
+        cerr << "Cannot create " << fileName << ": file exists" << endl;
+    }
 }
 
 /*

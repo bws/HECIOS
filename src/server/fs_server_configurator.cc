@@ -37,6 +37,7 @@ protected:
 
 private:
 
+    IPvXAddress* getServerIP(cModule* ioNode);
 };
 
 // OMNet Registriation Method
@@ -60,41 +61,65 @@ void FSServerConfigurator::initialize(int stage)
         for (int i = 0; i < numIONodes; i++)
         {
             cModule* ion = cluster->submodule("ion", i);
-            assert(0 != ion);
 
-            // Retrieve the file system server
+            // Retrieve the FS server
             cModule* daemon = ion->submodule("daemon");
             assert(0 != daemon);
             FSServer* server =
                 dynamic_cast<FSServer*>(daemon->submodule("server"));
             assert(0 != server);
-            
-            // Retrieve the INET host
-            cModule* hca = ion->submodule("hca");
-            assert(0 != hca);
-            InterfaceTable* ifTable = dynamic_cast<InterfaceTable*>(
-                hca->submodule("interfaceTable"));
-            assert(0 != ifTable);
-            
-            // Find eth0's IP address
-            InterfaceEntry* ie = 0;
-            for (int j = 0; j < ifTable->numInterfaces(); j++)
+
+            // Register the server's handle range
+            PFSUtils& utils = PFSUtils::instance();
+            int serverNum;
+            if (0 == i)
             {
-                ie = ifTable->interfaceAt(j);
-                if (0 == strcmp("eth0", ie->name()))
-                {
-                    assert(0 != ie->ipv4());
-                    EV << server->getName() << "IE Name: " << ie->name()
-                       << " IP: " << ie->ipv4()->inetAddress() << endl;
-                    // Register the IP for the handle range
-                    PFSUtils& utils = PFSUtils::instance();
-                    IPvXAddress* addr = new IPvXAddress(ie->ipv4()->inetAddress());
-                    utils.registerServerIP(addr,server->getHandleRange());
-                    break;
-                    }
+                serverNum = utils.registerFSServer(server->getHandleRange(),
+                                                   true);
             }
+            else
+            {
+                serverNum = utils.registerFSServer(server->getHandleRange(),
+                                                   false);
+            }
+            
+            // Set the server's server number
+            server->setNumber(serverNum);
+
+            // Register the IP for the handle range
+            IPvXAddress* addr = getServerIP(ion);
+            utils.registerServerIP(addr, server->getHandleRange());
+
         }
     }
+}
+
+IPvXAddress* FSServerConfigurator::getServerIP(cModule* ioNode)
+{
+    assert(0 != ioNode);
+    IPvXAddress* serverIP = 0;
+    
+    // Retrieve the INET host
+    cModule* hca = ioNode->submodule("hca");
+    assert(0 != hca);
+    InterfaceTable* ifTable = dynamic_cast<InterfaceTable*>(
+        hca->submodule("interfaceTable"));
+    assert(0 != ifTable);
+            
+    // Find eth0's IP address
+    InterfaceEntry* ie = 0;
+    for (int j = 0; j < ifTable->numInterfaces(); j++)
+    {
+        ie = ifTable->interfaceAt(j);
+        if (0 == strcmp("eth0", ie->name()))
+        {
+            assert(0 != ie->ipv4());
+            serverIP = new IPvXAddress(ie->ipv4()->inetAddress());
+            break;
+        }
+    }
+
+    return serverIP;
 }
 
 /**

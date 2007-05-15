@@ -1,6 +1,9 @@
-#include <iomanip>
-#include "mpiio_proto_m.h"
+
 #include "umd_io_trace.h"
+#include <iomanip>
+#include "filename.h"
+#include "mpiio_proto_m.h"
+#include "pfs_utils.h"
 using namespace std;
 
 /**
@@ -104,10 +107,19 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
     switch(opType) {
         case UMDIOTrace::OPEN:
         {
+            // If the file does not exist, create it
+            Filename openFile(fileNames_[fileId]);
+            if (!PFSUtils::instance().fileExists(openFile))
+            {
+                // Create trace files as needed
+                PFSUtils::instance().createFile(openFile, 0, 1);
+            }
+            
             spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
                 0, SPFS_MPI_FILE_OPEN_REQUEST);
             open->setFileName(fileNames_[fileId].c_str());
-            // FIXME just adding a descript to avoid core dumps for now
+
+            // FIXME - why the hell is this needed now!!!
             open->setFiledes(new FSOpenFile());
             mpiMsg = open;
             break;

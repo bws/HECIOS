@@ -57,8 +57,8 @@ inline bool operator==(const FSMetaData& lhs, const FSMetaData& rhs)
 /** Descriptor for an open file */
 struct FSOpenFile
 {
-    ClientFSState *fs;   /* pointer to client unique fs struct */
-    FSMetaData metaData; /* pointer to file unique metadata */
+    //ClientFSState *fs;   /* pointer to client unique fs struct */
+    FSMetaData* metaData; /* pointer to file unique metadata */
     std::string path;    /* the complete path to the file */
     int filePtr;         /* offset of current position in file */
     

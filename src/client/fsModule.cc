@@ -1,6 +1,6 @@
 // file fsModule.cc
-#include <iostream>
 #include "fs_module.h"
+#include <iostream>
 #include "pfs_types.h"
 #include "pvfs_proto_m.h"
 #include "mpiio_proto_m.h"
@@ -208,21 +208,21 @@ void fsProcess_mpiFileReadRequest( spfsMPIFileReadRequest *mpireq,
             /* build a request  */
             req = new spfsReadRequest(0, SPFS_READ_REQUEST);
             req->setContextPointer(mpireq);
-            req->setServerCnt(filedes->metaData.dataHandles.size());
+            req->setServerCnt(filedes->metaData->dataHandles.size());
             req->setOffset(filedes->filePtr);
             req->setCount(count);
             req->setDtype(dtype);
             /* send request to each server */
-	    for (snum = 0; snum < filedes->metaData.dataHandles.size(); snum++)
+	    for (snum = 0; snum < filedes->metaData->dataHandles.size(); snum++)
 	    {
-                if (filedes->fs->serverNotUsed(snum, filedes->metaData.dist,
+                if (client->fsState().serverNotUsed(snum, filedes->metaData->dist,
                                                count, dtype))
                     /* don't send if no data on server */
                     continue;
                 else
                 {
                     spfsReadRequest *newreq = (spfsReadRequest *)req->dup();
-                    newreq->setHandle(filedes->metaData.dataHandles[snum]);
+                    newreq->setHandle(filedes->metaData->dataHandles[snum]);
                     req->setServerNo(snum);
                     client->send(newreq, client->fsNetOut);
                 }
@@ -230,7 +230,7 @@ void fsProcess_mpiFileReadRequest( spfsMPIFileReadRequest *mpireq,
             /* free req */
             delete req;
             /* indicates how many responses we are waiting for */
-            mpireq->setResponses(filedes->metaData.dataHandles.size());
+            mpireq->setResponses(filedes->metaData->dataHandles.size());
             break;
         }
         case FSM_Exit(READ) :
@@ -292,21 +292,21 @@ void fsProcess_mpiFileWriteRequest( spfsMPIFileWriteRequest *mpireq,
 	    /* build a request  */
 	    req = new spfsWriteRequest(0, SPFS_WRITE_REQUEST);
 	    req->setContextPointer(mpireq);
-	    req->setServer_cnt(filedes->metaData.dataHandles.size());
+	    req->setServer_cnt(filedes->metaData->dataHandles.size());
 	    req->setOffset(filedes->filePtr);
 	    req->setCount(count);
 	    req->setDtype(dtype);
 	    /* send request to each server */
-	    for (snum = 0; snum < filedes->metaData.dataHandles.size(); snum++)
+	    for (snum = 0; snum < filedes->metaData->dataHandles.size(); snum++)
 	    {
-                if (filedes->fs->serverNotUsed(snum, filedes->metaData.dist,
+                if (client->fsState().serverNotUsed(snum, filedes->metaData->dist,
                                                count, dtype))
                     /* don't send if no data on server */
                     continue;
                 else
                 {
                     spfsWriteRequest *newreq = (spfsWriteRequest *)req->dup();
-                    newreq->setHandle(filedes->metaData.dataHandles[snum]);
+                    newreq->setHandle(filedes->metaData->dataHandles[snum]);
                     req->setServer_nr(snum);
                     client->send(newreq, client->fsNetOut);
                 }
@@ -314,7 +314,7 @@ void fsProcess_mpiFileWriteRequest( spfsMPIFileWriteRequest *mpireq,
             /* free req */
             delete req;
             /* indicates how many responses we are waiting for */
-            mpireq->setResponses(filedes->metaData.dataHandles.size());
+            mpireq->setResponses(filedes->metaData->dataHandles.size());
             break;
         }
         case FSM_Exit(WRITE) :

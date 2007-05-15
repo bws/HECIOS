@@ -2,8 +2,8 @@
 #include <sstream>
 #include <string>
 #include "client_fs_state.h"
+#include "filename.h"
 #include "mpiio_proto_m.h"
-#include "pfs_utils.h"
 #include "umd_io_trace.h"
 #include <omnetpp.h>
 using namespace std;
@@ -73,11 +73,9 @@ void IOApplication::initialize()
     long size = par("numTraceProcs").longValue();
     trace_ = new UMDIOTrace(size, traceName);
 
-    // Get the first event for this rank
-    cMessage* msg = trace_->nextRecordAsMessage();
-
-    // Send the message
-    scheduleAt(5.0, msg);
+    // Send the kick start message
+    cMessage* kickStart = new cMessage();
+    scheduleAt(5.0, kickStart);
 }
 
 /**
@@ -99,8 +97,10 @@ void IOApplication::handleMessage(cMessage* msg)
 {
     if (msg->isSelfMessage())
     {
-        // On a self message, forward the message to the "out" gate
-        send(msg, outGate_);
+        // On a self message kick start, get the first message
+        delete msg;
+        cMessage* firstMessage = getNextMessage();
+        send(firstMessage, outGate_);
     }
     else
     {
@@ -152,15 +152,6 @@ cMessage* IOApplication::getNextMessage()
         msg = trace_->nextRecordAsMessage();
     } while (0 == msg && trace_->hasMoreRecords());
 
-    // Create the requested file if neccesary and it does not exist
-    spfsMPIFileOpenRequest* open = 0;
-    if ((open = dynamic_cast<spfsMPIFileOpenRequest*>(msg)) &&
-        (open->getMode() == MPI_MODE_CREATE) &&
-        (!PFSUtils::instance().fileExists(open->getFileName())) )
-    {
-        PFSUtils::instance().createFile(open->getFileName(), 1, 1);
-    }
-    
     return msg;
 }
 /*
