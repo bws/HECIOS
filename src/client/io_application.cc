@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -138,9 +139,10 @@ void IOApplication::handleMessage(cMessage* msg)
                 break;
         }
 
-        // Delete the message
+        // Delete the originating request
+        delete (cMessage*)msg->contextPointer();
+        // Delete the response
         delete msg;
-        
     }
 }
 

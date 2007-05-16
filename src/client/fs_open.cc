@@ -151,9 +151,8 @@ void FSOpen::handleMessage(cMessage* msg)
                  << endl;
     }
 
-    // Store state if finish has not deleted the request
-    if (0 != openReq_)
-        openReq_->setState(currentState);
+    // Store state
+    openReq_->setState(currentState);
 }
 
 void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
@@ -388,12 +387,9 @@ void FSOpen::enterFinish()
 {
     spfsMPIFileOpenResponse *resp = new spfsMPIFileOpenResponse(
         0, SPFS_MPI_FILE_OPEN_RESPONSE);
-    resp->setContextPointer(openReq_->contextPointer());
+    resp->setContextPointer(openReq_);
     resp->setFiledes(openReq_->getFiledes());
     fsModule_->send(resp, fsModule_->fsMpiOut);
-
-    delete openReq_;
-    openReq_ = 0;
 }
             
 /*

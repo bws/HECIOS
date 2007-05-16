@@ -209,6 +209,7 @@ message spfsMPIFileReadAtResponse extends spfsMPIResponse
     fields:
         char data[];
         unsigned long bytes_read;
+        unsigned long bytesRead;
 };
 
 // Request to read from a file
@@ -226,6 +227,7 @@ message spfsMPIFileReadResponse extends spfsMPIResponse
     fields:
         char data[];
         unsigned long bytes_read;
+        unsigned long bytesRead;
 };
 
 // Request to write at a file offset
