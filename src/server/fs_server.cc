@@ -2,6 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include "create.h"
+#include "get_attr.h"
 #include "lookup.h"
 #include "mpiio_proto_m.h"
 #include "pvfs_proto_m.h"
@@ -59,6 +60,14 @@ void FSServer::handleMessage(cMessage* msg)
             Lookup lookup(static_cast<spfsLookupPathRequest*>(msg));
             lookupResponse = lookup.handleServerMessage(msg);
             send(lookupResponse, "netOut");
+            break;
+        }
+        case SPFS_GET_ATTR_REQUEST:
+        {
+            cMessage* getAttrResponse;
+            GetAttr getAttr(static_cast<spfsGetAttrRequest*>(msg));
+            getAttrResponse = getAttr.handleServerMessage(msg);
+            send(getAttrResponse, "netOut");
             break;
         }
         default:

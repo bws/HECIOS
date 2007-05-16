@@ -1,16 +1,16 @@
 
 #include <cassert>
 #include <omnetpp.h>
-#include "lookup.h"
+#include "get_attr.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-Lookup::Lookup(spfsLookupPathRequest* lookupReq)
-    : lookupReq_(lookupReq)
+GetAttr::GetAttr(spfsGetAttrRequest* getAttrReq)
+    : getAttrReq_(getAttrReq)
 {
 }
 
-cMessage* Lookup::handleServerMessage(cMessage* msg)
+cMessage* GetAttr::handleServerMessage(cMessage* msg)
 {
     // Message response
     cMessage* resp;
@@ -28,7 +28,7 @@ cMessage* Lookup::handleServerMessage(cMessage* msg)
     {
         case FSM_Enter(INIT):
         {
-            assert(0 != dynamic_cast<spfsLookupPathRequest*>(msg));
+            assert(0 != dynamic_cast<spfsGetAttrRequest*>(msg));
             resp = enterFinish();
             break;
         }
@@ -37,21 +37,16 @@ cMessage* Lookup::handleServerMessage(cMessage* msg)
     return resp;
 }
 
-cMessage* Lookup::enterFinish()
+cMessage* GetAttr::enterFinish()
 {
-    spfsLookupPathResponse* resp = new spfsLookupPathResponse(
+    spfsGetAttrResponse* resp = new spfsGetAttrResponse(
         0, SPFS_LOOKUP_PATH_RESPONSE);
-    resp->setContextPointer(lookupReq_->contextPointer());
-    resp->setStatus(SPFS_FOUND);
-    resp->setHandleCount(1);
-    resp->setAttrCount(0);
-    resp->setHandlesArraySize(1);
-    resp->setHandles(0, 1200);
+    resp->setContextPointer(getAttrReq_->contextPointer());
 
     // Cleanup initiating request
-    delete lookupReq_;
-    lookupReq_ = 0;
-
+    delete getAttrReq_;
+    getAttrReq_ = 0;
+    
     return resp;
 }
 

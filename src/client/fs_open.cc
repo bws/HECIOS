@@ -151,7 +151,9 @@ void FSOpen::handleMessage(cMessage* msg)
                  << endl;
     }
 
-    openReq_->setState(currentState);
+    // Store state if finish has not deleted the request
+    if (0 != openReq_)
+        openReq_->setState(currentState);
 }
 
 void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
@@ -230,20 +232,13 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
     outIsMissingAttr = false;
     outIsPartialLookup = false;
 
-    // save found handles
-    FSOpenFile* filedes = (FSOpenFile*)openReq_->getFiledes();
-    int handleCount = lookupResponse->getHandleCount();
-    for (int i = 0; i < handleCount; i++)
-    {
-        filedes->handles[++filedes->curseg] = lookupResponse->getHandles(i);
-    }
-
     // Determine lookup results
     switch (lookupResponse->getStatus())
     {
         case SPFS_FOUND:
         {
             /* enter handle in cache */
+            FSOpenFile* filedes = (FSOpenFile*)openReq_->getFiledes();
             fsModule_->fsState().insertDir(filedes->path,
                                            filedes->metaData->handle);
             /* look for metadata in cache */
@@ -266,16 +261,8 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
         }
         case SPFS_NOTFOUND:
         {
-            if (openReq_->getMode() & MPI_MODE_CREATE &&
-                filedes->curseg == filedes->segcnt - 1)
-            {
-                outIsCreate = true;
-            }
-            else
-            {
-                cerr << "FIXME: need to create the file???" << endl;
-                assert(0);
-            }
+            assert(openReq_->getMode() & MPI_MODE_CREATE);
+            outIsCreate = true;
             break;
         }
     }

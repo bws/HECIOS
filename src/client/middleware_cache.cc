@@ -11,11 +11,11 @@ class MiddlewareCache : public cSimpleModule
 {
 public:
     /** Constructor */
-    MiddlewareCache() : cSimpleModule() {};
+    MiddlewareCache();
     
 protected:
     /** Implementation of initialize */
-    virtual void initialize() {};
+    virtual void initialize();
 
     /** Implementation of finish */
     virtual void finish() {};
@@ -23,70 +23,42 @@ protected:
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
 
+private:
+    int appInGateId_;
+    int fsInGateId_;
 };
 
 // OMNet Registriation Method
 Define_Module(MiddlewareCache);
+
+MiddlewareCache::MiddlewareCache()
+{
+}
+
+void MiddlewareCache::initialize()
+{
+    appInGateId_ = gate("appIn")->id();
+    fsInGateId_ = gate("fsIn")->id();
+}
 
 /**
  * Handle MPI-IO Response messages
  */
 void MiddlewareCache::handleMessage(cMessage* msg)
 {
-    switch(msg->kind())
+    if (msg->arrivalGateId() == appInGateId_)
     {
-        case SPFS_MPI_FILE_OPEN_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
+        send(msg, "fsOut");
+    }
+    else if (msg->arrivalGateId() == fsInGateId_)
+    {
+        send(msg, "appOut");
+    }
+    else
+    {
+            cerr << "MiddlewareCache handleMessage: "
+                 << "not yet implemented for kind: "
                  << msg->kind() << endl;
-            break;
-        case SPFS_MPI_FILE_CLOSE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case SPFS_MPI_FILE_DELETE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case SPFS_MPI_FILE_SET_SIZE_REQUEST:
-             cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-           break;
-        case SPFS_MPI_FILE_PREALLOCATE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case SPFS_MPI_FILE_GET_SIZE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case SPFS_MPI_FILE_GET_INFO_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case SPFS_MPI_FILE_SET_INFO_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case SPFS_MPI_FILE_READ_AT_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case SPFS_MPI_FILE_READ_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case SPFS_MPI_FILE_WRITE_AT_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        case SPFS_MPI_FILE_WRITE_REQUEST:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
-        default:
-            cerr << "handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
-            break;
     }
 }
 
