@@ -81,6 +81,24 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
                 write.handleMessage(req);
             break;
         }
+        case SPFS_MPI_FILE_READ_AT_REQUEST:
+        {
+            FSRead read(client, static_cast<spfsMPIFileReadRequest*>(req));
+            if (resp)
+                read.handleMessage(resp);
+            else
+                read.handleMessage(req);
+            break;
+        }
+        case SPFS_MPI_FILE_WRITE_AT_REQUEST:
+        {
+            FSWrite write(client, static_cast<spfsMPIFileWriteRequest*>(req));
+            if (resp)
+                write.handleMessage(resp);
+            else
+                write.handleMessage(req);
+            break;
+        }
         case SPFS_MPI_FILE_DELETE_REQUEST:
         case SPFS_MPI_FILE_SET_SIZE_REQUEST :
         case SPFS_MPI_FILE_PREALLOCATE_REQUEST :

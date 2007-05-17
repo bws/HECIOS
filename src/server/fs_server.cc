@@ -4,6 +4,8 @@
 #include "create.h"
 #include "get_attr.h"
 #include "lookup.h"
+#include "read.h"
+#include "write.h"
 #include "mpiio_proto_m.h"
 #include "pvfs_proto_m.h"
 #include "pfs_utils.h"
@@ -68,6 +70,22 @@ void FSServer::handleMessage(cMessage* msg)
             GetAttr getAttr(static_cast<spfsGetAttrRequest*>(msg));
             getAttrResponse = getAttr.handleServerMessage(msg);
             send(getAttrResponse, "netOut");
+            break;
+        }
+        case SPFS_READ_REQUEST:
+        {
+            cMessage* readResponse;
+            Read read(static_cast<spfsReadRequest*>(msg));
+            readResponse = read.handleServerMessage(msg);
+            send(readResponse, "netOut");
+            break;
+        }
+        case SPFS_WRITE_REQUEST:
+        {
+            cMessage* writeResponse;
+            Write write(static_cast<spfsWriteRequest*>(msg));
+            writeResponse = write.handleServerMessage(msg);
+            send(writeResponse, "netOut");
             break;
         }
         default:

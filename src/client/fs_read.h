@@ -15,17 +15,20 @@ public:
 
     /** Constructor */
     FSRead(fsModule* module, spfsMPIFileReadRequest* readReq);
+
+    /** Destructor */
+    virtual ~FSRead() {};
     
     /** Handle MPI Read Message */
     void handleMessage(cMessage* msg);
 
 protected:
 
-    /**  */
-    void enterRead();
+    /**  Construct server read requests */
+    virtual void enterRead();
 
-    /** */
-    void enterFinish(spfsReadResponse* readResponse);
+    /** Accumulate server read responses and send final client response */
+    virtual void enterFinish(spfsReadResponse* readResponse);
     
 private:
 

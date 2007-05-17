@@ -68,7 +68,7 @@ void FSWrite::enterWrite()
 {
     // Construct the server write request
     spfsWriteRequest write(0, SPFS_WRITE_REQUEST);
-    FSOpenFile* filedes = (FSOpenFile*)writeReq_->getFiledes();
+    FSOpenFile* filedes = (FSOpenFile*)writeReq_->getFileDes();
     write.setContextPointer(writeReq_);
     //write.setServerCnt(filedes->metaData->dataHandles.size());
     write.setOffset(filedes->filePtr);

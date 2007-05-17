@@ -69,7 +69,7 @@ message spfsMPIRequest
         bool isCollective = false;
         int rank = 0;
         int size = 1;
-        int comm_members[] = 0;
+        int commMembers[] = 0;
 
         // internal fields
         cFSM state;
@@ -170,6 +170,7 @@ message spfsMPIFileGetSizeResponse extends spfsMPIResponse
 message spfsMPIFileGetInfoRequest extends spfsMPIRequest
 {
     fields:
+        FileDescriptorPtr fileDes;
         FileDescriptorPtr filedes;
 };
 
@@ -184,6 +185,7 @@ message spfsMPIFileGetInfoResponse extends spfsMPIResponse
 message spfsMPIFileSetInfoRequest extends spfsMPIRequest
 {
     fields:
+        FileDescriptorPtr fileDes;
         FileDescriptorPtr filedes;
         string info[];
 };
@@ -191,25 +193,6 @@ message spfsMPIFileSetInfoRequest extends spfsMPIRequest
 // Set file info response
 message spfsMPIFileSetInfoResponse extends spfsMPIResponse
 {
-};
-
-// Request to read at a file offset
-message spfsMPIFileReadAtRequest extends spfsMPIRequest
-{
-    fields:
-	FileDescriptorPtr filedes;
-	int count;
-	MPIDataType dtype;
-        long offset = 0;
-};
-
-// File readAt response
-message spfsMPIFileReadAtResponse extends spfsMPIResponse
-{
-    fields:
-        char data[];
-        unsigned long bytes_read;
-        unsigned long bytesRead;
 };
 
 // Request to read from a file
@@ -226,32 +209,26 @@ message spfsMPIFileReadResponse extends spfsMPIResponse
 {
     fields:
         char data[];
-        unsigned long bytes_read;
         unsigned long bytesRead;
 };
 
-// Request to write at a file offset
-message spfsMPIFileWriteAtRequest extends spfsMPIRequest
+// Request to read at a file offset
+message spfsMPIFileReadAtRequest extends spfsMPIFileReadRequest
 {
     fields:
-        FileDescriptorPtr filedes;
-        int count;
-        MPIDataType dtype;
         long offset;
-        char data[];
 };
 
-// File writeAt response
-message spfsMPIFileWriteAtResponse extends spfsMPIResponse
+// File readAt response
+message spfsMPIFileReadAtResponse extends spfsMPIFileReadResponse
 {
-    fields:
-        unsigned long bytes_written;
 };
 
 // Request to write to a file
 message spfsMPIFileWriteRequest extends spfsMPIRequest
 {
     fields:
+        FileDescriptorPtr fileDes;
         FileDescriptorPtr filedes;
         int count;
         MPIDataType dtype;
@@ -262,7 +239,19 @@ message spfsMPIFileWriteRequest extends spfsMPIRequest
 message spfsMPIFileWriteResponse extends spfsMPIResponse
 {
     fields:
-        unsigned long bytes_written;
+        unsigned long bytesWritten;
+};
+
+// Request to write at a file offset
+message spfsMPIFileWriteAtRequest extends spfsMPIFileWriteRequest
+{
+    fields:
+        long offset;
+};
+
+// File writeAt response
+message spfsMPIFileWriteAtResponse extends spfsMPIFileWriteResponse
+{
 };
 
 //

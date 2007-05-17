@@ -11,6 +11,7 @@ typedef TCPSocket* TCPSocketPtr;
 
 struct FSMetaData;
 struct HandleRange;
+class cFSM;
 class noncobject MPIDataType; // this is an int
 class noncobject TCPSocketPtr;
 
@@ -70,6 +71,9 @@ message spfsRequest
         int fsId;
         int serverNo; // which logical server
         int handle;   // indicates server address and object
+
+        // internal fields
+        cFSM state;
         TCPSocketPtr socket;
 };
 
@@ -275,7 +279,7 @@ message spfsReadDirRequest extends spfsRequest
 message spfsReadDirResponse extends spfsResponse
 {
     fields:
-        unsigned long dir_offset;
+        unsigned long dirOffset;
         string entries[];
         int entryCount;
         unsigned long directoryVersion;
@@ -320,7 +324,7 @@ message spfsListAttrRequest extends spfsRequest
 message spfsListAttrResponse extends spfsResponse
 {
     fields:
-        unsigned long num_handles;
+        unsigned long numHandles;
 };
 
 //

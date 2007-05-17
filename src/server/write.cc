@@ -1,22 +1,22 @@
 
-#include "get_attr.h"
+#include "write.h"
 #include <cassert>
 #include <omnetpp.h>
 #include "pvfs_proto_m.h"
 using namespace std;
 
-GetAttr::GetAttr(spfsGetAttrRequest* getAttrReq)
-    : getAttrReq_(getAttrReq)
+Write::Write(spfsWriteRequest* writeReq)
+    : writeReq_(writeReq)
 {
 }
 
-cMessage* GetAttr::handleServerMessage(cMessage* msg)
+cMessage* Write::handleServerMessage(cMessage* msg)
 {
     // Message response
     cMessage* resp;
     
     // Restore the existing state for this request
-    cFSM currentState = getAttrReq_->getState();
+    cFSM currentState = writeReq_->getState();
 
     // Server lookup states
     enum {
@@ -28,7 +28,7 @@ cMessage* GetAttr::handleServerMessage(cMessage* msg)
     {
         case FSM_Enter(INIT):
         {
-            assert(0 != dynamic_cast<spfsGetAttrRequest*>(msg));
+            assert(0 != dynamic_cast<spfsWriteRequest*>(msg));
             resp = enterFinish();
             break;
         }
@@ -37,15 +37,15 @@ cMessage* GetAttr::handleServerMessage(cMessage* msg)
     return resp;
 }
 
-cMessage* GetAttr::enterFinish()
+cMessage* Write::enterFinish()
 {
-    spfsGetAttrResponse* resp = new spfsGetAttrResponse(
-        0, SPFS_GET_ATTR_RESPONSE);
-    resp->setContextPointer(getAttrReq_->contextPointer());
+    spfsWriteResponse* resp = new spfsWriteResponse(
+        0, SPFS_WRITE_RESPONSE);
+    resp->setContextPointer(writeReq_->contextPointer());
 
     // Cleanup initiating request
-    delete getAttrReq_;
-    getAttrReq_ = 0;
+    delete writeReq_;
+    writeReq_ = 0;
     
     return resp;
 }

@@ -1,22 +1,22 @@
 
-#include "get_attr.h"
+#include "read.h"
 #include <cassert>
 #include <omnetpp.h>
 #include "pvfs_proto_m.h"
 using namespace std;
 
-GetAttr::GetAttr(spfsGetAttrRequest* getAttrReq)
-    : getAttrReq_(getAttrReq)
+Read::Read(spfsReadRequest* readReq)
+    : readReq_(readReq)
 {
 }
 
-cMessage* GetAttr::handleServerMessage(cMessage* msg)
+cMessage* Read::handleServerMessage(cMessage* msg)
 {
     // Message response
     cMessage* resp;
     
     // Restore the existing state for this request
-    cFSM currentState = getAttrReq_->getState();
+    cFSM currentState;// = lookupReq_->getState();
 
     // Server lookup states
     enum {
@@ -28,7 +28,7 @@ cMessage* GetAttr::handleServerMessage(cMessage* msg)
     {
         case FSM_Enter(INIT):
         {
-            assert(0 != dynamic_cast<spfsGetAttrRequest*>(msg));
+            assert(0 != dynamic_cast<spfsReadRequest*>(msg));
             resp = enterFinish();
             break;
         }
@@ -37,15 +37,15 @@ cMessage* GetAttr::handleServerMessage(cMessage* msg)
     return resp;
 }
 
-cMessage* GetAttr::enterFinish()
+cMessage* Read::enterFinish()
 {
-    spfsGetAttrResponse* resp = new spfsGetAttrResponse(
-        0, SPFS_GET_ATTR_RESPONSE);
-    resp->setContextPointer(getAttrReq_->contextPointer());
+    spfsReadResponse* resp = new spfsReadResponse(
+        0, SPFS_READ_RESPONSE);
+    resp->setContextPointer(readReq_->contextPointer());
 
     // Cleanup initiating request
-    delete getAttrReq_;
-    getAttrReq_ = 0;
+    delete readReq_;
+    readReq_ = 0;
     
     return resp;
 }
