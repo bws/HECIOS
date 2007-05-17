@@ -45,14 +45,14 @@ public:
     void testCombinePolicy();
 
 private:
-    LRUSimpleCache<int, int>* cache1_;
-    LRUSimpleCache<int, int>* cache2_;
+    LRUSimpleCache* cache1_;
+    LRUSimpleCache* cache2_;
 };
 
 void LRUSimpleCacheTest::setUp()
 {
-    cache1_ = new LRUSimpleCache<int, int>(10);
-    cache2_ = new LRUSimpleCache<int, int>(2);
+    cache1_ = new LRUSimpleCache(10);
+    cache2_ = new LRUSimpleCache(2);
     printf("\n----began setup\n");
 }
 
@@ -66,14 +66,14 @@ void LRUSimpleCacheTest::tearDown()
 
 void LRUSimpleCacheTest::testConstructor()
 {
-    LRUSimpleCache<int, int> cache(1);
+    LRUSimpleCache cache(1);
     CPPUNIT_ASSERT_EQUAL(0, cache.size());
 }
 
 void LRUSimpleCacheTest::testInsert()
 {
     printf("first insert \n");
-    LRUSimpleCache<int, int> cache(1);
+    LRUSimpleCache cache(1);
     cache.insert(1,1);
    
     printf("end of insert \n");
@@ -103,12 +103,12 @@ void LRUSimpleCacheTest::testRemove()
 void LRUSimpleCacheTest::testLookup()
 {
     // Lookup an entry in an empty cache
-    LRUSimpleCache<int,int>::EntryType* e77 = cache1_->lookup(77);
+    LRUSimpleCache::EntryType* e77 = cache1_->lookup(77);
     CPPUNIT_ASSERT(0 == e77);
 
     // Find an existing entry
     cache1_->insert(2000, 2000);
-    LRUSimpleCache<int,int>::EntryType* e2000 = cache1_->lookup(2000);
+    LRUSimpleCache::EntryType* e2000 = cache1_->lookup(2000);
     CPPUNIT_ASSERT(2000 == e2000->extent);
 
     // Fill the cache and lookup all entries

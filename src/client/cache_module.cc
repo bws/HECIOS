@@ -12,7 +12,7 @@
 #include "mpiio_proto_m.h"
 #include "umd_io_trace.h"
 #include "lru_simple_cache.h"
-
+#include "cache_module.h"
 
 
 using namespace std;
@@ -45,7 +45,7 @@ class cacheModule : public cSimpleModule
 	
 	private:
                 // create system cache
-                LRUSimpleCache<int, int>* systemCache;
+                LRUSimpleCache* systemCache;
 
 		// Request forward declerations
 		void cacheProcessTimer(cMessage *msg );
@@ -104,7 +104,7 @@ void cacheModule::initialize()
 	fsOut = findGate("fsOut");
 	appIn = findGate("appIn");
 	appOut = findGate("appOut");
-        systemCache = new LRUSimpleCache<int, int>(10);	
+        systemCache = new LRUSimpleCache(10);	
 }
 
 void cacheModule::finish()

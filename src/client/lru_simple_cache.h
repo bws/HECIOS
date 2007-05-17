@@ -7,32 +7,33 @@
 #include <map>
 #include <utility>
 #include <omnetpp.h>
+#include "lru_replace_policy.cc"
 
 /**
  * A CacheEntry wrapper that includes a simulation timestamp
  */
-template <class KeyType, class ValueType>
-struct LRUSimpleCacheEntry
+//template <class KeyType, class ValueType>
+/*struct LRUSimpleCacheEntry
 {
-    ValueType extent;
+    int extent;
     int address;
     double timeStamp;
-    typename std::list<KeyType>::iterator lruRef;
-};
+    std::list<int>::iterator lruRef;
+};*/
 
 /**
  *
  */
-template <class KeyType, class ValueType>
+//template <class KeyType, class ValueType>
 class LRUSimpleCache
 {
 public:
 
     /** Convenience typedef of cache entries */
-    typedef LRUSimpleCacheEntry<KeyType,ValueType> EntryType;
+    typedef LRUSimpleCacheEntry EntryType;
 
     /** Convencience typedef of the key-value map */
-    typedef std::map<KeyType,EntryType*> MapType;
+    typedef std::map<int,EntryType*> MapType;
 
     /**
      * Constructor
@@ -47,19 +48,19 @@ public:
      * contains more entries than the maximum size, evict the least
      * recently used item
      */
-    void insert(const KeyType& key, const ValueType& value);
+    void insert(const int& key, const int& value);
 
     /** Remove the value for key from the cache */
-    void remove(const KeyType& key);
+    void remove(const int& key);
 
     /**
      * @return The EntryType value wrapper for key.  The wrapper allows
      * the user to also determine the last time the entry was accessed.
      * If no entry exists for key, return 0
      */
-    EntryType* lookup(const KeyType& key);
-    int findOnlyKey(const KeyType& key);
-    int findOnlyKeyValue(const KeyType& key, const ValueType& value);
+    EntryType* lookup(const int& key);
+    int findOnlyKey(const int& key);
+    int findOnlyKeyValue(const int& key, const int& value);
     /**
      * @return the number of entries in the cache
      */
@@ -67,28 +68,33 @@ public:
     
 private:
 
-    std::map<KeyType, EntryType*> keyEntryMap;
-    std::list<KeyType> lruList;
+    std::map<int, EntryType*> keyEntryMap;
+    std::list<int> lruList;
 
     const int maxEntries_;
+    const int maxPhysSize_;
     //const double maxTime_;
     int numEntries_;
+    int currentPhysSize_;
+    LruReplacePolicy lruPolicy; //-----_-_-___-_-_-here -_-_-_-_//
 };
 
-template <class KeyType, class ValueType>
-LRUSimpleCache<KeyType,ValueType>::LRUSimpleCache(
-    int capacity) :
+//template <class KeyType, class ValueType>
+LRUSimpleCache::LRUSimpleCache(int capacity) :
     maxEntries_(capacity),
-    numEntries_(0)
+    maxPhysSize_(capacity*1000),
+    numEntries_(0),
+    currentPhysSize_(0)
 {
     assert(0 < maxEntries_);
+    assert(0 < maxPhysSize_);
 }
 
-template <class KeyType, class ValueType>
-LRUSimpleCache<KeyType,ValueType>::~LRUSimpleCache()
+//template <class KeyType, class ValueType>
+LRUSimpleCache::~LRUSimpleCache()
 {
     // Delete any EntryTypes still contained in the map
-    typename std::map<KeyType, EntryType*>::iterator iter;
+    std::map<int, EntryType*>::iterator iter;
     for (iter = keyEntryMap.begin(); iter != keyEntryMap.end(); ++iter)
     {
         //std::cerr << "Want to delete" << iter->first << endl;
@@ -101,9 +107,8 @@ LRUSimpleCache<KeyType,ValueType>::~LRUSimpleCache()
 }
 
 
-template<class KeyType, class ValueType>
-void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
-                                                const ValueType& value)
+//template<class KeyType, class ValueType>
+void LRUSimpleCache::insert(const int& key,                                                const int& value)
 {
     // Check to see if the entry already exists
     //printf("in the begin of insert\n");
@@ -111,9 +116,9 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
     int entrySize = (int) value;
     int prevPosEmpty, nextPosEmpty;
     prevPosEmpty = nextPosEmpty = 0;
-    typename std::map<KeyType, EntryType*>::iterator prevPos;
-    typename std::map<KeyType, EntryType*>::iterator nextPos;
-    typename std::map<KeyType, EntryType*>::iterator pos;
+    std::map<int, EntryType*>::iterator prevPos;
+    std::map<int, EntryType*>::iterator nextPos;
+    std::map<int, EntryType*>::iterator pos;
     pos = keyEntryMap.find(key);
     if (pos != keyEntryMap.end())  // if entry already exists
     {
@@ -199,8 +204,11 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
         // If the cache is full, evict an item according to LRU policy
         if (numEntries_ == maxEntries_)
         {
-            KeyType key = *(lruList.rbegin());
+            int key = *(lruList.rbegin());
             this->remove(key);
+            map<int,int> t1; list<int> t2;
+            lruPolicy.GetEvictIndex(keyEntryMap, lruList);
+            //lruPolicy.GetEvictIndex(t1,t2);
         }
 
         // Fill out the Cache entry data
@@ -294,10 +302,10 @@ void LRUSimpleCache<KeyType,ValueType>::insert(const KeyType& key,
     fflush(stdout);
 }
 
-template<class KeyType, class ValueType>
-void LRUSimpleCache<KeyType,ValueType>::remove(const KeyType& key)
+//template<class KeyType, class ValueType>
+void LRUSimpleCache::remove(const int& key)
 {
-    typename std::map<KeyType, EntryType*>::iterator pos;
+    std::map<int, EntryType*>::iterator pos;
     pos = keyEntryMap.find(key);
     if (pos != keyEntryMap.end())
     {
@@ -332,8 +340,8 @@ void LRUSimpleCache<KeyType,ValueType>::remove(const KeyType& key)
 
 
 // return 0 if not found in cache, 1 if found
-template<class KeyType, class ValueType>
-int LRUSimpleCache<KeyType,ValueType>::findOnlyKey(const KeyType& key)
+//template<class KeyType, class ValueType>
+int LRUSimpleCache::findOnlyKey(const int& key)
 {
     int toReturn = 0;
     if(lookup(key) != 0) toReturn = 1;    
@@ -342,8 +350,8 @@ int LRUSimpleCache<KeyType,ValueType>::findOnlyKey(const KeyType& key)
 
 
 // return - if not found in cache, 1 if found
-template<class KeyType, class ValueType>
-int  LRUSimpleCache<KeyType,ValueType>::findOnlyKeyValue(const KeyType& key, const ValueType& value)
+//template<class KeyType, class ValueType>
+int  LRUSimpleCache::findOnlyKeyValue(const int& key, const int& value)
 {
     int toReturn = 0;
     EntryType* foundEntry = lookup(key);
@@ -358,12 +366,12 @@ int  LRUSimpleCache<KeyType,ValueType>::findOnlyKeyValue(const KeyType& key, con
 
 
 
-template<class KeyType, class ValueType>
-typename LRUSimpleCache<KeyType,ValueType>::EntryType*
-LRUSimpleCache<KeyType,ValueType>::lookup(const KeyType& key)
+//template<class KeyType, class ValueType>
+LRUSimpleCache::EntryType*
+LRUSimpleCache::lookup(const int& key)
 {
     EntryType* entry = 0;
-    typename std::map<KeyType, EntryType*>::iterator pos;
+    std::map<int, EntryType*>::iterator pos;
 
     // Search the map for key
     pos = keyEntryMap.find(key);
@@ -390,8 +398,8 @@ LRUSimpleCache<KeyType,ValueType>::lookup(const KeyType& key)
     return entry;
 }
 
-template<class KeyType, class ValueType>
-int LRUSimpleCache<KeyType,ValueType>::size() const
+//template<class KeyType, class ValueType>
+int LRUSimpleCache::size() const
 {
     assert(lruList.size() == keyEntryMap.size());
     if (lruList.size() != keyEntryMap.size())
