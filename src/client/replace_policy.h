@@ -36,7 +36,7 @@ class ReplacePolicy
     public:
         typedef LRUSimpleCacheEntry EntryType;
         virtual ~ReplacePolicy();
-	virtual int GetEvictIndex(map<int, EntryType*> keyEntryMap,
+	virtual int GetEvictIndex(map <int, EntryType*> keyEntryMap,
                                         list<int> lruList)
         {
             printf("have to put this here b/c gcc linker sucks\n");

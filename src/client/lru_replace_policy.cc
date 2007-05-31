@@ -9,28 +9,6 @@
 
 using namespace std;
 
-//template <class KeyType, class ValueType>
-/*class LruReplacePolicy : public ReplacePolicy
-{
-    public:
-        virtual int GetEvictIndex(map<int, int> keyEntryMap,
-                                        list<int> lruList);
-        ~LruReplacePolicy(){};
-
-};*/
-
-/*LruReplacePolicy::~LruReplacePolicy()
-{
-    // does nothing, needed so compiler doesn't complain
-
-}*/
-
-/*ReplacePolicy::~ReplacePolicy()
-{
-
-}*/
-
-//template <class KeyType, class ValueType>
 int LruReplacePolicy::GetEvictIndex(map<int, EntryType*> keyEntryMap,
                                 list<int> lruList)
 {   

@@ -7,7 +7,9 @@
 #include <map>
 #include <utility>
 #include <omnetpp.h>
-#include "lru_replace_policy.cc"
+#include "lru_replace_policy.h"
+
+using namespace std;
 
 /**
  * A CacheEntry wrapper that includes a simulation timestamp
@@ -33,7 +35,7 @@ public:
     typedef LRUSimpleCacheEntry EntryType;
 
     /** Convencience typedef of the key-value map */
-    typedef std::map<int,EntryType*> MapType;
+    typedef map<int,EntryType*> MapType;
 
     /**
      * Constructor
@@ -68,8 +70,8 @@ public:
     
 private:
 
-    std::map<int, EntryType*> keyEntryMap;
-    std::list<int> lruList;
+    map<int, EntryType*> keyEntryMap;
+    list<int> lruList;
 
     const int maxEntries_;
     const int maxPhysSize_;
@@ -207,7 +209,9 @@ void LRUSimpleCache::insert(const int& key,                                     
             int key = *(lruList.rbegin());
             this->remove(key);
             map<int,int> t1; list<int> t2;
+            //lruPolicy.AFunction(3);
             lruPolicy.GetEvictIndex(keyEntryMap, lruList);
+                                            //(list<int> &) lruList);
             //lruPolicy.GetEvictIndex(t1,t2);
         }
 
