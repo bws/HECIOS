@@ -55,9 +55,6 @@ void FSWrite::handleMessage(cMessage* msg)
             enterFinish(static_cast<spfsWriteResponse*>(msg));
             break;
         }
-        default:
-            cerr << "FSWrite Error: Illegal state entered: " << currentState
-                 << endl;
     }
 
     // Store current state
@@ -94,8 +91,8 @@ void FSWrite::enterFinish(spfsWriteResponse* writeResp)
     
     if (0 == numOutstandingResponses)
     {
-        spfsMPIFileWriteResponse* mpiResp =
-            new spfsMPIFileWriteResponse(0, SPFS_MPI_FILE_WRITE_RESPONSE);
+        spfsMPIFileWriteAtResponse* mpiResp =
+            new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
         mpiResp->setContextPointer(writeReq_);
         mpiResp->setIsSuccessful(true);
         //mpiResp->setBytesRead(0);  // FIXME

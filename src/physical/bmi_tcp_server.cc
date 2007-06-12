@@ -44,7 +44,7 @@ private:
     TCPSocket listenSocket_;
 
     /** Mapping from a messages uniqueId to the amount of data received */
-    std::map<void*,TCPSocket*> contextToSocketMap;
+    std::map<int,TCPSocket*> requestToSocketMap_;
 
     /** Gate id for bmiIn */
     int bmiInGateId_;
@@ -99,15 +99,15 @@ void BMITcpServer::handleMessage(cMessage* msg)
     {
         // Retrieve the socket
         spfsResponse* resp = dynamic_cast<spfsResponse*>(msg);
-        map<void*,TCPSocket*>::iterator pos =
-            contextToSocketMap.find(resp->contextPointer());
-        assert(contextToSocketMap.end() != pos);
+        map<int,TCPSocket*>::iterator pos =
+            requestToSocketMap_.find(resp->getSocketId());
+        assert(requestToSocketMap_.end() != pos);
         
         TCPSocket* responseSocket = pos->second;
         assert(0 != responseSocket);
 
         // Remove the entry for this socket
-        contextToSocketMap.erase(resp->contextPointer());
+        requestToSocketMap_.erase(resp->getSocketId());
 
         // Encapsulate the file system response and send to the client
         spfsBMIServerSendMessage* pkt = new spfsBMIServerSendMessage();
@@ -116,7 +116,7 @@ void BMITcpServer::handleMessage(cMessage* msg)
         pkt->setUniqueId(ev.getUniqueNumber());
         responseSocket->send(pkt);
 
-        // A mostly ineffective hack to disable excessive INET output
+        // FIXME A mostly ineffective hack to disable excessive INET output
         ev.disable_tracing = true;        
      }
     else if (0 != dynamic_cast<spfsRequest*>(msg))
@@ -149,8 +149,10 @@ void BMITcpServer::socketDataArrived(int, void *, cMessage *msg, bool)
     cMessage* payload = msg->decapsulate();
 
     // Store the response socket for use during response
+    static int nextSocketId = 0;
     spfsRequest* request = dynamic_cast<spfsRequest*>(payload);
-    contextToSocketMap[request->contextPointer()] = responseSocket;
+    request->setSocketId(nextSocketId++);
+    requestToSocketMap_[request->getSocketId()] = responseSocket;
     
     //if (request)
     //    request->setSocket(responseSocket);

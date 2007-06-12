@@ -42,6 +42,7 @@ cMessage* GetAttr::enterFinish()
     spfsGetAttrResponse* resp = new spfsGetAttrResponse(
         0, SPFS_GET_ATTR_RESPONSE);
     resp->setContextPointer(getAttrReq_->contextPointer());
+    resp->setSocketId(getAttrReq_->getSocketId());
 
     // Cleanup initiating request
     delete getAttrReq_;

@@ -42,6 +42,7 @@ cMessage* Lookup::enterFinish()
     spfsLookupPathResponse* resp = new spfsLookupPathResponse(
         0, SPFS_LOOKUP_PATH_RESPONSE);
     resp->setContextPointer(lookupReq_->contextPointer());
+    resp->setSocketId(lookupReq_->getSocketId());
     resp->setStatus(SPFS_FOUND);
     resp->setHandleCount(1);
     resp->setAttrCount(0);

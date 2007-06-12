@@ -3,7 +3,7 @@
 
 class cMessage;
 class fsModule;
-class spfsMPIFileReadRequest;
+class spfsMPIFileReadAtRequest;
 class spfsReadResponse;
 
 /**
@@ -14,7 +14,7 @@ class FSRead
 public:
 
     /** Constructor */
-    FSRead(fsModule* module, spfsMPIFileReadRequest* readReq);
+    FSRead(fsModule* module, spfsMPIFileReadAtRequest* readReq);
 
     /** Destructor */
     virtual ~FSRead() {};
@@ -27,8 +27,11 @@ protected:
     /**  Construct server read requests */
     virtual void enterRead();
 
-    /** Accumulate server read responses and send final client response */
-    virtual void enterFinish(spfsReadResponse* readResponse);
+    /** Accumulate server read responses */
+    virtual void enterCountResponses(bool& outHasReceivedAllResponses);
+
+    /** Send final client response */
+    virtual void enterFinish();
     
 private:
 
@@ -36,7 +39,7 @@ private:
     fsModule* fsModule_;
 
     /** The originating MPI read request */
-    spfsMPIFileReadRequest* readReq_;
+    spfsMPIFileReadAtRequest* readReq_;
 };
 
 #endif

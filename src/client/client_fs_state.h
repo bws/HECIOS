@@ -76,18 +76,18 @@ public:
     /** access function for HandleRange_ vector */
     HandleRange servers(int num);
 
-    /** access function for root */
-    int root();
-    
-    /** access function for totalNumServers */
-    int totalNumServers();
-
     /** access function for defaultNumServers */
     int defaultNumServers();
 
 private:
     /** Copy constructor disabled */
     ClientFSState(const ClientFSState& orig);
+
+    /** access function for root */
+    int root();
+    
+    /** access function for totalNumServers */
+    int totalNumServers();
 
     /** Attribute cache */
     AttributeCache attrCache_;

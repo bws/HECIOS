@@ -12,7 +12,7 @@ typedef TCPSocket* TCPSocketPtr;
 struct FSMetaData;
 struct HandleRange;
 class cFSM;
-class noncobject MPIDataType; // this is an int
+class noncobject FSDataType;
 class noncobject TCPSocketPtr;
 
 
@@ -74,7 +74,7 @@ message spfsRequest
 
         // internal fields
         cFSM state;
-        TCPSocketPtr socket;
+        int socketId;
 };
 
 // File system response abstract base class
@@ -83,6 +83,8 @@ message spfsResponse
     fields:
         bool requestSucceeded;
         int serverNo; // which logical server - copy from request
+
+        int socketId;
 };
 
 // Create a file system object
@@ -119,7 +121,7 @@ message spfsReadRequest extends spfsRequest
         int serverCnt;
         unsigned long offset;
         int count;
-        int dtype;
+        FSDataType dtype;
 };
 
 // Read file data
@@ -137,7 +139,7 @@ message spfsWriteRequest extends spfsRequest
         int server_cnt;
         unsigned long offset;
         int count;
-        int dtype;
+        FSDataType dtype;
 };
 
 // Write file data

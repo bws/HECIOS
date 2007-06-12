@@ -26,10 +26,10 @@ public:
     bool hasMoreRecords() const { return (curRecord_ < numRecords_); };
     
     /** @return the next IOTraceRecord */
-    virtual IOTraceRecord* nextRecord() const;
+    virtual IOTraceRecord* nextRecord();
 
     /** @return the next IOTraceRecord as a cMessage */
-    virtual cMessage* nextRecordAsMessage() const;
+    virtual cMessage* nextRecordAsMessage();
 
 private:
 
@@ -38,7 +38,7 @@ private:
 
     /** @return the next IOTraceRecord as a cMessage */
     cMessage* createMPIIOMessage(OpType opType, int fileId,
-                                 long offset, long length) const;
+                                 long offset, long length);
     
     std::string traceFileName_;
     mutable std::ifstream traceFile_;

@@ -2,9 +2,11 @@
 #define IO_TRACE_H
 
 #include <iostream>
+#include <map>
 #include <omnetpp.h>
 
 /** Forward declarations */
+class FSOpenFile;
 class IOTraceRecord;
 
 /**
@@ -36,15 +38,26 @@ public:
     virtual bool hasMoreRecords() const = 0;
     
     /** @return the next IOTraceRecord */
-    virtual IOTraceRecord* nextRecord() const = 0;
+    virtual IOTraceRecord* nextRecord() = 0;
 
     /** @return the next IOTraceRecord */
-    virtual cMessage* nextRecordAsMessage() const = 0;
+    virtual cMessage* nextRecordAsMessage() = 0;
 
+protected:
+
+    /** */
+    void setDescriptor(int fileId, FSOpenFile* descriptor);
+
+    /** */
+    FSOpenFile* getDescriptor(int fileId) const;
+    
 private:
 
     /** The number of processes for this trace */
     const int numProcs_;
+
+    /** */
+    std::map<int, FSOpenFile*> descriptorById_;
 };
 
 /**

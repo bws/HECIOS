@@ -8,9 +8,8 @@ cplusplus {{
 
 typedef FSOpenFile* FileDescriptorPtr;
 
-/** MPI Data type -- currently indicates number of bytes */
-typedef int MPIDataType;
-
+/** MPI Data type */
+typedef FSDataType MPIDataType;
 }}
 
 class cFSM;

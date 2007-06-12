@@ -65,25 +65,15 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
         }
         case SPFS_MPI_FILE_READ_REQUEST:
         {
-            FSRead read(client, static_cast<spfsMPIFileReadRequest*>(req));
-            if (resp)
-                read.handleMessage(resp);
-            else
-                read.handleMessage(req);
-            break;
         }
         case SPFS_MPI_FILE_WRITE_REQUEST:
         {
-            FSWrite write(client, static_cast<spfsMPIFileWriteRequest*>(req));
-            if (resp)
-                write.handleMessage(resp);
-            else
-                write.handleMessage(req);
+            cerr << "Illegal read or write message" << endl;
             break;
         }
         case SPFS_MPI_FILE_READ_AT_REQUEST:
         {
-            FSRead read(client, static_cast<spfsMPIFileReadRequest*>(req));
+            FSRead read(client, static_cast<spfsMPIFileReadAtRequest*>(req));
             if (resp)
                 read.handleMessage(resp);
             else

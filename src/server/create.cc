@@ -41,6 +41,7 @@ cMessage* Create::enterFinish()
 {
     spfsCreateResponse* resp = new spfsCreateResponse(0, SPFS_CREATE_RESPONSE);
     resp->setContextPointer(createReq_->contextPointer());
+    resp->setSocketId(createReq_->getSocketId());
     return resp;
 }
 

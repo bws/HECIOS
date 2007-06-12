@@ -8,6 +8,9 @@ class ClientFSState;
 /** Maximum number of entries in a path */
 #define MAXSEG 16
 
+/** File system data distribution */
+typedef int FSDataType;
+
 /** File system handle data type */
 typedef long long FSHandle;
 

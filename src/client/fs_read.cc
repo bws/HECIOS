@@ -8,7 +8,7 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSRead::FSRead(fsModule* module, spfsMPIFileReadRequest* readReq)
+FSRead::FSRead(fsModule* module, spfsMPIFileReadAtRequest* readReq)
     : fsModule_(module),
       readReq_(readReq)
 {
@@ -25,15 +25,16 @@ void FSRead::handleMessage(cMessage* msg)
     /** File system open state machine states */
     enum {
         INIT = 0,
-        READ = FSM_Steady(1),
-        FINISH = FSM_Steady(2),
+        READ = FSM_Transient(1),
+        COUNT_RESPONSES = FSM_Steady(2),
+        FINISH = FSM_Steady(3),
     };
 
     FSM_Switch(currentState)
     {
         case FSM_Exit(INIT):
         {
-            assert(0 != dynamic_cast<spfsMPIFileReadRequest*>(msg));
+            assert(0 != dynamic_cast<spfsMPIFileReadAtRequest*>(msg));
             FSM_Goto(currentState, READ);
             break;
         }
@@ -44,19 +45,28 @@ void FSRead::handleMessage(cMessage* msg)
         }
         case FSM_Exit(READ):
         {
-            assert(0 != dynamic_cast<spfsReadResponse*>(msg));
-            FSM_Goto(currentState, FINISH);
+            //assert(0 != dynamic_cast<spfsReadResponse*>(msg));
+            FSM_Goto(currentState, COUNT_RESPONSES);
             break;
+        }
+        case FSM_Exit(COUNT_RESPONSES):
+        {
+            assert(0 != dynamic_cast<spfsReadResponse*>(msg));
+            bool hasReceivedAllResponses;
+            enterCountResponses(hasReceivedAllResponses);
+            if (hasReceivedAllResponses)
+                FSM_Goto(currentState, FINISH);
+            else
+                FSM_Goto(currentState, COUNT_RESPONSES);
+
+            // Cleanup responses
+            //delete msg;
         }
         case FSM_Enter(FINISH):
         {
-            assert(0 != dynamic_cast<spfsReadResponse*>(msg));
-            enterFinish(static_cast<spfsReadResponse*>(msg));
+            enterFinish();
             break;
         }
-        default:
-            cerr << "Error: Illegal open state entered: " << currentState
-                 << endl;
     }
 
     // Store current state
@@ -86,23 +96,27 @@ void FSRead::enterRead()
     readReq_->setResponses(read.getServerCnt());
 }
 
-void FSRead::enterFinish(spfsReadResponse* readResp)
+void FSRead::enterCountResponses(bool& outHasReceivedAllResponses)
 {
+    outHasReceivedAllResponses = false;
+
     int numOutstandingResponses = readReq_->getResponses();
     readReq_->setResponses(--numOutstandingResponses);
-    
+
     if (0 == numOutstandingResponses)
     {
-        spfsMPIFileReadResponse* mpiResp =
-            new spfsMPIFileReadResponse(0, SPFS_MPI_FILE_READ_RESPONSE);
-        mpiResp->setContextPointer(readReq_);
-        mpiResp->setIsSuccessful(true);
-        mpiResp->setBytesRead(0);  // FIXME
-        fsModule_->send(mpiResp, fsModule_->fsMpiOut);                 
+        outHasReceivedAllResponses = true;
     }
+}
 
-    // Cleanup server response
-    delete readResp;
+void FSRead::enterFinish()
+{
+    spfsMPIFileReadAtResponse* mpiResp =
+        new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
+    mpiResp->setContextPointer(readReq_);
+    mpiResp->setIsSuccessful(true);
+    mpiResp->setBytesRead(0);  // FIXME
+    fsModule_->send(mpiResp, fsModule_->fsMpiOut);
 }
 /*
  * Local variables:

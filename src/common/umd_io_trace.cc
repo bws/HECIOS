@@ -31,8 +31,6 @@ UMDIOTrace::UMDIOTrace(int numProcs, string traceFileName)
         traceFile_ >> numProcs_;
         traceFile_ >> numFiles_;
         traceFile_ >> numRecords_;
-        //cerr << "First 4 parts " << numProcs_ << " " << numFiles_ << " "
-        //     << numRecords_ << endl;
 
         // Read the file names
         fileNames_ = new string[numFiles_];
@@ -61,12 +59,12 @@ UMDIOTrace::~UMDIOTrace()
 /**
  * Construct the next record from the trace and return a pointer to it
  */
-IOTraceRecord* UMDIOTrace::nextRecord() const
+IOTraceRecord* UMDIOTrace::nextRecord()
 {
     return 0;
 }
 
-cMessage* UMDIOTrace::nextRecordAsMessage() const
+cMessage* UMDIOTrace::nextRecordAsMessage()
 {
     cMessage* msg = 0;
     
@@ -86,8 +84,6 @@ cMessage* UMDIOTrace::nextRecordAsMessage() const
         traceFile_ >> numRecords;
         traceFile_ >> pid >> fileId >> wallClock >> processClock;
         traceFile_ >> offset >> length;
-        //cerr << "Op: " << opType << " Pid " << pid << " fid " << fileId
-        //     << " wc " << " pc " << " off " << " len " << endl;
 
         // Create a new message and fill it out with the relevant data
         msg = createMPIIOMessage(static_cast<OpType>(opType), fileId,
@@ -99,7 +95,7 @@ cMessage* UMDIOTrace::nextRecordAsMessage() const
 }
 
 cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
-                                         long offset, long length) const
+                                         long offset, long length)
 {
     cMessage* mpiMsg = 0;
 
@@ -120,7 +116,9 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
             open->setFileName(fileNames_[fileId].c_str());
 
             // FIXME - why the hell is this needed now!!!
-            open->setFiledes(new FSOpenFile());
+            FSOpenFile* descriptor = new FSOpenFile();
+            setDescriptor(fileId, descriptor);
+            open->setFiledes(descriptor);
             mpiMsg = open;
             break;
         }
@@ -138,7 +136,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
             read->setCount(length);
             read->setOffset(offset);
             // FIXME just adding a descript to avoid core dumps for now
-            read->setFiledes(new FSOpenFile());
+            FSOpenFile* descriptor = getDescriptor(fileId);
+            read->setFiledes(descriptor);
             mpiMsg = read;
             break;
         }
@@ -149,7 +148,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
             write->setCount(length);
             write->setOffset(offset);
             // FIXME just adding a descript to avoid core dumps for now
-            write->setFiledes(new FSOpenFile());
+            FSOpenFile* descriptor = getDescriptor(fileId);
+            write->setFiledes(descriptor);
             mpiMsg = write;
             break;
         }
@@ -160,7 +160,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
             seek->setCount(0);
             seek->setOffset(offset);
             // FIXME just adding a descript to avoid core dumps for now
-            seek->setFiledes(new FSOpenFile());
+            FSOpenFile* descriptor = getDescriptor(fileId);
+            seek->setFiledes(descriptor);
             mpiMsg = seek;
             break;
         }

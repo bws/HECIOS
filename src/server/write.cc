@@ -42,6 +42,7 @@ cMessage* Write::enterFinish()
     spfsWriteResponse* resp = new spfsWriteResponse(
         0, SPFS_WRITE_RESPONSE);
     resp->setContextPointer(writeReq_->contextPointer());
+    resp->setSocketId(writeReq_->getSocketId());
 
     // Cleanup initiating request
     delete writeReq_;
