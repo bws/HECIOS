@@ -46,52 +46,55 @@ void FSServer::setNumber(size_t number)
 void FSServer::handleMessage(cMessage* msg)
 {
     // For now, construct the appropriate response and simply send it back
+    cMessage* response = 0;
+    
     switch(msg->kind())
     {
         case SPFS_CREATE_REQUEST:
         {
-            cMessage* createResponse;
             Create create(static_cast<spfsCreateRequest*>(msg));
-            createResponse = create.handleServerMessage(msg);
-            send(createResponse, "netOut");
+            response = create.handleServerMessage(msg);
             break;
         }
         case SPFS_LOOKUP_PATH_REQUEST:
         {
-            cMessage* lookupResponse;
             Lookup lookup(static_cast<spfsLookupPathRequest*>(msg));
-            lookupResponse = lookup.handleServerMessage(msg);
-            send(lookupResponse, "netOut");
+            response = lookup.handleServerMessage(msg);
             break;
         }
         case SPFS_GET_ATTR_REQUEST:
         {
-            cMessage* getAttrResponse;
             GetAttr getAttr(static_cast<spfsGetAttrRequest*>(msg));
-            getAttrResponse = getAttr.handleServerMessage(msg);
-            send(getAttrResponse, "netOut");
+            response = getAttr.handleServerMessage(msg);
             break;
         }
         case SPFS_READ_REQUEST:
         {
-            cMessage* readResponse;
             Read read(static_cast<spfsReadRequest*>(msg));
-            readResponse = read.handleServerMessage(msg);
-            send(readResponse, "netOut");
+            response = read.handleServerMessage(msg);
             break;
         }
         case SPFS_WRITE_REQUEST:
         {
-            cMessage* writeResponse;
             Write write(static_cast<spfsWriteRequest*>(msg));
-            writeResponse = write.handleServerMessage(msg);
-            send(writeResponse, "netOut");
+            response = write.handleServerMessage(msg);
             break;
         }
         default:
         {
             cerr << "Error: Unknown server message type" << endl;
         }
+    }
+
+    // Send server's response
+    if (spfsResponse* resp = dynamic_cast<spfsResponse*>(response))
+    {
+        cerr << "Request message: " << msg->info() << " " << msg->kind() << endl;
+        spfsRequest* req = dynamic_cast<spfsRequest*>(msg);
+        assert(0 != req);
+        resp->setContextPointer(req->contextPointer());
+        resp->setSocketId(req->getSocketId());
+        send(resp, "netOut");
     }
 }
 

@@ -24,8 +24,6 @@ class ClientFSStateTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testServerNotUsed);
     CPPUNIT_TEST(testSelectServer);
     CPPUNIT_TEST(testHashPath);
-    CPPUNIT_TEST(testRoot);
-    CPPUNIT_TEST(testTotalNumServers);
     CPPUNIT_TEST(testDefaultNumServers);
     CPPUNIT_TEST_SUITE_END();
 
@@ -59,10 +57,6 @@ public:
 
     void testServers();
 
-    void testRoot();
-
-    void testTotalNumServers();
-
     void testDefaultNumServers();
 
 private:
@@ -79,9 +73,9 @@ void ClientFSStateTest::tearDown()
 void ClientFSStateTest::testConstructor()
 {
     ClientFSState state;
-    CPPUNIT_ASSERT_EQUAL(0, state.root());
-    CPPUNIT_ASSERT_EQUAL(2, state.defaultNumServers());
-    CPPUNIT_ASSERT_EQUAL(2, state.totalNumServers());
+    //CPPUNIT_ASSERT_EQUAL(0, state.root());
+    //CPPUNIT_ASSERT_EQUAL(2, state.defaultNumServers());
+    //CPPUNIT_ASSERT_EQUAL(2, state.totalNumServers());
 }
 
 void ClientFSStateTest::testInsertAttr()
@@ -175,18 +169,6 @@ void ClientFSStateTest::testServers()
 {
     // FIXME
     //ClientFSState state;
-}
-
-void ClientFSStateTest::testRoot()
-{
-    ClientFSState state;
-    CPPUNIT_ASSERT_EQUAL(0, state.root());
-}
-
-void ClientFSStateTest::testTotalNumServers()
-{
-    ClientFSState state;
-    CPPUNIT_ASSERT_EQUAL(2, state.totalNumServers());
 }
 
 void ClientFSStateTest::testDefaultNumServers()

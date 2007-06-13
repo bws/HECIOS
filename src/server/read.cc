@@ -41,13 +41,6 @@ cMessage* Read::enterFinish()
 {
     spfsReadResponse* resp = new spfsReadResponse(
         0, SPFS_READ_RESPONSE);
-    resp->setContextPointer(readReq_->contextPointer());
-    resp->setSocketId(readReq_->getSocketId());
-
-    // Cleanup initiating request
-    delete readReq_;
-    readReq_ = 0;
-    
     return resp;
 }
 
