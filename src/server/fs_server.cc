@@ -20,13 +20,11 @@ Define_Module(FSServer);
  */
 void FSServer::initialize()
 {
-    // Determine this server's handle range
-    range_.first = serverNumber_ * 1000;
-    range_.last = range_.first + 999;
-
-    // Set the number and name to invalid values
+    // Set the number, name, and range to invalid values
     serverNumber_ = -1;
     serverName_ = "uninitialized";
+    range_.first = -1;
+    range_.last = -1;
 }
 
 void FSServer::setNumber(size_t number)
@@ -39,6 +37,9 @@ void FSServer::setNumber(size_t number)
     s << serverNumber_;
     serverName_ = "server" + s.str();
     
+    // Determine this server's handle range
+    range_.first = serverNumber_ * 1000;
+    range_.last = range_.first + 999;
 }
 /**
  * Handle MPI-IO Response messages
@@ -92,10 +93,19 @@ void FSServer::handleMessage(cMessage* msg)
         cerr << "Request message: " << msg->info() << " " << msg->kind() << endl;
         spfsRequest* req = dynamic_cast<spfsRequest*>(msg);
         assert(0 != req);
-        resp->setContextPointer(req->contextPointer());
+        resp->setContextPointer(req);
         resp->setSocketId(req->getSocketId());
         send(resp, "netOut");
     }
+    else
+    {
+        cerr << "!!!!!!!!! ------------------------ !!!!!!!!!!!!!!" << endl;
+        cerr << "ERROR: Server unable to construct proper response!" << endl;
+        cerr << "!!!!!!!!! ------------------------ !!!!!!!!!!!!!!" << endl;
+    }
+
+    //delete msg;
+    //msg = 0;
 }
 
 /*

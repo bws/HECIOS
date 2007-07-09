@@ -31,10 +31,10 @@ class PFSUtilsTest : public CppUnit::TestFixture
 public:
 
     /** Called before each test function */
-    void setUp();
+    virtual void setUp();
 
     /** Called after each test function */
-    void tearDown();
+    virtual void tearDown();
 
     void testInstance();
     void testRegisterServerIP();

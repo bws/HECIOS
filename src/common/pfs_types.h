@@ -1,6 +1,7 @@
 #ifndef PFS_TYPES_H
 #define PFS_TYPES_H
 
+#include <iostream>
 #include <vector>
 #include <string>
 class ClientFSState;
@@ -24,6 +25,8 @@ struct HandleRange
 /** Equality operation for HandleRanges */
 inline bool operator==(const HandleRange& lhs, const HandleRange& rhs)
 {
+    std::cerr << "LHS: " << lhs.first << " " <<lhs.last
+              << " RHS: " << rhs.first << " " << rhs.last << std::endl;
     return (lhs.first == rhs.first && lhs.last == rhs.last);
 }
 

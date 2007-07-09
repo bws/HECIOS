@@ -121,9 +121,12 @@ void IOApplication::handleMessage(cMessage* msg)
             case SPFS_MPI_FILE_WRITE_RESPONSE:
             {
                 // Send the next message
+                cerr << "Application recv'd response: " << msg->kind() << endl;
                 cMessage* nextMsg = getNextMessage();
                 if (0 != nextMsg)
                 {
+                    cerr << "\nNext application message posted: "
+                         << nextMsg->kind() << endl;
                     send(nextMsg, outGate_);
                 }
                 else

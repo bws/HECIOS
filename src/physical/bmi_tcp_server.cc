@@ -121,7 +121,7 @@ void BMITcpServer::handleMessage(cMessage* msg)
      }
     else if (0 != dynamic_cast<spfsRequest*>(msg))
     {
-        cerr << "BMI Forwarding request" << endl;
+        cerr << "BMI Forwarding request: " << msg->info() << endl;
         send(msg, "bmiOut");
 
         // A mostly ineffective hack to disable excessive INET output

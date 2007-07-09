@@ -92,7 +92,6 @@ message spfsCreateRequest extends spfsRequest
 {
     fields:
         int objectType;
-        HandleRange handleRng;
 };
 
 // Create a file system object

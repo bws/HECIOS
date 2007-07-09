@@ -57,8 +57,8 @@ IPvXAddress* PFSUtils::getServerIP(const FSHandle& handle)
         handleIPMap_.lower_bound(newRange);
     if (itr_lower != handleIPMap_.end())
     {
-        if(handle >= itr_lower->first.first &&
-           handle <= itr_lower->first.last)
+        if (handle >= itr_lower->first.first &&
+            handle <= itr_lower->first.last)
         {
             ip = itr_lower->second;
         }
@@ -110,6 +110,12 @@ FSMetaData* PFSUtils::getMetaData(const Filename& fileName) const
 FSOpenFile* PFSUtils::getDescriptor(const Filename& fileName) const
 {
     return 0;
+}
+
+FSHandle PFSUtils::getFirstHandle(size_t serverNumber)
+{
+    assert(serverNumber < nextServerNumber_);
+    return handlesByServer_[serverNumber].first;
 }
 
 FSHandle PFSUtils::getNextHandle(size_t serverNumber)

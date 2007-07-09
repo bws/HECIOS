@@ -82,9 +82,9 @@ void BMITcpClient::handleMessage(cMessage* msg)
     }
     else if (0 != dynamic_cast<spfsRequest*>(msg))
     {
-        cerr << "Sending packet from client!"
-             << "Kind: " << msg->kind() << " info: " << msg->info()
-             << endl;
+        //cerr << "Sending packet from client!"
+        //     << "Kind: " << msg->kind() << " info: " << msg->info()
+        //     << endl;
                 
         // Retrieve the socket for this handle
         FSHandle handle = 0;

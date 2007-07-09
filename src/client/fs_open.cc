@@ -275,12 +275,10 @@ void FSOpen::enterCreateMeta()
     spfsCreateRequest* req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
     req->setContextPointer(openReq_);
 
-    /* hash path to meta server number */
-    int metaserver = fsModule_->fsState().hashPath(openReq_->getFileName());
+    // hash path to meta server number
+    int metaServer = PFSUtils::instance().getMetaServers()[0];
 
-    /* use first handle in range to address server */
-    req->setHandleRng(fsModule_->fsState().servers(metaserver));
-    req->setServerNo(-1);
+    req->setHandle(PFSUtils::instance().getFirstHandle(metaServer));
     fsModule_->send(req, fsModule_->fsNetOut);
 }
 
@@ -302,15 +300,12 @@ void FSOpen::enterCreateData()
     /* send request to each server */
     for (snum = 0; snum < numservers; snum++)
     {
-        int dataserver;
         spfsCreateRequest *newreq = (spfsCreateRequest *)req->dup();
         newreq->setServerNo(snum);
-        /* randomly select a server from 0 to S-1 */
-        dataserver = fsModule_->fsState().selectServer();
-        /* get the bucket range for that server */
-        newreq->setHandleRng(fsModule_->fsState().servers(dataserver));
+        // randomly select a server from 0 to S-1
+        int dataServer = fsModule_->fsState().selectServer();
         /* use first handle of range to address server */
-        newreq->setHandle(fsModule_->fsState().servers(dataserver).first);
+        newreq->setHandle(PFSUtils::instance().getFirstHandle(dataServer));
         fsModule_->send(newreq, fsModule_->fsNetOut);
     }
     /* free req */

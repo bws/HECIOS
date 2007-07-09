@@ -25,7 +25,7 @@ void FSRead::handleMessage(cMessage* msg)
     /** File system open state machine states */
     enum {
         INIT = 0,
-        READ = FSM_Transient(1),
+        READ = FSM_Steady(1),
         COUNT_RESPONSES = FSM_Steady(2),
         FINISH = FSM_Steady(3),
     };
@@ -55,12 +55,17 @@ void FSRead::handleMessage(cMessage* msg)
             bool hasReceivedAllResponses;
             enterCountResponses(hasReceivedAllResponses);
             if (hasReceivedAllResponses)
+            {
+                cerr << "All responses recv'd for a read" << endl;
                 FSM_Goto(currentState, FINISH);
+            }
             else
+            {
                 FSM_Goto(currentState, COUNT_RESPONSES);
-
+            }
+            
             // Cleanup responses
-            //delete msg;
+            delete msg;
         }
         case FSM_Enter(FINISH):
         {
@@ -75,8 +80,8 @@ void FSRead::handleMessage(cMessage* msg)
 
 void FSRead::enterRead()
 {
-    // Construct the server read request
-    spfsReadRequest read(0, SPFS_READ_REQUEST);
+    // Construct the template read request
+    spfsReadRequest read("ReadStuff", SPFS_READ_REQUEST);
     FSOpenFile* filedes = (FSOpenFile*)readReq_->getFiledes();
     read.setContextPointer(readReq_);
     read.setServerCnt(filedes->metaData->dataHandles.size());
@@ -85,6 +90,7 @@ void FSRead::enterRead()
     read.setDtype(readReq_->getDtype());
 
     // Send request to each server
+    cerr << "Generating " << read.getServerCnt() << " read reqs\n";
     for (int i = 0; i < read.getServerCnt(); i++)
     {
         spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
@@ -92,7 +98,7 @@ void FSRead::enterRead()
         fsModule_->send(req, fsModule_->fsNetOut);
     }
 
-    // Set the number of responses
+    // Set the number of outstanding responses
     readReq_->setResponses(read.getServerCnt());
 }
 

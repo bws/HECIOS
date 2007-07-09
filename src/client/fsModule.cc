@@ -65,10 +65,12 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
         }
         case SPFS_MPI_FILE_READ_REQUEST:
         {
+            cerr << "ERROR: Illegal read message!" << endl;
+            break;
         }
         case SPFS_MPI_FILE_WRITE_REQUEST:
         {
-            cerr << "Illegal read or write message" << endl;
+            cerr << "ERROR: Illegal write message!" << endl;
             break;
         }
         case SPFS_MPI_FILE_READ_AT_REQUEST:
@@ -94,19 +96,20 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
         case SPFS_MPI_FILE_PREALLOCATE_REQUEST :
         case SPFS_MPI_FILE_GET_SIZE_REQUEST :
         {
-            cerr << "Error fsModule: Unsupported client request type: "
+            cerr << "ERROR fsModule: Unsupported client request type: "
                  << req->kind()
                  << endl;
             break;
         }
+
         // Server response messages
         case SPFS_CREATE_RESPONSE :
-        case SPFS_REMOVE_RESPONSE :
-        case SPFS_READ_RESPONSE :
-        case SPFS_WRITE_RESPONSE :
+        case SPFS_LOOKUP_PATH_RESPONSE :
         case SPFS_GET_ATTR_RESPONSE :
         case SPFS_SET_ATTR_RESPONSE :
-        case SPFS_LOOKUP_PATH_RESPONSE :
+        case SPFS_READ_RESPONSE:
+        case SPFS_WRITE_RESPONSE :
+        case SPFS_REMOVE_RESPONSE :
         case SPFS_CREATE_DIR_ENT_RESPONSE :
         case SPFS_REMOVE_DIR_ENT_RESPONSE :
         case SPFS_CHANGE_DIR_ENT_RESPONSE :
@@ -117,15 +120,24 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
         case SPFS_FLUSH_RESPONSE :
         case SPFS_STAT_RESPONSE :
         case SPFS_LIST_ATTR_RESPONSE :
+        {
+            cMessage* spfsRequest = (cMessage*)req->contextPointer();
+            cMessage* mpiRequest = (cMessage*)spfsRequest->contextPointer();
             cerr << "Calling process message after unpacking" << endl;
-            fsProcessMessage((cMessage *)req->contextPointer(), req, client);
+            fsProcessMessage(mpiRequest, req, client);
+
+            // Cleanup the server request
+            delete spfsRequest;
+            spfsRequest = 0;
             break;
-        default :
+        }   
+        default:
+        {
             fsUnknownMessage(req, resp, client);
             break;
+        }
     }
-
-} /* }}}1 */
+}
 
 void fsUnknownMessage(cMessage *req, cMessage *resp, fsModule *client)
 {

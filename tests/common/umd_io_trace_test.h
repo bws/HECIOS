@@ -5,6 +5,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <omnetpp.h>
 #include "mpiio_proto_m.h"
+#include "pfs_utils.h"
 #include "umd_io_trace.h"
 using namespace std;
 
@@ -24,10 +25,10 @@ class UMDIOTraceTest : public CppUnit::TestFixture
 public:
 
     /** Called before each test function */
-    void setUp() {};
+    void setUp();
 
     /** Called after each test function */
-    void tearDown() {};
+    void tearDown();
     
     void testConstructor();
 
@@ -39,6 +40,21 @@ public:
 
     void testNextRecordAsMessage();
 };
+
+void UMDIOTraceTest::setUp()
+{
+    // Register servers for use during testing
+    HandleRange range1 = {100, 200};
+    HandleRange range2 = {2000, 3000};
+    PFSUtils::instance().registerFSServer(range1, true);
+    PFSUtils::instance().registerFSServer(range2, false);
+}
+
+void UMDIOTraceTest::tearDown()
+{
+    // Clear the singleton state between tests
+    PFSUtils::clearState();
+}
 
 void UMDIOTraceTest::testConstructor()
 {

@@ -38,6 +38,9 @@ public:
 
     /** @return Descriptor for a PFS file */
     FSOpenFile* getDescriptor(const Filename& fileName) const;
+
+    /** @return the first handle for the server */
+    FSHandle getFirstHandle(size_t serverNumber);
     
     /** @return the next handle for server */
     FSHandle getNextHandle(size_t serverNumber);
@@ -52,6 +55,9 @@ public:
     void createFile(const Filename& fileName, int metaServer,
                     int numDataServers);
 
+    /** @return the list of blocks for a file handle */
+    std::vector<int> getDiskBlocks(const FSHandle& handle) const;
+    
 private:
 
     /** Default constructor */

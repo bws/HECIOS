@@ -83,7 +83,7 @@ void FSServerConfigurator::initialize(int stage)
                                                    false);
             }
             
-            // Set the server's server number
+            // Set the server's server number (will construct ranges also)
             server->setNumber(serverNum);
 
             // Register the IP for the handle range
