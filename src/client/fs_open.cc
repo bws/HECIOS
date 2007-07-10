@@ -161,7 +161,7 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
 {
     // Preconditions
     assert(0 != openReq->getFileName());
-    assert(0 != openReq->getFiledes());
+    assert(0 != openReq->getFileDes());
     assert(0 == (openReq->getMode() & MPI_MODE_EXCL));
     
     // Initialize outbound variable
@@ -170,7 +170,7 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
 
     // Retrieve the data from the simulator bookkeeper
     Filename openFile(openReq->getFileName());
-    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq->getFiledes());
+    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq->getFileDes());
     fd->metaData = PFSUtils::instance().getMetaData(openFile);
     fd->path = openFile.str();
     
@@ -206,7 +206,7 @@ void FSOpen::enterLookup()
     req->setContextPointer(openReq_);
     
     /* copy path to look up */
-    FSOpenFile *filedes = (FSOpenFile *)openReq_->getFiledes();
+    FSOpenFile *filedes = (FSOpenFile *)openReq_->getFileDes();
     req->setPath(
         filedes->path.substr(filedes->segstart[filedes->curseg],
                              filedes->seglen[filedes->curseg]).c_str());
@@ -237,7 +237,7 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
         case SPFS_FOUND:
         {
             /* enter handle in cache */
-            FSOpenFile* filedes = (FSOpenFile*)openReq_->getFiledes();
+            FSOpenFile* filedes = (FSOpenFile*)openReq_->getFileDes();
             fsModule_->fsState().insertDir(filedes->path,
                                            filedes->metaData->handle);
             /* look for metadata in cache */
@@ -323,7 +323,7 @@ void FSOpen::exitCreateData(spfsCreateResponse* createResp,
 
 void FSOpen::enterWriteAttr()
 {
-    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFiledes());
+    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFileDes());
     spfsSetAttrRequest *req = new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
     req->setHandle(fd->metaData->handle);
@@ -341,7 +341,7 @@ void FSOpen::enterWriteDirEnt()
     req = new spfsCreateDirEntRequest(0, SPFS_CREATE_DIR_ENT_REQUEST);
     req->setContextPointer(openReq_);
     /* this addresses the server with the dir on it */
-    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFiledes());
+    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFileDes());
     req->setHandle(fd->handles[fd->curseg]);
     /* this is the same handle, the handle of the parent dir */
     /* can we get rid of this field?  WBL */
@@ -363,7 +363,7 @@ void FSOpen::exitWriteDirEnt(spfsCreateDirEntResponse* dirEntResp)
 
 void FSOpen::enterReadAttr()
 {
-    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFiledes());
+    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFileDes());
     spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
     req->setHandle(fd->metaData->handle);
@@ -383,7 +383,7 @@ void FSOpen::enterFinish()
     spfsMPIFileOpenResponse *resp = new spfsMPIFileOpenResponse(
         0, SPFS_MPI_FILE_OPEN_RESPONSE);
     resp->setContextPointer(openReq_);
-    resp->setFiledes(openReq_->getFiledes());
+    resp->setFileDes(openReq_->getFileDes());
     fsModule_->send(resp, fsModule_->fsMpiOut);
 }
             

@@ -84,7 +84,7 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
         }
         case SPFS_MPI_FILE_WRITE_AT_REQUEST:
         {
-            FSWrite write(client, static_cast<spfsMPIFileWriteRequest*>(req));
+            FSWrite write(client, static_cast<spfsMPIFileWriteAtRequest*>(req));
             if (resp)
                 write.handleMessage(resp);
             else

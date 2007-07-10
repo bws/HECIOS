@@ -27,7 +27,8 @@ void FSWrite::handleMessage(cMessage* msg)
     enum {
         INIT = 0,
         WRITE = FSM_Steady(1),
-        FINISH = FSM_Steady(2),
+        COUNT_RESPONSES = FSM_Steady(2),
+        FINISH = FSM_Steady(3),
     };
 
     FSM_Switch(currentState)
@@ -49,6 +50,24 @@ void FSWrite::handleMessage(cMessage* msg)
             FSM_Goto(currentState, FINISH);
             break;
         }
+        case FSM_Exit(COUNT_RESPONSES):
+        {
+            assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
+            bool hasReceivedAllResponses;
+            enterCountResponses(hasReceivedAllResponses);
+            if (hasReceivedAllResponses)
+            {
+                cerr << "All responses recv'd for a write" << endl;
+                FSM_Goto(currentState, FINISH);
+            }
+            else
+            {
+                FSM_Goto(currentState, COUNT_RESPONSES);
+            }
+            
+            // Cleanup responses
+            delete msg;
+        }
         case FSM_Enter(FINISH):
         {
             assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
@@ -63,14 +82,16 @@ void FSWrite::handleMessage(cMessage* msg)
 
 void FSWrite::enterWrite()
 {
+    FSOpenFile* filedes = (FSOpenFile*)writeReq_->getFileDes();
+    assert(0 != filedes);
+    
     // Construct the server write request
     spfsWriteRequest write(0, SPFS_WRITE_REQUEST);
-    FSOpenFile* filedes = (FSOpenFile*)writeReq_->getFileDes();
     write.setContextPointer(writeReq_);
-    //write.setServerCnt(filedes->metaData->dataHandles.size());
+    write.setServerCnt(filedes->metaData->dataHandles.size());
     write.setOffset(filedes->filePtr);
     write.setCount(writeReq_->getCount());
-    write.setDtype(writeReq_->getDtype());
+    write.setDtype(writeReq_->getDataType());
 
     // Send request to each server
     for (size_t i = 0; i < filedes->metaData->dataHandles.size(); i++)
@@ -84,23 +105,26 @@ void FSWrite::enterWrite()
     writeReq_->setResponses(filedes->metaData->dataHandles.size());
 }
 
-void FSWrite::enterFinish(spfsWriteResponse* writeResp)
+void FSWrite::enterCountResponses(bool& outHasReceivedAllResponses)
 {
+    outHasReceivedAllResponses = false;
+
     int numOutstandingResponses = writeReq_->getResponses();
     writeReq_->setResponses(--numOutstandingResponses);
-    
+
     if (0 == numOutstandingResponses)
     {
-        spfsMPIFileWriteAtResponse* mpiResp =
-            new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
-        mpiResp->setContextPointer(writeReq_);
-        mpiResp->setIsSuccessful(true);
-        //mpiResp->setBytesRead(0);  // FIXME
-        fsModule_->send(mpiResp, fsModule_->fsMpiOut);                 
+        outHasReceivedAllResponses = true;
     }
+}
 
-    // Cleanup server response
-    delete writeResp;
+void FSWrite::enterFinish(spfsWriteResponse* writeResp)
+{
+    spfsMPIFileWriteAtResponse* mpiResp =
+        new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
+    mpiResp->setContextPointer(writeReq_);
+    mpiResp->setIsSuccessful(true);
+    fsModule_->send(mpiResp, fsModule_->fsMpiOut);
 }
 /*
  * Local variables:

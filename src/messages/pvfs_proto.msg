@@ -134,8 +134,8 @@ message spfsReadResponse extends spfsResponse
 message spfsWriteRequest extends spfsRequest
 {
     fields:
-        int server_nr;
-        int server_cnt;
+        int serverNo;
+        int serverCnt;
         unsigned long offset;
         int count;
         FSDataType dtype;
@@ -145,7 +145,7 @@ message spfsWriteRequest extends spfsRequest
 message spfsWriteResponse extends spfsResponse
 {
     fields:
-        unsigned long bytes_written;
+        unsigned long bytesWritten;
 };
 
 // Write completion

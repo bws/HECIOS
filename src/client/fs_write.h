@@ -26,10 +26,13 @@ protected:
      */
     void exitInit(spfsMPIFileWriteRequest* writeReq);
 
-    /**  */
+    /** Send server write requests */
     void enterWrite();
 
-    /** */
+    /** Count server write initiation responses */
+    void enterCountResponses(bool& outHasReceivedAllResponses);
+        
+    /** Send the final response */
     void enterFinish(spfsWriteResponse* writeResponse);
     
 private:

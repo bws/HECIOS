@@ -11,6 +11,7 @@ void IOTrace::setDescriptor(int fileId, FSOpenFile* descriptor)
 
 FSOpenFile* IOTrace::getDescriptor(int fileId) const
 {
+    cerr << "Getting descriptor: " << fileId << endl;
     FSOpenFile* descriptor = 0;
     map<int, FSOpenFile*>::const_iterator iter = descriptorById_.find(fileId);
     if (iter != descriptorById_.end())

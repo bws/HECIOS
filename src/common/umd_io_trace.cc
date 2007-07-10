@@ -1,5 +1,6 @@
 
 #include "umd_io_trace.h"
+#include <cassert>
 #include <iomanip>
 #include "filename.h"
 #include "mpiio_proto_m.h"
@@ -115,10 +116,10 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
                 0, SPFS_MPI_FILE_OPEN_REQUEST);
             open->setFileName(fileNames_[fileId].c_str());
 
-            // FIXME - why the hell is this needed now!!!
+            // Construct a file descriptor for use in simulaiton
             FSOpenFile* descriptor = new FSOpenFile();
             setDescriptor(fileId, descriptor);
-            open->setFiledes(descriptor);
+            open->setFileDes(descriptor);
             mpiMsg = open;
             break;
         }
@@ -135,9 +136,8 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
                 0, SPFS_MPI_FILE_READ_AT_REQUEST);
             read->setCount(length);
             read->setOffset(offset);
-            // FIXME just adding a descript to avoid core dumps for now
             FSOpenFile* descriptor = getDescriptor(fileId);
-            read->setFiledes(descriptor);
+            read->setFileDes(descriptor);
             mpiMsg = read;
             break;
         }
@@ -147,22 +147,23 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
                 0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
             write->setCount(length);
             write->setOffset(offset);
-            // FIXME just adding a descript to avoid core dumps for now
             FSOpenFile* descriptor = getDescriptor(fileId);
-            write->setFiledes(descriptor);
+            assert(0 != descriptor);
+            
+            write->setFileDes(descriptor);
             mpiMsg = write;
             break;
         }
         case UMDIOTrace::SEEK:
         {
-            spfsMPIFileReadAtRequest* seek = new spfsMPIFileReadAtRequest(
-                0, SPFS_MPI_FILE_READ_AT_REQUEST);
-            seek->setCount(0);
-            seek->setOffset(offset);
+            //spfsMPIFileReadAtRequest* seek = new spfsMPIFileReadAtRequest(
+            //    0, SPFS_MPI_FILE_READ_AT_REQUEST);
+            //seek->setCount(0);
+            //seek->setOffset(offset);
             // FIXME just adding a descript to avoid core dumps for now
-            FSOpenFile* descriptor = getDescriptor(fileId);
-            seek->setFiledes(descriptor);
-            mpiMsg = seek;
+            //FSOpenFile* descriptor = getDescriptor(fileId);
+            //seek->setFiledes(descriptor);
+            //mpiMsg = seek;
             break;
         }
         case UMDIOTrace::LISTIO_HEADER:

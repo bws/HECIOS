@@ -222,7 +222,7 @@ void cacheModule::cacheProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *msg )
 		// create new message and set message fields
     	spfsMPIFileOpenResponse *m = new spfsMPIFileOpenResponse("mpiFileOpenResponse",
                                     SPFS_MPI_FILE_OPEN_RESPONSE);
-        m->setFiledes(msg->getFiledes());
+        m->setFileDes(msg->getFileDes());
         
 	send(m, appOut);
     }else
@@ -234,7 +234,7 @@ void cacheModule::cacheProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *msg )
 void cacheModule::cacheProcess_mpiFileCloseRequest( spfsMPIFileCloseRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
     if(cacheLookupHandle(handle))
     {
 	// create new message and set message fields
@@ -270,7 +270,7 @@ void cacheModule::cacheProcess_mpiFileDeleteRequest( spfsMPIFileDeleteRequest *m
 void cacheModule::cacheProcess_mpiFileSetSizeRequest( spfsMPIFileSetSizeRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
     if(cacheLookupHandle(handle))
     {
     	// create new message and set message fields
@@ -287,7 +287,7 @@ void cacheModule::cacheProcess_mpiFileSetSizeRequest( spfsMPIFileSetSizeRequest 
 void cacheModule::cacheProcess_mpiFileGetInfoRequest(spfsMPIFileGetInfoRequest *msg)
 {
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
@@ -308,7 +308,7 @@ void cacheModule::cacheProcess_mpiFileGetInfoRequest(spfsMPIFileGetInfoRequest *
 void cacheModule::cacheProcess_mpiFileSetInfoRequest(spfsMPIFileSetInfoRequest *msg)
 {
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
@@ -329,7 +329,7 @@ void cacheModule::cacheProcess_mpiFileSetInfoRequest(spfsMPIFileSetInfoRequest *
 void cacheModule::cacheProcess_mpiFilePreallocateRequest( spfsMPIFilePreallocateRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
     if(cacheLookupHandle(handle))
     {
 		// create new message and set message fields
@@ -366,7 +366,7 @@ void cacheModule::cacheProcess_mpiFileGetSizeRequest( spfsMPIFileGetSizeRequest 
 void cacheModule::cacheProcess_mpiFileReadAtRequest( spfsMPIFileReadAtRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
     // should probably not cache this ----------_>>>><<<<<_---------------
     if(cacheLookupHandle(handle))
     {
@@ -384,7 +384,7 @@ void cacheModule::cacheProcess_mpiFileReadAtRequest( spfsMPIFileReadAtRequest *m
 void cacheModule::cacheProcess_mpiFileReadRequest( spfsMPIFileReadRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
     //should probably not cache this --------_>>>>><<<<<_---------
     if(cacheLookupHandle(handle))
     {
@@ -402,7 +402,7 @@ void cacheModule::cacheProcess_mpiFileReadRequest( spfsMPIFileReadRequest *msg )
 void cacheModule::cacheProcess_mpiFileWriteAtRequest( spfsMPIFileWriteAtRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
     // should probably not cache this or lookup in cache ------_>>>><<<_----
     if(cacheLookupHandle(handle))
     {
@@ -420,7 +420,7 @@ void cacheModule::cacheProcess_mpiFileWriteAtRequest( spfsMPIFileWriteAtRequest 
 void cacheModule::cacheProcess_mpiFileWriteRequest( spfsMPIFileWriteRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
     // should probably not cache this -------_>>>>>><<<<<_--------
     if(cacheLookupHandle(handle))
     {

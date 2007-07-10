@@ -45,7 +45,7 @@ void FSRead::handleMessage(cMessage* msg)
         }
         case FSM_Exit(READ):
         {
-            //assert(0 != dynamic_cast<spfsReadResponse*>(msg));
+            assert(0 != dynamic_cast<spfsReadResponse*>(msg));
             FSM_Goto(currentState, COUNT_RESPONSES);
             break;
         }
@@ -80,9 +80,11 @@ void FSRead::handleMessage(cMessage* msg)
 
 void FSRead::enterRead()
 {
+    FSOpenFile* filedes = (FSOpenFile*)readReq_->getFileDes();
+    assert(0 != filedes);
+    
     // Construct the template read request
     spfsReadRequest read("ReadStuff", SPFS_READ_REQUEST);
-    FSOpenFile* filedes = (FSOpenFile*)readReq_->getFiledes();
     read.setContextPointer(readReq_);
     read.setServerCnt(filedes->metaData->dataHandles.size());
     read.setOffset(filedes->filePtr);
