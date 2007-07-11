@@ -42,7 +42,8 @@ void fsModule::handleMessage(cMessage *msg)
 }
 
 void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
-{ /* Call message specific hander {{{1 */
+{
+    // Call message specific hander
     switch(req->kind())
     {
         case SPFS_MPI_FILE_OPEN_REQUEST:

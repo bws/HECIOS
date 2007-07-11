@@ -3,7 +3,7 @@
 
 class cMessage;
 class fsModule;
-class spfsMPIFileWriteRequest;
+class spfsMPIFileWriteAtRequest;
 class spfsWriteResponse;
 
 /**
@@ -14,7 +14,7 @@ class FSWrite
 public:
 
     /** Constructor */
-    FSWrite(fsModule* module, spfsMPIFileWriteRequest* writeReq);
+    FSWrite(fsModule* module, spfsMPIFileWriteAtRequest* writeReq);
     
     /** Handle MPI-Open Message */
     void handleMessage(cMessage* msg);
@@ -24,7 +24,7 @@ protected:
     /**
      * @return The next state transition, see implementation for details
      */
-    void exitInit(spfsMPIFileWriteRequest* writeReq);
+    void exitInit(spfsMPIFileWriteAtRequest* writeReq);
 
     /** Send server write requests */
     void enterWrite();
@@ -33,7 +33,7 @@ protected:
     void enterCountResponses(bool& outHasReceivedAllResponses);
         
     /** Send the final response */
-    void enterFinish(spfsWriteResponse* writeResponse);
+    void enterFinish();
     
 private:
 
@@ -41,7 +41,7 @@ private:
     fsModule* fsModule_;
 
     /** The originating MPI write request */
-    spfsMPIFileWriteRequest* writeReq_;
+    spfsMPIFileWriteAtRequest* writeReq_;
 };
 
 #endif

@@ -9,7 +9,7 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSWrite::FSWrite(fsModule* module, spfsMPIFileWriteRequest* writeReq)
+FSWrite::FSWrite(fsModule* module, spfsMPIFileWriteAtRequest* writeReq)
     : fsModule_(module),
       writeReq_(writeReq)
 {
@@ -35,7 +35,7 @@ void FSWrite::handleMessage(cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            assert(0 != dynamic_cast<spfsMPIFileWriteRequest*>(msg));
+            assert(0 != dynamic_cast<spfsMPIFileWriteAtRequest*>(msg));
             FSM_Goto(currentState, WRITE);
             break;
         }
@@ -47,7 +47,7 @@ void FSWrite::handleMessage(cMessage* msg)
         case FSM_Exit(WRITE):
         {
             assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
-            FSM_Goto(currentState, FINISH);
+            FSM_Goto(currentState, COUNT_RESPONSES);
             break;
         }
         case FSM_Exit(COUNT_RESPONSES):
@@ -70,8 +70,8 @@ void FSWrite::handleMessage(cMessage* msg)
         }
         case FSM_Enter(FINISH):
         {
-            assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
-            enterFinish(static_cast<spfsWriteResponse*>(msg));
+            //assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
+            enterFinish();
             break;
         }
     }
@@ -94,7 +94,8 @@ void FSWrite::enterWrite()
     write.setDtype(writeReq_->getDataType());
 
     // Send request to each server
-    for (size_t i = 0; i < filedes->metaData->dataHandles.size(); i++)
+    cerr << "Generating " << write.getServerCnt() << " write reqs\n";
+    for (int i = 0; i < write.getServerCnt(); i++)
     {
         spfsWriteRequest* req = static_cast<spfsWriteRequest*>(write.dup());
         req->setHandle(filedes->metaData->dataHandles[i]);
@@ -102,7 +103,7 @@ void FSWrite::enterWrite()
     }
 
     // Set the number of responses
-    writeReq_->setResponses(filedes->metaData->dataHandles.size());
+    writeReq_->setResponses(write.getServerCnt());
 }
 
 void FSWrite::enterCountResponses(bool& outHasReceivedAllResponses)
@@ -118,8 +119,9 @@ void FSWrite::enterCountResponses(bool& outHasReceivedAllResponses)
     }
 }
 
-void FSWrite::enterFinish(spfsWriteResponse* writeResp)
+void FSWrite::enterFinish()
 {
+    cerr << "Sending mpi write response.\n" << endl;
     spfsMPIFileWriteAtResponse* mpiResp =
         new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
     mpiResp->setContextPointer(writeReq_);
