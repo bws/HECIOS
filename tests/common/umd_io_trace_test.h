@@ -19,7 +19,6 @@ class UMDIOTraceTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testIsValid);
     CPPUNIT_TEST(testHasMoreRecords);
     CPPUNIT_TEST(testNextRecord);
-    CPPUNIT_TEST(testNextRecordAsMessage);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -85,8 +84,8 @@ void UMDIOTraceTest::testHasMoreRecords()
     for (int i = 0; i < 10; i++)
     {
         CPPUNIT_ASSERT(true == test.hasMoreRecords());
-        cMessage* msg = test.nextRecordAsMessage();
-        delete msg;
+        IOTraceRecord* rec = test.nextRecord();
+        delete rec;
     }
 
     CPPUNIT_ASSERT(false == test.hasMoreRecords());
@@ -94,104 +93,87 @@ void UMDIOTraceTest::testHasMoreRecords()
 
 void UMDIOTraceTest::testNextRecord()
 {
-}
-
-void UMDIOTraceTest::testNextRecordAsMessage()
-{
     UMDIOTrace test1(1, "tests/support/umd_io_trace.tra");
-    cMessage* msg;
-    spfsMPIFileOpenRequest* open;
-    spfsMPIFileCloseRequest* close;
-    spfsMPIFileReadAtRequest* read;
-    spfsMPIFileWriteAtRequest* write;
 
     //
     // 1st record
     //
-    msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
-    open = dynamic_cast<spfsMPIFileOpenRequest*>(msg);
-    CPPUNIT_ASSERT(0 != open);
-    delete open;
+    IOTraceRecord* rec1 = test1.nextRecord();
+    CPPUNIT_ASSERT(0 != rec1);
+    CPPUNIT_ASSERT_EQUAL(IOTrace::OPEN, rec1->opType());
+    delete rec1;
 
     //
     // 2nd record
     //
-    msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
-    close = dynamic_cast<spfsMPIFileCloseRequest*>(msg);
-    CPPUNIT_ASSERT(0 != close);
-    delete close;
+    IOTraceRecord* rec2 = test1.nextRecord();
+    CPPUNIT_ASSERT(0 != rec2);
+    CPPUNIT_ASSERT_EQUAL(IOTrace::CLOSE, rec2->opType());
+    delete rec2;
 
     //
     // 3rd record
     //
-    msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
-    read = dynamic_cast<spfsMPIFileReadAtRequest*>(msg);
-    CPPUNIT_ASSERT(0 != read);
-    delete read;
+    IOTraceRecord* rec3 = test1.nextRecord();
+    CPPUNIT_ASSERT(0 != rec3);
+    CPPUNIT_ASSERT_EQUAL(IOTrace::READ_AT, rec3->opType());
+    delete rec3;
 
     //
     // 4th record
     //
-    msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
-    write = dynamic_cast<spfsMPIFileWriteAtRequest*>(msg);
-    CPPUNIT_ASSERT(0 != write);
-    delete write;
+    IOTraceRecord* rec4 = test1.nextRecord();
+    CPPUNIT_ASSERT(0 != rec4);
+    CPPUNIT_ASSERT_EQUAL(IOTrace::WRITE_AT, rec4->opType());
+    delete rec4;
 
     //
-    // 5th record -- seek
+    // 5th record
     //
-    msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
-    read = dynamic_cast<spfsMPIFileReadAtRequest*>(msg);
-    CPPUNIT_ASSERT(0 != read);
-    delete read;
+    IOTraceRecord* rec5 = test1.nextRecord();
+    CPPUNIT_ASSERT(0 != rec5);
+    CPPUNIT_ASSERT_EQUAL(IOTrace::SEEK, rec5->opType());
+    delete rec5;
 
     //
-    // 6th record (at present listio_header messages return null)
+    // 6th record
     //
-    msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 == msg);
-    delete msg;
+    IOTraceRecord* rec6 = test1.nextRecord();
+    CPPUNIT_ASSERT(0 == rec6);
+    //CPPUNIT_ASSERT_EQUAL(IOTrace::OPEN, rec6->opType());
+    delete rec6;
 
     //
     // 7th record
     //
-    msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
-    open = dynamic_cast<spfsMPIFileOpenRequest*>(msg);
-    CPPUNIT_ASSERT(0 != open);
-    delete open;
+    IOTraceRecord* rec7 = test1.nextRecord();
+    CPPUNIT_ASSERT(0 != rec7);
+    CPPUNIT_ASSERT_EQUAL(IOTrace::OPEN, rec7->opType());
+    delete rec7;
 
     //
     // 8th record
     //
-    msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
-    close = dynamic_cast<spfsMPIFileCloseRequest*>(msg);
-    CPPUNIT_ASSERT(0 != close);
-    delete close;
+    IOTraceRecord* rec8 = test1.nextRecord();
+    CPPUNIT_ASSERT(0 != rec8);
+    CPPUNIT_ASSERT_EQUAL(IOTrace::CLOSE, rec8->opType());
+    delete rec8;
 
     //
     // 9th record
     //
-    msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
-    read = dynamic_cast<spfsMPIFileReadAtRequest*>(msg);
-    CPPUNIT_ASSERT(0 != read);
-    delete read;
+    IOTraceRecord* rec9 = test1.nextRecord();
+    CPPUNIT_ASSERT(0 != rec9);
+    CPPUNIT_ASSERT_EQUAL(IOTrace::READ_AT, rec9->opType());
+    delete rec9;
 
     //
     // 10th record
     //
-    msg = test1.nextRecordAsMessage();
-    CPPUNIT_ASSERT(0 != msg);
-    write = dynamic_cast<spfsMPIFileWriteAtRequest*>(msg);
-    CPPUNIT_ASSERT(0 != write);
-    delete write;
+    IOTraceRecord* rec10 = test1.nextRecord();
+    CPPUNIT_ASSERT(0 != rec10);
+    CPPUNIT_ASSERT_EQUAL(IOTrace::WRITE_AT, rec10->opType());
+    delete rec10;
 
 }
 

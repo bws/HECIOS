@@ -5,6 +5,7 @@
 #include "client_fs_state.h"
 #include "filename.h"
 #include "mpiio_proto_m.h"
+#include "pfs_utils.h"
 #include "umd_io_trace.h"
 #include <omnetpp.h>
 using namespace std;
@@ -18,6 +19,9 @@ public:
     /** Constructor */
     IOApplication() : cSimpleModule(), trace_(0), rank_(-1) {};
     
+    /** @return the file descriptor for a file id */
+    FSOpenFile* getDescriptor(int fileId) const;
+
 protected:
     /** Implementation of initialize */
     virtual void initialize();
@@ -30,6 +34,12 @@ protected:
 
     /** Get the next message to send */
     virtual cMessage* getNextMessage();
+
+    /** Create a cMessage from an IOTraceRecord */
+    virtual cMessage* createMessage(IOTraceRecord* rec);
+    
+    /** */
+    void setDescriptor(int fileId, FSOpenFile* descriptor);
     
 private:
 
@@ -39,6 +49,10 @@ private:
 
     int inGate_;
     int outGate_;
+
+    /** */
+    std::map<int, FSOpenFile*> descriptorById_;
+
 };
 
 // OMNet Registriation Method
@@ -152,13 +166,111 @@ void IOApplication::handleMessage(cMessage* msg)
 cMessage* IOApplication::getNextMessage()
 {
     cMessage* msg = 0;
-    
     do {
-        msg = trace_->nextRecordAsMessage();
+        IOTraceRecord* traceRec = trace_->nextRecord();
+        if (traceRec)
+        {
+            msg = createMessage(traceRec);
+        }
+
     } while (0 == msg && trace_->hasMoreRecords());
 
     return msg;
 }
+
+cMessage* IOApplication::createMessage(IOTraceRecord* rec)
+{
+    cMessage* mpiMsg = 0;
+
+    // Create the correct messages for each operation type
+    switch(rec->opType()) {
+        case IOTrace::OPEN:
+        {
+            // If the file does not exist, create it
+            Filename openFile(trace_->getFilename(rec->fileId()));
+            if (!PFSUtils::instance().fileExists(openFile))
+            {
+                // Create trace files as needed
+                PFSUtils::instance().createFile(openFile, 0, 1);
+            }
+            
+            spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
+                0, SPFS_MPI_FILE_OPEN_REQUEST);
+            open->setFileName(openFile.str().c_str());
+
+            // Construct a file descriptor for use in simulaiton
+            FSOpenFile* descriptor = new FSOpenFile();
+            setDescriptor(rec->fileId(), descriptor);
+            open->setFileDes(descriptor);
+            mpiMsg = open;
+            break;
+        }
+        case IOTrace::CLOSE:
+        {
+            spfsMPIFileCloseRequest* close = new spfsMPIFileCloseRequest(
+                0, SPFS_MPI_FILE_CLOSE_REQUEST);
+            mpiMsg = close;
+            break;
+        }
+        case IOTrace::READ_AT:
+        {
+            spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
+                0, SPFS_MPI_FILE_READ_AT_REQUEST);
+            read->setCount(rec->length());
+            read->setOffset(rec->offset());
+            FSOpenFile* descriptor = getDescriptor(rec->fileId());
+            read->setFileDes(descriptor);
+            mpiMsg = read;
+            break;
+        }
+        case IOTrace::WRITE_AT:
+        {
+            spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
+                0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
+            write->setCount(rec->length());
+            write->setOffset(rec->offset());
+            FSOpenFile* descriptor = getDescriptor(rec->fileId());
+            write->setFileDes(descriptor);
+            mpiMsg = write;
+            break;
+        }
+        case IOTrace::SEEK:
+        {
+            //spfsMPIFileReadAtRequest* seek = new spfsMPIFileReadAtRequest(
+            //    0, SPFS_MPI_FILE_READ_AT_REQUEST);
+            //seek->setCount(0);
+            //seek->setOffset(offset);
+            // FIXME just adding a descript to avoid core dumps for now
+            //FSOpenFile* descriptor = getDescriptor(fileId);
+            //seek->setFiledes(descriptor);
+            //mpiMsg = seek;
+            break;
+        }
+        default:
+            cerr << "Ignored IO OpType for MPI Application: " << rec->opType()
+                 << endl;
+            break;
+    }
+    return mpiMsg;    
+}
+
+void IOApplication::setDescriptor(int fileId, FSOpenFile* descriptor)
+{
+    descriptorById_[fileId] = descriptor;
+}
+
+FSOpenFile* IOApplication::getDescriptor(int fileId) const
+{
+    cerr << "Getting descriptor: " << fileId << endl;
+    FSOpenFile* descriptor = 0;
+    map<int, FSOpenFile*>::const_iterator iter = descriptorById_.find(fileId);
+    if (iter != descriptorById_.end())
+    {
+        descriptor = iter->second;
+    }
+    return descriptor;
+}
+
 /*
  * Local variables:
  *  c-indent-level: 4

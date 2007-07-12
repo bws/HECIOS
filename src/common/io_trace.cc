@@ -1,22 +1,24 @@
 
 #include "io_trace.h"
 #include <cassert>
-#include "pfs_types.h"
 using namespace std;
 
-void IOTrace::setDescriptor(int fileId, FSOpenFile* descriptor)
+void IOTrace::addFilename(int fileId, std::string filename)
 {
-    descriptorById_[fileId] = descriptor;
+    filenamesById_[fileId] = filename;
+}
+    
+std::string IOTrace::getFilename(int fileId) const
+{
+    map<int, string>::const_iterator iter = filenamesById_.find(fileId);
+    return iter->second;
 }
 
-FSOpenFile* IOTrace::getDescriptor(int fileId) const
-{
-    cerr << "Getting descriptor: " << fileId << endl;
-    FSOpenFile* descriptor = 0;
-    map<int, FSOpenFile*>::const_iterator iter = descriptorById_.find(fileId);
-    if (iter != descriptorById_.end())
-    {
-        descriptor = iter->second;
-    }
-    return descriptor;
-}
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=8 sts=4 sw=4 expandtab
+ */

@@ -6,7 +6,6 @@
 #include <omnetpp.h>
 
 /** Forward declarations */
-class FSOpenFile;
 class IOTraceRecord;
 
 /**
@@ -40,16 +39,11 @@ public:
     /** @return the next IOTraceRecord */
     virtual IOTraceRecord* nextRecord() = 0;
 
-    /** @return the next IOTraceRecord */
-    virtual cMessage* nextRecordAsMessage() = 0;
-
-protected:
-
-    /** */
-    void setDescriptor(int fileId, FSOpenFile* descriptor);
-
-    /** */
-    FSOpenFile* getDescriptor(int fileId) const;
+    /** Register a filename by file id */
+    void addFilename(int fileId, std::string filename);
+    
+    /** @return the file name for a file id */
+    std::string getFilename(int fileId) const;
     
 private:
 
@@ -57,7 +51,7 @@ private:
     const int numProcs_;
 
     /** */
-    std::map<int, FSOpenFile*> descriptorById_;
+    std::map<int, std::string> filenamesById_;
 };
 
 /**
@@ -66,26 +60,31 @@ private:
 class IOTraceRecord
 {
 public:
+
     /** Constructor */
-    IOTraceRecord(int rank, IOTrace::operation opType) :
-        rank_(rank), opType_(opType) {};
+    IOTraceRecord(IOTrace::operation opType, int fileId,
+                  size_t offset, size_t length) :
+        opType_(opType), fileId_(fileId), offset_(offset), length_(length) {};
 
     /** Destructor */
     virtual ~IOTraceRecord() {};
 
     /** Operation type getter */
-    IOTrace::operation getOpType() const {return opType_;};
+    IOTrace::operation opType() const {return opType_;};
 
+    /** File id getter */
+    int fileId() const {return fileId_;};
+    
     /** File offset getter */
-    size_t getOffset() const {return offset_;};
+    size_t offset() const {return offset_;};
 
     /** Length getter */
-    size_t getLength() const {return length_;};
+    size_t length() const {return length_;};
     
 private:
 
-    int rank_;
     IOTrace::operation opType_;
+    int fileId_;
     size_t offset_;
     size_t length_;
     

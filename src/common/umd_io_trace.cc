@@ -17,7 +17,6 @@ UMDIOTrace::UMDIOTrace(int numProcs, string traceFileName)
       numFiles_(0),
       numRecords_(0),
       offsetToTraceRecords_(0),
-      fileNames_(0),
       curRecord_(-1)
 {
     // Open the trace file
@@ -34,13 +33,14 @@ UMDIOTrace::UMDIOTrace(int numProcs, string traceFileName)
         traceFile_ >> numRecords_;
 
         // Read the file names
-        fileNames_ = new string[numFiles_];
         for (int i = 0; i < numFiles_; i++)
         {
             int length;
             traceFile_ >> length;
-            traceFile_ >> fileNames_[i];
-            //cerr << "Filename: " << fileNames_[i] << endl;
+
+            string filename;
+            traceFile_ >> filename;
+            addFilename(i, filename);
         }
         curRecord_ = 0;
     }
@@ -54,7 +54,6 @@ UMDIOTrace::UMDIOTrace(int numProcs, string traceFileName)
 UMDIOTrace::~UMDIOTrace()
 {
     traceFile_.close();
-    delete[] fileNames_;
 }
 
 /**
@@ -62,13 +61,7 @@ UMDIOTrace::~UMDIOTrace()
  */
 IOTraceRecord* UMDIOTrace::nextRecord()
 {
-    return 0;
-}
-
-cMessage* UMDIOTrace::nextRecordAsMessage()
-{
-    cMessage* msg = 0;
-    
+    IOTraceRecord* rec = 0;
     if (curRecord_ < numRecords_)
     {
         int opType;
@@ -87,83 +80,45 @@ cMessage* UMDIOTrace::nextRecordAsMessage()
         traceFile_ >> offset >> length;
 
         // Create a new message and fill it out with the relevant data
-        msg = createMPIIOMessage(static_cast<OpType>(opType), fileId,
-                                       offset, length);
+        rec = createIOTraceRecord(static_cast<OpType>(opType), fileId,
+                                  offset, length);
         // Increment the current record
         curRecord_++;    
     }
-    return msg;
+    
+    return rec;
 }
 
-cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
-                                         long offset, long length)
+IOTraceRecord* UMDIOTrace::createIOTraceRecord(OpType opType, int fileId,
+                                              long offset, long length)
 {
-    cMessage* mpiMsg = 0;
+    IOTraceRecord* rec = 0;
 
     // Create the correct messages for each operation type
     switch(opType) {
         case UMDIOTrace::OPEN:
         {
-            // If the file does not exist, create it
-            Filename openFile(fileNames_[fileId]);
-            if (!PFSUtils::instance().fileExists(openFile))
-            {
-                // Create trace files as needed
-                PFSUtils::instance().createFile(openFile, 0, 1);
-            }
-            
-            spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
-                0, SPFS_MPI_FILE_OPEN_REQUEST);
-            open->setFileName(fileNames_[fileId].c_str());
-
-            // Construct a file descriptor for use in simulaiton
-            FSOpenFile* descriptor = new FSOpenFile();
-            setDescriptor(fileId, descriptor);
-            open->setFileDes(descriptor);
-            mpiMsg = open;
+            rec = new IOTraceRecord(IOTrace::OPEN, fileId, 0, 0);
             break;
         }
         case UMDIOTrace::CLOSE:
         {
-            spfsMPIFileCloseRequest* close = new spfsMPIFileCloseRequest(
-                0, SPFS_MPI_FILE_CLOSE_REQUEST);
-            mpiMsg = close;
-            break;
-        }
-        case UMDIOTrace::READ:
-        {
-            spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
-                0, SPFS_MPI_FILE_READ_AT_REQUEST);
-            read->setCount(length);
-            read->setOffset(offset);
-            FSOpenFile* descriptor = getDescriptor(fileId);
-            read->setFileDes(descriptor);
-            mpiMsg = read;
-            break;
-        }
-        case UMDIOTrace::WRITE:
-        {
-            spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
-                0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
-            write->setCount(length);
-            write->setOffset(offset);
-            FSOpenFile* descriptor = getDescriptor(fileId);
-            assert(0 != descriptor);
-            
-            write->setFileDes(descriptor);
-            mpiMsg = write;
+            rec = new IOTraceRecord(IOTrace::CLOSE, fileId, 0, 0);
             break;
         }
         case UMDIOTrace::SEEK:
         {
-            //spfsMPIFileReadAtRequest* seek = new spfsMPIFileReadAtRequest(
-            //    0, SPFS_MPI_FILE_READ_AT_REQUEST);
-            //seek->setCount(0);
-            //seek->setOffset(offset);
-            // FIXME just adding a descript to avoid core dumps for now
-            //FSOpenFile* descriptor = getDescriptor(fileId);
-            //seek->setFiledes(descriptor);
-            //mpiMsg = seek;
+            rec = new IOTraceRecord(IOTrace::SEEK, fileId, offset, length);
+            break;
+        }
+        case UMDIOTrace::READ:
+        {
+            rec = new IOTraceRecord(IOTrace::READ_AT, fileId, offset, length);
+            break;
+        }
+        case UMDIOTrace::WRITE:
+        {
+            rec = new IOTraceRecord(IOTrace::WRITE_AT, fileId, offset, length);
             break;
         }
         case UMDIOTrace::LISTIO_HEADER:
@@ -171,7 +126,7 @@ cMessage* UMDIOTrace::createMPIIOMessage(OpType opType, int fileId,
             cerr << "Ignored IO OpType for UMDIOTrace: " << opType << endl;
             break;
     }
-    return mpiMsg;
+    return rec;
 }
 
 /*

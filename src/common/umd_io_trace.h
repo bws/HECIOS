@@ -28,17 +28,14 @@ public:
     /** @return the next IOTraceRecord */
     virtual IOTraceRecord* nextRecord();
 
-    /** @return the next IOTraceRecord as a cMessage */
-    virtual cMessage* nextRecordAsMessage();
-
 private:
 
     enum OpType {OPEN = 0, CLOSE = 1, READ = 2,
                  WRITE = 3, SEEK = 4, LISTIO_HEADER = 5};
 
-    /** @return the next IOTraceRecord as a cMessage */
-    cMessage* createMPIIOMessage(OpType opType, int fileId,
-                                 long offset, long length);
+    /** @return the next IOTraceRecord */
+    IOTraceRecord* createIOTraceRecord(OpType opType, int fileId,
+                                  long offset, long length);
     
     std::string traceFileName_;
     mutable std::ifstream traceFile_;
@@ -49,8 +46,6 @@ private:
     int numRecords_;
     int offsetToTraceRecords_;
     
-    std::string* fileNames_;
-
     mutable int curRecord_;
 };
 
