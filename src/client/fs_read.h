@@ -28,7 +28,7 @@ protected:
     virtual void enterRead();
 
     /** Accumulate server read responses */
-    virtual void enterCountResponses(bool& outHasReceivedAllResponses);
+    virtual void exitCountResponses(bool& outHasReceivedAllResponses);
 
     /** Send final client response */
     virtual void enterFinish();

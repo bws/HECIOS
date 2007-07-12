@@ -30,7 +30,7 @@ protected:
     void enterWrite();
 
     /** Count server write initiation responses */
-    void enterCountResponses(bool& outHasReceivedAllResponses);
+    void exitCountResponses(bool& outHasReceivedAllResponses);
         
     /** Send the final response */
     void enterFinish();

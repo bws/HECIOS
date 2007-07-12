@@ -16,20 +16,26 @@ FSRead::FSRead(fsModule* module, spfsMPIFileReadAtRequest* readReq)
     assert(0 != readReq_);
 }
 
-// Processing that occurs upon receipt of an MPI-IO Open request
+// Processing that occurs upon receipt of an MPI-IO read request
 void FSRead::handleMessage(cMessage* msg)
 {
-    /** Restore the existing state for this Open Request */
+    /** Restore the existing state for this Read Request */
     cFSM currentState = readReq_->getState();
 
-    /** File system open state machine states */
+    /** File system read state machine states
+     *
+     *  Note that the read state is transient to facilitate correct
+     *  response counting.  Responses are counted upon exit of the
+     *  COUNT_RESPONSES state rather than upon entry
+     */
     enum {
         INIT = 0,
-        READ = FSM_Steady(1),
+        READ = FSM_Transient(1),
         COUNT_RESPONSES = FSM_Steady(2),
         FINISH = FSM_Steady(3),
     };
 
+    cerr << "Current State: " << currentState.state() << endl << endl;
     FSM_Switch(currentState)
     {
         case FSM_Exit(INIT):
@@ -40,20 +46,25 @@ void FSRead::handleMessage(cMessage* msg)
         }
         case FSM_Enter(READ):
         {
+            assert(0 != dynamic_cast<spfsMPIFileReadAtRequest*>(msg));
             enterRead();
             break;
         }
         case FSM_Exit(READ):
         {
-            assert(0 != dynamic_cast<spfsReadResponse*>(msg));
+            assert(0 != dynamic_cast<spfsMPIFileReadAtRequest*>(msg));
             FSM_Goto(currentState, COUNT_RESPONSES);
+            break;
+        }
+        case FSM_Enter(COUNT_RESPONSES):
+        {
             break;
         }
         case FSM_Exit(COUNT_RESPONSES):
         {
             assert(0 != dynamic_cast<spfsReadResponse*>(msg));
             bool hasReceivedAllResponses;
-            enterCountResponses(hasReceivedAllResponses);
+            exitCountResponses(hasReceivedAllResponses);
             if (hasReceivedAllResponses)
             {
                 cerr << "All responses recv'd for a read" << endl;
@@ -66,6 +77,8 @@ void FSRead::handleMessage(cMessage* msg)
             
             // Cleanup responses
             delete msg;
+            msg = 0;
+            break;
         }
         case FSM_Enter(FINISH):
         {
@@ -104,14 +117,12 @@ void FSRead::enterRead()
     readReq_->setResponses(read.getServerCnt());
 }
 
-void FSRead::enterCountResponses(bool& outHasReceivedAllResponses)
+void FSRead::exitCountResponses(bool& outHasReceivedAllResponses)
 {
     outHasReceivedAllResponses = false;
-
     int numOutstandingResponses = readReq_->getResponses();
     readReq_->setResponses(--numOutstandingResponses);
-
-    if (0 == numOutstandingResponses)
+    if (0 == readReq_->getResponses())
     {
         outHasReceivedAllResponses = true;
     }

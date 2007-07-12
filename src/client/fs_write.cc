@@ -23,10 +23,15 @@ void FSWrite::handleMessage(cMessage* msg)
     /** Restore the existing state for this request */
     cFSM currentState = writeReq_->getState();
 
-    /** File system open state machine states */
+    /** File system write state machine states
+     *
+     *  Note that the write state is transient to facilitate correct
+     *  response counting.  Responses are counted upon exit of the
+     *  COUNT_RESPONSES state rather than upon entry
+     */
     enum {
         INIT = 0,
-        WRITE = FSM_Steady(1),
+        WRITE = FSM_Transient(1),
         COUNT_RESPONSES = FSM_Steady(2),
         FINISH = FSM_Steady(3),
     };
@@ -41,20 +46,25 @@ void FSWrite::handleMessage(cMessage* msg)
         }
         case FSM_Enter(WRITE):
         {
+            assert(0 != dynamic_cast<spfsMPIFileWriteAtRequest*>(msg));
             enterWrite();
             break;
         }
         case FSM_Exit(WRITE):
         {
-            assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
+            assert(0 != dynamic_cast<spfsMPIFileWriteAtRequest*>(msg));
             FSM_Goto(currentState, COUNT_RESPONSES);
+            break;
+        }
+        case FSM_Enter(COUNT_RESPONSES):
+        {
             break;
         }
         case FSM_Exit(COUNT_RESPONSES):
         {
             assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
             bool hasReceivedAllResponses;
-            enterCountResponses(hasReceivedAllResponses);
+            exitCountResponses(hasReceivedAllResponses);
             if (hasReceivedAllResponses)
             {
                 cerr << "All responses recv'd for a write" << endl;
@@ -67,10 +77,11 @@ void FSWrite::handleMessage(cMessage* msg)
             
             // Cleanup responses
             delete msg;
+            msg = 0;
+            break;
         }
         case FSM_Enter(FINISH):
         {
-            //assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
             enterFinish();
             break;
         }
@@ -106,7 +117,7 @@ void FSWrite::enterWrite()
     writeReq_->setResponses(write.getServerCnt());
 }
 
-void FSWrite::enterCountResponses(bool& outHasReceivedAllResponses)
+void FSWrite::exitCountResponses(bool& outHasReceivedAllResponses)
 {
     outHasReceivedAllResponses = false;
 
@@ -121,7 +132,6 @@ void FSWrite::enterCountResponses(bool& outHasReceivedAllResponses)
 
 void FSWrite::enterFinish()
 {
-    cerr << "Sending mpi write response.\n" << endl;
     spfsMPIFileWriteAtResponse* mpiResp =
         new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
     mpiResp->setContextPointer(writeReq_);
