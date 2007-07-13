@@ -25,7 +25,7 @@ void FSWrite::handleMessage(cMessage* msg)
 
     /** File system write state machine states
      *
-     *  Note that the write state is transient to facilitate correct
+     *  Note that the WRITE state is transient to facilitate correct
      *  response counting.  Responses are counted upon exit of the
      *  COUNT_RESPONSES state rather than upon entry
      */

@@ -86,8 +86,7 @@ private:
     IOTrace::operation opType_;
     int fileId_;
     size_t offset_;
-    size_t length_;
-    
+    size_t length_; 
 };
 
 #endif

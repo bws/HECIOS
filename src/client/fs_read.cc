@@ -24,7 +24,7 @@ void FSRead::handleMessage(cMessage* msg)
 
     /** File system read state machine states
      *
-     *  Note that the read state is transient to facilitate correct
+     *  Note that the READ state is transient to facilitate correct
      *  response counting.  Responses are counted upon exit of the
      *  COUNT_RESPONSES state rather than upon entry
      */

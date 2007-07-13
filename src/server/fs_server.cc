@@ -103,9 +103,6 @@ void FSServer::handleMessage(cMessage* msg)
         cerr << "ERROR: Server unable to construct proper response!" << endl;
         cerr << "!!!!!!!!! ------------------------ !!!!!!!!!!!!!!" << endl;
     }
-
-    //delete msg;
-    //msg = 0;
 }
 
 /*

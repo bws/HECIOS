@@ -4,7 +4,7 @@ import
     "mpi_process";
 
 //
-// A UNIX process
+// A UNIX process that requires 10us interrupts to access the network
 //
 module JobProcess
 
@@ -16,7 +16,7 @@ module JobProcess
         mpi: MPIProcess;
            
     connections:
-        mpi.netOut --> out;
-        mpi.netIn <-- in;
+        mpi.netOut --> delay 10us -->out;
+        mpi.netIn <-- delay 10us <-- in;
 
 endmodule
