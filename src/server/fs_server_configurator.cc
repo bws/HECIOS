@@ -38,6 +38,8 @@ protected:
 private:
 
     IPvXAddress* getServerIP(cModule* ioNode);
+
+    size_t handlesPerServer_;
 };
 
 // OMNet Registriation Method
@@ -52,6 +54,9 @@ void FSServerConfigurator::initialize(int stage)
     // assigned
     if (3 == stage)
     {
+        // Retrieve the handles per server
+        handlesPerServer_ = par("handlesPerServer");
+        
         // Retrieve the interface table for this module
         cModule* cluster = parentModule();
         assert(0 != cluster);
@@ -71,8 +76,8 @@ void FSServerConfigurator::initialize(int stage)
 
             // Set the server's handle range
             HandleRange range;
-            range.first = i * 1000;
-            range.last = (i + 1) * 1000 - 1;
+            range.first = i * handlesPerServer_;
+            range.last = ((i + 1) * handlesPerServer_) - 1;
             server->setHandleRange(range);
             
             // Register the server's handle range
