@@ -27,12 +27,15 @@ public:
     /** Not sure what this does yet */
     void parsePath(FSOpenFile* descriptor) const;
 
-    /** @return a list of Metadata Server numbers */
-    std::vector<int> getMetaServers() const;
-    
     /** @return true if the filename exists within the PFS */
     bool fileExists(const Filename& fileName) const;
 
+    /** @return a list of Metadata Server numbers */
+    std::vector<int> getMetaServers() const;
+
+    /** @return the number of data servers */
+    size_t getNumDataServers() const {return nextServerNumber_;};
+    
     /** @return Metadata for a PFS file */
     FSMetaData* getMetaData(const Filename& fileName) const;
 

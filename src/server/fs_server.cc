@@ -35,12 +35,9 @@ void FSServer::setNumber(size_t number)
     // Set the server's name
     stringstream s;
     s << serverNumber_;
-    serverName_ = "server" + s.str();
-    
-    // Determine this server's handle range
-    range_.first = serverNumber_ * 1000;
-    range_.last = range_.first + 999;
+    serverName_ = "server" + s.str();    
 }
+
 /**
  * Handle MPI-IO Response messages
  */

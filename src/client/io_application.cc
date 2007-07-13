@@ -190,7 +190,8 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
             if (!PFSUtils::instance().fileExists(openFile))
             {
                 // Create trace files as needed
-                PFSUtils::instance().createFile(openFile, 0, 1);
+                int numServers = PFSUtils::instance().getNumDataServers();
+                PFSUtils::instance().createFile(openFile, 0, numServers);
             }
             
             spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(

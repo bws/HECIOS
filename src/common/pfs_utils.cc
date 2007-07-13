@@ -63,6 +63,7 @@ IPvXAddress* PFSUtils::getServerIP(const FSHandle& handle)
             ip = itr_lower->second;
         }
     }
+
     return ip;
 }
 
@@ -182,6 +183,7 @@ void PFSUtils::createFile(const Filename& fileName, int metaServer, int numServe
         meta->dist = 0;
 
         // Construct the data handles
+        cerr << "Creating file on " << numServers << endl;
         int firstServer = rand() % nextServerNumber_;
         vector<FSHandle> dataHandles;
         for (size_t i = 0; i < nextServerNumber_; i++)

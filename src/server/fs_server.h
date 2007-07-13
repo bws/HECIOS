@@ -20,6 +20,8 @@ public:
 
     void setNumber(size_t number);
     
+    void setHandleRange(const HandleRange& range) {range_ = range;};
+    
 protected:
     
     /** Implementation of initialize */

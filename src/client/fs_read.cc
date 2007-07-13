@@ -103,7 +103,6 @@ void FSRead::enterRead()
     read.setDtype(readReq_->getDtype());
 
     // Send request to each server
-    cerr << "Generating " << read.getServerCnt() << " read reqs\n";
     for (int i = 0; i < read.getServerCnt(); i++)
     {
         spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());

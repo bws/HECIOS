@@ -69,6 +69,12 @@ void FSServerConfigurator::initialize(int stage)
                 dynamic_cast<FSServer*>(daemon->submodule("server"));
             assert(0 != server);
 
+            // Set the server's handle range
+            HandleRange range;
+            range.first = i * 1000;
+            range.last = (i + 1) * 1000 - 1;
+            server->setHandleRange(range);
+            
             // Register the server's handle range
             PFSUtils& utils = PFSUtils::instance();
             int serverNum;

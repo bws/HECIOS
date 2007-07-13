@@ -80,10 +80,10 @@ void BMITcpClient::handleMessage(cMessage* msg)
         assert(0 != sock);
         sock->processMessage(msg);
     }
-    else if (0 != dynamic_cast<spfsRequest*>(msg))
+    else if (spfsRequest* req = dynamic_cast<spfsRequest*>(msg))
     {
         // Retrieve the socket for this handle
-        FSHandle handle = 0;
+        FSHandle handle = req->getHandle();
         TCPSocket* sock = getConnectedSocket(handle);
                 
         // Encapsulate the domain message and send via TCP
