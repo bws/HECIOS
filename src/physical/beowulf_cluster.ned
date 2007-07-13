@@ -15,17 +15,18 @@ module BeowulfCluster
     submodules:
 
         cpun: ComputeNode[numCPUNodes];
-            display: "p=20,32,r;i=block/process,cyan";
+            display: "p=20,120,m,8;i=block/process,green";
 
         ion: IONode[numIONodes];
-            display: "p=20,256,r;i=abstract/server,green";
+            display: "p=20,300,m,8;i=abstract/server,magenta";
 
         switch: EtherSwitch;
-            display: "p=256,164;i=abstract/switch";
+            display: "p=256,200;i=abstract/switch,cyan";
 
         fsConfig: FSServerConfigurator;
             parameters:
                 handlesPerServer = 10000;
+            display: "p=40,50;b=20,20,rect;o=blue";
 
         configurator: FlatNetworkConfigurator;
             parameters:
@@ -33,6 +34,7 @@ module BeowulfCluster
                 nonIPModuleTypes = "",
                 networkAddress = "192.168.0.0",
                 netmask = "255.255.0.0";
+            display: "p=140,50;b=20,20,rect;o=blue";
 
     connections:
 
@@ -45,6 +47,8 @@ module BeowulfCluster
             ion[i].ethOut --> switch.in++;
             ion[i].ethIn <-- switch.out++;
         endfor;
+
+    display: "o=white"; // affects background
 
 endmodule
 

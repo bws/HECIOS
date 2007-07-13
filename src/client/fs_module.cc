@@ -124,7 +124,6 @@ void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client)
         {
             cMessage* spfsRequest = (cMessage*)req->contextPointer();
             cMessage* mpiRequest = (cMessage*)spfsRequest->contextPointer();
-            cerr << "Calling process message after unpacking" << endl;
             fsProcessMessage(mpiRequest, req, client);
 
             // Cleanup the server request

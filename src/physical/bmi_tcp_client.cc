@@ -82,10 +82,6 @@ void BMITcpClient::handleMessage(cMessage* msg)
     }
     else if (0 != dynamic_cast<spfsRequest*>(msg))
     {
-        //cerr << "Sending packet from client!"
-        //     << "Kind: " << msg->kind() << " info: " << msg->info()
-        //     << endl;
-                
         // Retrieve the socket for this handle
         FSHandle handle = 0;
         TCPSocket* sock = getConnectedSocket(handle);
@@ -102,8 +98,6 @@ void BMITcpClient::handleMessage(cMessage* msg)
     }
     else if (0 != dynamic_cast<spfsResponse*>(msg))
     {
-        cerr << "BMI Forwarding response" << endl;
-        
         // Send response to application
         send(msg, "bmiOut");
                 
@@ -139,12 +133,13 @@ TCPSocket* BMITcpClient::getConnectedSocket(const FSHandle& handle)
     return sock;
 }
 
+//
+// TCP settings should be set to tcp.sendQueueClass="TCPMsgBasedSendQueue"
+// and tcp.receiveQueueClass="TCPMsgBasedRcvQueue" ensuring that only
+// whole messages are received rather than message fragments
+//
 void BMITcpClient::socketDataArrived(int, void *, cMessage *msg, bool)
 {
-    // TCP settings should be set to tcp.sendQueueClass="TCPMsgBasedSendQueue"
-    // and tcp.receiveQueueClass="TCPMsgBasedRcvQueue" ensuring that only
-    // whole messages are received rather than message fragments
-
     // Decapsulate the payload and call handleMessage with the payload
     cMessage* payload = msg->decapsulate();
     delete msg;

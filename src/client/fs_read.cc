@@ -35,7 +35,6 @@ void FSRead::handleMessage(cMessage* msg)
         FINISH = FSM_Steady(3),
     };
 
-    cerr << "Current State: " << currentState.state() << endl << endl;
     FSM_Switch(currentState)
     {
         case FSM_Exit(INIT):
@@ -67,7 +66,6 @@ void FSRead::handleMessage(cMessage* msg)
             exitCountResponses(hasReceivedAllResponses);
             if (hasReceivedAllResponses)
             {
-                cerr << "All responses recv'd for a read" << endl;
                 FSM_Goto(currentState, FINISH);
             }
             else

@@ -121,7 +121,6 @@ void BMITcpServer::handleMessage(cMessage* msg)
      }
     else if (0 != dynamic_cast<spfsRequest*>(msg))
     {
-        cerr << "BMI Forwarding request: " << msg->info() << endl;
         send(msg, "bmiOut");
 
         // A mostly ineffective hack to disable excessive INET output
@@ -136,12 +135,13 @@ void BMITcpServer::handleMessage(cMessage* msg)
     }
 }
 
+//
+// TCP settings should be set to tcp.sendQueueClass="TCPMsgBasedSendQueue"
+// and tcp.receiveQueueClass="TCPMsgBasedRcvQueue" ensuring that only
+// whole messages are received rather than message fragments
+//
 void BMITcpServer::socketDataArrived(int, void *, cMessage *msg, bool)
 {    
-    // TCP settings should be set to tcp.sendQueueClass="TCPMsgBasedSendQueue"
-    // and tcp.receiveQueueClass="TCPMsgBasedRcvQueue" ensuring that only
-    // whole messages are received rather than message fragments
-
     // Find the socket for this message
     TCPSocket* responseSocket = socketMap_.findSocketFor(msg);
     
@@ -153,11 +153,6 @@ void BMITcpServer::socketDataArrived(int, void *, cMessage *msg, bool)
     spfsRequest* request = dynamic_cast<spfsRequest*>(payload);
     request->setSocketId(nextSocketId++);
     requestToSocketMap_[request->getSocketId()] = responseSocket;
-    
-    //if (request)
-    //    request->setSocket(responseSocket);
-    //else
-    //    cerr << "NON SPFS Request sent to BMI server" << endl;
     
     delete msg;
     handleMessage(payload);

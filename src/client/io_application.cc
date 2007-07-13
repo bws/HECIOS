@@ -135,12 +135,11 @@ void IOApplication::handleMessage(cMessage* msg)
             case SPFS_MPI_FILE_WRITE_RESPONSE:
             {
                 // Send the next message
-                cerr << "Application recv'd response: " << msg->kind() << endl;
                 cMessage* nextMsg = getNextMessage();
                 if (0 != nextMsg)
                 {
-                    cerr << "\nNext application message posted: "
-                         << nextMsg->kind() << endl;
+                    //cerr << "\nNext application message posted: "
+                    //     << nextMsg->kind() << endl;
                     send(nextMsg, outGate_);
                 }
                 else
@@ -236,14 +235,10 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
         }
         case IOTrace::SEEK:
         {
-            //spfsMPIFileReadAtRequest* seek = new spfsMPIFileReadAtRequest(
-            //    0, SPFS_MPI_FILE_READ_AT_REQUEST);
-            //seek->setCount(0);
-            //seek->setOffset(offset);
-            // FIXME just adding a descript to avoid core dumps for now
-            //FSOpenFile* descriptor = getDescriptor(fileId);
-            //seek->setFiledes(descriptor);
-            //mpiMsg = seek;
+            // Retrieve the open file descriptor and adjust the file pointer
+            // according to the seek parameters
+            FSOpenFile* descriptor = getDescriptor(rec->fileId());
+            descriptor->filePtr = rec->offset() + rec->length();
             break;
         }
         default:
@@ -261,7 +256,6 @@ void IOApplication::setDescriptor(int fileId, FSOpenFile* descriptor)
 
 FSOpenFile* IOApplication::getDescriptor(int fileId) const
 {
-    cerr << "Getting descriptor: " << fileId << endl;
     FSOpenFile* descriptor = 0;
     map<int, FSOpenFile*>::const_iterator iter = descriptorById_.find(fileId);
     if (iter != descriptorById_.end())

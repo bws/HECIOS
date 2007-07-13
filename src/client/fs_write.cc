@@ -67,7 +67,6 @@ void FSWrite::handleMessage(cMessage* msg)
             exitCountResponses(hasReceivedAllResponses);
             if (hasReceivedAllResponses)
             {
-                cerr << "All responses recv'd for a write" << endl;
                 FSM_Goto(currentState, FINISH);
             }
             else
