@@ -54,6 +54,7 @@ void LRUSimpleCacheTest::setUp()
     cache1_ = new LRUSimpleCache(10);
     cache2_ = new LRUSimpleCache(2);
     printf("\n----began setup\n");
+    fflush(stdout);
 }
 
 void LRUSimpleCacheTest::tearDown()
@@ -80,7 +81,8 @@ void LRUSimpleCacheTest::testInsert()
     fflush(stdout); 
     cache1_->insert(1, 1);
     cache1_->insert(2, 2);
-    CPPUNIT_ASSERT_EQUAL(2, cache1_->size());
+    cache1_->insert(10, 2);
+    CPPUNIT_ASSERT_EQUAL(3, cache1_->size());
         
     cache2_->insert(101, 11);
     cache2_->insert(102, 22);
@@ -96,6 +98,7 @@ void LRUSimpleCacheTest::testRemove()
 
     // Remove an existing entry from a cache
     cache1_->insert(63, 63);
+    CPPUNIT_ASSERT_EQUAL(1, cache1_->size());
     cache1_->remove(63);
     CPPUNIT_ASSERT_EQUAL(0, cache1_->size());
 }
@@ -122,6 +125,8 @@ void LRUSimpleCacheTest::testLookup()
     cache1_->insert(2008, 2008);
     cache1_->insert(2009, 2009);
 
+    CPPUNIT_ASSERT(cache1_->lookup(3000));
+    CPPUNIT_ASSERT(!cache1_->lookup(8000));
     CPPUNIT_ASSERT(cache1_->lookup(2000));
     CPPUNIT_ASSERT_EQUAL(2018, cache1_->lookup(2000)->extent);
     
@@ -232,6 +237,19 @@ void LRUSimpleCacheTest::testLRUPolicy()
     CPPUNIT_ASSERT(0 == cache1_->lookup(644));
     CPPUNIT_ASSERT(0 != cache1_->lookup(652));
     CPPUNIT_ASSERT(0 != cache1_->lookup(653));
+        
+
+    cache2_->insert(1200, 2);
+    cache2_->insert(3999, 3);
+    cache2_->lookup(1200);
+    CPPUNIT_ASSERT_EQUAL(2, cache2_->size());
+    cache2_->insert(14999, 3);
+    CPPUNIT_ASSERT(0 == cache2_->lookup(3999));
+    CPPUNIT_ASSERT(0 != cache2_->lookup(1200));
+    CPPUNIT_ASSERT(0 != cache2_->lookup(14999));
+    CPPUNIT_ASSERT_EQUAL(2, cache2_->size());
+    
+
 }
 
 void LRUSimpleCacheTest::testCombinePolicy()

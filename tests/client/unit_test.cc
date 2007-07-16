@@ -1,6 +1,7 @@
 
 #include <cppunit/TextTestRunner.h>
 #include "client_fs_state_test.h"
+#include "lru_complex_cache_test.h"
 #include "lru_simple_cache_test.h"
 
 int main(int argc, char** argv)
@@ -10,6 +11,7 @@ int main(int argc, char** argv)
     // Add all of the requisite tests
     runner.addTest( ClientFSStateTest::suite() );
     runner.addTest( LRUSimpleCacheTest::suite() );
+    runner.addTest( LRUComplexCacheTest::suite() );
 
     bool success = runner.run();
     return (success ? 0 : 1);

@@ -216,7 +216,8 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
         {
             spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
                 0, SPFS_MPI_FILE_READ_AT_REQUEST);
-            read->setCount(rec->length());
+            read->setCount(1);
+            read->setDtype(rec->length());
             read->setOffset(rec->offset());
             FSOpenFile* descriptor = getDescriptor(rec->fileId());
             read->setFileDes(descriptor);
@@ -227,7 +228,8 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
         {
             spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
                 0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
-            write->setCount(rec->length());
+            write->setCount(1);
+            write->setDataType(rec->length());
             write->setOffset(rec->offset());
             FSOpenFile* descriptor = getDescriptor(rec->fileId());
             write->setFileDes(descriptor);

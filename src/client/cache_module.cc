@@ -11,7 +11,7 @@
 #include "cache_entry.h"
 #include "mpiio_proto_m.h"
 #include "umd_io_trace.h"
-#include "lru_simple_cache.h"
+#include "lru_complex_cache.h"
 #include "cache_module.h"
 
 
@@ -30,6 +30,8 @@ typedef struct cacheLine
 
 //map<int, CacheEntry> systemCache;
 //map<int, CacheEntry>::iterator cacheIter;
+// wheather the cache should have consistency or not
+int consistant = 0;
 
 class cacheModule : public cSimpleModule
 {
@@ -45,7 +47,7 @@ class cacheModule : public cSimpleModule
 	
 	private:
                 // create system cache
-                LRUSimpleCache* systemCache;
+                LRUComplexCache* systemCache;
 
 		// Request forward declerations
 		void cacheProcessTimer(cMessage *msg );
@@ -79,16 +81,20 @@ class cacheModule : public cSimpleModule
 		// Other funcitons
 		void cacheUnknownMessage(cMessage *msg);	
                 // funciton declarations
-                int cacheLookup(int address, int extent);
                 int cacheLookupFileName(const char* fileName);
-                int cacheLookupHandle(int handle);
+                /*int cacheLookupHandle(int handle);
+                int cacheLookupHandleOffset(int handle, int offset);
+                int cacheLookupHandleOffsetExtent(int handle, int offset, 
+                                                    int extent);*/
                 int cacheAddFileName(const char* fileName);
-                int cacheAddHandle(int handle, int extent);
+                int cacheAddHandle(int handle, int extent, int offset);
+                void cacheRemoveHandle(int handle);
 		// delcare gates
 		int fsIn;
 		int fsOut;
 		int appIn;
 		int appOut;
+
 };
 
 Define_Module(cacheModule);
@@ -104,7 +110,7 @@ void cacheModule::initialize()
 	fsOut = findGate("fsOut");
 	appIn = findGate("appIn");
 	appOut = findGate("appOut");
-        systemCache = new LRUSimpleCache(10);	
+        systemCache = new LRUComplexCache(100,1000000000);	
 }
 
 void cacheModule::finish()
@@ -195,7 +201,11 @@ void cacheModule::handleMessage(cMessage *msg)
 		case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
 			cacheProcess_mpiFileWriteAtResponse((spfsMPIFileWriteAtResponse*) msg);
 			break;
-		default :
+		/*case CACHE_EVICT_RESPONSE:
+                        cacheProcess_cacheEvictResponse((spfsCacheEvictResponse*) msg);
+                        break;
+                */
+                default :
 			cacheUnknownMessage(msg);
 			break;
 		}
@@ -208,34 +218,20 @@ void cacheModule::handleMessage(cMessage *msg)
 void cacheModule::cacheProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *msg )
 {
 
-  // new response message to schedule
-  //mpiFileOpenResponse *m = new cMessage("mpiFileOpenResponse");
-  // cache search delay goes here
-  //int delay = 1;
-  // schedule message handling for sometime in future
-  //scheduleAt(delay, m);
-
-              cerr << "in here 11111...."
-                 << msg->kind() << endl;
-    if(cacheLookupFileName(msg->getFileName()))
-    {
-		// create new message and set message fields
-    	spfsMPIFileOpenResponse *m = new spfsMPIFileOpenResponse("mpiFileOpenResponse",
+    // create new message and set message fields
+    /*spfsMPIFileOpenResponse *m = new spfsMPIFileOpenResponse("mpiFileOpenResponse",
                                     SPFS_MPI_FILE_OPEN_RESPONSE);
-        m->setFileDes(msg->getFileDes());
-        
-	send(m, appOut);
-    }else
-    {
-        send(msg, fsOut);
-    }
+    m->setFileDes(msg->getFileDes());
+      
+    send(m, appOut);*/
+    send(msg, fsOut);
 }
 
 void cacheModule::cacheProcess_mpiFileCloseRequest( spfsMPIFileCloseRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
-    if(cacheLookupHandle(handle))
+    if(systemCache->findOnlyHandle(handle))
     {
 	// create new message and set message fields
     	spfsMPIFileCloseResponse *m = new 
@@ -245,42 +241,33 @@ void cacheModule::cacheProcess_mpiFileCloseRequest( spfsMPIFileCloseRequest *msg
     }else
     {
         send(msg, fsOut);
-        cacheAddHandle(handle, 1);
+        cacheRemoveHandle(handle);        
     }
 }
 
 void cacheModule::cacheProcess_mpiFileDeleteRequest( spfsMPIFileDeleteRequest *msg )
 {
-    // look in cache, if found, respond, if not found, sent to fs
-    if(cacheLookupFileName(msg->getFileName()))
-    {
-	// create new message and set message fields
-        spfsMPIFileDeleteResponse *m = new 
-			    spfsMPIFileDeleteResponse("mpiFileDeleteResponse",
-                                                SPFS_MPI_FILE_DELETE_RESPONSE);
-        //m->kind = 
-	send(m, appOut);
-    }else
-    {
-        send(msg, fsOut);
-        cacheAddFileName(msg->getFileName());
-    }
+    // do not look in cache, file will have been closed before deletion,
+    // just forward request on
+    send(msg, fsOut);
 }
 
 void cacheModule::cacheProcess_mpiFileSetSizeRequest( spfsMPIFileSetSizeRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
-    if(cacheLookupHandle(handle))
+//    if(cacheLookupHandle(handle))
+    if(systemCache->findOnlyHandle(handle))
     {
     	// create new message and set message fields
         spfsMPIFileSetSizeResponse *m = new 
             		    spfsMPIFileSetSizeResponse("mpiFileSetSizeResponse",                               SPFS_MPI_FILE_SET_SIZE_RESPONSE);
 	send(m, appOut);
+        if(consistant) send(msg, fsOut);
     }else
     {
         send(msg, fsOut);
-        cacheAddHandle(handle, msg->getSize());
+        cacheAddHandle(handle, 1, 1);
     }
 }
 
@@ -288,7 +275,8 @@ void cacheModule::cacheProcess_mpiFileGetInfoRequest(spfsMPIFileGetInfoRequest *
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
-    if(cacheLookupHandle(handle))
+//    if(cacheLookupHandle(handle))
+    if(systemCache->findOnlyHandle(handle))
     {
 		// create new message and set message fields
     	spfsMPIFileGetInfoResponse *m = new 
@@ -298,7 +286,7 @@ void cacheModule::cacheProcess_mpiFileGetInfoRequest(spfsMPIFileGetInfoRequest *
     }else
     {
         send(msg, fsOut);
-        cacheAddHandle(handle, 1);
+        cacheAddHandle(handle, 1, 1);
     }
 
 
@@ -309,17 +297,19 @@ void cacheModule::cacheProcess_mpiFileSetInfoRequest(spfsMPIFileSetInfoRequest *
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
-    if(cacheLookupHandle(handle))
+//    if(cacheLookupHandle(handle))
+    if(systemCache->findOnlyHandle(handle))
     {
 		// create new message and set message fields
     	spfsMPIFileSetInfoResponse *m = new 
 		    spfsMPIFileSetInfoResponse("mpiFileSetInfoResponse",
                         SPFS_MPI_FILE_SET_INFO_RESPONSE);
 	send(m, appOut);
+        if(consistant) send(msg, fsOut);
     }else
     {
         send(msg, fsOut);
-        cacheAddHandle(handle, 1);
+        cacheAddHandle(handle, 1, 1);
     }
 }
 
@@ -328,25 +318,30 @@ void cacheModule::cacheProcess_mpiFileSetInfoRequest(spfsMPIFileSetInfoRequest *
 
 void cacheModule::cacheProcess_mpiFilePreallocateRequest( spfsMPIFilePreallocateRequest *msg )
 {
+    // Now not caching this type of request
+    send(msg, fsOut);
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
-    if(cacheLookupHandle(handle))
+    /*FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
+        if(systemCache->findOnlyHandle(handle))
     {
 		// create new message and set message fields
     	spfsMPIFilePreallocateResponse *m = new 
 				spfsMPIFilePreallocateResponse("mpiFilePreallocateResponse",
                                 SPFS_MPI_FILE_PREALLOCATE_RESPONSE);
 	send(m, appOut);
+        if(consistant) send(msg, fsOut);
     }else
     {
         send(msg, fsOut);
         cacheAddHandle(handle,msg->getSize());
-    }
+    }*/
 }
 
 void cacheModule::cacheProcess_mpiFileGetSizeRequest( spfsMPIFileGetSizeRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
+    //FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    //if(cacheLookupHandle(handle))
     if(cacheLookupFileName(msg->getFileName()))
     {
 		// create new message and set message fields
@@ -354,7 +349,8 @@ void cacheModule::cacheProcess_mpiFileGetSizeRequest( spfsMPIFileGetSizeRequest 
 				spfsMPIFileGetSizeResponse("mpiFileGetSizeResponse",
                                 SPFS_MPI_FILE_GET_SIZE_RESPONSE);
         // not sure if i should be setting this or not
-        //m->setFileSize(msg->size);
+        // m->setFileSize(msg->size);
+        // m->setFileDes(msg->getFileDes());
 	send(m, appOut);
     }else
     {
@@ -367,8 +363,14 @@ void cacheModule::cacheProcess_mpiFileReadAtRequest( spfsMPIFileReadAtRequest *m
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
-    // should probably not cache this ----------_>>>><<<<<_---------------
-    if(cacheLookupHandle(handle))
+    /*cerr << "read at request "
+        << handle << endl;*/
+    printf(" reat at request %d  %d  %d\n", (int) handle, (int) msg->getOffset(),
+                            (int) msg->getCount() * msg->getDtype());
+    /*if(systemCache->findOnlyHandleOffsetExtent(handle,msg->getOffset(),
+                                            msg->getCount() * msg->getDtype()))*/
+    if(systemCache->lookup(handle,msg->getOffset(),
+                                            msg->getCount() * msg->getDtype()))
     {
 		// create new message and set message fields
     	spfsMPIFileReadAtResponse *m = new 
@@ -377,16 +379,22 @@ void cacheModule::cacheProcess_mpiFileReadAtRequest( spfsMPIFileReadAtRequest *m
 	send(m, appOut);
     }else
     {
+        cacheAddHandle(handle,msg->getOffset(),
+                msg->getCount() * msg->getDtype());
         send(msg, fsOut);
     }
 }
 
 void cacheModule::cacheProcess_mpiFileReadRequest( spfsMPIFileReadRequest *msg )
 {
+    // no read requests, decideing to throw error when see this type
+    cerr << "read message found"
+               << msg->kind() << endl;
+    exit(0);
+    
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
-    //should probably not cache this --------_>>>>><<<<<_---------
-    if(cacheLookupHandle(handle))
+    /*FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
+    if(systemCache->findOnlyHandle(handle))
     {
 		// create new message and set message fields
     	spfsMPIFileReadResponse *m = new 
@@ -395,44 +403,55 @@ void cacheModule::cacheProcess_mpiFileReadRequest( spfsMPIFileReadRequest *msg )
 	send(m, appOut);
     }else
     {
+        cacheAddHandle(handle,msg->getCount());
         send(msg, fsOut);
-    }
+    }*/
 }
 
 void cacheModule::cacheProcess_mpiFileWriteAtRequest( spfsMPIFileWriteAtRequest *msg )
 {
     // look in cache, if found, respond, if not found, sent to fs
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
-    // should probably not cache this or lookup in cache ------_>>>><<<_----
-    if(cacheLookupHandle(handle))
+    if(systemCache->lookup(handle,msg->getOffset(),
+                            msg->getCount() * msg->getDataType()))
+    //if(systemCache->findOnlyHandleOffset(handle,msg->getOffset()))
     {
-		// create new message and set message fields
+	// create new message and set message fields
     	spfsMPIFileWriteAtResponse *m = new 
 				spfsMPIFileWriteAtResponse("mpiFileWriteAtResponse",
                                 SPFS_MPI_FILE_WRITE_AT_RESPONSE);
+        //m->setFileDes(msg->getFileDes());
 	send(m, appOut);
+        if(consistant) send(msg, fsOut);
     }else
     {
+        cacheAddHandle(handle,msg->getOffset(),msg->getCount());
         send(msg, fsOut);
     }
 }
 
 void cacheModule::cacheProcess_mpiFileWriteRequest( spfsMPIFileWriteRequest *msg )
 {
+    // no write requests, decideing to throw error when see this type
+    cerr << "write message found"
+               << msg->kind() << endl;
+    exit(0);
     // look in cache, if found, respond, if not found, sent to fs
-    FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
+    /*FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
     // should probably not cache this -------_>>>>>><<<<<_--------
-    if(cacheLookupHandle(handle))
+    //    if(cacheLookupHandle(handle))
+    if(systemCache->findOnlyHandle(handle))
     {
 		// create new message and set message fields
     	spfsMPIFileWriteResponse *m = new 
 				spfsMPIFileWriteResponse("mpiFileWriteResponse",
                                 SPFS_MPI_FILE_WRITE_RESPONSE);
 	send(m, appOut);
+        if(consistant) send(msg, fsOut);
     }else
     {
         send(msg, fsOut);
-    }
+    }*/
 }
 
 // messages to fs - responses
@@ -509,6 +528,14 @@ void cacheModule::cacheProcess_mpiFileWriteAtResponse( spfsMPIFileWriteAtRespons
     send(msg, appOut);
 }
 
+/* void cacheModule::cacheProcess_cacheEvictResponse(spfsCacheEvictResponse*mst )
+{
+    FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    cacheRemoveHandle(handle);
+
+}
+*/
+
 // defualt message for unknown message type
 void cacheModule::cacheUnknownMessage(cMessage *msg)
 {
@@ -529,23 +556,34 @@ int cacheModule::cacheLookupFileName(const char* fileName)
     return toReturnFound;
 }
 
-int cacheModule::cacheLookupHandle(int address)
+/*int cacheModule::cacheLookupHandle(int handle)
 {
     int toReturnFound = 0;  // holds if found and return variable
     // go through cache map and find entry     
     toReturnFound = systemCache->findOnlyKey(address); 
+    if(toReturnFound) // if found in cache, re-insert to indicate use
+        cacheAddHandle(address, 1);
     return toReturnFound;
 }
 
 // helper function to perform cache lookup
-int cacheModule::cacheLookup(int address, int extent)
+int cacheModule::cacheLookupHandleOffset(int handle, int offset)
 {
     int toReturnFound = 0;  // holds if found and return variable
     // go through cache map and find entry     
     toReturnFound = systemCache->findOnlyKeyValue(address, extent);
+    if(toReturnFound) // if found in cache, re-insert to indicate use
+        cacheAddHandle(address, extent);
     return toReturnFound;
 }
 
+int cacheModule::cacheLookupHandleOffsetExtent(int handle, int offset, 
+                                                int extent)
+{
+    int toReturnFound = 0;
+    
+
+}*/
 
 int cacheModule::cacheAddFileName(const char* fileName)
 {
@@ -558,15 +596,23 @@ int cacheModule::cacheAddFileName(const char* fileName)
     return toReturnAdded;
 }
 
-int cacheModule::cacheAddHandle(int handle, int extent) // would probably include mode in here in the future also
+// would probably include mode in here in the future also
+int cacheModule::cacheAddHandle(int handle, int offset, int extent)
 {
     int toReturnAdded = 0;
     // add to used cache
-    systemCache->insert(handle, extent);	
+    systemCache->insert(handle, offset, extent);	
     cerr << "inserting message with handle"
     << handle << endl;
+    toReturnAdded = 1;
     return toReturnAdded;
 }
+
+void cacheModule::cacheRemoveHandle(int handle)
+{
+    systemCache->removeHandle(handle);
+}
+
 
 // helper function to perform cache add
 /*int cacheAdd(int address, int extent, int state)

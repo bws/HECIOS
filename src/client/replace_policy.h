@@ -20,7 +20,9 @@ using namespace std;
 struct LRUSimpleCacheEntry
 {
     int extent;
+    int offset;
     int address;
+    int state;
     double timeStamp;
     std::list<int>::iterator lruRef;
 };
@@ -36,18 +38,25 @@ class ReplacePolicy
     public:
         typedef LRUSimpleCacheEntry EntryType;
         virtual ~ReplacePolicy();
-	virtual int GetEvictIndex(map <int, EntryType*> keyEntryMap,
-                                        list<int> lruList)
-        {
+	/*virtual int GetEvictIndex(map <int, EntryType*> keyEntryMap,
+                                        list<int> *lruList) = 0;*/
+	virtual int GetEvictIndex(list<int> *lruList) = 0;
+        virtual list<int>::iterator PolicyUpdate(list<int> *lruList, 
+                list<int>::iterator &lruRef, int key)=0;
+        virtual list<int>::iterator PolicyInsert(list<int> *lruList, int key)=0;
+        /*{
             printf("have to put this here b/c gcc linker sucks\n");
-            return 1;
-        }
+            int toreturn = *((*lruList).rbegin());
+            printf("to return is %d\n", toreturn);
+            return *((*lruList).rbegin());
+            //return 1;
+        }*/
 };
 
 
 inline ReplacePolicy::~ReplacePolicy()
 {
-    printf("nothing to do here");
+    //printf("nothing to do here");
 
 
 }

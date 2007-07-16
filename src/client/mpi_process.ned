@@ -4,7 +4,7 @@ import
     "cache_module",
     "fs_client",
     "bmi_transport",
-    "middleware_cache";
+    "cacheModule";
 
 //
 // Compound module describing and MPI job process
@@ -20,7 +20,8 @@ module MPIProcess
 
         app: IOApplication;
 
-        cache: MiddlewareCache;
+        //cache: MiddlewareCache;
+        cache: cacheModule;
 
         fsClient: fsModule;
 
