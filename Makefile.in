@@ -26,7 +26,7 @@ SERVER_DIR= $(SRC_DIR)/server
 #
 # Master Makefile default targets
 #
-ALL_TARGETS = $(BIN_DIR)/hecios $(BIN_DIR)/hecios_cmd
+ALL_TARGETS = $(BIN_DIR)/hecios
 all: $(ALL_TARGETS)
 
 
@@ -68,21 +68,16 @@ INCLUDES = $(OMNET_DIR)/include \
 #
 LIB_DIR = lib
 
-THIRDPARTY_LIBS = \
-	$(LIB_DIR)/ospfd.a \
-	$(LIB_DIR)/ripd.a \
-	$(LIB_DIR)/zebra.a
-
 OMNET_SIM_LIBS = -lsim_std -lnedxml -lxml2
 
 OMNET_GUI_LIBS = -lenvir -ltkenv -ltk -ltcl
 
 OMNET_CMD_LIBS = -lenvir -lcmdenv
 
-LIBS_GUI = -L$(OMNET_DIR)/lib -L$(LIB_DIR) -lzebra \
+LIBS_GUI = -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
         $(OMNET_GUI_LIBS) $(OMNET_SIM_LIBS) -ldl -lstdc++
 
-LIBS_CMD = -L$(OMNET_DIR)/lib -L$(LIB_DIR) -lzebra \
+LIBS_CMD = -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
 	$(OMNET_CMD_LIBS) $(OMNET_SIM_LIBS) -ldl -lstdc++
 
 #
@@ -151,7 +146,6 @@ TEST_CLIENT_DIR := $(TEST_DIR)/client
 TEST_INCLUDES := -I$(TEST_COMMON_DIR)
 
 TEST_LIBS := -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
-	lib/inet.a \
 	-lsim_std -lnedxml -lxml2 \
 	-lcppunit -ldl
 
@@ -228,21 +222,17 @@ doc: $(DOC_EPS) $(DOC_PDF)
 test: $(BIN_DIR)/common_test $(BIN_DIR)/client_test
 
 #
-# Targets to hecios build simulator
+# Targets to build HECIOS simulator (gui and command line versions)
 #
 $(SIM_MSG_OUTPUT): $(THIRDPARTY_LIBS)
 
 $(SIM_OBJS): $(SIM_MSG_OUTPUT)
 
-$(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
+$(BIN_DIR)/hecios: lib/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) 
 	@mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(LIBS_GUI) -o $@
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o $(LIBS_GUI) -o $@
 
-$(BIN_DIR)/hecios_cmd: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
-	@mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(LIBS_CMD) -o $@
-
-$(BIN_DIR)/hecios_inc: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
+$(BIN_DIR)/hecios_cmd: lib/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o $(LIBS_CMD) -o $@
 
@@ -252,9 +242,9 @@ $(BIN_DIR)/hecios_inc: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
 COMMON_TEST_OBJS = $(TEST_COMMON_DIR)/unit_test.o \
 	$(TEST_SUPPORT_DIR)/test_cenvir.o
 
-$(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
+$(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(COMMON_TEST_OBJS) $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
+	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(COMMON_TEST_OBJS) lib/inet.o $(TEST_LIBS) -o $@
 
 #
 # client module unit tests
@@ -262,9 +252,9 @@ $(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet
 CLIENT_TEST_OBJS = $(TEST_CLIENT_DIR)/unit_test.o \
 	$(TEST_SUPPORT_DIR)/test_cenvir.o
 
-$(BIN_DIR)/client_test: $(CLIENT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.a
+$(BIN_DIR)/client_test: $(CLIENT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(CLIENT_TEST_OBJS) $(THIRDPARTY_LIBS) $(TEST_LIBS) -o $@
+	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(CLIENT_TEST_OBJS) lib/inet.o $(TEST_LIBS) -o $@
 
 #
 # Psuedotargets (required by make for some dependencies)

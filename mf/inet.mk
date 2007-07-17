@@ -255,6 +255,11 @@ INET_OBJS = $(INET_DIR)/Applications/Ethernet/EtherApp_m.o \
 	$(INET_DIR)/World/ScenarioManager.o \
 	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o
 
+INET_LIBS = \
+	$(LIB_DIR)/ospfd.a \
+	$(LIB_DIR)/ripd.a \
+	$(LIB_DIR)/zebra.a
+
 
 $(INET_DIR)/bin/INET:
 	cd INET && ./makemake
@@ -268,14 +273,6 @@ $(INET_OBJS): $(INET_DIR)/bin/INET
 #
 # Archives created by and for the INET framework package
 #
-lib/inet.o: $(INET_DIR)/bin/INET
-	mkdir -p lib
-	ld -Ur -L/lib -L/usr/lib $(INET_OBJS) lib/ospfd.a lib/ripd.a lib/zebra.a -o $@
-
-lib/inet.a: $(INET_DIR)/bin/INET
-	mkdir -p lib
-	$(AR) rcs $@ $(INET_OBJS)
-
 lib/ospfd.a: $(INET_DIR)/bin/INET
 	mkdir -p lib
 	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/ospfd/ospfd.a $@
@@ -293,10 +290,17 @@ lib/libzebra.a: $(INET_DIR)/bin/INET
 	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/lib/libzebra.a $@
 
 #
+# INET prelinked object file
+#
+lib/inet.o: $(INET_DIR)/bin/INET $(INET_LIBS)
+	mkdir -p lib
+	ld -Ur -L/lib -L/usr/lib -Llib $(INET_OBJS) $(INET_LIBS) -lzebra -o $@
+
+#
 # Clean out INET build
 #
 inet_clean:
 	cd INET && make ROOT=$(shell pwd)/$(INET_DIR) clean
-	$(RM) lib/inet.a lib/ospfd.a lib/ripd.a lib/zebra.a lib/libzebra.a
+	$(RM) lib/inet.o $(INET_LIBS) lib/libzebra.a
 
 .PHONY: inet_clean
