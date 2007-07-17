@@ -242,6 +242,10 @@ $(BIN_DIR)/hecios_cmd: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(LIBS_CMD) -o $@
 
+$(BIN_DIR)/hecios_inc: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o $(LIBS_CMD) -o $@
+
 #
 # common module unit tests
 #

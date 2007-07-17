@@ -268,6 +268,10 @@ $(INET_OBJS): $(INET_DIR)/bin/INET
 #
 # Archives created by and for the INET framework package
 #
+lib/inet.o: $(INET_DIR)/bin/INET
+	mkdir -p lib
+	ld -Ur -L/lib -L/usr/lib $(INET_OBJS) lib/ospfd.a lib/ripd.a lib/zebra.a -o $@
+
 lib/inet.a: $(INET_DIR)/bin/INET
 	mkdir -p lib
 	$(AR) rcs $@ $(INET_OBJS)
