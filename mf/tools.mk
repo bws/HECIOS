@@ -22,7 +22,7 @@ DEPENDC = scripts/depend.sh
 #
 # Compilation flags
 #
-CXXFLAGS += -g -pg
+CXXFLAGS += -g
 CXXFLAGS += -Wno-unused -Wall -Werror
 CXXFLAGS += -DWITH_PARSIM -DWITH_NETBUILDER
 CXXFLAGS += $(patsubst %,-I%,$(INCLUDES))
@@ -30,7 +30,7 @@ CXXFLAGS += $(patsubst %,-I%,$(INCLUDES))
 #
 # More permissive compilation flags for generated source (warnings disabled)
 #
-UNSAFE_CXXFLAGS += -g -pg
+UNSAFE_CXXFLAGS += -g
 UNSAFE_CXXFLAGS += -DWITH_PARSIM -DWITH_NETBUILDER
 UNSAFE_CXXFLAGS += $(patsubst %,-I%,$(INCLUDES))
 
@@ -42,7 +42,7 @@ DEPFLAGS = $(patsubst %,-I%,$(INCLUDES))
 #
 # Link flags
 #
-LDFLAGS += -g -pg -Wl,--export-dynamic
+LDFLAGS += -g -Wl,--export-dynamic
 
 #
 # Nedtool flags
