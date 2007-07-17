@@ -26,7 +26,7 @@ SERVER_DIR= $(SRC_DIR)/server
 #
 # Master Makefile default targets
 #
-ALL_TARGETS = $(BIN_DIR)/hecios
+ALL_TARGETS = $(BIN_DIR)/hecios $(BIN_DIR)/hecios_cmd
 all: $(ALL_TARGETS)
 
 
@@ -67,15 +67,23 @@ INCLUDES = $(OMNET_DIR)/include \
 # Libraries to link
 #
 LIB_DIR = lib
+
 THIRDPARTY_LIBS = \
-	$(LIB_DIR)/libzebra.a \
 	$(LIB_DIR)/ospfd.a \
 	$(LIB_DIR)/ripd.a \
 	$(LIB_DIR)/zebra.a
 
-LIBS = -L$(OMNET_DIR)/lib -L$(LIB_DIR) -lzebra \
-        -lenvir -ltkenv -ltk -ltcl -lsim_std -lnedxml -lxml2 -ldl \
-        -lstdc++
+OMNET_SIM_LIBS = -lsim_std -lnedxml -lxml2
+
+OMNET_GUI_LIBS = -lenvir -ltkenv -ltk -ltcl
+
+OMNET_CMD_LIBS = -lenvir -lcmdenv
+
+LIBS_GUI = -L$(OMNET_DIR)/lib -L$(LIB_DIR) -lzebra \
+        $(OMNET_GUI_LIBS) $(OMNET_SIM_LIBS) -ldl -lstdc++
+
+LIBS_CMD = -L$(OMNET_DIR)/lib -L$(LIB_DIR) -lzebra \
+	$(OMNET_CMD_LIBS) $(OMNET_SIM_LIBS) -ldl -lstdc++
 
 #
 # Variables used by the individual modules
@@ -180,6 +188,8 @@ include mf/tools.mk
 #
 # Top level psuedo targets
 #
+gui: $(BIN_DIR)/hecios_gui
+
 clean:
 	@echo "Removing all derived files."
 	$(RM) $(DOC_DVI) $(DOC_EPS) $(DOC_PDF) $(DOC_PS) $(DOC_CRUFT)
@@ -226,7 +236,11 @@ $(SIM_OBJS): $(SIM_MSG_OUTPUT)
 
 $(BIN_DIR)/hecios: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
 	@mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(LIBS_GUI) -o $@
+
+$(BIN_DIR)/hecios_cmd: $(THIRDPARTY_LIBS) $(SIM_MSG_OBJS) $(SIM_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(INET_OBJS) $(THIRDPARTY_LIBS) $(LIBS_CMD) -o $@
 
 #
 # common module unit tests
@@ -251,4 +265,4 @@ $(BIN_DIR)/client_test: $(CLIENT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet
 #
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all all_clean clean doc ned_clean test tests_clean
+.PHONY: all all_clean clean doc gui ned_clean test tests_clean
