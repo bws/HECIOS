@@ -1,6 +1,6 @@
 #include "fs_open.h"
 #include <iostream>
-#define FSM_DEBUG  // Enable FSM Debug output
+//#define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
 #include "client_fs_state.h"
 #include "filename.h"
@@ -56,7 +56,6 @@ void FSOpen::handleMessage(cMessage* msg)
         }
         case FSM_Enter(LOOKUP):
         {
-            cerr << "Enter Lookup" << endl;
             enterLookup();
             break;
         }
@@ -76,7 +75,7 @@ void FSOpen::handleMessage(cMessage* msg)
                 FSM_Goto(currentState, LOOKUP);
             else
             {
-                cerr << "Do Something to create the file here" << endl;
+                cerr << "ERROR: File does not exist during open!!!!" << endl;
             }
             break;
         }
@@ -293,7 +292,6 @@ void FSOpen::enterCreateData()
     int numservers;
     int snum;
     /* build a request message */
-    //FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFiledes());
     req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
     req->setContextPointer(openReq_);
     numservers = fsModule_->fsState().defaultNumServers();

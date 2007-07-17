@@ -87,7 +87,7 @@ void FSServer::handleMessage(cMessage* msg)
     // Send server's response
     if (spfsResponse* resp = dynamic_cast<spfsResponse*>(response))
     {
-        cerr << "Request message: " << msg->info() << " " << msg->kind() << endl;
+        //cerr << "Request message: " << msg->info() << " " << msg->kind() << endl;
         spfsRequest* req = dynamic_cast<spfsRequest*>(msg);
         assert(0 != req);
         resp->setContextPointer(req);

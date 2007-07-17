@@ -1,7 +1,7 @@
 #include "fs_write.h"
 #include <cassert>
 #include <iostream>
-#define FSM_DEBUG  // Enable FSM Debug output
+//#define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
 #include "fs_module.h"
 #include "mpiio_proto_m.h"
@@ -104,7 +104,6 @@ void FSWrite::enterWrite()
     write.setDtype(writeReq_->getDataType());
 
     // Send request to each server
-    cerr << "Generating " << write.getServerCnt() << " write reqs\n";
     for (int i = 0; i < write.getServerCnt(); i++)
     {
         spfsWriteRequest* req = static_cast<spfsWriteRequest*>(write.dup());
