@@ -110,7 +110,7 @@ void cacheModule::initialize()
 	fsOut = findGate("fsOut");
 	appIn = findGate("appIn");
 	appOut = findGate("appOut");
-        systemCache = new LRUComplexCache(10,1000000000);	
+        systemCache = new LRUComplexCache(300,2000000000);	
 }
 
 void cacheModule::finish()

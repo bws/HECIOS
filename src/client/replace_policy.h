@@ -42,7 +42,7 @@ class ReplacePolicy
                                         list<int> *lruList) = 0;*/
 	virtual int GetEvictIndex(list<int> *lruList) = 0;
         virtual list<int>::iterator PolicyUpdate(list<int> *lruList, 
-                list<int>::iterator &lruRef, int key)=0;
+                list<int>::iterator &lruRef, int key, int toDelete)=0;
         virtual list<int>::iterator PolicyInsert(list<int> *lruList, int key)=0;
         /*{
             printf("have to put this here b/c gcc linker sucks\n");

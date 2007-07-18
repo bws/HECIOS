@@ -116,7 +116,7 @@ inline void LRUComplexCache::insert(const int& handle,
         fileLruList.push_front(handle);
         pos->second->blockLruRef = fileLruList.begin();*/
         pos->second->blockLruRef = lruPolicy.PolicyUpdate(&fileLruList,
-                            pos->second->blockLruRef, handle);
+                            pos->second->blockLruRef, handle, handle);
         
     }else
     {
@@ -129,7 +129,7 @@ inline void LRUComplexCache::insert(const int& handle,
             //int toEvict = *(fileLruList.rbegin());
             this->removeHandle(toEvict);
         }
-        printf("current phys size is %d \n", currentPhysSize_);
+        //printf("current phys size is %d \n", currentPhysSize_);
         while(extent < maxPhysSize_ &&  // check for size constraint
             ((currentPhysSize_+extent) > maxPhysSize_))
         {
@@ -153,7 +153,7 @@ inline void LRUComplexCache::insert(const int& handle,
         
         // insert into map and update sizes
         currentPhysSize_ += extent;
-        printf("current phys size is %d \n", currentPhysSize_);
+        //printf("current phys size is %d \n", currentPhysSize_);
         entry->blockCache->insert(offset, extent);
         fileEntryMap.insert(std::make_pair(handle, entry));
         numEntries_++;
@@ -196,14 +196,14 @@ inline void LRUComplexCache::removeOffset(const int& handle, const int& offset)
 {
     std::map<int, ComplexEntryType*>::iterator pos;
     //pos = fileEntryMap.find(handle);
-    pos = fileEntryMap.upper_bound(handle);
-    if(numEntries_ != 0 && pos!=fileEntryMap.begin()) pos--;
+    pos = fileEntryMap.find(handle);
+    //if(numEntries_ != 0 && pos!=fileEntryMap.begin()) pos--;
     
     //printf("size before remove is %d %d %d\n", currentPhysSize_,
     //        handle, offset);
     if(pos != fileEntryMap.end()) // if entry found
     {
-        printf("removing size %d\n", 
+        printf("removing whole file entry with size %d\n", 
             pos->second->blockCache->physSize());
         currentPhysSize_ -= pos->second->blockCache->physSize();
         pos->second->blockCache->remove(offset);
@@ -237,7 +237,7 @@ LRUComplexCache::lookup(const int& handle,
             fileLruList.push_front(handle);
             entry->blockLruRef = fileLruList.begin();*/
             entry->blockLruRef = lruPolicy.PolicyUpdate(&fileLruList,
-                            entry->blockLruRef, handle);
+                            entry->blockLruRef, handle, handle);
         }else if(pos->second->blockCache->findOnlyKeyValue(offset,extent)!=0)
         {
             entry = pos->second;
@@ -246,7 +246,7 @@ LRUComplexCache::lookup(const int& handle,
             fileLruList.push_front(handle);
             entry->blockLruRef = fileLruList.begin(); */
             entry->blockLruRef = lruPolicy.PolicyUpdate(&fileLruList,
-                            entry->blockLruRef, handle);
+                            entry->blockLruRef, handle, handle);
         }
     }
     return entry;

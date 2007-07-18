@@ -27,10 +27,11 @@ class LruReplacePolicy:public ReplacePolicy
 		}
 		
 		list<int>::iterator PolicyUpdate(list<int> *lruList, 
-						list<int>::iterator &lruRef, int key)
+						list<int>::iterator &lruRef, int key,
+						int toDelete)
 		{
 			//(*lruList).erase(lruRef);
-			(*lruList).remove(key);
+			(*lruList).remove(toDelete);
 			return PolicyInsert(lruList, key);
 		}
         list<int>::iterator PolicyInsert(list<int> *lruList, int key)
