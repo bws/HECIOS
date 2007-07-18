@@ -14,14 +14,17 @@ module IONode
         out: ethOut;
 
     submodules:
-        daemon: DaemonProcess;
-
         hca: BMIEnhancedHost;
             parameters:
                 numTcpApps = 1,
                 tcpAppType = "BMITcpServer";
+            display: "p=100,80;i=block/arrival,medium purple";
+
+        daemon: DaemonProcess;
+            display: "p=100,180;i=block/process,blue";
 
         storage: StorageLayer;
+            display: "p=100,280;i=abstract/db,sienna";
 
     connections nocheck:
 
@@ -37,4 +40,6 @@ module IONode
         ethIn --> hca.ethIn++;
         ethOut <-- hca.ethOut++;
 
+    display: "o=white";
+        
 endmodule

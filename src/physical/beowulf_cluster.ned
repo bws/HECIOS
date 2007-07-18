@@ -15,7 +15,7 @@ module BeowulfCluster
     submodules:
 
         cpun: ComputeNode[numCPUNodes];
-            display: "p=20,120,m,8;i=block/process,green";
+            display: "p=20,120,m,8;i=device/cpu,yellow";
 
         ion: IONode[numIONodes];
             display: "p=20,300,m,8;i=abstract/server,magenta";

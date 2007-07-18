@@ -19,11 +19,14 @@ module MPIProcess
     submodules:
 
         app: IOApplication;
+            display: "p=80,80;i=block/app,white";
 
         //cache: MiddlewareCache;
         cache: cacheModule;
+            display: "p=80,180;i=abstract/cache,gold";
 
         fsClient: fsModule;
+            display: "p=80,280;o=orange red";
 
     connections:
 
@@ -35,5 +38,7 @@ module MPIProcess
 
         fsClient.netOut --> netOut;
         fsClient.netIn <-- netIn;
+
+    display: "o=white";
 
 endmodule
