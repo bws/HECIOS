@@ -131,6 +131,7 @@ void LRUComplexCacheTest::testLookup()
     // Lookup an entry in an empty cache
     LRUComplexCache::ComplexEntryType* e77 = cache1_->lookup(77,0,0);
     CPPUNIT_ASSERT(0 == e77);
+    CPPUNIT_ASSERT_EQUAL(0, cache1_->size());
 
     // Find an existing entry
     cache1_->insert(2000, 0, 1000);
@@ -148,11 +149,12 @@ void LRUComplexCacheTest::testLookup()
     cache1_->insert(2007, 2, 2007);
     cache1_->insert(2008, 2, 2008);
     cache1_->insert(2009, 0, 2009);
+    CPPUNIT_ASSERT_EQUAL(10, cache1_->size());
 
     CPPUNIT_ASSERT(!cache1_->lookup(3000,0,0));
     CPPUNIT_ASSERT(!cache1_->lookup(8000,0,0));
     //CPPUNIT_ASSERT(cache1_->lookup(2000,3,2));
-    printf("cache size id %d\n", cache1_->size());
+    //printf("cache size id %d\n", cache1_->size());
     CPPUNIT_ASSERT_EQUAL(2008, cache1_->lookup(2008,50,40)->handle);
 
     CPPUNIT_ASSERT(cache1_->lookup(2001,0,10));
@@ -172,8 +174,14 @@ void LRUComplexCacheTest::testLookup()
     CPPUNIT_ASSERT(0 == cache1_->lookup(9010,0,0));
     
     cache1_->insert(2020, 0, 10);
+    CPPUNIT_ASSERT_EQUAL(11, cache1_->size());
     CPPUNIT_ASSERT(!cache1_->lookup(2020,10,15));
+    printf("got here --\n");
+    fflush(stdout);
     cache1_->insert(2020, 10, 15);
+    printf("got here --\n");
+    fflush(stdout);
+    CPPUNIT_ASSERT_EQUAL(11, cache1_->size());
     cache1_->insert(2020, 0, 2001);
     cache1_->insert(2020, 0, 2001);
     cache1_->insert(2020, 0, 2001);
