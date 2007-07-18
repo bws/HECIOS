@@ -63,6 +63,7 @@ public:
                                     const int& extent);
     int size() const;
     int physSize();
+    void mapPrint();
 
 private:
     map<int, ComplexEntryType*> fileEntryMap;
@@ -128,6 +129,7 @@ inline void LRUComplexCache::insert(const int& handle,
             //int toEvict = *(fileLruList.rbegin());
             this->removeHandle(toEvict);
         }
+        printf("current phys size is %d \n", currentPhysSize_);
         while(extent < maxPhysSize_ &&  // check for size constraint
             ((currentPhysSize_+extent) > maxPhysSize_))
         {
@@ -151,6 +153,7 @@ inline void LRUComplexCache::insert(const int& handle,
         
         // insert into map and update sizes
         currentPhysSize_ += extent;
+        printf("current phys size is %d \n", currentPhysSize_);
         entry->blockCache->insert(offset, extent);
         fileEntryMap.insert(std::make_pair(handle, entry));
         numEntries_++;
@@ -182,8 +185,9 @@ inline void LRUComplexCache::removeHandle(const int& handle)
         currentPhysSize_ -= pos->second->blockCache->size();
         fileLruList.erase(pos->second->blockLruRef);
         delete pos->second;
-        fileEntryMap.erase(pos);
+        fileEntryMap.erase(pos->first);
         numEntries_--;
+        printf("removing handle %d %d \n", numEntries_, fileEntryMap.size());
     }
 }
 
@@ -191,11 +195,16 @@ inline void LRUComplexCache::removeHandle(const int& handle)
 inline void LRUComplexCache::removeOffset(const int& handle, const int& offset)
 {
     std::map<int, ComplexEntryType*>::iterator pos;
-    pos = fileEntryMap.find(handle);
+    //pos = fileEntryMap.find(handle);
+    pos = fileEntryMap.upper_bound(handle);
+    if(numEntries_ != 0 && pos!=fileEntryMap.begin()) pos--;
+    
     //printf("size before remove is %d %d %d\n", currentPhysSize_,
     //        handle, offset);
     if(pos != fileEntryMap.end()) // if entry found
     {
+        printf("removing size %d\n", 
+            pos->second->blockCache->physSize());
         currentPhysSize_ -= pos->second->blockCache->physSize();
         pos->second->blockCache->remove(offset);
         currentPhysSize_ += pos->second->blockCache->physSize();
@@ -291,6 +300,20 @@ inline int LRUComplexCache::physSize()
 {
     return currentPhysSize_;
 }
+
+inline void LRUComplexCache::mapPrint()
+{
+    std::map<int, ComplexEntryType*>::iterator pos;
+    printf("printing entire map ----\n");
+    for(pos = fileEntryMap.begin(); pos != fileEntryMap.end(); pos++)
+    {
+        printf("key: %d, size:%d\n", pos->first,
+        pos->second->blockCache->physSize());
+    }
+    printf("total size is %d\n", currentPhysSize_);
+}
+
+
 /*
  * Local variables:
  *  c-indent-level: 4

@@ -29,7 +29,8 @@ class LruReplacePolicy:public ReplacePolicy
 		list<int>::iterator PolicyUpdate(list<int> *lruList, 
 						list<int>::iterator &lruRef, int key)
 		{
-			(*lruList).erase(lruRef);
+			//(*lruList).erase(lruRef);
+			(*lruList).remove(key);
 			return PolicyInsert(lruList, key);
 		}
         list<int>::iterator PolicyInsert(list<int> *lruList, int key)

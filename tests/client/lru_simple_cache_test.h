@@ -20,6 +20,7 @@ class LRUSimpleCacheTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testSize);
     CPPUNIT_TEST(testLRUPolicy);
     CPPUNIT_TEST(testCombinePolicy);
+    CPPUNIT_TEST(testRemoveRange);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -43,6 +44,8 @@ public:
     void testLRUPolicy();
 
     void testCombinePolicy();
+
+    void testRemoveRange();
 
 private:
     LRUSimpleCache* cache1_;
@@ -195,6 +198,7 @@ void LRUSimpleCacheTest::testSize()
     cache1_->insert(651, 651);
     cache1_->insert(652, 652);
     cache1_->insert(653, 653);
+    cache1_->mapPrint();
     // should be 1 b/c of all combined inserts
     CPPUNIT_ASSERT_EQUAL(1, cache1_->size());
 }
@@ -244,6 +248,7 @@ void LRUSimpleCacheTest::testLRUPolicy()
     cache2_->lookup(1200);
     CPPUNIT_ASSERT_EQUAL(2, cache2_->size());
     cache2_->insert(14999, 3);
+    cache2_->mapPrint();
     CPPUNIT_ASSERT(0 == cache2_->lookup(3999));
     CPPUNIT_ASSERT(0 != cache2_->lookup(1200));
     CPPUNIT_ASSERT(0 != cache2_->lookup(14999));
@@ -255,6 +260,25 @@ void LRUSimpleCacheTest::testLRUPolicy()
 void LRUSimpleCacheTest::testCombinePolicy()
 {
     
+}
+
+void LRUSimpleCacheTest::testRemoveRange()
+{
+    cache1_->insert(640, 50);
+    CPPUNIT_ASSERT_EQUAL(1, cache1_->size());
+    cache1_->insert(700, 30);
+    cache1_->insert(740, 800);
+    CPPUNIT_ASSERT_EQUAL(3, cache1_->size());
+    cache1_->removeRange(650, 750);
+    cache1_->mapPrint();
+    CPPUNIT_ASSERT_EQUAL(2, cache1_->size());
+    CPPUNIT_ASSERT(0 == cache1_->lookup(750));
+    CPPUNIT_ASSERT(0 == cache1_->lookup(705));
+    CPPUNIT_ASSERT(0 != cache1_->lookup(641));
+    /*CPPUNIT_ASSERT(0 != cache1_->lookup(751));
+    CPPUNIT_ASSERT(0 != cache1_->lookup(649));*/
+    
+
 }
 
 #endif

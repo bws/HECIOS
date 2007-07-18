@@ -97,6 +97,7 @@ void LRUComplexCacheTest::testInsert()
     cache2_->insert(655, 7, 40);
     cache2_->insert(56, 3, 30);
     cache2_->insert(75, 10, 35);
+    cache2_->mapPrint();
     CPPUNIT_ASSERT_EQUAL(2, cache2_->size());
     
 }
