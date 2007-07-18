@@ -292,7 +292,7 @@ lib/libzebra.a: $(INET_DIR)/bin/INET
 #
 # INET prelinked object file
 #
-lib/inet.o: $(INET_DIR)/bin/INET $(INET_LIBS)
+lib/inet.o: $(INET_DIR)/bin/INET $(INET_LIBS) lib/libzebra.a
 	mkdir -p lib
 	ld -Ur -L/lib -L/usr/lib -Llib $(INET_OBJS) $(INET_LIBS) -lzebra -o $@
 
