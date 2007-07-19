@@ -3,6 +3,7 @@ import
     "compute_node",
     "io_node",
     "fs_server_configurator",
+    "mpi_configurator",
     "EtherSwitch",
     "FlatNetworkConfigurator";
 
@@ -28,13 +29,16 @@ module BeowulfCluster
                 handlesPerServer = 10000;
             display: "p=40,50;b=20,20,rect;o=blue";
 
-        configurator: FlatNetworkConfigurator;
+        mpiConfig: MPIConfigurator;
+            display: "p=140,50;b=20,20,rect;o=blue";
+
+        networkConfig: FlatNetworkConfigurator;
             parameters:
-                moduleTypes = "Router StandardHost BMIEnhancedHost",
+                moduleTypes = "Router StandardHost BMIEnhancedHost EnhancedHost",
                 nonIPModuleTypes = "",
                 networkAddress = "192.168.0.0",
                 netmask = "255.255.0.0";
-            display: "p=140,50;b=20,20,rect;o=blue";
+            display: "p=240,50;b=20,20,rect;o=blue";
 
     connections:
 

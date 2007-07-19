@@ -16,7 +16,7 @@ module JobProcess
         mpi: MPIProcess;
            
     connections:
-        mpi.netOut --> delay 10us -->out;
+        mpi.netOut --> delay 10us --> out;
         mpi.netIn <-- delay 10us <-- in;
 
 endmodule

@@ -20,6 +20,16 @@ module ComputeNode
             numTcpApps = 1,
             tcpAppType = "BMITcpClient";
 
+        //mpiClientHCA: EnhancedHost;
+        //parameters:
+        //    numTcpApps = 1,
+        //    tcpAppType ="MPITCPClient";
+
+        //mpiServerHCA: EnhancedHost;
+        //parameters:
+        //    numTcpApps = 1,
+        //    tcpAppType ="MPITCPServer";
+
     connections:
 
         // Connect process to bmi transport

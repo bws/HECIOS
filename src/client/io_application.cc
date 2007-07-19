@@ -1,63 +1,16 @@
+#include "io_application.h"
 #include <cassert>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "client_fs_state.h"
 #include "filename.h"
 #include "mpiio_proto_m.h"
 #include "pfs_utils.h"
 #include "umd_io_trace.h"
-#include <omnetpp.h>
 using namespace std;
-
-/**
- * Model of an application process.
- */
-class IOApplication : public cSimpleModule
-{
-public:
-    /** Constructor */
-    IOApplication() : cSimpleModule(), trace_(0), rank_(-1) {};
-    
-    /** @return the file descriptor for a file id */
-    FSOpenFile* getDescriptor(int fileId) const;
-
-protected:
-    /** Implementation of initialize */
-    virtual void initialize();
-
-    /** Implementation of finish */
-    virtual void finish();
-
-    /** Implementation of handleMessage */
-    virtual void handleMessage(cMessage* msg);
-
-    /** Get the next message to send */
-    virtual cMessage* getNextMessage();
-
-    /** Create a cMessage from an IOTraceRecord */
-    virtual cMessage* createMessage(IOTraceRecord* rec);
-    
-    /** */
-    void setDescriptor(int fileId, FSOpenFile* descriptor);
-    
-private:
-
-    IOTrace* trace_;
-    int rank_;
-    ClientFSState clientState_;
-
-    int inGate_;
-    int outGate_;
-
-    /** */
-    std::map<int, FSOpenFile*> descriptorById_;
-
-};
 
 // OMNet Registriation Method
 Define_Module(IOApplication);
-
 static int rank_seed = 0;
 
 /**
@@ -234,6 +187,8 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
             FSOpenFile* descriptor = getDescriptor(rec->fileId());
             write->setFileDes(descriptor);
             mpiMsg = write;
+
+            // Generate corresponding cache invalidation messages
             break;
         }
         case IOTrace::SEEK:

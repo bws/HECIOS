@@ -1,7 +1,7 @@
 
 import
+    "bmi_enhanced_host",
     "daemon_process", 
-    "StandardHost",
     "Storagelayer";
 
 //

@@ -41,7 +41,7 @@ void PFSUtils::registerServerIP(IPvXAddress* ip, HandleRange range)
     handleIPMap_[range] = ip;
 }
 
-IPvXAddress* PFSUtils::getServerIP(const FSHandle& handle) 
+IPvXAddress* PFSUtils::getServerIP(const FSHandle& handle) const
 {
     // Create a HandleRange whose first and last elements are equal to the
     // handle
@@ -65,6 +65,33 @@ IPvXAddress* PFSUtils::getServerIP(const FSHandle& handle)
     }
 
     return ip;
+}
+
+void PFSUtils::registerRankIP(int rank, IPvXAddress* ip)
+{
+    ipsByRank_[rank] = ip;
+}
+
+IPvXAddress* PFSUtils::getRankIP(int rank) const
+{
+    IPvXAddress* addr = 0;
+    map<int, IPvXAddress*>::const_iterator iter = ipsByRank_.find(rank);
+    if (iter != ipsByRank_.end())
+    {
+        addr = iter->second;
+    }
+    return addr;
+}
+
+std::vector<IPvXAddress*> PFSUtils::getAllRankIP() const
+{
+    vector<IPvXAddress*> addrs;
+    map<int, IPvXAddress*>::const_iterator iter;
+    for (iter = ipsByRank_.begin(); iter != ipsByRank_.end(); ++iter)
+    {
+        addrs.push_back(iter->second);
+    }
+    return addrs;
 }
 
 void PFSUtils::parsePath(FSOpenFile* descriptor) const

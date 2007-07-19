@@ -18,12 +18,21 @@ public:
     /** Clear all state information */
     static void clearState();
     
-    /** Register a mapping between an IP address and a rang of handles */
+    /** Register a mapping between an IP address and a range of handles */
     void registerServerIP(IPvXAddress* ip, HandleRange range);
     
     /** @return the Server IP address for handle */
-    IPvXAddress* getServerIP(const FSHandle& handle);
+    IPvXAddress* getServerIP(const FSHandle& handle) const;
 
+    /** Register a mapping between a process rank and an IP */
+    void registerRankIP(int rank, IPvXAddress* ip);
+    
+    /** @return the Server IP address for handle */
+    IPvXAddress* getRankIP(int rank) const;
+
+    /** @return all server IPs */
+    std::vector<IPvXAddress*> getAllRankIP() const;
+    
     /** Not sure what this does yet */
     void parsePath(FSOpenFile* descriptor) const;
 
@@ -78,6 +87,8 @@ private:
      */
     std::map<HandleRange, IPvXAddress*> handleIPMap_;
 
+    std::map<int, IPvXAddress*> ipsByRank_;
+    
     std::map<std::string, FSHandle> nameToHandleMap_;
 
     std::map<FSHandle, FSMetaData*> handleToMetaMap_;
