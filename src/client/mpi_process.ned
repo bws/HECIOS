@@ -23,10 +23,10 @@ module MPIProcess
 
         //cache: MiddlewareCache;
         cache: cacheModule;
-            display: "p=80,180;i=abstract/cache,gold";
+            display: "p=80,180;i=block/buffer2,green";
 
         fsClient: fsModule;
-            display: "p=80,280;o=orange red";
+            display: "p=80,280;i=block/classifier,yellow";
 
     connections:
 

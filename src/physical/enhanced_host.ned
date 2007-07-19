@@ -59,7 +59,7 @@ module EnhancedHost
                 routingFile = routingFile;
             display: "p=60,230;i=block/table";
         tcpApp: tcpAppType[numTcpApps] like TCPApp;
-            display: "p=163,67;i=block/app";
+            display: "p=163,67,m,3;i=block/app";
         tcp: TCP;
             display: "p=163,154;i=block/wheelbarrow";
         udpApp: udpAppType[numUdpApps] like UDPApp;

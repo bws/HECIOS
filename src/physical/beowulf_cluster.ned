@@ -16,10 +16,10 @@ module BeowulfCluster
     submodules:
 
         cpun: ComputeNode[numCPUNodes];
-            display: "p=20,120,m,8;i=device/terminal,yellow";
+            display: "p=20,120,m,8;i=abstract/server,yellow";
 
         ion: IONode[numIONodes];
-            display: "p=20,300,m,8;i=abstract/server,magenta";
+            display: "p=20,300,m,8;i=abstract/cache,magenta";
 
         switch: EtherSwitch;
             display: "p=256,200;i=abstract/switch,cyan";
@@ -27,10 +27,10 @@ module BeowulfCluster
         fsConfig: FSServerConfigurator;
             parameters:
                 handlesPerServer = 10000;
-            display: "p=40,50;b=20,20,rect;o=blue";
+            display: "p=40,50;i=abstract/table2,light blue";
 
         mpiConfig: MPIConfigurator;
-            display: "p=140,50;b=20,20,rect;o=blue";
+            display: "p=140,50;i=abstract/table2,khaki";
 
         networkConfig: FlatNetworkConfigurator;
             parameters:
@@ -38,7 +38,7 @@ module BeowulfCluster
                 nonIPModuleTypes = "",
                 networkAddress = "192.168.0.0",
                 netmask = "255.255.0.0";
-            display: "p=240,50;b=20,20,rect;o=blue";
+            display: "p=240,50;i=abstract/table2,hot pink";
 
     connections:
 

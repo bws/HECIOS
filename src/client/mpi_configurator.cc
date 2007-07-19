@@ -35,6 +35,10 @@ protected:
 
 private:
 
+    /** */
+    void createTCPApps(cModule* computeNode);
+
+    /** */
     IPvXAddress* getComputeNodeIP(cModule* computeNode);
 };
 
@@ -53,19 +57,23 @@ void MPIConfigurator::initialize(int stage)
         // Retrieve the interface table for this module
         cModule* cluster = parentModule();
         assert(0 != cluster);
-
-        // Register the handles and IP for each ComputeNode
+        
+        // Register the rank and IP for each ComputeNode
         long numComputeNodes = cluster->par("numCPUNodes");        
         for (int i = 0; i < numComputeNodes; i++)
         {
             cModule* cpun = cluster->submodule("cpun", i);
 
+            // Alter the TcpApps to be of the correct MPI types
+            createTCPApps(cpun);
+            
             // Retrieve the IO Application
             cModule* job = cpun->submodule("jobProcess");
             assert(0 != job);
             cModule* mpiProcess = job->submodule("mpi");
             assert(0 != mpiProcess);
-            IOApplication* ioApp = dynamic_cast<IOApplication*>(mpiProcess->submodule("app"));
+            IOApplication* ioApp =
+                dynamic_cast<IOApplication*>(mpiProcess->submodule("app"));
             assert(0 != ioApp);
 
             // Register the IP for the this process rank
@@ -74,6 +82,32 @@ void MPIConfigurator::initialize(int stage)
 
         }
     }
+}
+
+void MPIConfigurator::createTCPApps(cModule* computeNode)
+{
+    assert(0 != computeNode);
+
+    // Retrieve the host
+    cModule* hca = computeNode->submodule("hca");
+    assert(0 != hca);
+
+    // Convert the second TcpApp into a MPITcpClient
+    cModule* tcpApp1 = hca->submodule("tcpApp", 1);
+    assert(0 != tcpApp1);
+    tcpApp1->callFinish();
+    tcpApp1->deleteModule();
+    cModuleType* mpiClientType = findModuleType("MPITcpClient");
+    assert(0 != mpiClientType);
+    //mpiClientType->createScheduleInit("tcpApp", hca);
+
+    // Convert the third TcpApp into a MPITcpServer
+    cModule* tcpApp2 = hca->submodule("tcpApp", 2);
+    assert(0 != tcpApp2);
+    tcpApp2->callFinish();
+    tcpApp2->deleteModule();
+    cModuleType* mpiServerType = findModuleType("MPITcpServer");
+    assert(0 != mpiServerType);
 }
 
 IPvXAddress* MPIConfigurator::getComputeNodeIP(cModule* computeNode)

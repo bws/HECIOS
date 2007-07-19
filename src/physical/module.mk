@@ -5,4 +5,6 @@ DIR := src/physical
 
 SIM_SRC += $(DIR)/bmi_tcp_client.cc \
 	$(DIR)/bmi_tcp_server.cc \
-	$(DIR)/hard_disk.cc
+	$(DIR)/hard_disk.cc \
+	$(DIR)/mpi_tcp_client.cc \
+	$(DIR)/mpi_tcp_server.cc
