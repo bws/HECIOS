@@ -326,9 +326,11 @@ inline void LRUSimpleCache::insert(const int& key,                              
             && key < pos->second->address+pos->second->extent )
         {
             //printf("got in here  111\n");
-            EntryType* entry = new EntryType();
+            //EntryType* entry = new EntryType();
             currentPhysSize_ -= pos->second->extent;
             entry->extent = pos->second->extent+(pos->second->address-key);
+            if(entry->extent < pos->second->extent)
+                entry->extent = pos->second->extent;
             entry->timeStamp = simulation.simTime();
             //if(numEntries_ == 0) 
             lruList.erase(pos->second->lruRef);
@@ -351,7 +353,7 @@ inline void LRUSimpleCache::insert(const int& key,                              
             //pos++;
             
             // Cleanup the EntryType memory
-            if(numEntries_ > 1) delete prevPos->second;
+            //if(numEntries_ > 1) delete prevPos->second;
             
             
         }
@@ -381,8 +383,9 @@ inline void LRUSimpleCache::insert(const int& key,                              
         */
 
         pos = keyEntryMap.upper_bound(key);
+        pos--;
         //if(numEntries_ != 0 && pos!=keyEntryMap.begin()) pos--;
-        if((pos!= keyEntryMap.end() || pos->second->address > key) &&
+        /*if((pos!= keyEntryMap.end() || pos->second->address > key) &&
             key+value < pos->second->address)
         {
             //printf("got in here  222\n");
@@ -404,7 +407,7 @@ inline void LRUSimpleCache::insert(const int& key,                              
             // Cleanup the EntryType memory
             delete pos->second;
 
-        }
+        }*/
     
         /*if(!prevPosEmpty &&
             prevPos->second->extent+prevPos->second->address > key)
@@ -454,7 +457,7 @@ inline void LRUSimpleCache::insert(const int& key,                              
 inline void LRUSimpleCache::removeRange(int start, int end)
 {
     std::map<int, EntryType*>::iterator pos;
-    std::map<int, EntryType*>::iterator nextPos;
+    int firstHandled = 0;
     pos = keyEntryMap.upper_bound(start);
     pos--;
     int lastPos = 0;
@@ -463,7 +466,8 @@ inline void LRUSimpleCache::removeRange(int start, int end)
                 pos->second->extent, pos->second->address);
             fflush(stdout);
     if((pos != keyEntryMap.end() || pos->second->address < end) &&
-            pos->second->address < end)
+            pos->second->address <= end && pos->second->address+
+                                         pos->second->extent >= start)
     {
         // if first value does not equal start value
         if(pos->second->address != start)
@@ -474,10 +478,11 @@ inline void LRUSimpleCache::removeRange(int start, int end)
             int newInsertExtentEnd = lookup(pos->second->address)->extent+
                     pos->second->address - end;
             if(pos == keyEntryMap.end()) lastPos = 1;
-            nextPos = pos;
-            //nextPos++;
+            int toRemove = pos->second->address;
+            pos++;
+            if(pos == keyEntryMap.end()) lastPos = 1;
             printf("removin %d\n", pos->second->address);
-            remove(pos->second->address);
+            remove(toRemove);
             insert(newInsertKeyBegin, newInsertExtentBegin);
             printf("inserting from RG Begin %d %d\n", newInsertKeyBegin, 
                         newInsertExtentBegin);
@@ -488,39 +493,46 @@ inline void LRUSimpleCache::removeRange(int start, int end)
                 insert(newInsertKeyEnd, newInsertExtentEnd);
                 lastPos = 1;
             }
-            pos = nextPos;
-            pos++;
+            firstHandled = 1;
             //pos++;
         }
-        // while there are more values to remove
-        int newKey = -1;
-        int newExtent;
+        // variables to hold removal left overs
+        int newInsertKeyEnd = -1;
+        int newInsertExtentEnd;
             printf("in here %d\n", lastPos);
             fflush(stdout);
-        pos = keyEntryMap.upper_bound(start);
-        pos--;
-        while(!lastPos && numEntries_ > 0 && pos->second->address <= end
-                && lookup(pos->second->address)->extent +pos->second->address
-                    > start)
+        std::map<int, EntryType*>::iterator posBegin;
+        std::map<int, EntryType*>::iterator posEnd;
+        
+        // get the begining and end itterators for removeal
+        mapPrint();
+        posBegin = keyEntryMap.upper_bound(start);
+        if(!firstHandled) posBegin--;
+        posEnd = keyEntryMap.upper_bound(end);
+        posEnd--; // decrement counter to capture data
+
+        printf("address is %d %d\n", posBegin->first, posEnd->first);        
+
+        // if the last entry has data that is to be kept, keep track of it
+        if(posEnd->second->address+posEnd->second->extent > end)
         {
-            pos = keyEntryMap.upper_bound(start);
-            pos--;
-            printf("pos second add is %d\n", pos->second->address);
-            if(pos == keyEntryMap.end()) lastPos = 1;
-            if(pos->second->address+lookup(pos->second->address)->extent > end)
+                newInsertKeyEnd = end+1;
+                newInsertExtentEnd = 
+                    (posEnd->second->extent+posEnd->second->address)-(end+1);
+        }
+        posEnd++;   // re increment counter to proper position
+        int pastRemove = 0;    
+        for(;posBegin != posEnd; posBegin++)
+        {
+            
+            if(posBegin->first > pastRemove) 
             {
-                newKey = end+1;
-                newExtent = 
-                    (pos->second->extent+pos->second->address)-(end+1);
+                pastRemove = posBegin->first;
+                remove(posBegin->first);
             }
-            nextPos = pos;
-            nextPos++;
-            printf("pos second remove is %d %d\n", pos->second->address,
-                                                    pos->second->extent);
-            remove(pos->second->address);
-            pos = nextPos;
-        } 
-        if(newKey != -1) insert(newKey, newExtent);
+        }
+        
+        if(newInsertKeyEnd != -1) insert(newInsertKeyEnd, newInsertExtentEnd);
     }
 }
 
@@ -537,8 +549,10 @@ inline void LRUSimpleCache::remove(const int& key)
     //pos = keyEntryMap.find(key);
     pos = keyEntryMap.upper_bound(key);
     
-    if(pos!=keyEntryMap.begin())pos--;
-    
+    //if(pos!=keyEntryMap.begin())
+    pos--;
+    //pos--;   
+ 
     EntryType* entry = lookup(pos->second->address);
     
     printf("extent to remove is %d key %d %d %d\n", pos->second->extent, key,
@@ -565,11 +579,11 @@ inline void LRUSimpleCache::remove(const int& key)
         //delete &(pos->second);
     }
     
-    if(pos != keyEntryMap.begin())pos--;
+    //if(pos != keyEntryMap.begin())pos--;
     //printf("in here ---\n");
     printf("extent to remove is %d key %d %d %d\n", pos->second->extent, key,
                 pos->second->address, pos->second->address+pos->second->extent);
-    if( !removedItem && pos->second->address <= key &&
+    /*if( !removedItem && pos->second->address <= key &&
         pos->second->address+pos->second->extent >= key
         && numEntries_>0) // if the given entry starts inside another block, 
                           // remove the entire block
@@ -586,7 +600,7 @@ inline void LRUSimpleCache::remove(const int& key)
         numEntries_--;
         // Cleanup the EntryType memory
         //delete pos->second;
-    }
+    }*/
     }
     fflush(stdout);
 }

@@ -267,13 +267,18 @@ void LRUSimpleCacheTest::testRemoveRange()
     cache1_->insert(640, 50);
     CPPUNIT_ASSERT_EQUAL(1, cache1_->size());
     cache1_->insert(700, 30);
+    cache1_->insert(733,2);
     cache1_->insert(740, 800);
-    CPPUNIT_ASSERT_EQUAL(3, cache1_->size());
+    cache1_->insert(744, 30);
+    CPPUNIT_ASSERT_EQUAL(4, cache1_->size());
+    cache1_->mapPrint();
     cache1_->removeRange(650, 750);
     cache1_->mapPrint();
     CPPUNIT_ASSERT_EQUAL(2, cache1_->size());
     CPPUNIT_ASSERT(0 == cache1_->lookup(750));
     CPPUNIT_ASSERT(0 == cache1_->lookup(705));
+    CPPUNIT_ASSERT(0 != cache1_->lookup(790));
+    CPPUNIT_ASSERT(0 != cache1_->lookup(751));
     CPPUNIT_ASSERT(0 != cache1_->lookup(641));
     /*CPPUNIT_ASSERT(0 != cache1_->lookup(751));
     CPPUNIT_ASSERT(0 != cache1_->lookup(649));*/
