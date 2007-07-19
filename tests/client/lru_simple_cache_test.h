@@ -280,8 +280,7 @@ void LRUSimpleCacheTest::testRemoveRange()
     CPPUNIT_ASSERT(0 != cache1_->lookup(790));
     CPPUNIT_ASSERT(0 != cache1_->lookup(751));
     CPPUNIT_ASSERT(0 != cache1_->lookup(641));
-    /*CPPUNIT_ASSERT(0 != cache1_->lookup(751));
-    CPPUNIT_ASSERT(0 != cache1_->lookup(649));*/
+    CPPUNIT_ASSERT(0 != cache1_->lookup(649));
     
 
 }

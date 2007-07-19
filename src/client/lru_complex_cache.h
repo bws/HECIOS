@@ -49,6 +49,8 @@ public:
     /** Remove the value for key from the cache */
     void removeHandle(const int& handle);
     void removeOffset(const int& handle, const int& offset);
+    void removeOffsetExtent(const int& handle, const int& offset, 
+                            const int& extent);
 
     /**
      * @return The EntryType value wrapper for key.  The wrapper allows
@@ -214,6 +216,20 @@ inline void LRUComplexCache::removeOffset(const int& handle, const int& offset)
     }
 }
 
+inline void LRUComplexCache::removeOffsetExtent
+            (const int& handle, const int& offset, const int& extent)
+{
+    std::map<int, ComplexEntryType*>::iterator pos;
+    pos = fileEntryMap.find(handle);
+    if(pos->first == handle)
+    {
+        pos->second->blockCache->removeRange(offset, offset+extent);
+
+
+    }
+
+
+}
 
 inline LRUComplexCache::ComplexEntryType* 
 LRUComplexCache::lookup(const int& handle, 

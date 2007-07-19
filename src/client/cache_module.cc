@@ -89,6 +89,7 @@ class cacheModule : public cSimpleModule
                 int cacheAddFileName(const char* fileName);
                 int cacheAddHandle(int handle, int extent, int offset);
                 void cacheRemoveHandle(int handle);
+                void cacheEvict(int handle, int offset, int extent);
 		// delcare gates
 		int fsIn;
 		int fsOut;
@@ -263,6 +264,7 @@ void cacheModule::cacheProcess_mpiFileSetSizeRequest( spfsMPIFileSetSizeRequest 
         spfsMPIFileSetSizeResponse *m = new 
             		    spfsMPIFileSetSizeResponse("mpiFileSetSizeResponse",                               SPFS_MPI_FILE_SET_SIZE_RESPONSE);
 	send(m, appOut);
+        cacheEvict(handle, msg->getSize(),999999);
         if(consistant) send(msg, fsOut);
     }else
     {
@@ -391,21 +393,6 @@ void cacheModule::cacheProcess_mpiFileReadRequest( spfsMPIFileReadRequest *msg )
     cerr << "read message found"
                << msg->kind() << endl;
     exit(0);
-    
-    // look in cache, if found, respond, if not found, sent to fs
-    /*FSHandle handle = static_cast<FSOpenFile*>(msg->getFileDes())->handle;
-    if(systemCache->findOnlyHandle(handle))
-    {
-		// create new message and set message fields
-    	spfsMPIFileReadResponse *m = new 
-				spfsMPIFileReadResponse("mpiFileReadResponse",
-                                SPFS_MPI_FILE_READ_RESPONSE);
-	send(m, appOut);
-    }else
-    {
-        cacheAddHandle(handle,msg->getCount());
-        send(msg, fsOut);
-    }*/
 }
 
 void cacheModule::cacheProcess_mpiFileWriteAtRequest( spfsMPIFileWriteAtRequest *msg )
@@ -528,11 +515,19 @@ void cacheModule::cacheProcess_mpiFileWriteAtResponse( spfsMPIFileWriteAtRespons
     send(msg, appOut);
 }
 
-/* void cacheModule::cacheProcess_cacheEvictResponse(spfsCacheEvictResponse*mst )
+/*void cacheModule::cacheProcess_cacheEvictRequest(spfsCacheEvictRequest *msg)
 {
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
-    cacheRemoveHandle(handle);
+    cacheEvict(handle, ,msg->getOffset(),
+                       msg->getCount() * msg->getDtype()));
+}
 
+
+ void cacheModule::cacheProcess_cacheEvictResponse(spfsCacheEvictResponse*mst )
+{
+    // FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
+    // cacheRemoveHandle(handle);
+    send(mst, appOut);
 }
 */
 
@@ -613,17 +608,13 @@ void cacheModule::cacheRemoveHandle(int handle)
     systemCache->removeHandle(handle);
 }
 
-
-// helper function to perform cache add
-/*int cacheAdd(int address, int extent, int state)
+void cacheModule::cacheEvict(int handle, int offset, int extent)
 {
-	// go through map look for closest entry
-	// if entry exists, combine with current,
-	// else, just add entry, no eviction right now
-	// CacheEntry newEntry = new CacheEntry(address, extent, state);
-    // systemCache[address] = newEntry;
-    return 1;
-}*/
+    systemCache->removeOffsetExtent(handle, offset, extent);
+
+}
+
+
 
 
 // Main function for testing funcitonality of requests
