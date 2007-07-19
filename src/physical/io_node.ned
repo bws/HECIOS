@@ -18,7 +18,7 @@ module IONode
             parameters:
                 numTcpApps = 1,
                 tcpAppType = "BMITcpServer";
-            display: "p=100,80;i=block/arrival,medium purple";
+            display: "p=100,80;i=block/rxtx,medium purple";
 
         daemon: DaemonProcess;
             display: "p=100,180;i=block/process,blue";

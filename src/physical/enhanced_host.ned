@@ -21,8 +21,8 @@ import
 
 
 //
-// An embellishment of INET's StandardHost that also provides BMI and MPI
-// support in the TCP Application.
+// An embellishment of INET's StandardHost that also provides BMI support
+// in the TCP Application.
 //
 module EnhancedHost
     parameters:
@@ -39,9 +39,9 @@ module EnhancedHost
         in: ethIn[];
         out: ethOut[];
 
-        // Additional gates for bmi and mpi applications
-        in: spfsIn[];
-        out: spfsOut[];
+        // Additional gates for bmi applications
+        in: bmiIn[];
+        out: bmiOut[];
 
     submodules:
         namTrace: NAMTraceWriter;
@@ -114,10 +114,10 @@ module EnhancedHost
             eth[i].netwIn <-- networkLayer.ifOut[sizeof(out)+i];
         endfor;
 
-        // Connections for BMI and MPI messaging applications
-        for i=1..numTcpApps-1 do
-            spfsIn[i] --> tcpApp[i].bmiIn;
-            spfsOut[i] <-- tcpApp[i].bmiOut;
+        // Connections for BMI messaging applications
+        for i=0..numTcpApps-1 do
+            bmiIn[i] --> tcpApp[i].bmiIn;
+            bmiOut[i] <-- tcpApp[i].bmiOut;
         endfor;
 
 endmodule

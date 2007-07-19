@@ -15,26 +15,24 @@ module ComputeNode
     submodules:
         jobProcess: JobProcess;
 
-        hca: BMIEnhancedHost;
+        // Note:  Statically, we are only able to construct TCPApps of a
+        // single type, however the underlying TCPApp's will be
+        // changed dynamically to be of the types:
+        // 0.  BMITcpClient
+        // 1.  MPITcpClient
+        // 2.  MPITcpServer
+        hca: EnhancedHost;
         parameters:
-            numTcpApps = 1,
+            numTcpApps = 3,
             tcpAppType = "BMITcpClient";
-
-        //mpiClientHCA: EnhancedHost;
-        //parameters:
-        //    numTcpApps = 1,
-        //    tcpAppType ="MPITCPClient";
-
-        //mpiServerHCA: EnhancedHost;
-        //parameters:
-        //    numTcpApps = 1,
-        //    tcpAppType ="MPITCPServer";
 
     connections:
 
-        // Connect process to bmi transport
-        jobProcess.out --> hca.bmiIn++;
-        jobProcess.in <-- hca.bmiOut++;
+        // Connect process to network transport
+        for i=0..2 do
+            jobProcess.out++ --> hca.bmiIn++;
+            jobProcess.in++ <-- hca.bmiOut++;
+        endfor
 
         // Connect forwarding gates
         ethIn --> hca.ethIn++;

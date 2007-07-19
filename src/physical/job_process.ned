@@ -9,14 +9,23 @@ import
 module JobProcess
 
     gates:
-        in: in;
-        out: out;
+        in: in[];
+        out: out[];
 
     submodules:
         mpi: MPIProcess;
            
     connections:
-        mpi.netOut --> delay 10us --> out;
-        mpi.netIn <-- delay 10us <-- in;
+
+        // Connect the MPI process I/O network to this Job's network
+        mpi.ioOut --> delay 10us --> out++;
+        mpi.ioIn <-- delay 10us <-- in++;
+
+        // Connect the MPI process messaging network to this Job's network
+        // (The connection order here is important)
+        mpi.mpiClientOut --> out++;
+        mpi.mpiClientIn <-- in++;
+        mpi.mpiServerOut --> out++;
+        mpi.mpiServerIn <-- in++;
 
 endmodule

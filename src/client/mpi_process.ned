@@ -13,8 +13,8 @@ module MPIProcess
 
     gates:
 
-        in: netIn;
-        out: netOut;
+        in: ioIn, mpiClientIn, mpiServerIn;
+        out: ioOut, mpiClientOut, mpiServerOut;
 
     submodules:
 
@@ -30,14 +30,23 @@ module MPIProcess
 
     connections:
 
-        app.out --> cache.appIn;
-        app.in <-- cache.appOut;
+        // Connect the MPI application to the MPI messaging network
+        app.mpiClientOut --> mpiClientOut;
+        app.mpiClientIn <-- mpiClientIn;
+        app.mpiServerOut --> mpiServerOut;
+        app.mpiServerIn <-- mpiServerIn;
 
+        // Connect the MPI application to the cache
+        app.ioOut --> cache.appIn;
+        app.ioIn <-- cache.appOut;
+
+        // Connect the file cache to the file system client
         cache.fsOut --> fsClient.appIn;
         cache.fsIn <-- fsClient.appOut;
 
-        fsClient.netOut --> netOut;
-        fsClient.netIn <-- netIn;
+        // Connect the file system client to the I/O network
+        fsClient.netOut --> ioOut;
+        fsClient.netIn <-- ioIn;
 
     display: "o=white";
 

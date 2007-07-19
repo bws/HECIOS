@@ -19,8 +19,8 @@ static int rank_seed = 0;
 void IOApplication::initialize()
 {
     // Cache the gate descriptors
-    inGate_ = findGate("in");
-    outGate_ = findGate("out");
+    inGate_ = findGate("ioIn");
+    outGate_ = findGate("ioOut");
     
     // Set the process rank
     rank_ = rank_seed++;
