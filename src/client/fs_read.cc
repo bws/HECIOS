@@ -1,9 +1,9 @@
 #include "fs_read.h"
 #include <iostream>
-#define FSM_DEBUG  // Enable FSM Debug output
+//#define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
 #include "fs_module.h"
-#include "mpiio_proto_m.h"
+#include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "pvfs_proto_m.h"
 using namespace std;

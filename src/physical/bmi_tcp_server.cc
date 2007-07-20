@@ -3,7 +3,7 @@
 #include <map>
 #include "TCPSocket.h"
 #include "TCPSocketMap.h"
-#include "bmi_proto_m.h"
+#include "network_proto_m.h"
 #include "pvfs_proto_m.h"
 #include "umd_io_trace.h"
 #include <omnetpp.h>
@@ -110,21 +110,15 @@ void BMITcpServer::handleMessage(cMessage* msg)
         requestToSocketMap_.erase(resp->getSocketId());
 
         // Encapsulate the file system response and send to the client
-        spfsBMIServerSendMessage* pkt = new spfsBMIServerSendMessage();
+        spfsNetworkServerSendMessage* pkt = new spfsNetworkServerSendMessage();
         pkt->encapsulate(resp);
         pkt->setByteLength(256);
         pkt->setUniqueId(ev.getUniqueNumber());
         responseSocket->send(pkt);
-
-        // FIXME A mostly ineffective hack to disable excessive INET output
-        // ev.disable_tracing = true;        
      }
     else if (0 != dynamic_cast<spfsRequest*>(msg))
     {
         send(msg, "bmiOut");
-
-        // A mostly ineffective hack to disable excessive INET output
-        // ev.disable_tracing = false;
     }
     else
     {

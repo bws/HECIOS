@@ -1,6 +1,4 @@
 #include <iostream>
-#include "mpiio_proto_m.h"
-#include "umd_io_trace.h"
 #include <omnetpp.h>
 using namespace std;
 

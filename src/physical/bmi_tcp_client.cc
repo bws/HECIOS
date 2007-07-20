@@ -3,8 +3,7 @@
 #include "IPvXAddress.h"
 #include "TCPSocket.h"
 #include "TCPSocketMap.h"
-#include "bmi_proto_m.h"
-#include "mpiio_proto_m.h"
+#include "network_proto_m.h"
 #include "pfs_types.h"
 #include "pfs_utils.h"
 #include "pvfs_proto_m.h"
@@ -87,22 +86,16 @@ void BMITcpClient::handleMessage(cMessage* msg)
         TCPSocket* sock = getConnectedSocket(handle);
                 
         // Encapsulate the domain message and send via TCP
-        spfsBMIClientSendMessage* pkt = new spfsBMIClientSendMessage();
+        spfsNetworkClientSendMessage* pkt = new spfsNetworkClientSendMessage();
         pkt->encapsulate(msg);
         pkt->setByteLength(256);
         pkt->setUniqueId(ev.getUniqueNumber());
         sock->send(pkt);
-
-        // A mostly ineffective hack to disable excessive INET output
-        // ev.disable_tracing = true;
     }
     else if (0 != dynamic_cast<spfsResponse*>(msg))
     {
         // Send response to application
         send(msg, "bmiOut");
-                
-        // A mostly ineffective hack to disable excessive INET output
-        // ev.disable_tracing = false;
     }
     else
     {

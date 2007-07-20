@@ -9,7 +9,7 @@
 
 //#include <cacheModule.h>
 #include "cache_entry.h"
-#include "mpiio_proto_m.h"
+#include "mpi_proto_m.h"
 #include "umd_io_trace.h"
 #include "lru_complex_cache.h"
 #include "cache_module.h"
@@ -264,7 +264,7 @@ void cacheModule::cacheProcess_mpiFileSetSizeRequest( spfsMPIFileSetSizeRequest 
         spfsMPIFileSetSizeResponse *m = new 
             		    spfsMPIFileSetSizeResponse("mpiFileSetSizeResponse",                               SPFS_MPI_FILE_SET_SIZE_RESPONSE);
 	send(m, appOut);
-        cacheEvict(handle, msg->getSize(),999999);
+        cacheEvict(handle, msg->getFileSize(),999999);
         if(consistant) send(msg, fsOut);
     }else
     {

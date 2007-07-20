@@ -2,10 +2,11 @@
 #define IO_APPLICATION_H
 
 #include <omnetpp.h>
-#include "client_fs_state.h"
 class FSOpenFile;
 class IOTrace;
 class IOTraceRecord;
+class spfsCacheInvalidateRequest;
+class spfsMPIFileWriteAtRequest;
 
 /**
  * Model of an application process.
@@ -38,17 +39,24 @@ protected:
     /** Create a cMessage from an IOTraceRecord */
     virtual cMessage* createMessage(IOTraceRecord* rec);
     
-    /** */
+    /** Assiciate the fileId with a file descriptor */
     void setDescriptor(int fileId, FSOpenFile* descriptor);
+
+    /** Send out the required cache invalidation messages */
+    void invalidateCaches(spfsMPIFileWriteAtRequest* writeAt);
+    
+    /** Create a cache invalidation message for sending to peers */
+    spfsCacheInvalidateRequest* createCacheInvalidationMessage(
+        spfsMPIFileWriteAtRequest* writeAt);
     
 private:
 
     IOTrace* trace_;
-    int rank_;
-    ClientFSState clientState_;
-
-    int inGate_;
-    int outGate_;
+    unsigned int rank_;
+    int ioInGate_;
+    int ioOutGate_;
+    int mpiClientOutGate_;
+    int mpiServerInGate_;
 
     /** */
     std::map<int, FSOpenFile*> descriptorById_;

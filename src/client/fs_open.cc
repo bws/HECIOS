@@ -5,7 +5,7 @@
 #include "client_fs_state.h"
 #include "filename.h"
 #include "fs_module.h"
-#include "mpiio_proto_m.h"
+#include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "pvfs_proto_m.h"
 using namespace std;

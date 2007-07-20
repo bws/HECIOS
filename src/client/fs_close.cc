@@ -2,7 +2,7 @@
 #include <iostream>
 #include <omnetpp.h>
 #include "fs_module.h"
-#include "mpiio_proto_m.h"
+#include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "pvfs_proto_m.h"
 using namespace std;

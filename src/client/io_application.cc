@@ -3,8 +3,9 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "cache_proto_m.h"
 #include "filename.h"
-#include "mpiio_proto_m.h"
+#include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "umd_io_trace.h"
 using namespace std;
@@ -19,8 +20,10 @@ static int rank_seed = 0;
 void IOApplication::initialize()
 {
     // Cache the gate descriptors
-    inGate_ = findGate("ioIn");
-    outGate_ = findGate("ioOut");
+    ioInGate_ = findGate("ioIn");
+    ioOutGate_ = findGate("ioOut");
+    mpiClientOutGate_ = findGate("mpiClientOut");
+    mpiServerInGate_ = findGate("mpiServerIn");
     
     // Set the process rank
     rank_ = rank_seed++;
@@ -43,7 +46,7 @@ void IOApplication::initialize()
 
     // Send the kick start message
     cMessage* kickStart = new cMessage();
-    scheduleAt(5.0, kickStart);
+    scheduleAt(1.0, kickStart);
 }
 
 /**
@@ -68,9 +71,9 @@ void IOApplication::handleMessage(cMessage* msg)
         // On a self message kick start, get the first message
         delete msg;
         cMessage* firstMessage = getNextMessage();
-        send(firstMessage, outGate_);
+        send(firstMessage, ioOutGate_);
     }
-    else
+    else if (msg->arrivalGateId() == ioInGate_)
     {
         switch(msg->kind())
         {
@@ -93,7 +96,7 @@ void IOApplication::handleMessage(cMessage* msg)
                 {
                     //cerr << "\nNext application message posted: "
                     //     << nextMsg->kind() << endl;
-                    send(nextMsg, outGate_);
+                    send(nextMsg, ioOutGate_);
                 }
                 else
                 {
@@ -112,6 +115,12 @@ void IOApplication::handleMessage(cMessage* msg)
         delete (cMessage*)msg->contextPointer();
         // Delete the response
         delete msg;
+    }
+    else if (msg->arrivalGateId() == mpiServerInGate_)
+    {
+        cMessage* cacheMsg = msg->decapsulate();
+        delete msg;
+        send(cacheMsg, ioOutGate_);
     }
 }
 
@@ -189,6 +198,7 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
             mpiMsg = write;
 
             // Generate corresponding cache invalidation messages
+            invalidateCaches(write);
             break;
         }
         case IOTrace::SEEK:
@@ -221,6 +231,39 @@ FSOpenFile* IOApplication::getDescriptor(int fileId) const
         descriptor = iter->second;
     }
     return descriptor;
+}
+
+void IOApplication::invalidateCaches(spfsMPIFileWriteAtRequest* writeAt)
+{
+    cMessage* inval = createCacheInvalidationMessage(writeAt);
+    vector<IPvXAddress*> ips = PFSUtils::instance().getAllRankIP();
+
+    for (unsigned int i = 0; i < ips.size(); i++)
+    {
+        if (i != rank_)
+        {
+            spfsMPISendRequest* msg = new spfsMPISendRequest();
+            msg->setRank(i);
+            msg->encapsulate(static_cast<cMessage*>(inval->dup()));
+            send(msg, mpiClientOutGate_);
+        }
+    }
+
+    // Cleanup memory
+    delete inval;
+}
+
+spfsCacheInvalidateRequest* IOApplication::createCacheInvalidationMessage(
+    spfsMPIFileWriteAtRequest* writeAt)
+{
+    spfsCacheInvalidateRequest* invalidator = new spfsCacheInvalidateRequest();
+    FSHandle handle = writeAt->getFileDes()->metaData->handle;
+    invalidator->setHandle(handle);
+    invalidator->setOffset(writeAt->getOffset());
+    invalidator->setDataType(writeAt->getDataType());
+    invalidator->setCount(writeAt->getCount());
+
+    return invalidator;
 }
 
 /*

@@ -1,9 +1,7 @@
-
 #include "umd_io_trace.h"
 #include <cassert>
 #include <iomanip>
 #include "filename.h"
-#include "mpiio_proto_m.h"
 #include "pfs_utils.h"
 using namespace std;
 

@@ -2,7 +2,7 @@
 // BMI wrapper messages for transporting data from the client to server
 //
 
-enum spfsBMIMessageTypes
+enum spfsBMIMessageKinds
 {
     SPFS_BMI_CLIENT_SEND = 401;
     SPFS_BMI_CLIENT_RECV = 402;

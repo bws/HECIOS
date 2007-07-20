@@ -10,4 +10,5 @@ simple IOApplication
     gates:
         in: ioIn, mpiClientIn, mpiServerIn;
         out: ioOut, mpiClientOut, mpiServerOut;
+
 endsimple

@@ -5,7 +5,6 @@
 #include "IPv4InterfaceData.h"
 #include "IPvXAddress.h"
 #include "fs_server.h"
-#include "mpiio_proto_m.h"
 #include "pvfs_proto_m.h"
 #include "pfs_types.h"
 #include "pfs_utils.h"

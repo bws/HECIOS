@@ -3,12 +3,10 @@
 #include "IPvXAddress.h"
 #include "TCPSocket.h"
 #include "TCPSocketMap.h"
-#include "bmi_proto_m.h"
-#include "mpiio_proto_m.h"
-#include "pfs_types.h"
-#include "pfs_utils.h"
-#include "pvfs_proto_m.h"
 #include "ip_socket_map.h"
+#include "mpi_proto_m.h"
+#include "network_proto_m.h"
+#include "pfs_utils.h"
 #include <omnetpp.h>
 using namespace std;
 
@@ -50,9 +48,6 @@ private:
 
     /** Gate id for appIn */
     int appOutGateId_;
-
-    /** Gate id for tcpIn */
-    int tcpInGateId_;
 };
 
 // OMNet Registriation Method
@@ -65,11 +60,10 @@ void MPITcpClient::initialize()
 {
     connectPort_ = par("connectPort").longValue();
     appOutGateId_ = gate("appOut")->id();
-    tcpInGateId_ = gate("tcpIn")->id();
 }
 
 /**
- * Handle MPI-IO Response messages
+ * Handle MPI Response messages
  */
 void MPITcpClient::handleMessage(cMessage* msg)
 {
@@ -80,33 +74,26 @@ void MPITcpClient::handleMessage(cMessage* msg)
         assert(0 != sock);
         sock->processMessage(msg);
     }
-    else if (spfsRequest* req = dynamic_cast<spfsRequest*>(msg))
+    else if (spfsMPISendRequest* req = dynamic_cast<spfsMPISendRequest*>(msg))
     {
-        // Retrieve the socket for this handle
-        FSHandle handle = req->getHandle();
-        TCPSocket* sock = getConnectedSocket(handle);
+        // Retrieve the socket for this rank
+        TCPSocket* sock = getConnectedSocket(req->getRank());
                 
         // Encapsulate the domain message and send via TCP
-        spfsBMIClientSendMessage* pkt = new spfsBMIClientSendMessage();
+        spfsNetworkClientSendMessage* pkt = new spfsNetworkClientSendMessage();
         pkt->encapsulate(msg);
         pkt->setByteLength(256);
         pkt->setUniqueId(ev.getUniqueNumber());
         sock->send(pkt);
-
-        // A mostly ineffective hack to disable excessive INET output
-        // ev.disable_tracing = true;
     }
-    else if (0 != dynamic_cast<spfsResponse*>(msg))
+    else if (0 != dynamic_cast<spfsMPISendResponse*>(msg))
     {
         // Send response to application
         send(msg, appOutGateId_);
-                
-        // A mostly ineffective hack to disable excessive INET output
-        // ev.disable_tracing = false;
     }
     else
     {
-        cerr << "Unknown message type in MPI TCP client\n";
+        cerr << "Unsupported type in MPI TCP client\n";
     }
 }
 

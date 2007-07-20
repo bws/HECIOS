@@ -6,7 +6,6 @@
 #include "lookup.h"
 #include "read.h"
 #include "write.h"
-#include "mpiio_proto_m.h"
 #include "pvfs_proto_m.h"
 #include "pfs_utils.h"
 #include "fs_server.h"

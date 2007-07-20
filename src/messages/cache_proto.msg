@@ -24,6 +24,7 @@ message spfsCacheInvalidateRequest
 {
     fields:
         int handle;
+        unsigned int offset;
         MPIDataType dataType;
         unsigned int count;
 }

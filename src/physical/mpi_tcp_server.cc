@@ -3,9 +3,8 @@
 #include <map>
 #include "TCPSocket.h"
 #include "TCPSocketMap.h"
-#include "bmi_proto_m.h"
-#include "pvfs_proto_m.h"
-#include "umd_io_trace.h"
+#include "network_proto_m.h"
+#include "mpi_proto_m.h"
 #include <omnetpp.h>
 using namespace std;
 
@@ -71,7 +70,7 @@ void MPITcpServer::initialize()
 }
 
 /**
- * Handle MPI-IO Response messages
+ * Handle MPI Response messages
  */
 void MPITcpServer::handleMessage(cMessage* msg)
 {
@@ -90,36 +89,31 @@ void MPITcpServer::handleMessage(cMessage* msg)
         }
         inSock->processMessage(msg);
     }
-    else if (0 != dynamic_cast<spfsResponse*>(msg))
+    else if (0 != dynamic_cast<spfsMPISendResponse*>(msg))
     {
         // Retrieve the socket
-        spfsResponse* resp = dynamic_cast<spfsResponse*>(msg);
+        spfsMPIRequest* origReq =
+            static_cast<spfsMPIRequest*>(msg->contextPointer());
         map<int,TCPSocket*>::iterator pos =
-            requestToSocketMap_.find(resp->getSocketId());
+            requestToSocketMap_.find(origReq->getSocketId());
         assert(requestToSocketMap_.end() != pos);
         
         TCPSocket* responseSocket = pos->second;
         assert(0 != responseSocket);
 
         // Remove the entry for this socket
-        requestToSocketMap_.erase(resp->getSocketId());
+        requestToSocketMap_.erase(origReq->getSocketId());
 
         // Encapsulate the file system response and send to the client
-        spfsBMIServerSendMessage* pkt = new spfsBMIServerSendMessage();
-        pkt->encapsulate(resp);
-        pkt->setByteLength(256);
+        spfsNetworkServerSendMessage* pkt = new spfsNetworkServerSendMessage();
+        pkt->encapsulate(msg);
+        pkt->setByteLength(4);
         pkt->setUniqueId(ev.getUniqueNumber());
         responseSocket->send(pkt);
-
-        // FIXME A mostly ineffective hack to disable excessive INET output
-        // ev.disable_tracing = true;        
      }
-    else if (0 != dynamic_cast<spfsRequest*>(msg))
+    else if (0 != dynamic_cast<spfsMPISendRequest*>(msg))
     {
         send(msg, appOutGateId_);
-
-        // A mostly ineffective hack to disable excessive INET output
-        // ev.disable_tracing = false;
     }
     else
     {
@@ -145,7 +139,7 @@ void MPITcpServer::socketDataArrived(int, void *, cMessage *msg, bool)
 
     // Store the response socket for use during response
     static int nextSocketId = 0;
-    spfsRequest* request = dynamic_cast<spfsRequest*>(payload);
+    spfsMPIRequest* request = dynamic_cast<spfsMPIRequest*>(payload);
     request->setSocketId(nextSocketId++);
     requestToSocketMap_[request->getSocketId()] = responseSocket;
     

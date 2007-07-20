@@ -29,57 +29,69 @@ enum mpiAccessMode
     MPI_MODE_SEQUENTIAL = 256;
 };
 
-enum mpiRequestType
+enum mpiRequestKind
 {
-    SPFS_MPI_FILE_OPEN_REQUEST = 1;
-    SPFS_MPI_FILE_CLOSE_REQUEST = 2;
-    SPFS_MPI_FILE_DELETE_REQUEST = 3;
-    SPFS_MPI_FILE_SET_SIZE_REQUEST = 4;
-    SPFS_MPI_FILE_PREALLOCATE_REQUEST = 5;
-    SPFS_MPI_FILE_GET_SIZE_REQUEST = 6;
-    SPFS_MPI_FILE_GET_INFO_REQUEST = 7;
-    SPFS_MPI_FILE_SET_INFO_REQUEST = 8;
-    SPFS_MPI_FILE_READ_AT_REQUEST = 9;
-    SPFS_MPI_FILE_READ_REQUEST = 10;
-    SPFS_MPI_FILE_WRITE_AT_REQUEST = 11;
-    SPFS_MPI_FILE_WRITE_REQUEST = 12;
+    SPFS_MPI_SEND_REQUEST = 1;
+    SPFS_MPI_FILE_OPEN_REQUEST = 101;
+    SPFS_MPI_FILE_CLOSE_REQUEST = 102;
+    SPFS_MPI_FILE_DELETE_REQUEST = 103;
+    SPFS_MPI_FILE_SET_SIZE_REQUEST = 104;
+    SPFS_MPI_FILE_PREALLOCATE_REQUEST = 105;
+    SPFS_MPI_FILE_GET_SIZE_REQUEST = 106;
+    SPFS_MPI_FILE_GET_INFO_REQUEST = 107;
+    SPFS_MPI_FILE_SET_INFO_REQUEST = 108;
+    SPFS_MPI_FILE_READ_AT_REQUEST = 109;
+    SPFS_MPI_FILE_READ_REQUEST = 110;
+    SPFS_MPI_FILE_WRITE_AT_REQUEST = 111;
+    SPFS_MPI_FILE_WRITE_REQUEST = 112;
 };
 
-enum mpiResponseType
+enum mpiResponseKind
 {
-    SPFS_MPI_FILE_OPEN_RESPONSE = 101;
-    SPFS_MPI_FILE_CLOSE_RESPONSE = 102;
-    SPFS_MPI_FILE_DELETE_RESPONSE = 103;
-    SPFS_MPI_FILE_SET_SIZE_RESPONSE = 104;
-    SPFS_MPI_FILE_PREALLOCATE_RESPONSE = 105;
-    SPFS_MPI_FILE_GET_SIZE_RESPONSE = 106;
-    SPFS_MPI_FILE_GET_INFO_RESPONSE = 107;
-    SPFS_MPI_FILE_SET_INFO_RESPONSE = 108;
-    SPFS_MPI_FILE_READ_AT_RESPONSE = 109;
-    SPFS_MPI_FILE_READ_RESPONSE = 110;
-    SPFS_MPI_FILE_WRITE_AT_RESPONSE = 111;
-    SPFS_MPI_FILE_WRITE_RESPONSE = 112;
+    SPFS_MPI_SEND_RESPONSE = 201;
+    SPFS_MPI_FILE_OPEN_RESPONSE = 301;
+    SPFS_MPI_FILE_CLOSE_RESPONSE = 302;
+    SPFS_MPI_FILE_DELETE_RESPONSE = 303;
+    SPFS_MPI_FILE_SET_SIZE_RESPONSE = 304;
+    SPFS_MPI_FILE_PREALLOCATE_RESPONSE = 305;
+    SPFS_MPI_FILE_GET_SIZE_RESPONSE = 306;
+    SPFS_MPI_FILE_GET_INFO_RESPONSE = 307;
+    SPFS_MPI_FILE_SET_INFO_RESPONSE = 308;
+    SPFS_MPI_FILE_READ_AT_RESPONSE = 309;
+    SPFS_MPI_FILE_READ_RESPONSE = 310;
+    SPFS_MPI_FILE_WRITE_AT_RESPONSE = 311;
+    SPFS_MPI_FILE_WRITE_RESPONSE = 312;
 };
 
-// The abstract base class for all MPI IO message requests
+// The abstract base class for all MPI message requests
 message spfsMPIRequest
 {
     fields:
         bool isCollective = false;
-        int rank = 0;
-        int size = 1;
+        int rank;
         int commMembers[] = 0;
 
         // internal fields
         cFSM state;
         int responses = 0;
+        int socketId;
 };
 
-// The abstract base class for all MPI IO message responses
+// The abstract base class for all MPI message responses
 message spfsMPIResponse
 {
     fields:
         bool isSuccessful;
+};
+
+// Simple MPI Send request
+message spfsMPISendRequest extends spfsMPIRequest
+{
+};
+
+// Simple MPI Send response
+message spfsMPISendResponse extends spfsMPIResponse
+{
 };
 
 // Request to open a file 
@@ -130,7 +142,7 @@ message spfsMPIFileSetSizeRequest extends spfsMPIRequest
 {
     fields:
         FileDescriptorPtr fileDes;
-        int size;
+        int fileSize;
 };
 
 // Resize file response
@@ -143,7 +155,7 @@ message spfsMPIFilePreallocateRequest extends spfsMPIRequest
 {
     fields:
         FileDescriptorPtr fileDes;
-        int size;
+        int fileSize;
 };
 
 // Delete file response

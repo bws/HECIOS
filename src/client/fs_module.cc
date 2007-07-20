@@ -7,7 +7,7 @@
 #include "fs_write.h"
 #include "pfs_types.h"
 #include "pvfs_proto_m.h"
-#include "mpiio_proto_m.h"
+#include "mpi_proto_m.h"
 using namespace std;
 
 // local function decls
