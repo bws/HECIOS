@@ -117,14 +117,14 @@ void BMITcpServer::handleMessage(cMessage* msg)
         responseSocket->send(pkt);
 
         // FIXME A mostly ineffective hack to disable excessive INET output
-        ev.disable_tracing = true;        
+        // ev.disable_tracing = true;        
      }
     else if (0 != dynamic_cast<spfsRequest*>(msg))
     {
         send(msg, "bmiOut");
 
         // A mostly ineffective hack to disable excessive INET output
-        ev.disable_tracing = false;
+        // ev.disable_tracing = false;
     }
     else
     {

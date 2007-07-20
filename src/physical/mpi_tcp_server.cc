@@ -46,11 +46,8 @@ private:
     /** Mapping from a messages uniqueId to the amount of data received */
     std::map<int,TCPSocket*> requestToSocketMap_;
 
-    /** Gate id for bmiIn */
-    int bmiInGateId_;
-
-    /** Gate id for tcpIn */
-    int tcpInGateId_;
+    /** Gate id for appOut */
+    int appOutGateId_;
 };
 
 // OMNet Registriation Method
@@ -70,9 +67,7 @@ void MPITcpServer::initialize()
     listenSocket_.listen();
 
     // Extract the gate ids
-    bmiInGateId_ = gate("bmiIn")->id();
-    tcpInGateId_ = gate("tcpIn")->id();
-
+    appOutGateId_ = gate("appOut")->id();
 }
 
 /**
@@ -117,18 +112,18 @@ void MPITcpServer::handleMessage(cMessage* msg)
         responseSocket->send(pkt);
 
         // FIXME A mostly ineffective hack to disable excessive INET output
-        ev.disable_tracing = true;        
+        // ev.disable_tracing = true;        
      }
     else if (0 != dynamic_cast<spfsRequest*>(msg))
     {
-        send(msg, "bmiOut");
+        send(msg, appOutGateId_);
 
         // A mostly ineffective hack to disable excessive INET output
-        ev.disable_tracing = false;
+        // ev.disable_tracing = false;
     }
     else
     {
-        cerr << "BMI Server does not support message type "
+        cerr << "MPI TCP Server does not support message type "
              << " name: " << msg->name()
              << " kind: " << msg->kind()
              << " info: " << msg->info() << endl;

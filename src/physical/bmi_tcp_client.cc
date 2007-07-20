@@ -94,7 +94,7 @@ void BMITcpClient::handleMessage(cMessage* msg)
         sock->send(pkt);
 
         // A mostly ineffective hack to disable excessive INET output
-        ev.disable_tracing = true;
+        // ev.disable_tracing = true;
     }
     else if (0 != dynamic_cast<spfsResponse*>(msg))
     {
@@ -102,7 +102,7 @@ void BMITcpClient::handleMessage(cMessage* msg)
         send(msg, "bmiOut");
                 
         // A mostly ineffective hack to disable excessive INET output
-        ev.disable_tracing = false;
+        // ev.disable_tracing = false;
     }
     else
     {

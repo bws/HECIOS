@@ -37,7 +37,7 @@ protected:
 private:
 
     /** @return a socket with an open connection to the server */
-    TCPSocket* getConnectedSocket(const FSHandle& handle);
+    TCPSocket* getConnectedSocket(int rank);
 
     /** The server port to connect to */
     int connectPort_;
@@ -48,8 +48,8 @@ private:
     /** Map containing all connected sockets (for message handling) */
     TCPSocketMap socketMap_;
 
-    /** Gate id for bmiIn */
-    int bmiInGateId_;
+    /** Gate id for appIn */
+    int appOutGateId_;
 
     /** Gate id for tcpIn */
     int tcpInGateId_;
@@ -64,7 +64,7 @@ Define_Module(MPITcpClient);
 void MPITcpClient::initialize()
 {
     connectPort_ = par("connectPort").longValue();
-    bmiInGateId_ = gate("bmiIn")->id();
+    appOutGateId_ = gate("appOut")->id();
     tcpInGateId_ = gate("tcpIn")->id();
 }
 
@@ -94,26 +94,26 @@ void MPITcpClient::handleMessage(cMessage* msg)
         sock->send(pkt);
 
         // A mostly ineffective hack to disable excessive INET output
-        ev.disable_tracing = true;
+        // ev.disable_tracing = true;
     }
     else if (0 != dynamic_cast<spfsResponse*>(msg))
     {
         // Send response to application
-        send(msg, "bmiOut");
+        send(msg, appOutGateId_);
                 
         // A mostly ineffective hack to disable excessive INET output
-        ev.disable_tracing = false;
+        // ev.disable_tracing = false;
     }
     else
     {
-        cerr << "Unknown message type in BMI client\n";
+        cerr << "Unknown message type in MPI TCP client\n";
     }
 }
 
-TCPSocket* MPITcpClient::getConnectedSocket(const FSHandle& handle)
+TCPSocket* MPITcpClient::getConnectedSocket(int rank)
 {
-    IPvXAddress* serverIp = PFSUtils::instance().getServerIP(handle);
-    TCPSocket* sock = serverConnectionMap_.getSocket(serverIp->str());
+    IPvXAddress* ip = PFSUtils::instance().getRankIP(rank);
+    TCPSocket* sock = serverConnectionMap_.getSocket(ip->str());
 
     // If a connected socket does not exist, create it
     if (0 == sock)
@@ -121,10 +121,10 @@ TCPSocket* MPITcpClient::getConnectedSocket(const FSHandle& handle)
         sock = new TCPSocket();
         sock->setOutputGate(gate("tcpOut"));
         sock->setCallbackObject(this, NULL);
-        sock->connect(serverIp->get4(), connectPort_);
+        sock->connect(ip->get4(), connectPort_);
 
         // Add open socket for use in later communication
-        serverConnectionMap_.addSocket(serverIp->str(), sock);
+        serverConnectionMap_.addSocket(ip->str(), sock);
 
         // Add open socket to TCPSocketMap for handling later TCP messages
         socketMap_.addSocket(sock);
