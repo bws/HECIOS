@@ -224,7 +224,7 @@ test: $(BIN_DIR)/common_test $(BIN_DIR)/client_test
 #
 # Targets to build HECIOS simulator (gui and command line versions)
 #
-$(SIM_MSG_OUTPUT): $(THIRDPARTY_LIBS)
+$(SIM_MSG_OUTPUT): lib/inet.o
 
 $(SIM_OBJS): $(SIM_MSG_OUTPUT)
 

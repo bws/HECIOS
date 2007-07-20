@@ -6,8 +6,8 @@ simple MPITcpClient
         connectPort: numeric const; // port to connect to
 
     gates:
-        in: mpiClientIn;
-        out: mpiClientOut;
+        in: appIn;
+        out: appOut;
 
         in: tcpIn;
         out: tcpOut;

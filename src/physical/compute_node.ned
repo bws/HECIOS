@@ -13,7 +13,7 @@ module ComputeNode
         out: ethOut;
 
     submodules:
-        jobProcess: JobProcess;
+        job: JobProcess;
 
         // Note:  Statically, we are only able to construct TCPApps of a
         // single type, however the underlying TCPApp's will be
@@ -30,8 +30,8 @@ module ComputeNode
 
         // Connect process to network transport
         for i=0..2 do
-            jobProcess.out++ --> hca.bmiIn++;
-            jobProcess.in++ <-- hca.bmiOut++;
+            job.out++ --> hca.bmiIn++;
+            job.in++ <-- hca.bmiOut++;
         endfor
 
         // Connect forwarding gates

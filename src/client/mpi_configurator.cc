@@ -68,7 +68,7 @@ void MPIConfigurator::initialize(int stage)
             createTCPApps(cpun);
             
             // Retrieve the IO Application
-            cModule* job = cpun->submodule("jobProcess");
+            cModule* job = cpun->submodule("job");
             assert(0 != job);
             cModule* mpiProcess = job->submodule("mpi");
             assert(0 != mpiProcess);
@@ -92,22 +92,47 @@ void MPIConfigurator::createTCPApps(cModule* computeNode)
     cModule* hca = computeNode->submodule("hca");
     assert(0 != hca);
 
-    // Convert the second TcpApp into a MPITcpClient
+    // Retrieve the TCP object
+    cModule* tcp = hca->submodule("tcp");
+    assert(0 != tcp);
+
+    // Disconnect and delete the existing TcpApp[1] module
     cModule* tcpApp1 = hca->submodule("tcpApp", 1);
     assert(0 != tcpApp1);
-    tcpApp1->callFinish();
     tcpApp1->deleteModule();
+
+    // Create the new MPI TCPApp
     cModuleType* mpiClientType = findModuleType("MPITcpClient");
     assert(0 != mpiClientType);
-    //mpiClientType->createScheduleInit("tcpApp", hca);
-
+    cModule* mpiClient = mpiClientType->create("tcpApp1", hca);
+    mpiClient->buildInside();
+    
+    // Set the MPITcpClient parameters and connect gates
+    mpiClient->par("connectPort") = 8000;
+    hca->gate("bmiIn", 1)->connectTo(mpiClient->gate("appIn"));
+    mpiClient->gate("appOut")->connectTo(hca->gate("bmiOut", 1));
+    tcp->gate("to_appl", 1)->connectTo(mpiClient->gate("tcpIn"));
+    mpiClient->gate("tcpOut")->connectTo(tcp->gate("from_appl", 1));
+    mpiClient->scheduleStart(simTime());
+    
     // Convert the third TcpApp into a MPITcpServer
     cModule* tcpApp2 = hca->submodule("tcpApp", 2);
     assert(0 != tcpApp2);
-    tcpApp2->callFinish();
     tcpApp2->deleteModule();
+
+    // Create the new TcpApp MPITcpServer
     cModuleType* mpiServerType = findModuleType("MPITcpServer");
     assert(0 != mpiServerType);
+    cModule* mpiServer = mpiServerType->create("tcpApp2", hca);
+    mpiServer->buildInside();
+
+    // Set the MPITcpClient parameters and connect gates
+    mpiServer->par("listenPort") = 8000;
+    hca->gate("bmiIn", 2)->connectTo(mpiServer->gate("appIn"));
+    mpiServer->gate("appOut")->connectTo(hca->gate("bmiOut", 2));
+    tcp->gate("to_appl", 2)->connectTo(mpiServer->gate("tcpIn"));
+    mpiServer->gate("tcpOut")->connectTo(tcp->gate("from_appl", 2));
+    mpiServer->scheduleStart(simTime());
 }
 
 IPvXAddress* MPIConfigurator::getComputeNodeIP(cModule* computeNode)

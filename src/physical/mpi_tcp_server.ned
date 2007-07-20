@@ -6,8 +6,8 @@ simple MPITcpServer
         listenPort: numeric const; // port to listen on
 
     gates:
-        in: mpiServerIn;
-        out: mpiServerOut;
+        in: appIn;
+        out: appOut;
 
         in: tcpIn;
         out: tcpOut;
