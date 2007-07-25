@@ -179,7 +179,7 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
             spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
                 0, SPFS_MPI_FILE_READ_AT_REQUEST);
             read->setCount(1);
-            read->setDtype(rec->length());
+            read->setDataType(rec->length());
             read->setOffset(rec->offset());
             FSOpenFile* descriptor = getDescriptor(rec->fileId());
             read->setFileDes(descriptor);

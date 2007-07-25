@@ -70,7 +70,6 @@ message spfsRequest
 {
     fields:
         int fsId;
-        int serverNo; // which logical server
         int handle;   // indicates server address and object
 
         // internal fields
@@ -83,8 +82,6 @@ message spfsResponse
 {
     fields:
         bool requestSucceeded;
-        int serverNo; // which logical server - copy from request
-
         int socketId;
 };
 
@@ -121,7 +118,7 @@ message spfsReadRequest extends spfsRequest
         int serverCnt;
         unsigned long offset;
         int count;
-        FSDataType dtype;
+        FSDataType dataType;
 };
 
 // Read file data
@@ -139,7 +136,7 @@ message spfsWriteRequest extends spfsRequest
         int serverCnt;
         unsigned long offset;
         int count;
-        FSDataType dtype;
+        FSDataType dataType;
 };
 
 // Write file data

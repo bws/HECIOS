@@ -18,6 +18,7 @@ SRC_DIR = src
 INET_DIR = INET
 CLIENT_DIR= $(SRC_DIR)/client
 COMMON_DIR= $(SRC_DIR)/common
+LAYOUT_DIR= $(SRC_DIR)/layout
 MESSAGES_DIR= $(SRC_DIR)/messages
 OS_DIR= $(SRC_DIR)/os
 PHYSICAL_DIR= $(SRC_DIR)/physical
@@ -37,6 +38,7 @@ INCLUDES = $(OMNET_DIR)/include \
 	$(HECIOS_DIR) \
         $(CLIENT_DIR) \
         $(COMMON_DIR) \
+        $(LAYOUT_DIR) \
         $(MESSAGES_DIR) \
         $(OS_DIR) \
         $(PHYSICAL_DIR) \
@@ -93,6 +95,7 @@ include mf/inet.mk
 include $(DOC_DIR)/module.mk
 include $(CLIENT_DIR)/module.mk
 include $(COMMON_DIR)/module.mk
+include $(LAYOUT_DIR)/module.mk
 include $(MESSAGES_DIR)/module.mk
 include $(OS_DIR)/module.mk
 include $(PHYSICAL_DIR)/module.mk

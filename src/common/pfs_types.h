@@ -15,6 +15,12 @@ typedef int FSDataType;
 /** File system handle data type */
 typedef long long FSHandle;
 
+/** File system file offset data type */
+typedef long long FSOffset;
+
+/** File system file region length data type */
+typedef long long FSSize;
+
 /** A contguous handle range beginning at first and ending at last */
 struct HandleRange
 {

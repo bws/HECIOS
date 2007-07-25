@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include "IPvXAddress.h"
+#include "TCPCommand_m.h"
 #include "TCPSocket.h"
 #include "TCPSocketMap.h"
 #include "network_proto_m.h"
@@ -17,6 +18,10 @@ using namespace std;
 class BMITcpClient : public cSimpleModule, public TCPSocket::CallbackInterface
 {
 public:
+
+    /** Number of bytes required as overhead to use the BMI protocol */
+    static const unsigned int OVERHEAD_BYTES = 4;
+    
     /** Constructor */
     BMITcpClient() : cSimpleModule() {};
     
@@ -32,6 +37,9 @@ protected:
 
     /** Extract the payload from a completed socket message */
     void socketDataArrived(int, void *, cMessage *msg, bool);
+
+    /** Handle the arrival of status messages to note when a msg is recvd */
+    void socketStatusArrived(int connId, void *yourPtr, TCPStatusInfo *status);
     
 private:
 
@@ -87,8 +95,8 @@ void BMITcpClient::handleMessage(cMessage* msg)
                 
         // Encapsulate the domain message and send via TCP
         spfsNetworkClientSendMessage* pkt = new spfsNetworkClientSendMessage();
+        pkt->setByteLength(OVERHEAD_BYTES);
         pkt->encapsulate(msg);
-        pkt->setByteLength(256);
         pkt->setUniqueId(ev.getUniqueNumber());
         sock->send(pkt);
     }
@@ -139,6 +147,16 @@ void BMITcpClient::socketDataArrived(int, void *, cMessage *msg, bool)
     handleMessage(payload);
 }
 
+void BMITcpClient::socketStatusArrived(int connId,
+                                       void *yourPtr,
+                                       TCPStatusInfo* status)
+{
+    cerr << "Socket status arrived: State: " << status->state()
+         << " Name: " << status->stateName()
+         << " MSS: " << status->snd_mss()
+         << " Final Ack: " << status->fin_ack_rcvd() << endl;
+    delete status;
+}
 /*
  * Local variables:
  *  c-indent-level: 4

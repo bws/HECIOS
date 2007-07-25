@@ -101,12 +101,17 @@ void FSWrite::enterWrite()
     write.setServerCnt(filedes->metaData->dataHandles.size());
     write.setOffset(filedes->filePtr);
     write.setCount(writeReq_->getCount());
-    write.setDtype(writeReq_->getDataType());
+    write.setDataType(writeReq_->getDataType());
 
     // Send request to each server
     for (int i = 0; i < write.getServerCnt(); i++)
     {
         spfsWriteRequest* req = static_cast<spfsWriteRequest*>(write.dup());
+
+        // Set the message size in bytes
+        size_t bytes = 4 + 8 + 8 + 8 + (req->getCount() * req->getDataType() / 8);
+        req->setByteLength(bytes);
+
         req->setHandle(filedes->metaData->dataHandles[i]);
         fsModule_->send(req, fsModule_->fsNetOut);
     }

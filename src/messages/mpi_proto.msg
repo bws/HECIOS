@@ -210,7 +210,7 @@ message spfsMPIFileReadRequest extends spfsMPIRequest
     fields:
 	FileDescriptorPtr fileDes;
 	int count;
-	MPIDataType dtype;
+	MPIDataType dataType;
 };
 
 // File read response

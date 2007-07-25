@@ -100,7 +100,7 @@ void FSRead::enterRead()
     read.setServerCnt(filedes->metaData->dataHandles.size());
     read.setOffset(filedes->filePtr);
     read.setCount(readReq_->getCount());
-    read.setDtype(readReq_->getDtype());
+    read.setDataType(readReq_->getDataType());
 
     // Send request to each server
     for (int i = 0; i < read.getServerCnt(); i++)

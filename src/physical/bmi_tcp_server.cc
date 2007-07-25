@@ -15,6 +15,9 @@ using namespace std;
 class BMITcpServer : public cSimpleModule, public TCPSocket::CallbackInterface
 {
 public:
+    /** Number of bytes required as overhead to use the BMI protocol */
+    static const unsigned int OVERHEAD_BYTES = 4;
+    
     /** Constructor */
     BMITcpServer() : cSimpleModule() {};
     
@@ -111,8 +114,8 @@ void BMITcpServer::handleMessage(cMessage* msg)
 
         // Encapsulate the file system response and send to the client
         spfsNetworkServerSendMessage* pkt = new spfsNetworkServerSendMessage();
+        pkt->setByteLength(OVERHEAD_BYTES);
         pkt->encapsulate(resp);
-        pkt->setByteLength(256);
         pkt->setUniqueId(ev.getUniqueNumber());
         responseSocket->send(pkt);
      }

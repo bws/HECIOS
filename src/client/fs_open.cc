@@ -298,15 +298,17 @@ void FSOpen::enterCreateData()
     /* send request to each server */
     for (snum = 0; snum < numservers; snum++)
     {
-        spfsCreateRequest *newreq = (spfsCreateRequest *)req->dup();
-        newreq->setServerNo(snum);
-        // randomly select a server from 0 to S-1
+        spfsCreateRequest* newReq = (spfsCreateRequest*)req->dup();
+
+        // Set the message size in bytes
+        //newReq->setByteLength(8);
+            
+        // use first handle of range to address server
         int dataServer = fsModule_->fsState().selectServer();
-        /* use first handle of range to address server */
-        newreq->setHandle(PFSUtils::instance().getFirstHandle(dataServer));
-        fsModule_->send(newreq, fsModule_->fsNetOut);
+        newReq->setHandle(PFSUtils::instance().getFirstHandle(dataServer));
+        fsModule_->send(newReq, fsModule_->fsNetOut);
     }
-    /* free req */
+
     delete req;
     /* indicates how many responses we are waiting for */
     openReq_->setResponses(numservers);

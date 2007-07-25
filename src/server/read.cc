@@ -41,6 +41,11 @@ cMessage* Read::enterFinish()
 {
     spfsReadResponse* resp = new spfsReadResponse(
         0, SPFS_READ_RESPONSE);
+
+    // Calculate the response size
+    size_t bytes = 8 + readReq_->getCount() * readReq_->getDataType() / 8;
+    resp->setByteLength(bytes);
+    
     return resp;
 }
 

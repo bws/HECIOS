@@ -4,7 +4,6 @@
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
 #include <omnetpp.h>
-#include "mpiio_proto_m.h"
 #include "pfs_utils.h"
 #include "umd_io_trace.h"
 using namespace std;

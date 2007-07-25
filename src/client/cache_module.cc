@@ -368,21 +368,22 @@ void cacheModule::cacheProcess_mpiFileReadAtRequest( spfsMPIFileReadAtRequest *m
     /*cerr << "read at request "
         << handle << endl;*/
     printf(" reat at request %d  %d  %d\n", (int) handle, (int) msg->getOffset(),
-                            (int) msg->getCount() * msg->getDtype());
+                            (int) msg->getCount() * msg->getDataType());
     /*if(systemCache->findOnlyHandleOffsetExtent(handle,msg->getOffset(),
-                                            msg->getCount() * msg->getDtype()))*/
-    if(systemCache->lookup(handle,msg->getOffset(),
-                                            msg->getCount() * msg->getDtype()))
+                                            msg->getCount() * msg->getDataType()))*/
+    if(systemCache->lookup(handle,
+                           msg->getOffset(),
+                           msg->getCount() * msg->getDataType()))
     {
 		// create new message and set message fields
     	spfsMPIFileReadAtResponse *m = new 
-				spfsMPIFileReadAtResponse("mpiFileReadAtResponse",
-                                SPFS_MPI_FILE_READ_AT_RESPONSE);
+            spfsMPIFileReadAtResponse("mpiFileReadAtResponse",
+                                      SPFS_MPI_FILE_READ_AT_RESPONSE);
 	send(m, appOut);
     }else
     {
         cacheAddHandle(handle,msg->getOffset(),
-                msg->getCount() * msg->getDtype());
+                       msg->getCount() * msg->getDataType());
         send(msg, fsOut);
     }
 }
@@ -519,7 +520,7 @@ void cacheModule::cacheProcess_mpiFileWriteAtResponse( spfsMPIFileWriteAtRespons
 {
     FSHandle handle = static_cast<FSOpenFile*>(msg->getFiledes())->handle;
     cacheEvict(handle, ,msg->getOffset(),
-                       msg->getCount() * msg->getDtype()));
+                       msg->getCount() * msg->getDataType()));
 }
 
 
