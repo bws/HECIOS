@@ -38,8 +38,6 @@ struct FSDescriptor
     std::string path;    /* the complete path to the file */
     int filePtr;         /* offset of current position in file */
     
-    FSHandle handle; // Is this field really neccesary
-
     FSHandle handles[MAXSEG]; /* handles of all dirs along path */    
     int segstart[MAXSEG];/* index to start of each dir name */
     int seglen[MAXSEG];  /* length to end of path for each segment */

@@ -101,7 +101,7 @@ void FSRead::enterRead()
     spfsReadRequest read("ReadStuff", SPFS_READ_REQUEST);
     read.setContextPointer(readReq_);
     read.setServerCnt(filedes->metaData->dataHandles.size());
-    read.setOffset(filedes->filePtr);
+    read.setOffset(readReq_->getOffset());
     read.setCount(readReq_->getCount());
     read.setDataType(readReq_->getDataType());
 
