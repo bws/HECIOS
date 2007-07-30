@@ -6,7 +6,7 @@
 /**
  * Basic one server file distribution
  */
-class BasicDistribution public FileDistribution
+class BasicDistribution : public FileDistribution
 {
 public:
 
@@ -19,20 +19,27 @@ public:
     /** Destructor */
     virtual ~BasicDistribution() {};
 
-protected:
+private:
 
     /** @return the physical offset for a logical offset */
-    virtual int logicalToPhysicalOffset(int logicalOffset) const {return logicalOffset;};
+    virtual FSOffset convertLogicalToPhysicalOffset(size_t objectIdx,
+                                               FSOffset logicalOffset) const
+        { return logicalOffset; };
 
     /** @return the logical offset for a physical offset */
-    virtual int nextMappedLogicalOffset(int logicalOffset) const {return logicalOffset; };
+    virtual FSOffset getNextMappedLogicalOffset(size_t objectIdx,
+                                           FSOffset logicalOffset) const
+        { return logicalOffset; };
 
     /** @return the logical offset for a physical offset */
-    virtual int physicalToLogicalOffset(int physicalOffset) const {return physicalOffset};
+    virtual FSOffset convertPhysicalToLogicalOffset(
+        size_t objectIdx, physicalOffset) const
+        { return physicalOffset };
 
     /** @return the contiguous length forward from a physical offset */
-    virtual int contiguousLength(int physicalOffset) const {return CONTGUOUS_SIZE; };
-
+    virtual int getContiguousLength(size_t objectIdx,
+                                    FSOffset physicalOffset) const
+        { return CONTGUOUS_SIZE; };
 };
 
 #endif

@@ -5,6 +5,7 @@
 #include <string>
 #include "cache_proto_m.h"
 #include "filename.h"
+#include "file_builder.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "umd_io_trace.h"
@@ -149,11 +150,11 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
         {
             // If the file does not exist, create it
             Filename openFile(trace_->getFilename(rec->fileId()));
-            if (!PFSUtils::instance().fileExists(openFile))
+            if (!FileBuilder::instance().fileExists(openFile))
             {
                 // Create trace files as needed
-                int numServers = PFSUtils::instance().getNumDataServers();
-                PFSUtils::instance().createFile(openFile, 0, numServers);
+                int numServers = FileBuilder::instance().getNumDataServers();
+                FileBuilder::instance().createFile(openFile, 0, numServers);
             }
             
             spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(

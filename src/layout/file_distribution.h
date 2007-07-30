@@ -5,41 +5,72 @@
 #include "pfs_types.h"
 
 /**
- * Abstract File distribution
+ * Abstract File distribution.  Derived distributions will need to provide
+ * implementations for all of the private virtual functions.
  */
 class FileDistribution
 {
 public:
 
     /** Constructor */
-    FileDistribution(std::size_t numDataObjects)
-        : numDataObjects_(numDataObjects) {};
+    FileDistribution(std::size_t objectIdx, std::size_t numObjects);
 
     /** Destructor */
     virtual ~FileDistribution() {};
 
+    /** @return the object index for this node's file distribution */
+    int getObjectIdx() const { return objectIdx_; };
+    
     /** @return the number of data objects used by this distribution */
-    int getNumObjects() const { return numDataObjects_; };
+    int getNumObjects() const { return numObjects_; };
+
+    /** Set object index */
+    void setObjectIdx(std::size_t objectIdx) { objectIdx_ = objectIdx; };
+    
+    /** @return the physical offset for a logical offset */
+    FSOffset logicalToPhysicalOffset(FSOffset logicalOffset) const;
+
+    /** @return the logical offset for a physical offset */
+    FSOffset nextMappedLogicalOffset(FSOffset logicalOffset) const;
+
+    /** @return the logical offset for a physical offset */
+    FSOffset physicalToLogicalOffset(FSOffset physicalOffset) const;
+
+    /** @return the contiguous length forward from a physical offset */
+    FSSize contiguousLength(FSOffset physicalOffset) const;
+
+    /** @return the logical file size */
+    FSSize logicalFileSize() const;
 
 protected:
 
-    /** @return the physical offset for a logical offset */
-    virtual FSOffset logicalToPhysicalOffset(FSOffset logicalOffset) const = 0;
+    /** the index number for this data object */
+    std::size_t objectIdx_;
 
-    /** @return the logical offset for a physical offset */
-    virtual FSOffset nextMappedLogicalOffset(FSOffset logicalOffset) const = 0;
+    /** the total number of data objects */
+    std::size_t numObjects_;
 
-    /** @return the logical offset for a physical offset */
-    virtual FSOffset physicalToLogicalOffset(FSOffset physicalOffset) const =0;
+private:
 
     /** @return the contiguous length forward from a physical offset */
-    virtual FSSize contiguousLength(FSOffset physicalOffset) const = 0;
+    virtual FSSize getContiguousLength(std::size_t objectIdx,
+                                       FSOffset physicalOffset) const = 0;
 
     /** @return the logical file size */
-    virtual FSSize logicalFileSize() const = 0;
+    virtual FSSize getLogicalFileSize() const = 0;
 
-    std::size_t numDataObjects_;
-    
+    /** @return the logical offset for a physical offset */
+    virtual FSOffset getNextMappedLogicalOffset(
+        std::size_t objectIdx, FSOffset logicalOffset) const = 0;
+
+    /** @return the physical offset for a logical offset */
+    virtual FSOffset convertLogicalToPhysicalOffset(
+        std::size_t objectIdx, FSOffset logicalOffset) const = 0;
+
+    /** @return the logical offset for a physical offset */
+    virtual FSOffset convertPhysicalToLogicalOffset(
+        std::size_t objectIdx, FSOffset physicalOffset) const = 0;
+
 };
 
 #endif

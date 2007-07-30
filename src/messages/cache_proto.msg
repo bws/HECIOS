@@ -4,7 +4,7 @@
 
 // allow a pointer field in a message 
 cplusplus {{
-#include <pfs_types.h>
+#include "pfs_types.h"
 
 /** MPI Data type */
 typedef FSDataType MPIDataType;

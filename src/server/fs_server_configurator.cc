@@ -4,6 +4,7 @@
 #include "InterfaceTableAccess.h"
 #include "IPv4InterfaceData.h"
 #include "IPvXAddress.h"
+#include "file_builder.h"
 #include "fs_server.h"
 #include "pvfs_proto_m.h"
 #include "pfs_types.h"
@@ -80,17 +81,16 @@ void FSServerConfigurator::initialize(int stage)
             server->setHandleRange(range);
             
             // Register the server's handle range
-            PFSUtils& utils = PFSUtils::instance();
             int serverNum;
             if (0 == i)
             {
-                serverNum = utils.registerFSServer(server->getHandleRange(),
-                                                   true);
+                serverNum = FileBuilder::instance().registerFSServer(
+                    server->getHandleRange(), true);
             }
             else
             {
-                serverNum = utils.registerFSServer(server->getHandleRange(),
-                                                   false);
+                serverNum = FileBuilder::instance().registerFSServer(
+                    server->getHandleRange(), false);
             }
             
             // Set the server's server number (will construct ranges also)
@@ -98,7 +98,8 @@ void FSServerConfigurator::initialize(int stage)
 
             // Register the IP for the handle range
             IPvXAddress* addr = getServerIP(ion);
-            utils.registerServerIP(addr, server->getHandleRange());
+            PFSUtils::instance().registerServerIP(addr,
+                                                  server->getHandleRange());
 
         }
     }

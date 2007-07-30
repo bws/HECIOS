@@ -1,7 +1,10 @@
 #include "fs_read.h"
 #include <iostream>
+#include <numeric>
 //#define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
+#include "data_type_processor.h"
+#include "file_distribution.h"
 #include "fs_module.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
@@ -103,15 +106,38 @@ void FSRead::enterRead()
     read.setDataType(readReq_->getDataType());
 
     // Send request to each server
+    size_t numRequests = 0;
     for (int i = 0; i < read.getServerCnt(); i++)
     {
-        spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
-        req->setHandle(filedes->metaData->dataHandles[i]);
-        fsModule_->send(req, fsModule_->fsNetOut);
+        // Process the data type to determine the read size
+        FileLayout layout;
+        filedes->metaData->dist->setObjectIdx(i);
+        DataTypeProcessor::createFileLayoutForClient(read.getOffset(),
+                                                     read.getDataType(),
+                                                     read.getCount(),
+                                                     *filedes->metaData->dist,
+                                                     10000000,
+                                                     layout);
+
+        // Sum all the extents to determine total write size
+        size_t reqBytes = accumulate(layout.extents.begin(),
+                                     layout.extents.end(), 0);
+
+        if (0 != reqBytes)
+        {
+            // Set the message size in bytes
+            spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
+            req->setByteLength(4 + 8 + 8 + 8);
+            req->setHandle(filedes->metaData->dataHandles[i]);
+            fsModule_->send(req, fsModule_->fsNetOut);
+
+            // Increment the number of outstanding requests
+            numRequests++;
+        }
     }
 
     // Set the number of outstanding responses
-    readReq_->setResponses(read.getServerCnt());
+    readReq_->setResponses(numRequests);
 }
 
 void FSRead::exitCountResponses(bool& outHasReceivedAllResponses)

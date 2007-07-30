@@ -1,12 +1,15 @@
+//#define FSM_DEBUG  // Enable FSM Debug output
 #include "fs_write.h"
 #include <cassert>
 #include <iostream>
-//#define FSM_DEBUG  // Enable FSM Debug output
+#include <numeric>
 #include <omnetpp.h>
+#include "data_type_processor.h"
 #include "fs_module.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "pvfs_proto_m.h"
+#include "file_distribution.h"
 using namespace std;
 
 FSWrite::FSWrite(fsModule* module, spfsMPIFileWriteAtRequest* writeReq)
@@ -104,20 +107,43 @@ void FSWrite::enterWrite()
     write.setDataType(writeReq_->getDataType());
 
     // Send request to each server
+    int numRequests = 0;
     for (int i = 0; i < write.getServerCnt(); i++)
     {
-        spfsWriteRequest* req = static_cast<spfsWriteRequest*>(write.dup());
+        // Process the data type to determine the write size
+        FileLayout layout;
+        filedes->metaData->dist->setObjectIdx(i);
+        DataTypeProcessor::createFileLayoutForClient(write.getOffset(),
+                                                     write.getDataType(),
+                                                     write.getCount(),
+                                                     *filedes->metaData->dist,
+                                                     10000000,
+                                                     layout);
 
-        // Set the message size in bytes
-        size_t bytes = 4 + 8 + 8 + 8 + (req->getCount() * req->getDataType() / 8);
-        req->setByteLength(bytes);
+        // Sum all the extents to determine total write size
+        size_t reqBytes = accumulate(layout.extents.begin(),
+                                     layout.extents.end(), 0);
 
-        req->setHandle(filedes->metaData->dataHandles[i]);
-        fsModule_->send(req, fsModule_->fsNetOut);
+        // Send write request if server hosts data
+        if (0 != reqBytes)
+        {
+            // Add message overhead
+            reqBytes += 4 + 8 + 8 + 8;
+
+            // Set the message size in bytes
+            spfsWriteRequest* req = static_cast<spfsWriteRequest*>(
+                write.dup());
+            req->setByteLength(reqBytes);
+            req->setHandle(filedes->metaData->dataHandles[i]);
+            fsModule_->send(req, fsModule_->fsNetOut);
+
+            // Increment the number of outstanding requests
+            numRequests++;
+        }
     }
 
     // Set the number of responses
-    writeReq_->setResponses(write.getServerCnt());
+    writeReq_->setResponses(numRequests);
 }
 
 void FSWrite::exitCountResponses(bool& outHasReceivedAllResponses)

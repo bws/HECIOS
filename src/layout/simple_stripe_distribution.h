@@ -14,30 +14,36 @@ public:
     static const FSSize DEFAULT_STRIP_SIZE = 65536;
     
     /** Constructor */
-    SimpleStripeDistribution(std::size_t numServers,
+    SimpleStripeDistribution(std::size_t serverIdx,
+                             std::size_t numServers,
                              FSSize stripSize = DEFAULT_STRIP_SIZE);
 
     /** Destructor */
     virtual ~SimpleStripeDistribution() {};
 
-protected:
+private:
+
+    /** @return the contiguous length forward from a physical offset */
+    virtual FSSize getContiguousLength(std::size_t objectIdx,
+                                       FSOffset physicalOffset) const;
+
+    /** @return the logical file size */
+    virtual FSSize getLogicalFileSize() const;
+
+    /** @return the logical offset for a physical offset */
+    virtual FSOffset getNextMappedLogicalOffset(
+        std::size_t objectIdx,
+        FSOffset logicalOffset) const;
 
     /** @return the physical offset for a logical offset */
-    virtual FSOffset logicalToPhysicalOffset(FSOffset logicalOffset) const;
+    virtual FSOffset convertLogicalToPhysicalOffset(
+        std::size_t objectIdx,
+        FSOffset logicalOffset) const;
 
     /** @return the logical offset for a physical offset */
-    virtual FSOffset nextMappedLogicalOffset(FSOffset logicalOffset) const;
-
-    /** @return the logical offset for a physical offset */
-    virtual FSOffset physicalToLogicalOffset(FSOffset physicalOffset) const;
-
-    /** @return the contiguous length forward from a physical offset */
-    virtual FSSize contiguousLength(FSOffset physicalOffset) const;
-
-    /** @return the contiguous length forward from a physical offset */
-    virtual FSSize logicalFileSize() const;
-
-private:
+    virtual FSOffset convertPhysicalToLogicalOffset(
+        std::size_t objectIdx,
+        FSOffset physicalOffset) const;
 
     FSSize stripSize_;
 };

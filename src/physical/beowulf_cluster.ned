@@ -16,13 +16,13 @@ module BeowulfCluster
     submodules:
 
         cpun: ComputeNode[numCPUNodes];
-            display: "p=20,120,m,8;i=abstract/server,yellow";
+            display: "p=20,150,m,8;i=abstract/server,yellow";
 
         ion: IONode[numIONodes];
-            display: "p=20,300,m,8;i=abstract/cache,magenta";
+            display: "p=20,350,m,8;i=abstract/cache,magenta";
 
         switch: EtherSwitch;
-            display: "p=256,200;i=abstract/switch,cyan";
+            display: "p=256,250;i=abstract/switch,cyan";
 
         fsConfig: FSServerConfigurator;
             parameters:

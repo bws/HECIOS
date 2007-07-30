@@ -4,6 +4,7 @@
 #include <omnetpp.h>
 #include "client_fs_state.h"
 #include "filename.h"
+#include "file_builder.h"
 #include "fs_module.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
@@ -170,7 +171,7 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
     // Retrieve the data from the simulator bookkeeper
     Filename openFile(openReq->getFileName());
     FSOpenFile* fd = static_cast<FSOpenFile*>(openReq->getFileDes());
-    fd->metaData = PFSUtils::instance().getMetaData(openFile);
+    fd->metaData = FileBuilder::instance().getMetaData(openFile);
     fd->path = openFile.str();
     
     /* look for dir in cache */
@@ -212,7 +213,7 @@ void FSOpen::enterLookup()
     
     /* get handle for root dir */
     Filename root("/");
-    FSMetaData* rootMeta = PFSUtils::instance().getMetaData(root);
+    FSMetaData* rootMeta = FileBuilder::instance().getMetaData(root);
     req->setHandle(rootMeta->handle);
     fsModule_->send(req, fsModule_->fsNetOut);
 }
@@ -275,9 +276,9 @@ void FSOpen::enterCreateMeta()
     req->setContextPointer(openReq_);
 
     // hash path to meta server number
-    int metaServer = PFSUtils::instance().getMetaServers()[0];
+    int metaServer = FileBuilder::instance().getMetaServers()[0];
 
-    req->setHandle(PFSUtils::instance().getFirstHandle(metaServer));
+    req->setHandle(FileBuilder::instance().getFirstHandle(metaServer));
     fsModule_->send(req, fsModule_->fsNetOut);
 }
 
@@ -305,7 +306,7 @@ void FSOpen::enterCreateData()
             
         // use first handle of range to address server
         int dataServer = fsModule_->fsState().selectServer();
-        newReq->setHandle(PFSUtils::instance().getFirstHandle(dataServer));
+        newReq->setHandle(FileBuilder::instance().getFirstHandle(dataServer));
         fsModule_->send(newReq, fsModule_->fsNetOut);
     }
 

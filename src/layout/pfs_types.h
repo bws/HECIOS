@@ -1,51 +1,16 @@
 #ifndef PFS_TYPES_H
 #define PFS_TYPES_H
 
-#include <iostream>
 #include <vector>
 #include <string>
-class ClientFSState;
+#include "basic_types.h"
+class FileDistribution;
 
 /** Maximum number of entries in a path */
 #define MAXSEG 16
 
 /** File system data distribution */
 typedef int FSDataType;
-
-/** File system handle data type */
-typedef long long FSHandle;
-
-/** File system file offset data type */
-typedef long long FSOffset;
-
-/** File system file region length data type */
-typedef long long FSSize;
-
-/** A contguous handle range beginning at first and ending at last */
-struct HandleRange
-{
-    FSHandle first;
-    FSHandle last;
-};
-
-/** Equality operation for HandleRanges */
-inline bool operator==(const HandleRange& lhs, const HandleRange& rhs)
-{
-    std::cerr << "LHS: " << lhs.first << " " <<lhs.last
-              << " RHS: " << rhs.first << " " << rhs.last << std::endl;
-    return (lhs.first == rhs.first && lhs.last == rhs.last);
-}
-
-/**
- * Less than operation for HandleRanges
- *
- * Only provided so that HandleRanges can be inserted into maps,
- * Note:  Assumes that HandleRanges do not overlap!!
- */
-inline bool operator<(const HandleRange& lhs, const HandleRange& rhs)
-{
-    return (lhs.first < rhs.first && lhs.last < rhs.last);
-}
 
 /** Metadata for a file */
 struct FSMetaData
@@ -56,8 +21,8 @@ struct FSMetaData
     int nlinks;
     int size;            /* number of bytes in file */
     FSHandle handle; /* handle of the metadata object */
-    std::vector<FSHandle> dataHandles; /* size of handles is server count */
-    int dist;            /* for now just strip size in bytes */
+    std::vector<FSHandle> dataHandles;
+    FileDistribution* dist;            
 };
 
 /** Equality operation for Metadata */
@@ -67,9 +32,8 @@ inline bool operator==(const FSMetaData& lhs, const FSMetaData& rhs)
 }
 
 /** Descriptor for an open file */
-struct FSOpenFile
+struct FSDescriptor
 {
-    //ClientFSState *fs;   /* pointer to client unique fs struct */
     FSMetaData* metaData; /* pointer to file unique metadata */
     std::string path;    /* the complete path to the file */
     int filePtr;         /* offset of current position in file */
@@ -82,6 +46,9 @@ struct FSOpenFile
     int curseg;          /* which segment is being looked up */
     int segcnt;
 };
+
+/** For backwards compatibility, alias FSDescriptor to FSOpenFile */
+typedef struct FSDescriptor FSOpenFile;
 
 #endif
 
