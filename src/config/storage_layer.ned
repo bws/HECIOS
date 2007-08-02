@@ -22,26 +22,34 @@ module StorageLayer
         physicalDiskType : string;
 
     gates:
-        in: in;
-        out: out;
+        in: in, fromDisk;
+        out: out, toDisk;
 
     submodules:
 
         ioLibrary: ioLibraryType like AIOLibrary;
+            display: "p=80,80;i=block/layer,white";
 
         systemCall: systemCallInterfaceType like ASystemCallInterface;
+            display: "p=80,180;i=block/layer,green";
 
         fileSystem: fileSystemType like AFileSystem;
+            display: "p=80,280;i=block/wheelbarrow,forest green";
 
         blockCache: blockCacheType like ABlockCache;
+            display: "p=80,380;i=block/buffer,yellow";
 
         blockTrans: blockTranslatorType like ABlockTranslator;
+            display: "p=80,480;i=block/classifier2,orange";
 
         diskScheduler: diskSchedulerType like ADiskScheduler;
+            display: "p=80,580;i=block/control,orange red";
 
         accessManager: accessManagerType like AAccessManager;
+            display: "p=80,680;i=block/cogwheel,red";
 
-        hardDisk: physicalDiskType like BasicModelDisk;
+        //hardDisk: physicalDiskType like BasicModelDisk;
+        //    display: "p=80,780;i=block/buffer2,purple";
 
     connections:
 
@@ -65,7 +73,19 @@ module StorageLayer
     diskScheduler.next_request --> accessManager.next_request;
     diskScheduler.response <-- accessManager.out;
 
-    accessManager.get_block --> hardDisk.in;
-    accessManager.block <-- hardDisk.out;
+    //accessManager.get_block --> hardDisk.in;
+    //accessManager.block <-- hardDisk.out;
+
+    accessManager.get_block --> toDisk;
+    accessManager.block <-- fromDisk;
 
 endmodule
+
+//
+// Local variables:
+//  c-indent-level: 4
+//  c-basic-offset: 4
+// End:
+//
+// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+//

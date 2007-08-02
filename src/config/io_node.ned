@@ -33,8 +33,8 @@ module IONode
         daemon.in <-- hca.bmiOut++;
 
         // Connect storage gates
-        daemon.storageOut --> hardDisk.in;
-        daemon.storageIn <-- hardDisk.out;
+        daemon.toDisk --> hardDisk.in;
+        daemon.fromDisk <-- hardDisk.out;
 
         // Connect networking gates
         ethIn --> hca.ethIn++;
@@ -43,3 +43,12 @@ module IONode
     display: "o=white";
         
 endmodule
+
+//
+// Local variables:
+//  c-indent-level: 4
+//  c-basic-offset: 4
+// End:
+//
+// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+//

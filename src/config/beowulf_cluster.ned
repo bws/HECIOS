@@ -61,3 +61,12 @@ endmodule
 network adenine: BeowulfCluster
 
 endnetwork
+
+//
+// Local variables:
+//  c-indent-level: 4
+//  c-basic-offset: 4
+// End:
+//
+// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+//
