@@ -150,7 +150,7 @@ inline void LRUSimpleCache::insert(const int& key,                              
         /*&& pos->second->extent+pos->first < key
         && numEntries_ != 0)*/  // if entry already exists
     {
-        printf("found entry, merging %d %d\n", key,value);
+        //printf("found entry, merging %d %d\n", key,value);
         // Entry already exists, update it
         if(value > pos->second->extent)
         {

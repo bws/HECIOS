@@ -10,6 +10,7 @@
 //#include <cacheModule.h>
 #include "cache_entry.h"
 #include "mpi_proto_m.h"
+#include "cache_proto_m.h"
 #include "umd_io_trace.h"
 #include "lru_complex_cache.h"
 #include "cache_module.h"
@@ -31,7 +32,7 @@ typedef struct cacheLine
 //map<int, CacheEntry> systemCache;
 //map<int, CacheEntry>::iterator cacheIter;
 // wheather the cache should have consistency or not
-int consistant = 0;
+int consistant = 1;
 
 class cacheModule : public cSimpleModule
 {
@@ -51,6 +52,7 @@ class cacheModule : public cSimpleModule
 
 		// Request forward declerations
 		void cacheProcessTimer(cMessage *msg );
+                void cacheProcess_cacheInvalidateRequest(spfsCacheInvalidateRequest *msg);
    		void cacheProcess_mpiFileOpenRequest(spfsMPIFileOpenRequest *msg );
 		void cacheProcess_mpiFileCloseRequest(spfsMPIFileCloseRequest *msg );
 		void cacheProcess_mpiFileDeleteRequest(spfsMPIFileDeleteRequest *msg );
@@ -66,11 +68,12 @@ class cacheModule : public cSimpleModule
 		void cacheProcess_mpiFileWriteRequest(spfsMPIFileWriteRequest *msg );
 		
 		// Response forward declerations
+                void cacheProcess_cacheInvalidateResponse(spfsCacheInvalidateResponse *msg);
 		void cacheProcess_mpiFileOpenResponse(spfsMPIFileOpenResponse *msg );
 		void cacheProcess_mpiFileCloseResponse(spfsMPIFileCloseResponse *msg );
 		void cacheProcess_mpiFileDeleteResponse(spfsMPIFileDeleteResponse *msg );
-    void cacheProcess_mpiFileSetSizeResponse(spfsMPIFileSetSizeResponse *msg );
-    void cacheProcess_mpiFilePreallocateResponse( 
+                void cacheProcess_mpiFileSetSizeResponse(spfsMPIFileSetSizeResponse *msg );
+                void cacheProcess_mpiFilePreallocateResponse( 
         spfsMPIFilePreallocateResponse *msg );
 		void cacheProcess_mpiFileGetSizeResponse(spfsMPIFileGetSizeResponse *msg );
 		void cacheProcess_mpiFileReadAtResponse(spfsMPIFileReadAtResponse *msg );
@@ -95,6 +98,8 @@ class cacheModule : public cSimpleModule
 		int fsOut;
 		int appIn;
 		int appOut;
+                
+                int evictCount;
 
 };
 
@@ -112,6 +117,7 @@ void cacheModule::initialize()
 	appIn = findGate("appIn");
 	appOut = findGate("appOut");
         systemCache = new LRUComplexCache(300,2000000000);	
+        evictCount = 0;
 }
 
 void cacheModule::finish()
@@ -133,6 +139,8 @@ void cacheModule::handleMessage(cMessage *msg)
 		switch(msg->kind())
 		{
 		// cases for request handling
+                case SPFS_CACHE_INVALIDATE_REQUEST:
+                    cacheProcess_cacheInvalidateRequest((spfsCacheInvalidateRequest*) msg);
 		case SPFS_MPI_FILE_OPEN_REQUEST:  
 			cacheProcess_mpiFileOpenRequest((spfsMPIFileOpenRequest*) msg);
 			break;
@@ -172,6 +180,8 @@ void cacheModule::handleMessage(cMessage *msg)
 			cacheProcess_mpiFileWriteRequest((spfsMPIFileWriteRequest*) msg);
 			break;
 		// cases for response handling
+                case SPFS_CACHE_INVALIDATE_RESPONSE:
+                    cacheProcess_cacheInvalidateResponse((spfsCacheInvalidateResponse*)msg);
 		case SPFS_MPI_FILE_OPEN_RESPONSE:
 			cacheProcess_mpiFileOpenResponse((spfsMPIFileOpenResponse*) msg);
 			break;
@@ -215,6 +225,17 @@ void cacheModule::handleMessage(cMessage *msg)
 
 // messages from app/fs - request
 // in simplist cases, just send a response for now
+void cacheModule::cacheProcess_cacheInvalidateRequest(spfsCacheInvalidateRequest *msg)
+{
+    spfsCacheInvalidateResponse *m = new spfsCacheInvalidateResponse("mpiCacheInvalidateResponse",
+                                    SPFS_CACHE_INVALIDATE_RESPONSE);
+    if(systemCache->findOnlyHandle(msg->getHandle()))
+    {
+        cacheEvict(msg->getHandle(), msg->getOffset(), msg->getCount());
+        evictCount++;
+    }
+    send(m, appOut);
+}
 
 void cacheModule::cacheProcess_mpiFileOpenRequest( spfsMPIFileOpenRequest *msg )
 {
@@ -269,7 +290,7 @@ void cacheModule::cacheProcess_mpiFileSetSizeRequest( spfsMPIFileSetSizeRequest 
     }else
     {
         send(msg, fsOut);
-        cacheAddHandle(handle, 1, 1);
+        cacheAddHandle(handle, 1, msg->getFileSize());
     }
 }
 
@@ -443,6 +464,11 @@ void cacheModule::cacheProcess_mpiFileWriteRequest( spfsMPIFileWriteRequest *msg
 }
 
 // messages to fs - responses
+void cacheModule::cacheProcess_cacheInvalidateResponse(spfsCacheInvalidateResponse *msg)
+{
+
+
+}
 
 void cacheModule::cacheProcess_mpiFileOpenResponse( spfsMPIFileOpenResponse *msg )
 {
@@ -537,6 +563,7 @@ void cacheModule::cacheUnknownMessage(cMessage *msg)
 {
               cerr << "unknown message found"
                  << msg->kind() << endl;
+              printf("unknown message found");
 }
 
 
