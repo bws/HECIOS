@@ -14,12 +14,14 @@ module DaemonProcess
 
     submodules:
         server: FSServer;
-           
+          
+        storage: StorageLayer;
+ 
     connections nocheck:
         server.netOut --> out;
         server.netIn <-- in; 
 
-        server.storageOut --> storageOut;
-        server.storageIn <-- storageIn;
+        //server.storageOut --> storage.Out;
+        //server.storageIn <-- storage.In;
 
 endmodule

@@ -14,6 +14,7 @@ module ComputeNode
 
     submodules:
         job: JobProcess;
+            display: "p=100,180;i=block/process,blue";
 
         // Note:  Statically, we are only able to construct TCPApps of a
         // single type, however the underlying TCPApp's will be
@@ -25,6 +26,7 @@ module ComputeNode
         parameters:
             numTcpApps = 3,
             tcpAppType = "BMITcpClient";
+        display: "p=100,80;i=block/rxtx,medium purple";
 
     connections:
 

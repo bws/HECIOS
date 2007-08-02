@@ -19,7 +19,7 @@ module BeowulfCluster
             display: "p=20,150,m,8;i=abstract/server,yellow";
 
         ion: IONode[numIONodes];
-            display: "p=20,350,m,8;i=abstract/cache,magenta";
+            display: "p=20,380,m,8;i=abstract/cache,magenta";
 
         switch: EtherSwitch;
             display: "p=256,250;i=abstract/switch,cyan";

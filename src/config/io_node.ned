@@ -23,7 +23,7 @@ module IONode
         daemon: DaemonProcess;
             display: "p=100,180;i=block/process,blue";
 
-        storage: StorageLayer;
+        hardDisk: BasicModelDisk;
             display: "p=100,280;i=abstract/db,sienna";
 
     connections nocheck:
@@ -33,8 +33,8 @@ module IONode
         daemon.in <-- hca.bmiOut++;
 
         // Connect storage gates
-        daemon.storageOut --> storage.in;
-        daemon.storageIn <-- storage.out;
+        daemon.storageOut --> hardDisk.in;
+        daemon.storageIn <-- hardDisk.out;
 
         // Connect networking gates
         ethIn --> hca.ethIn++;
