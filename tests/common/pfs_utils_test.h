@@ -18,14 +18,6 @@ class PFSUtilsTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testInstance);
     CPPUNIT_TEST(testRegisterServerIP);
     CPPUNIT_TEST(testGetServerIP);
-    CPPUNIT_TEST(testRegisterFSServer);
-    CPPUNIT_TEST(testGetMetaServers);
-    CPPUNIT_TEST(testGetNextHandle);
-    CPPUNIT_TEST(testFileExists);
-    CPPUNIT_TEST(testGetMetaData);
-    CPPUNIT_TEST(testGetDescriptor);
-    CPPUNIT_TEST(testCreateDirectory);
-    CPPUNIT_TEST(testCreateFile);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -39,27 +31,11 @@ public:
     void testInstance();
     void testRegisterServerIP();
     void testGetServerIP();
-    void testRegisterFSServer();
-    void testGetMetaServers();
-    void testGetNextHandle();
-    void testFileExists();
-    void testGetMetaData();
-    void testGetDescriptor();
-    void testCreateDirectory();
-    void testCreateFile();
 
-private:
-    HandleRange range1_;
-    HandleRange range2_;
 };
 
 void PFSUtilsTest::setUp()
 {
-    // Register servers for use during testing
-    range1_.first = 100; range1_.last = 200;
-    range2_.first = 2000; range2_.last = 3000;
-    PFSUtils::instance().registerFSServer(range1_, true);
-    PFSUtils::instance().registerFSServer(range2_, false);
 }
 
 void PFSUtilsTest::tearDown()
@@ -155,100 +131,6 @@ void PFSUtilsTest::testGetServerIP()
     CPPUNIT_ASSERT(0 == PFSUtils::instance().getServerIP(h7_3));
     CPPUNIT_ASSERT_EQUAL(ip7 , PFSUtils::instance().getServerIP(h7_4));
 
-}
-
-void PFSUtilsTest::testRegisterFSServer()
-{
-    HandleRange h1, h2;
-    PFSUtils::instance().registerFSServer(h1, true);
-    PFSUtils::instance().registerFSServer(h2, false);
-    CPPUNIT_ASSERT(true);
-}
-
-void PFSUtilsTest::testGetMetaServers()
-{
-    // Clear the setup state to ease testing
-    PFSUtils::clearState();
-
-    // Register 3 servers with servers 1 and 3 set as Meta servers
-    HandleRange h1, h2, h3;
-    PFSUtils::instance().registerFSServer(h1, true);
-    PFSUtils::instance().registerFSServer(h2, false);
-    PFSUtils::instance().registerFSServer(h3, true);
-    vector<int> metaServers = PFSUtils::instance().getMetaServers();
-    CPPUNIT_ASSERT_EQUAL(0, metaServers[0]);
-    CPPUNIT_ASSERT_EQUAL(2, metaServers[1]);
-}
-
-void PFSUtilsTest::testGetNextHandle()
-{
-    CPPUNIT_ASSERT_EQUAL(range1_.first, PFSUtils::instance().getNextHandle(0));
-    CPPUNIT_ASSERT_EQUAL(range1_.first + 1,
-                         PFSUtils::instance().getNextHandle(0));
-    CPPUNIT_ASSERT_EQUAL(range2_.first, PFSUtils::instance().getNextHandle(1));
-    CPPUNIT_ASSERT_EQUAL(range2_.first + 1,
-                         PFSUtils::instance().getNextHandle(1));
-}
-
-void PFSUtilsTest::testFileExists()
-{
-    // Create files
-    string file1 = "/test1";
-    string file2 = "/test2";
-    string dir1 = "/dir1";
-    PFSUtils::instance().createFile(file1, 0, 1);
-    PFSUtils::instance().createDirectory(dir1, 0);
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(file1));
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(dir1));
-    CPPUNIT_ASSERT(!PFSUtils::instance().fileExists(file2));
-}
-
-void PFSUtilsTest::testGetMetaData()
-{
-    Filename file1("/test1");
-    PFSUtils::instance().createFile(file1, 0, 1);
-    FSMetaData* file1MD = PFSUtils::instance().getMetaData(file1);
-    CPPUNIT_ASSERT(0 != file1MD);
-    
-    string dir1 = "/dir1";
-    PFSUtils::instance().createDirectory(dir1, 0);
-    //CPPUNIT_FAIL("Not implemented");
-}
-
-void PFSUtilsTest::testGetDescriptor()
-{
-    //CPPUNIT_FAIL("Not implemented");
-}
-
-void PFSUtilsTest::testCreateDirectory()
-{
-    Filename dir1("/dir1");
-    Filename dir2("/");
-    Filename dir3("/foo/bar/baz");
-    PFSUtils::instance().createDirectory(dir1, 0);
-    PFSUtils::instance().createDirectory(dir2, 0);
-    PFSUtils::instance().createDirectory(dir3, 0);
-
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(dir1));
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(dir2));
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(Filename("/")));
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(Filename("/foo")));
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(Filename("/foo/bar")));
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(Filename("/foo/bar/baz")));
-}
-
-void PFSUtilsTest::testCreateFile()
-{
-    Filename file1("/file1");
-    Filename file2("/foo/bar/baz");
-    PFSUtils::instance().createFile(file1, 0, 1);
-    PFSUtils::instance().createFile(file2, 0, 1);
-
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(file1));
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(Filename("/")));
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(Filename("/foo")));
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(Filename("/foo/bar")));
-    CPPUNIT_ASSERT(PFSUtils::instance().fileExists(Filename("/foo/bar/baz")));
 }
 
 #endif

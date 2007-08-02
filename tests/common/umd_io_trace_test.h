@@ -4,6 +4,7 @@
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
 #include <omnetpp.h>
+#include "file_builder.h"
 #include "pfs_utils.h"
 #include "umd_io_trace.h"
 using namespace std;
@@ -44,8 +45,8 @@ void UMDIOTraceTest::setUp()
     // Register servers for use during testing
     HandleRange range1 = {100, 200};
     HandleRange range2 = {2000, 3000};
-    PFSUtils::instance().registerFSServer(range1, true);
-    PFSUtils::instance().registerFSServer(range2, false);
+    FileBuilder::instance().registerFSServer(range1, true);
+    FileBuilder::instance().registerFSServer(range2, false);
 }
 
 void UMDIOTraceTest::tearDown()

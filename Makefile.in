@@ -142,9 +142,10 @@ endif
 #
 TEST_DIR := tests
 
-TEST_COMMON_DIR := $(TEST_DIR)/common
-TEST_SUPPORT_DIR := $(TEST_DIR)/support
 TEST_CLIENT_DIR := $(TEST_DIR)/client
+TEST_COMMON_DIR := $(TEST_DIR)/common
+TEST_LAYOUT_DIR := $(TEST_DIR)/layout
+TEST_SUPPORT_DIR := $(TEST_DIR)/support
 
 TEST_INCLUDES := -I$(TEST_COMMON_DIR)
 
@@ -158,6 +159,7 @@ TEST_LIBS := -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
 SIM_TEST_SRC :=
 include $(TEST_CLIENT_DIR)/module.mk
 include $(TEST_COMMON_DIR)/module.mk
+include $(TEST_LAYOUT_DIR)/module.mk
 include $(TEST_SUPPORT_DIR)/module.mk
 
 
@@ -220,11 +222,6 @@ doc: $(DOC_EPS) $(DOC_PDF)
 	opp_neddoc -d ../api-doc/html -t $(DOC_DIR)/Doxytag.xml -o $(DOC_DIR)/ned-doc $(SRC_DIR)
 
 #
-# Build unit test drivers
-#
-test: $(BIN_DIR)/common_test $(BIN_DIR)/client_test
-
-#
 # Targets to build HECIOS simulator (gui and command line versions)
 #
 $(SIM_MSG_OUTPUT): lib/inet.o
@@ -239,15 +236,11 @@ $(BIN_DIR)/hecios_cmd: lib/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o $(LIBS_CMD) -o $@
 
-#
-# common module unit tests
-#
-COMMON_TEST_OBJS = $(TEST_COMMON_DIR)/unit_test.o \
-	$(TEST_SUPPORT_DIR)/test_cenvir.o
 
-$(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
-	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(COMMON_TEST_OBJS) lib/inet.o $(TEST_LIBS) -o $@
+#
+# Build unit test drivers
+#
+test: $(BIN_DIR)/common_test $(BIN_DIR)/client_test $(BIN_DIR)/layout_test
 
 #
 # client module unit tests
@@ -257,7 +250,27 @@ CLIENT_TEST_OBJS = $(TEST_CLIENT_DIR)/unit_test.o \
 
 $(BIN_DIR)/client_test: $(CLIENT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $(SIM_MSG_OBJS) $(SIM_OBJS) $(CLIENT_TEST_OBJS) lib/inet.o $(TEST_LIBS) -o $@
+	$(LD) -g $(TEST_INCLUDES) $^ $(TEST_LIBS) -o $@
+
+#
+# common module unit tests
+#
+COMMON_TEST_OBJS = $(TEST_COMMON_DIR)/unit_test.o \
+	$(TEST_SUPPORT_DIR)/test_cenvir.o
+
+$(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
+	@mkdir -p $(BIN_DIR)
+	$(LD) -g $(TEST_INCLUDES) $^ $(TEST_LIBS) -o $@
+
+#
+# layout module unit tests
+#
+LAYOUT_TEST_OBJS = $(TEST_LAYOUT_DIR)/unit_test.o \
+	$(TEST_SUPPORT_DIR)/test_cenvir.o
+
+$(BIN_DIR)/layout_test: $(LAYOUT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
+	@mkdir -p $(BIN_DIR)
+	$(LD) -g $(TEST_INCLUDES) $^ $(TEST_LIBS) -o $@
 
 #
 # Psuedotargets (required by make for some dependencies)
