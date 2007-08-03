@@ -10,6 +10,18 @@ SimpleStripeDistribution::SimpleStripeDistribution(size_t serverIdx,
 {
 }
 
+SimpleStripeDistribution::SimpleStripeDistribution(
+    const SimpleStripeDistribution& other )
+    : FileDistribution(other),
+      stripSize_(other.stripSize_)
+{
+}
+
+SimpleStripeDistribution* SimpleStripeDistribution::doClone() const
+{
+    return new SimpleStripeDistribution(*this);
+}
+
 FSOffset SimpleStripeDistribution::convertLogicalToPhysicalOffset(
     size_t objectIdx, FSOffset logicalOffset) const
 {

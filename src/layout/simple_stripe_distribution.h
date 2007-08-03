@@ -18,10 +18,16 @@ public:
                              std::size_t numServers,
                              FSSize stripSize = DEFAULT_STRIP_SIZE);
 
+    /** Copy Constructor */
+    SimpleStripeDistribution(const SimpleStripeDistribution& other);
+    
     /** Destructor */
     virtual ~SimpleStripeDistribution() {};
 
 private:
+
+    /** @return a cloned copy of this SimpleStripeDistribution*/
+    virtual SimpleStripeDistribution* doClone() const;
 
     /** @return the contiguous length forward from a physical offset */
     virtual FSSize getContiguousLength(std::size_t objectIdx,

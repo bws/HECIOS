@@ -55,12 +55,12 @@ std::vector<long> NativeFileSystem::getBlocks(FSHandle handle,
     std::vector<long> blocks;
 
     // for now assume all files start at block zero
-    long startBlock = offset % BLOCK_SIZE_BYTES;
-    long numBlocks = bytes % BLOCK_SIZE_BYTES;
-    for (int i = startBlock; i < numBlocks; i++)
-    {
-        blocks.push_back(i);
-    }
+    //long startBlock = offset % BLOCK_SIZE_BYTES;
+    //long numBlocks = bytes % BLOCK_SIZE_BYTES;
+    //for (int i = startBlock; i < numBlocks; i++)
+    //{
+    //    blocks.push_back(i);
+    //}
     return blocks;
 }
 

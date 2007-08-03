@@ -15,9 +15,15 @@ public:
     /** Constructor */
     FileDistribution(std::size_t objectIdx, std::size_t numObjects);
 
+    /** Copy Constructor */
+    FileDistribution(const FileDistribution& other);
+    
     /** Destructor */
     virtual ~FileDistribution() {};
 
+    /** @return a pointer to a correctly copied concrete FileDistribution */
+    FileDistribution* clone() const { return doClone(); };
+    
     /** @return the object index for this node's file distribution */
     int getObjectIdx() const { return objectIdx_; };
     
@@ -52,6 +58,9 @@ protected:
 
 private:
 
+    /** @return a pointer to a correctly copied derived FileDistribution */
+    virtual FileDistribution* doClone() const = 0;
+    
     /** @return the contiguous length forward from a physical offset */
     virtual FSSize getContiguousLength(std::size_t objectIdx,
                                        FSOffset physicalOffset) const = 0;

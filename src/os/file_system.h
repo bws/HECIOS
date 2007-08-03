@@ -67,17 +67,20 @@ class PassThroughFileSystem : public AbstractFileSystem
 
 /**
  * Model of a Native OS File System.  At present the only additional
- * functionality provided by this file system is the ability to convery
+ * functionality provided by this file system is the ability to convert
  * file locations into block numbers.  The block size is assumed to be 512
  * bytes since that seems to match our disk models most closely.
  */
 class NativeFileSystem : public AbstractFileSystem
 {
-    /** The size of a file system block in bytes */
-    static const int BLOCK_SIZE_BYTES = 512;
+    /** The default file system block size */
+    static const std::size_t DEFAULT_BLOCK_SIZE_BYTES = 4096;
     
 public:
 
+    /** @return the file system's block size in bytes */
+    std::size_t getFileBlockSize() const { return DEFAULT_BLOCK_SIZE_BYTES; };
+    
     /**
      * @return a list of blocks that map to the corresponding file region
      */

@@ -1,7 +1,10 @@
 
 #include "read.h"
 #include <cassert>
+#include <numeric>
 #include <omnetpp.h>
+#include "data_type_processor.h"
+#include "file_distribution.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
@@ -39,13 +42,23 @@ cMessage* Read::handleServerMessage(cMessage* msg)
 
 cMessage* Read::enterFinish()
 {
+    // Calculate the response size
+    FileLayout layout;
+    DataTypeProcessor::createFileLayoutForServer(readReq_->getOffset(),
+                                                 readReq_->getDataType(),
+                                                 readReq_->getCount(),
+                                                 *(readReq_->getDist()),
+                                                 10000000,
+                                                 layout);
+
+    // Sum all the extents to determine total write size
+    size_t reqBytes = accumulate(layout.extents.begin(),
+                                 layout.extents.end(), 0);
+    assert(0 != reqBytes);
+    
     spfsReadResponse* resp = new spfsReadResponse(
         0, SPFS_READ_RESPONSE);
-
-    // Calculate the response size
-    size_t bytes = 8 + readReq_->getCount() * readReq_->getDataType() / 8;
-    resp->setByteLength(bytes);
-    
+    resp->setByteLength(reqBytes);    
     return resp;
 }
 

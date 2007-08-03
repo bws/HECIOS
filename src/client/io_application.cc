@@ -55,6 +55,14 @@ void IOApplication::initialize()
  */
 void IOApplication::finish()
 {
+    // Delete open descriptors
+    map<int, FSOpenFile*>::iterator iter;
+    for (iter = descriptorById_.begin(); iter != descriptorById_.end(); ++iter)
+    {
+        delete iter->second;
+    }
+
+    // Delete open trace
     delete trace_;
     trace_ = 0;
 
@@ -114,6 +122,7 @@ void IOApplication::handleMessage(cMessage* msg)
 
         // Delete the originating request
         delete (cMessage*)msg->contextPointer();
+        
         // Delete the response
         delete msg;
     }
@@ -133,6 +142,7 @@ cMessage* IOApplication::getNextMessage()
         if (traceRec)
         {
             msg = createMessage(traceRec);
+            delete traceRec;
         }
 
     } while (0 == msg && trace_->hasMoreRecords());

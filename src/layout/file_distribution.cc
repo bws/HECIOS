@@ -10,6 +10,13 @@ FileDistribution::FileDistribution(size_t objectIdx, size_t numObjects)
     assert(objectIdx_ < numObjects_);
 }
 
+FileDistribution::FileDistribution(const FileDistribution& other)
+    : objectIdx_(other.objectIdx_),
+      numObjects_(other.numObjects_)
+{
+    assert(objectIdx_ < numObjects_);
+}
+
 FSOffset FileDistribution::logicalToPhysicalOffset(
     FSOffset logicalOffset) const
 {

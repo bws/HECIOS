@@ -83,6 +83,117 @@ void AbstractDisk::handleMessage(cMessage *msg)
   scheduleAt(completeRequestAt, cDiskDelayMessage);
 }
 
+
+//
+// Create BasicModelDisk module -- this not code originally developed as part
+// of FSS
+//
+Define_Module(BasicModelDisk);
+
+void BasicModelDisk::handleMessage(cMessage* msg)
+{
+    AbstractDisk::handleMessage(msg);
+}
+
+void BasicModelDisk::initialize()
+{
+    fixedControllerReadOverheadSecs_ =
+        par("fixedControllerReadOverheadSecs").doubleValue();
+    fixedControllerWriteOverheadSecs_ =
+        par("fixedControllerWriteOverheadSecs").doubleValue();
+    trackSwitchTimeSecs_ = par("trackSwitchTimeSecs").doubleValue();
+    averageReadSeekSecs_ = par("averageReadSeekSecs").doubleValue();
+    averageWriteSeekSecs_ = par("averageWriteSeekSecs").doubleValue();
+    numCylinders_ = par("numCylinders").longValue();
+    tracksPerCylinder_ = par("tracksPerCylinder").longValue();
+    sectorsPerTrack_ = par("sectorsPerTrack").longValue();
+    rpms_ = par("rpms").longValue();
+
+    sectorsPerCylinder_ = sectorsPerTrack_ * tracksPerCylinder_;
+    numSectors_ = sectorsPerCylinder_ * numCylinders_;
+    timePerRevolution_ = 1.0 / rpms_;
+    timePerSector_ = timePerRevolution_ / sectorsPerCylinder_;
+}
+
+double BasicModelDisk::service(cMessage* msg)
+{
+    // Message data
+    bool isRead = msg->par("is_read").boolValue();
+    
+    // Service delay
+    double totalDelay = 0.0;
+
+    // Determine physical destination 
+    long destBlock = ((cPar&)msg->par("block")).longValue();
+    long destCylinder = destBlock / sectorsPerCylinder_;
+    long destSector = destBlock % sectorsPerCylinder_;
+
+    // Account for fixed controller overhead
+    double delay = 0.0;
+    if ( msg->par("is_read").boolValue() )
+    {
+      delay = fixedControllerReadOverheadSecs_;
+    }
+    else
+    {
+      delay = fixedControllerWriteOverheadSecs_;
+    }
+    totalDelay += delay;
+
+    // get to the right cylinder
+    long cylindersToMove = abs(destCylinder - lastCylinder_);
+    if (0 != cylindersToMove)
+    {
+        // Simply use the average seek time to calculate cylinder location
+        // (a bad choice, but arm acceleration data is not currently available
+        // this is a serious departure from the paper's model, possibly leading
+        // to double digit inaccuracies)
+        if (isRead)
+            totalDelay += averageReadSeekSecs_;
+        else
+            totalDelay += averageWriteSeekSecs_;
+    }
+
+    // Account for the rotational delay
+    long sectorsToMove = 0;
+    long currentSector =
+        static_cast<long>(fmod(simTime(), timePerRevolution_)/timePerSector_);
+    if ( currentSector != destSector )
+    {
+        if ( currentSector < destSector )
+        {
+            sectorsToMove = destSector - currentSector;
+        }
+        else
+        {
+            // Must wrap around to sector 0
+            sectorsToMove  = sectorsPerCylinder_ - currentSector;
+            sectorsToMove += destSector;
+        }
+        totalDelay += sectorsToMove * timePerSector_;
+    }
+    
+    // Account for movement between tracks
+    if ( sectorsToMove > 0 )
+    {
+        long currentTrack = currentSector / sectorsPerTrack_;
+        long destTrack = destSector / sectorsPerTrack_;
+        if ( currentTrack != destTrack )
+        {
+            long numTracks = abs(destTrack - currentTrack);
+            totalDelay += numTracks * trackSwitchTimeSecs_;
+        }
+    }
+
+    // Add delay to transfer the data off the media
+    totalDelay += timePerSector_;
+
+    // Update disk state
+    lastCylinder_ = destCylinder;
+    
+    return totalDelay;
+}
+
 //------------------------------------------------
 //
 // ACPDisk : Fake disk with given service time
@@ -222,113 +333,3 @@ double HP97560Disk::service(cMessage *msg)
   return totalDelay;
 }
 
-
-//
-// Create BasicModelDisk module -- this not code originally developed as part
-// of FSS
-//
-Define_Module(BasicModelDisk);
-
-void BasicModelDisk::handleMessage(cMessage* msg)
-{
-    AbstractDisk::handleMessage(msg);
-}
-
-void BasicModelDisk::initialize()
-{
-    fixedControllerReadOverheadSecs_ =
-        par("fixedControllerReadOverheadSecs").doubleValue();
-    fixedControllerWriteOverheadSecs_ =
-        par("fixedControllerWriteOverheadSecs").doubleValue();
-    trackSwitchTimeSecs_ = par("trackSwitchTimeSecs").doubleValue();
-    averageReadSeekSecs_ = par("averageReadSeekSecs").doubleValue();
-    averageWriteSeekSecs_ = par("averageWriteSeekSecs").doubleValue();
-    numCylinders_ = par("numCylinders").longValue();
-    tracksPerCylinder_ = par("tracksPerCylinder").longValue();
-    sectorsPerTrack_ = par("sectorsPerTrack").longValue();
-    rpms_ = par("rpms").longValue();
-
-    sectorsPerCylinder_ = sectorsPerTrack_ * tracksPerCylinder_;
-    numSectors_ = sectorsPerCylinder_ * numCylinders_;
-    timePerRevolution_ = 1.0 / rpms_;
-    timePerSector_ = timePerRevolution_ / sectorsPerCylinder_;
-}
-
-double BasicModelDisk::service(cMessage* msg)
-{
-    // Message data
-    bool isRead = msg->par("is_read").boolValue();
-    
-    // Service delay
-    double totalDelay = 0.0;
-
-    // Determine physical destination 
-    long destBlock = ((cPar&)msg->par("block")).longValue();
-    long destCylinder = destBlock / sectorsPerCylinder_;
-    long destSector = destBlock % sectorsPerCylinder_;
-
-    // Account for fixed controller overhead
-    double delay = 0.0;
-    if ( msg->par("is_read").boolValue() )
-    {
-      delay = fixedControllerReadOverheadSecs_;
-    }
-    else
-    {
-      delay = fixedControllerWriteOverheadSecs_;
-    }
-    totalDelay += delay;
-
-    // get to the right cylinder
-    long cylindersToMove = abs(destCylinder - lastCylinder_);
-    if (0 != cylindersToMove)
-    {
-        // Simply use the average seek time to calculate cylinder location
-        // (a bad choice, but arm acceleration data is not currently available
-        // this is a serious departure from the paper's model, possibly leading
-        // to double digit inaccuracies)
-        if (isRead)
-            totalDelay += averageReadSeekSecs_;
-        else
-            totalDelay += averageWriteSeekSecs_;
-    }
-
-    // Account for the rotational delay
-    long sectorsToMove = 0;
-    long currentSector =
-        static_cast<long>(fmod(simTime(), timePerRevolution_)/timePerSector_);
-    if ( currentSector != destSector )
-    {
-        if ( currentSector < destSector )
-        {
-            sectorsToMove = destSector - currentSector;
-        }
-        else
-        {
-            // Must wrap around to sector 0
-            sectorsToMove  = sectorsPerCylinder_ - currentSector;
-            sectorsToMove += destSector;
-        }
-        totalDelay += sectorsToMove * timePerSector_;
-    }
-    
-    // Account for movement between tracks
-    if ( sectorsToMove > 0 )
-    {
-        long currentTrack = currentSector / sectorsPerTrack_;
-        long destTrack = destSector / sectorsPerTrack_;
-        if ( currentTrack != destTrack )
-        {
-            long numTracks = abs(destTrack - currentTrack);
-            totalDelay += numTracks * trackSwitchTimeSecs_;
-        }
-    }
-
-    // Add delay to transfer the data off the media
-    totalDelay += timePerSector_;
-
-    // Update disk state
-    lastCylinder_ = destCylinder;
-    
-    return totalDelay;
-}

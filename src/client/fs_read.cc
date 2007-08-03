@@ -75,7 +75,11 @@ void FSRead::handleMessage(cMessage* msg)
             {
                 FSM_Goto(currentState, COUNT_RESPONSES);
             }
-            
+
+            // Delete originating request's distribution
+            spfsReadRequest* req = (spfsReadRequest*)msg->contextPointer();
+            delete req->getDist();
+                
             // Cleanup responses
             delete msg;
             msg = 0;
@@ -127,8 +131,9 @@ void FSRead::enterRead()
         {
             // Set the message size in bytes
             spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
-            req->setByteLength(4 + 8 + 8 + 8);
             req->setHandle(filedes->metaData->dataHandles[i]);
+            req->setDist(filedes->metaData->dist->clone());
+            req->setByteLength(4 + 8 + 8 + 8);
             fsModule_->send(req, fsModule_->fsNetOut);
 
             // Increment the number of outstanding requests

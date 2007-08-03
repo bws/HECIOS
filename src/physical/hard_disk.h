@@ -11,7 +11,7 @@
  */
 
 /*
- *  $Id: hard_disk.h,v 1.2 2007/04/18 15:00:48 bradles Exp $
+ *  $Id: hard_disk.h,v 1.3 2007/08/03 15:05:21 bradles Exp $
  */
 
 #include <omnetpp.h>
@@ -73,6 +73,54 @@ protected:
     cMessage *cDiskDelayMessage;
     cMessage *cPendingRequestMessage;
 
+};
+
+/**
+ * BasicDiskModel capable of simulating most of the disk model described
+ * in the 1994 IEEE Computer article: "An Introduction to Disk Drive Modeling"
+ * by Ruemmler and Wilkes.
+ *
+ * Model does account for controller delay, disk architecture, and density,
+ * however it lacks adequate modelling of position modeling, detailed
+ * disk layout, or possible read/write parity based optimizations
+ *
+ */
+class BasicModelDisk : public AbstractDisk
+{
+public:
+
+    /** Initialize Omnet model */
+    virtual void initialize();
+
+protected:
+    
+    /** Concrete implementation of service method */
+    virtual double service(cMessage* msg);
+
+    virtual void handleMessage(cMessage* msg);
+    
+private:
+
+    // Data descibing disk characteristics
+    double fixedControllerReadOverheadSecs_;
+    double fixedControllerWriteOverheadSecs_;
+    double trackSwitchTimeSecs_;
+    double averageReadSeekSecs_;
+    double averageWriteSeekSecs_;
+    long numCylinders_;
+    long tracksPerCylinder_;
+    long sectorsPerTrack_;
+    long rpms_;
+
+    // Data derived from disk characteristics
+    long sectorsPerCylinder_;
+    long numSectors_;
+    double timePerRevolution_;
+    double timePerSector_;
+
+    // Disk state
+    long lastCylinder_;
+    double lastTime_;
 };
 
 /**
@@ -153,51 +201,6 @@ class HP97560Disk : public AbstractDisk
     HP97560Disk();
 
     virtual double service(cMessage *msg);
-};
-
-/**
- * Hard disk drive with the performance characteristics of a Hitachi Deskstar
- * T7K500 with NCQ (500GB SATA) released in 2006.  Performance characteristics
- * downloaded from Hitachi as t7k500_sp.pdf
- *
- * http://www.hitachigst.com/tech/techlib.nsf/products/Deskstar_T7K500
- */
-class BasicModelDisk : public AbstractDisk
-{
-public:
-
-    /** Initialize Omnet model */
-    virtual void initialize();
-
-protected:
-    
-    /** Concrete implementation of service method */
-    virtual double service(cMessage* msg);
-
-    virtual void handleMessage(cMessage* msg);
-    
-private:
-
-    // Data descibing disk characteristics
-    double fixedControllerReadOverheadSecs_;
-    double fixedControllerWriteOverheadSecs_;
-    double trackSwitchTimeSecs_;
-    double averageReadSeekSecs_;
-    double averageWriteSeekSecs_;
-    long numCylinders_;
-    long tracksPerCylinder_;
-    long sectorsPerTrack_;
-    long rpms_;
-
-    // Data derived from disk characteristics
-    long sectorsPerCylinder_;
-    long numSectors_;
-    double timePerRevolution_;
-    double timePerSector_;
-
-    // Disk state
-    long lastCylinder_;
-    double lastTime_;
 };
 
 #endif

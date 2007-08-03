@@ -3,18 +3,16 @@
 //
 
 cplusplus {{
-#include <pfs_types.h>
-
-class TCPSocket;
-typedef TCPSocket* TCPSocketPtr;
+#include "pfs_types.h"
+#include "file_distribution.h"
+typedef FileDistribution* FileDistributionPtr;
 }}
 
-struct FSMetaData;
-struct HandleRange;
+// Forward declarations
 class cFSM;
 class noncobject FSDataType;
-class noncobject TCPSocketPtr;
-
+class noncobject FSMetaData;
+class noncobject FileDistributionPtr;
 
 // PVFS Request Protocol Messages
 enum spfsRequestKind 
@@ -119,6 +117,7 @@ message spfsReadRequest extends spfsRequest
         unsigned long offset;
         int count;
         FSDataType dataType;
+        FileDistributionPtr dist;
 };
 
 // Read file data
@@ -137,6 +136,7 @@ message spfsWriteRequest extends spfsRequest
         unsigned long offset;
         int count;
         FSDataType dataType;
+        FileDistributionPtr dist;
 };
 
 // Write file data
