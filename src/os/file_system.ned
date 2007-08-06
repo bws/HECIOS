@@ -12,7 +12,7 @@
 // Implemented File Systems:
 // -  PassThroughFileSystem
 //
-simple AFileSystem
+simple FileSystem
   gates:
     in: in, response;
     out: out, request;

@@ -16,7 +16,7 @@ AbstractAccessManager::
     AbstractAccessManager( const char *namestr, cModule *parent, size_t stack):
 cSimpleModule( namestr, parent, stack)
 {
-  RequestMsg = new cMessage( "get-next-request" );
+    //RequestMsg = new cMessage( "get-next-request" );
 }
 
 AbstractAccessManager::~AbstractAccessManager()
@@ -35,7 +35,7 @@ void AbstractAccessManager::initialize()
   fromDiskId = gate("block")->id();
 
   // Prime the pump by asking the Scheduler for the FIRST disk request
-  send( RequestMsg, "get_next_request" );
+  //send( RequestMsg, "get_next_request" );
 }
 
 void AbstractAccessManager::finish()

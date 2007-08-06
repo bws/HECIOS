@@ -9,44 +9,41 @@
 
 #include "file_system.h"
 
-AbstractFileSystem::AbstractFileSystem( const char *namestr, cModule *parent, size_t stack):
-cSimpleModule( namestr, parent, stack),
-queue("queue")
+FileSystem::FileSystem()
+    : cSimpleModule()
 {
 }
 
-void AbstractFileSystem::initialize()
+FileSystem::~FileSystem()
+{
+}
+
+void FileSystem::initialize()
 {
   fromInGateId = gate("in")->id();
 }
 
-void AbstractFileSystem::finish()
+void FileSystem::finish()
 {
 }
 
-void AbstractFileSystem::handleMessage(cMessage *msg)
+void FileSystem::handleMessage(cMessage *msg)
 {
-  if ( msg->arrivalGateId()==fromInGateId ) {
-    ev << className() << ": Sending " << msg->name() << " to request" << endl;
-    send( msg, "request" );
-  } else {
-    ev << className() << ": Completed service of " << msg->name() << endl;
-    send( msg, "out" );
-  }
-}
-
-//------------------------------------------------
-
-Define_Module_Like( PassThroughFileSystem, AFileSystem )
-
-PassThroughFileSystem::
-    PassThroughFileSystem(const char *namestr, cModule *parent, size_t stack):
-AbstractFileSystem(namestr, parent, stack)
-{
+    if ( msg->arrivalGateId()==fromInGateId )
+    {
+        ev << className() << ": Sending " << msg->name() << " to request"
+           << endl;
+        send( msg, "request" );
+    }
+    else
+    {
+        ev << className() << ": Completed service of " << msg->name() << endl;
+        send( msg, "out" );
+    }
 }
 
 
-Define_Module_Like(NativeFileSystem, AFileSystem);
+Define_Module_Like(NativeFileSystem, FileSystem);
 
 std::vector<long> NativeFileSystem::getBlocks(FSHandle handle,
                                               size_t offset,

@@ -18,8 +18,7 @@ module StorageLayer
         blockCacheType : string,
         blockTranslatorType : string,
         diskSchedulerType : string,
-        accessManagerType : string,
-        physicalDiskType : string;
+        accessManagerType : string;
 
     gates:
         in: in, fromDisk;
@@ -47,9 +46,6 @@ module StorageLayer
 
         accessManager: accessManagerType like AAccessManager;
             display: "p=80,680;i=block/cogwheel,red";
-
-        //hardDisk: physicalDiskType like BasicModelDisk;
-        //    display: "p=80,780;i=block/buffer2,purple";
 
     connections:
 

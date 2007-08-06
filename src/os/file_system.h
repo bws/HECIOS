@@ -15,24 +15,18 @@
 #include "pfs_types.h"
 
 /**
- * Abstract base class for a File System server
+ * File System abstract base class module
  */
-class AbstractFileSystem : public cSimpleModule
+class FileSystem : public cSimpleModule
 {
   public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    AbstractFileSystem(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
 
-    cQueue queue;
+    /** Constructor */
+    FileSystem();
 
-    int fromInGateId;
-
+    /** Destructor */
+    virtual ~FileSystem() = 0;
+    
     /**
      *  This is the initialization routine for this simulation module.
      */
@@ -47,22 +41,11 @@ class AbstractFileSystem : public cSimpleModule
      *  This is the finalization routine for this simulation module.
      */
     virtual void handleMessage( cMessage *msg );
-};
 
-/**
- * Simple File System model that passes requests through with no translation
- */
-class PassThroughFileSystem : public AbstractFileSystem
-{
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    PassThroughFileSystem(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    cQueue queue;
+
+    int fromInGateId;
+
 };
 
 /**
@@ -71,7 +54,7 @@ class PassThroughFileSystem : public AbstractFileSystem
  * file locations into block numbers.  The block size is assumed to be 512
  * bytes since that seems to match our disk models most closely.
  */
-class NativeFileSystem : public AbstractFileSystem
+class NativeFileSystem : public FileSystem
 {
     /** The default file system block size */
     static const std::size_t DEFAULT_BLOCK_SIZE_BYTES = 4096;

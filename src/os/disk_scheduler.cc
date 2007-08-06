@@ -22,7 +22,7 @@ nstep_queue("disk-scheduler-nstep-queue")
   priorityInversionLog = new cOutVector( "scheduler-pri-inversion-log", 2 );
   processTimeLog = new cOutVector( "scheduler-service-time-log", 2 );
 
-  cPeriodMessage = new cMessage( "period-marker" );
+  //cPeriodMessage = new cMessage( "period-marker" );
 }
 
 AbstractScheduler::~AbstractScheduler()
@@ -47,8 +47,8 @@ void AbstractScheduler::initialize()
 
   setup();
   next_period = simTime() + period;
-  if ( period )
-    scheduleAt( next_period, cPeriodMessage );
+  //if ( period )
+  //  scheduleAt( next_period, cPeriodMessage );
 }
 
 void AbstractScheduler::finish()

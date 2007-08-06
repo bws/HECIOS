@@ -5,7 +5,37 @@
 //  $Joel-Id: disk.ned,v 1.4 1999/05/12 21:01:24 omnetpp Exp $
 //-------------------------------------------------------------
 
+// Abstract interface for all Hard Disks
+simple HardDisk
+    gates:
+        in: in;
+        out: out;
+endsimple
 
+//
+// Hard Disk Model that uses the simplified model examined in the FSS
+// simulator
+//
+simple BasicModelDisk
+    parameters:
+        fixedControllerReadOverheadSecs: const,
+        fixedControllerWriteOverheadSecs: const,
+        trackSwitchTimeSecs: const,
+        averageReadSeekSecs: const,
+        averageWriteSeekSecs: const,
+        capacity: const,
+        numCylinders: const,
+        tracksPerCylinder: const,
+        sectorsPerTrack: const,
+        rpms: const;
+
+    gates:
+        in: in;
+        out: out;
+endsimple  
+
+// This model is from FSS, and is a place holder while figuring out what
+// parts of the FSS system are usable and what is not
 //
 // Abstract interface for Physical Disks
 //
@@ -20,26 +50,6 @@ simple APhysicalDisk
     in: in;
     out: out;
 endsimple
-
-//
-// Hard Disk Model simplifed from the model used in HP97560Disk
-//
-simple BasicModelDisk
-    parameters:
-        fixedControllerReadOverheadSecs: const,
-        fixedControllerWriteOverheadSecs: const,
-        trackSwitchTimeSecs: const,
-        averageReadSeekSecs: const,
-        averageWriteSeekSecs: const,
-        numCylinders: const,
-        tracksPerCylinder: const,
-        sectorsPerTrack: const,
-        rpms: const;
-
-    gates:
-        in: in;
-        out: out;
-endsimple  
 
 
 //
