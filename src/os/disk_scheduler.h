@@ -1,32 +1,42 @@
 #ifndef DISK_SCHEDULER_H
 #define DISK_SCHEDULER_H
-/**
- * @file disk_scheduler.h
- * @brief Disk Scheduler Modules
- *
- * Note: These classes are adapted from the FSS simulator project and are
- * licensed only under the GPL.  The FSS project is available at:
- * http://www.omnetpp.org/filemgmt/singlefile.php?lid=104 and
- * http://www.omnetpp.org/doc/FSS-doc/neddoc/index.html
- */
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2006 Joel Sherrill <joel@oarcorp.com>
+// Copyright (C) 2007 Brad Settlemyer
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
 
+#include <vector>
 #include <omnetpp.h>
-#include "priority_distribution.h"
+#include "basic_types.h"
 
-// This is the set of block comparison functions available to the
-// various disk scheduling algorithms.
-extern "C" {
-  int CompareBlocksNumber(cObject *left, cObject *right);
-  int CompareBlocksTimeStamp(cObject *left, cObject *right);
-  int CompareBlocksPriority(cObject *left, cObject *right);
-  int CompareBlocksPriorityAscending(cObject *left, cObject *right);
-  int CompareBlocksPriorityDescending(cObject *left, cObject *right);
-}; /* end of extern "C" */
+/** Scheduler entry for disk schedulers */
+struct SchedulerEntry : public cObject
+{
+    LogicalBlockAddress lba;
+    cMessage* request;
+    bool isReadRequest;
+};
 
 /**
  * Abstract base class for Disk Schedulers
  */
-class AbstractScheduler : public cSimpleModule
+class DiskScheduler : public cSimpleModule
 {
   public:
     /**
@@ -36,370 +46,239 @@ class AbstractScheduler : public cSimpleModule
      *  @param parent (in) is the parent of this module
      *  @param stack (in) is the size in bytes of the stack for this module
      */
-    AbstractScheduler(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    DiskScheduler();
 
     /**
      *  This is the destructor for this simulation module.
      */
-    ~AbstractScheduler();
+    ~DiskScheduler();
 
-    int       number_of_ops;   // number of ops to schedule per period
+protected:
 
-    double    period;          // length of each period
-
-    cQueue    queue;
-
-    cQueue    nstep_queue;
-
-    cMessage *cPeriodMessage;
-
-    int newReqestId;
-
-    int getRequestId;
-
-    int responseId;
-
-    double next_period;
-
-    cMessage *RequestMsg;
-
-    bool        priorityInversionInProcess;
-
-    double      priorityInversionStartTime;
-
-    cStdDev    *priorityInversionStats;
-
-    cOutVector *priorityInversionLog;
-
-    cOutVector *processTimeLog;
-
-    /**
-     *  This is the initialization routine for this simulation module.
-     */
     virtual void initialize();
 
-    /**
-     *  This is the finalization routine for this simulation module.
-     */
     virtual void finish();
 
+    virtual void handleMessage(cMessage* msg);
+    
+    /** Perform initialization tasks on scheduler before messages arrive */
+    virtual void initializeScheduler() = 0;
+
+    /** @return true if the disk scheduler has no outstanding entries */
+    virtual bool isEmpty() const = 0;
+    
+    /** Add entry to the scheduler */
+    virtual void addEntry(SchedulerEntry* entry) = 0;
+
+    /** @return the next scheduled entry */
+    virtual SchedulerEntry* popNextEntry() = 0;
+
     /**
-     *  This is the message handling routine for this simulation module.
+     * Remove a superceded request if one exists.  A read or write request
+     * becomes superceded if an incoming write request is to the same address.
      *
-     *  @param msg (in) is the new message to process
+     * @return the superceded request
      */
-    virtual void handleMessage(cMessage *msg);
+    virtual std::vector<SchedulerEntry*> popRequestsCompletedByRead(
+        LogicalBlockAddress lba) = 0;
 
-    void checkIfWriteSatisfiesAnyRequest(cMessage *msg);
+    /**
+     * @return a list of all satisfied requests
+     */
+    virtual std::vector<SchedulerEntry*> popRequestsCompletedByWrite(
+        LogicalBlockAddress lba) = 0;
 
-    void checkIfWriteSatisfiesAnotherWrite(cMessage *msg);
+private:
 
-    void checkForSatisfiedRead(cMessage *msg);
+    int inGateId_;
 
-    void checkAQueue(
-      cQueue *q, cMessage *msg, bool read_satisfies, bool write_satisfies);
+    int outGateId_;
 
-    // hook functions to (re)define behaviour
-    virtual void setup(void) {};
-
-    virtual void resetPeriod(void) {};
-
-    virtual void checkIfWriteSatisfies(cMessage *msg);
-
-    virtual void checkIfReadSatisfies(cMessage *msg);
-
-    virtual void insertNewRequest(cMessage *msg);
-
-    virtual cMessage *getNextToDo();
-
-    virtual void checkForPriorityInversion(cMessage *msg);
+    int requestGateId_;
 };
 
 /**
- * FIFO Disk Scheduler
+ * First come, first served Disk Scheduler
  */
-class FIFOScheduler : public AbstractScheduler
+class FCFSDiskScheduler : public DiskScheduler
 {
   public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    FIFOScheduler(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    /** Constructor */
+    FCFSDiskScheduler();
+    
+protected:
+
+    virtual void initializeScheduler() {};
+
+    virtual bool isEmpty() const { return fcfsQueue.empty(); };
+    
+    virtual void addEntry( SchedulerEntry* entry);
+    
+    virtual SchedulerEntry* popNextEntry();
+
+    virtual std::vector<SchedulerEntry*> popRequestsCompletedByRead(
+        LogicalBlockAddress lba);
+
+    virtual std::vector<SchedulerEntry*> popRequestsCompletedByWrite(
+        LogicalBlockAddress lba);
+private:
+
+    cQueue fcfsQueue;
+    
 };
 
 /**
  * Shortest Seek Time First Disk Scheduler
  */
-class SSTFScheduler : public AbstractScheduler
+class SSTFDiskScheduler : public DiskScheduler
 {
-  long current_block;
+public:
+    /** Constructor */
+    SSTFDiskScheduler();
 
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    SSTFScheduler(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+protected:
 
-    virtual cMessage *getNextToDo();
+    virtual void initializeScheduler();
+
+    virtual bool isEmpty() {return sstfQueue.empty(); };
+    
+    virtual void addEntry( SchedulerEntry* entry);
+    
+    virtual SchedulerEntry* popNextEntry();
+
+    virtual std::vector<SchedulerEntry*> popRequestsCompletedByRead(
+        LogicalBlockAddress lba);
+
+    virtual std::vector<SchedulerEntry*> popRequestsCompletedByWrite(
+        LogicalBlockAddress lba);
+private:
+
+    cQueue sstfQueue;
+
+    LogicalBlockAddress currentBlock_;
+};
+
+/**
+ * SCAN Disk Scheduler
+ */
+class ScanDiskScheduler : public DiskScheduler
+{
+public:
+    /** Constructor */
+    ScanDiskScheduler();
+
+protected:
+
+    virtual void initializeScheduler() {};
+
+    virtual void addEntry( SchedulerEntry* entry);
+    
+    virtual SchedulerEntry* popNextEntry();
+
+    virtual std::vector<SchedulerEntry*> popSupercededRequests(
+        LogicalBlockAddress lba);
+
+    virtual std::vector<SchedulerEntry*> popAllSatisfiedRequests(
+        LogicalBlockAddress lba);
+private:
+
+    cQueue scanQueue;
+
+    bool isGoingUp_;
 };
 
 /**
  * C-SCAN Disk Scheduler
  */
-class CScanScheduler : public AbstractScheduler
+class CScanDiskScheduler : public DiskScheduler
 {
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    CScanScheduler(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+public:
+    /** Constructor */
+    CScanDiskScheduler();
 
-    virtual void setup( void );
-};
+protected:
 
-/**
- * N-Step C-SCAN Disk Scheduler
- */
-class NStepCScanScheduler : public AbstractScheduler
-{
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    NStepCScanScheduler(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    virtual void initializeScheduler() {};
 
-    virtual void setup( void );
+    virtual void addEntry( SchedulerEntry* entry);
+    
+    virtual SchedulerEntry* popNextEntry();
 
-    virtual void insertNewRequest( cMessage *msg );
+    virtual std::vector<SchedulerEntry*> popSupercededRequests(
+        LogicalBlockAddress lba);
 
-    virtual cMessage *getNextToDo();
-};
+    virtual std::vector<SchedulerEntry*> popAllSatisfiedRequests(
+        LogicalBlockAddress lba);
+private:
 
+    cQueue sstfQueue;
 
-/**
- * SCAN Disk Scheduler
- */
-class ScanScheduler : public AbstractScheduler
-{
-    bool going_up;
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    ScanScheduler(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
-
-    virtual void setup( void );
-
-    virtual void insertNewRequest( cMessage *msg );
+    LogicalBlockAddress currentBlock_;
 };
 
 /**
  * N-Step SCAN Disk Scheduler
  */
-class NStepScanScheduler : public AbstractScheduler
+class NStepScanDiskScheduler : public DiskScheduler
 {
-    bool going_up;
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    NStepScanScheduler(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+public:
+    /** Constructor */
+    NStepScanDiskScheduler();
 
-    virtual void setup( void );
+protected:
 
-    virtual void insertNewRequest( cMessage *msg );
+    virtual void initializeScheduler() {};
 
-    virtual cMessage *getNextToDo();
+    virtual void addEntry( SchedulerEntry* entry);
+    
+    virtual SchedulerEntry* popNextEntry();
+
+    virtual std::vector<SchedulerEntry*> popSupercededRequests(
+        LogicalBlockAddress lba);
+
+    virtual std::vector<SchedulerEntry*> popAllSatisfiedRequests(
+        LogicalBlockAddress lba);
+private:
+
+    cQueue scanQueue;
+
+    bool isGoingUp_;
 };
 
 /**
- * Priority Disk Scheduler
+ * N-Step C-SCAN Disk Scheduler
  */
-class PriorityScheduler : public AbstractScheduler
+class NStepCScanDiskScheduler : public DiskScheduler
 {
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    PriorityScheduler(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+public:
+    /** Constructor */
+    NStepCScanDiskScheduler();
 
-    virtual void setup( void );
-};
+protected:
 
-/**
- * Priority SCAN Disk Scheduler
- */
-class PriorityScanScheduler : public AbstractScheduler
-{
-    bool going_up;
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    PriorityScanScheduler(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    virtual void initializeScheduler() {};
 
-    virtual void setup( void );
+    virtual void addEntry( SchedulerEntry* entry);
+    
+    virtual SchedulerEntry* popNextEntry();
 
-    virtual void insertNewRequest( cMessage *msg );
-};
+    virtual std::vector<SchedulerEntry*> popSupercededRequests(
+        LogicalBlockAddress lba);
 
-/**
- * Priority C-SCAN Disk Scheduler
- */
-class PriorityCScanScheduler : public AbstractScheduler
-{
-    bool going_up;
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    PriorityCScanScheduler(
-      const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    virtual std::vector<SchedulerEntry*> popAllSatisfiedRequests(
+        LogicalBlockAddress lba);
+private:
 
-    virtual void setup( void );
-};
-
-/**
- * Priority N-Step SCAN Disk Scheduler
- */
-class PriorityNStepScanScheduler : public AbstractScheduler
-{
-    bool going_up;
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    PriorityNStepScanScheduler(
-      const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
-
-    virtual void setup( void );
-
-    virtual void insertNewRequest( cMessage *msg );
-
-    virtual cMessage *getNextToDo();
-};
-
-/**
- * Fair Share Disk Scheduler
- */
-class FairShareScheduler : public AbstractScheduler
-{
-    bool going_up;
-    PriorityDistribution< double, 255 > the_distribution;
-    PriorityDistribution< long, 255 > the_limit;
-    PriorityDistribution< long, 255 > the_count;
-    double reset_time;
-
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    FairShareScheduler(
-      const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
-
-    virtual void setup( void );
-
-    virtual void resetPeriod( void );
-
-    virtual void insertNewRequest( cMessage *msg );
-
-    virtual cMessage *getNextToDo();
-};
-
-/**
- * Priority N-Step SCAN Disk Scheduler with Preemption
- */
-class PreemptivePriorityNStepScanScheduler : public PriorityNStepScanScheduler
-{
-    bool going_up;
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    PreemptivePriorityNStepScanScheduler(
-      const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
-
-    virtual void insertNewRequest( cMessage *msg );
-};
-
-/**
- * Preemptive Fair Share Disk Scheduler
- */
-class PreemptiveFairShareScheduler : public AbstractScheduler
-{
-    bool going_up;
-    PriorityDistribution< double, 255 > the_distribution;
-    PriorityDistribution< long, 255 > the_limit;
-    PriorityDistribution< long, 255 > the_count;
-    double reset_time;
-
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    PreemptiveFairShareScheduler(
-      const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
-
-    virtual void setup( void );
-
-    virtual void resetPeriod( void );
-
-    virtual void insertNewRequest( cMessage *msg );
-
-    virtual cMessage *getNextToDo();
+    cQueue scanQueue;
 };
 
 #endif
 
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=8 sts=4 sw=4 expandtab
+ */

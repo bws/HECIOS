@@ -80,7 +80,6 @@ message spfsResponse
 {
     fields:
         bool requestSucceeded;
-        int socketId;
 };
 
 // Create a file system object
@@ -124,7 +123,7 @@ message spfsReadRequest extends spfsRequest
 message spfsReadResponse extends spfsResponse
 {
     fields:
-        unsigned long bytes_read;
+        unsigned long bytesRead;
 };
 
 // Write object data

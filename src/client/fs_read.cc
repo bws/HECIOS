@@ -65,7 +65,7 @@ void FSRead::handleMessage(cMessage* msg)
         case FSM_Exit(COUNT_RESPONSES):
         {
             assert(0 != dynamic_cast<spfsReadResponse*>(msg));
-            bool hasReceivedAllResponses;
+            bool hasReceivedAllResponses = false;
             exitCountResponses(hasReceivedAllResponses);
             if (hasReceivedAllResponses)
             {
@@ -147,12 +147,15 @@ void FSRead::enterRead()
 
 void FSRead::exitCountResponses(bool& outHasReceivedAllResponses)
 {
-    outHasReceivedAllResponses = false;
     int numOutstandingResponses = readReq_->getResponses();
     readReq_->setResponses(--numOutstandingResponses);
     if (0 == readReq_->getResponses())
     {
         outHasReceivedAllResponses = true;
+    }
+    else
+    {
+        outHasReceivedAllResponses = false;
     }
 }
 

@@ -1,11 +1,23 @@
-/**
- * @file io_library.cc
- *
- * Note: These classes are adapted from the FSS simulator project and are
- * licensed only under the GPL.  The FSS project is available at:
- * http://www.omnetpp.org/filemgmt/singlefile.php?lid=104 and
- * http://www.omnetpp.org/doc/FSS-doc/neddoc/index.html
- */
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2006 Joel Sherrill <joel@oarcorp.com>
+// Copyright (C) 2007 Brad Settlemyer
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
 
 #include <cassert>
 #include <iostream>
@@ -14,118 +26,32 @@
 #include "io_library.h"
 using namespace std;
 
-void AbstractIOLibrary::initialize()
+void IOLibrary::initialize()
 {
-  fromInGateId = gate("in")->id();
-}
-
-void AbstractIOLibrary::handleMessage( cMessage *msg )
-{
-  if ( msg->arrivalGateId()==fromInGateId ) {
-    ev << className() << ": Sending " << msg->name() << " to request" << endl;
-    send( msg, "request" );
-  } else {
-    ev << className() << ": Completed service of " << msg->name() << endl;
-    send( msg, "out" );
-  }
-}
-
-//------------------------------------------------
-
-Define_Module_Like( PassThroughIOLibrary, AIOLibrary )
-
-
-//-------------------------------------------------
-Define_Module_Like(PFSIOLibrary, AIOLibrary);
-
-void PFSIOLibrary::initialize()
-{
+    // Store gate ids
     inGateId_ = gate("in")->id();
     requestGateId_ = gate("request")->id();
     outGateId_ = gate("out")->id();
-    localFileSystem_ = dynamic_cast<NativeFileSystem*>(
-        parentModule()->submodule("fileSystem"));
-    assert(0 != localFileSystem_);
 }
 
-void PFSIOLibrary::handleMessage(cMessage* msg)
+void IOLibrary::handleMessage( cMessage *msg )
 {
     if (msg->arrivalGateId() == inGateId_)
     {
-        switch(msg->kind())
-        {
-            case SPFS_OS_FILE_READ_REQUEST:
-            {
-                spfsOSFileReadRequest* read =
-                    dynamic_cast<spfsOSFileReadRequest*>(msg);
-                
-                FSHandle handle = read->getFileHandle();
-                size_t offset = read->getOffset();
-                size_t bytes = read->getExtent();
-                vector<long> blocks =
-                    localFileSystem_->getBlocks(handle, offset, bytes);
-                vector<long>::iterator iter;
-                for (iter = blocks.begin(); iter != blocks.end(); iter++)
-                {
-                    cMessage* fssReadReq = new cMessage();
-                    fssReadReq->addPar("block").setLongValue(*iter);
-                    fssReadReq->addPar("priority").setLongValue(-1);
-                    fssReadReq->addPar("is_read").setBoolValue(true);
-                    fssReadReq->addPar("jobId").setLongValue(read->getJobId());
-                    send(fssReadReq, requestGateId_);
-                }
-                break;
-            }
-            case SPFS_OS_FILE_WRITE_REQUEST:
-            {
-                spfsOSFileWriteRequest* write =
-                    dynamic_cast<spfsOSFileWriteRequest*>(msg);
-                
-                FSHandle handle = write->getFileHandle();
-                size_t offset = write->getOffset();
-                size_t bytes = write->getExtent();
-                vector<long> blocks =
-                    localFileSystem_->getBlocks(handle, offset, bytes);
-                vector<long>::iterator iter;
-                for (iter = blocks.begin(); iter != blocks.end(); iter++)
-                {
-                    cMessage* fssWriteReq = new cMessage();
-                    fssWriteReq->addPar("block").setLongValue(*iter);
-                    fssWriteReq->addPar("priority").setLongValue(-1);
-                    fssWriteReq->addPar("is_read").setBoolValue(false);
-                    fssWriteReq->addPar("jobId").setLongValue(
-                        write->getJobId());
-                    send(fssWriteReq, requestGateId_);
-                }
-                break;
-            }
-            default:
-                cerr << "Unrecognized message kind on in gate." << endl;
-        }
+        send(msg, requestGateId_);
     }
     else
     {
-        // Translate outgoing message into an OS message
-        bool isRead = msg->par("is_read").boolValue();
-        if (isRead)
-        {
-            spfsOSFileReadResponse* readResp =
-                new spfsOSFileReadResponse(0, SPFS_OS_FILE_READ_RESPONSE);
-            readResp->setFileHandle(0);
-            send(readResp, outGateId_);
-        }
-        else
-        {
-            spfsOSFileWriteResponse* writeResp =
-                new spfsOSFileWriteResponse(0, SPFS_OS_FILE_WRITE_RESPONSE);
-            writeResp->setFileHandle(0);
-            send(writeResp, outGateId_);
-        }
+        send(msg, outGateId_);
     }
-
-    // Cleanup
-    delete msg;
 }
+
+//-------------------------------------------------
+Define_Module_Like(ListIOLibrary, IOLibrary);
+
+//------------------------------------------------
+Define_Module_Like( PassThroughIOLibrary, IOLibrary )
+
 
 /*
  * Local variables:

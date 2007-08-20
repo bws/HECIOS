@@ -1,14 +1,32 @@
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2006 Joel Sherrill <joel@oarcorp.com>
+// Copyright (C) 2007 Brad Settlemyer
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
 
+#include "hard_disk.h"
 #include <cassert>
 #include <cstdlib>
-#include "hard_disk.h"
+#include "basic_types.h"
+#include "os_proto_m.h"
 using namespace std;
 
-// Register the C++ class for the NED module
-//Define_Module(HardDisk);
-
 HardDisk::HardDisk()
-    : cSimpleModule()
 {
 }
 
@@ -28,17 +46,38 @@ void HardDisk::handleMessage(cMessage *msg)
 {
     if (msg->isSelfMessage())
     {
+        // Send response for serviced request
         send(msg, "out");
     }
     else
     {
-        long long diskBlock = msg->par("block").longValue();
-        bool isRead = msg->par("is_read").boolValue();
-        
-        //simtime_t requestArrivalTime = simTime();
-        double serviceTime = service(diskBlock, isRead);
-        scheduleAt(serviceTime, msg);
-    }    
+        // Service and construct responses for read and write requests
+        double delay = 0.0;
+        cMessage* resp = 0;
+        if (spfsOSReadDeviceRequest* read =
+            dynamic_cast<spfsOSReadDeviceRequest*>(msg))
+        {
+            LogicalBlockAddress diskBlock = read->getAddress();
+            delay = service(diskBlock, true);
+            resp = new spfsOSReadDeviceResponse();
+        }
+        else if (spfsOSWriteDeviceRequest* write =
+                 dynamic_cast<spfsOSWriteDeviceRequest*>(msg))
+        {
+            LogicalBlockAddress diskBlock = write->getAddress();
+            delay = service(diskBlock, false);
+            resp = new spfsOSWriteDeviceResponse();
+        }
+        else
+        {
+            cerr << "Error in Hard Disk Module!!!" << endl;
+            assert(0);
+        }
+
+        // Schedule response at the end of service period
+        resp->setContextPointer(msg);
+        scheduleAt(simTime() + delay, resp);
+    }
 }
 
 long HardDisk::getBasicBlockSize() const
@@ -61,6 +100,23 @@ void BasicModelDisk::handleMessage(cMessage* msg)
 
 void BasicModelDisk::initialize()
 {
+    // Drive layout parameters
+    numCylinders_ = par("numCylinders").longValue();
+    numHeads_ = par("numHeads").longValue();
+    tracksPerCylinder_ = par("tracksPerCylinder").longValue();
+    sectorsPerTrack_ = par("sectorsPerTrack").longValue();
+    rpms_ = par("rpm").longValue();
+
+    // FIXME: Need workaround to get 64 bits of integer precisison
+    // could use strings here, but double reinterpret won't work :(
+    capacity_ = static_cast<uint64_t>(par("capacity").doubleValue());
+
+    // Derived layout parameters
+    headsPerCylinder_ = numCylinders_ / numHeads_;
+    sectorsPerCylinder_ = sectorsPerTrack_ * tracksPerCylinder_;
+    numSectors_ = sectorsPerCylinder_ * numCylinders_;
+
+    // Drive performance parameters
     fixedControllerReadOverheadSecs_ =
         par("fixedControllerReadOverheadSecs").doubleValue();
     fixedControllerWriteOverheadSecs_ =
@@ -69,44 +125,24 @@ void BasicModelDisk::initialize()
     averageReadSeekSecs_ = par("averageReadSeekSecs").doubleValue();
     averageWriteSeekSecs_ = par("averageWriteSeekSecs").doubleValue();
 
-    // FIXME: Need workaround to get 64 bits of integer precisison
-    // could use strings here, but double reinterpret won't work :(
-    capacity_ = par("capacity").longValue();
-    
-    numCylinders_ = par("numCylinders").longValue();
-    tracksPerCylinder_ = par("tracksPerCylinder").longValue();
-    sectorsPerTrack_ = par("sectorsPerTrack").longValue();
-    rpms_ = par("rpms").longValue();
-
-    // Calculated data
-    sectorsPerCylinder_ = sectorsPerTrack_ * tracksPerCylinder_;
-    numSectors_ = sectorsPerCylinder_ * numCylinders_;
+    // Derived performance parameters
     timePerRevolution_ = 1.0 / rpms_;
     timePerSector_ = timePerRevolution_ / sectorsPerCylinder_;
 }
 
-double BasicModelDisk::service(long long blockNumber, bool isRead)
+double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
 {
     // Service delay
     double totalDelay = 0.0;
 
-    // Determine physical destination 
-    long destBlock = blockNumber;
-    long destCylinder = destBlock / sectorsPerCylinder_;
-    long destSector = destBlock % sectorsPerCylinder_;
+    // Determine physical destination
+    int temp = blockNumber % (headsPerCylinder_ * sectorsPerTrack_);
+    int destCylinder = blockNumber / (headsPerCylinder_ * sectorsPerTrack_);
+    //int destHead = temp / sectorsPerTrack_;
+    int destSector = temp % sectorsPerCylinder_ + 1;
 
-    // Account for fixed controller overhead
-    if (isRead)
-    {
-      totalDelay += fixedControllerReadOverheadSecs_;
-    }
-    else
-    {
-      totalDelay += fixedControllerWriteOverheadSecs_;
-    }
-
-    // get to the right cylinder
-    long cylindersToMove = abs(destCylinder - lastCylinder_);
+    // Account for cylinder switch/arm movement
+    int cylindersToMove = abs(int(destCylinder - lastCylinder_));
     if (0 != cylindersToMove)
     {
         // Simply use the average seek time to calculate cylinder location
@@ -119,7 +155,17 @@ double BasicModelDisk::service(long long blockNumber, bool isRead)
             totalDelay += averageWriteSeekSecs_;
     }
 
-    // Account for the rotational delay
+    // Account for head switch time/fixed controller overhead
+    if (isRead)
+    {
+      totalDelay += fixedControllerReadOverheadSecs_;
+    }
+    else
+    {
+      totalDelay += fixedControllerWriteOverheadSecs_;
+    }
+
+    // Account for the sector switching/rotational delay
     long sectorsToMove = 0;
     long currentSector =
         static_cast<long>(fmod(simTime(), timePerRevolution_)/timePerSector_);
@@ -138,18 +184,6 @@ double BasicModelDisk::service(long long blockNumber, bool isRead)
         totalDelay += sectorsToMove * timePerSector_;
     }
     
-    // Account for movement between tracks
-    if ( sectorsToMove > 0 )
-    {
-        long currentTrack = currentSector / sectorsPerTrack_;
-        long destTrack = destSector / sectorsPerTrack_;
-        if ( currentTrack != destTrack )
-        {
-            long numTracks = abs(destTrack - currentTrack);
-            totalDelay += numTracks * trackSwitchTimeSecs_;
-        }
-    }
-
     // Add delay to transfer the data off the media
     totalDelay += timePerSector_;
 
@@ -159,7 +193,7 @@ double BasicModelDisk::service(long long blockNumber, bool isRead)
     return totalDelay;
 }
 
-long BasicModelDisk::basicBlockSize() const
+uint32_t BasicModelDisk::basicBlockSize() const
 {
     //FIXME return capacity_ / numSectors_;
     return 512;

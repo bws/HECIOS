@@ -1,43 +1,47 @@
-/**
- * @file blocktrans.h
- * @brief Block Translator Modules
- */
-
-/*
- *  $Id: block_translator.h,v 1.1 2007/04/05 22:57:17 bradles Exp $
- */
-
-#ifndef __BLOCKTRANS_H
-#define __BLOCKTRANS_H
+#ifndef BLOCK_TRANSLATOR_H
+#define BLOCK_TRANSLATOR_H
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2007 Brad Settlemyer
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
 
 #include <omnetpp.h>
+#include "basic_types.h"
 
 /**
- * Abstract base class for the Disk Block Number translation layer
- * in the filesystem software stack.  The filesystem views the disk
- * as an ordered array of disk blocks.  This layer is responsible
- * for translating that abstract view into head, cylinder, and sector
- * as required by the disk.
+ * Abstract base class for the File System block translator.  The block
+ * translator is responsible for translating the File System blocks (which
+ * are not required to be sized similarly to disk geometry) into disk
+ * hardware addresses (which for a hard drive will be sector numbers).
  */
-class AbstractBlockTranslator : public cSimpleModule
+class BlockTranslator : public cSimpleModule
 {
-    cMessage *msgServiced;
-    cMessage *endServiceMsg;
-    cQueue queue;
+public:
+    /** Constructor */
+    BlockTranslator();
 
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    AbstractBlockTranslator(
-     const char *namestr,
-     cModule *parent,
-     size_t stack=0
-    );
+protected:
+
+    /** Initialize the mdule prior to simulation run */
+    virtual void initialize();
+
+    /** Perform any post simulation run cleanup */
+    virtual void finish() {};
 
     /**
      *  This method is invoked by the simulation framework when a message
@@ -48,45 +52,39 @@ class AbstractBlockTranslator : public cSimpleModule
     virtual void handleMessage(cMessage *msg);
 
     /**
-     *  This method is invoked when each request arrives.  It translates
-     *  the logical block number into the information required by the
-     *  disk hardware.
-     *
-     *  @param msg (in) is the message to be processed.
-     *
-     *  @note This method is a hook function which is assumed to be
-     *  provided by a derived class to (re)define the behaviour.
+     * @return a hardware address for the give file system block
      */
-    virtual void Translate(cMessage *msg) {}
+    virtual long long getAddress(FSBlock blocks) const = 0;
+
+private:
+
+    int inGateId_;
 };
 
 /**
- * No translation: Simply pass through the request
+ * Simply returns the existing block number as the disk address
  */
-class NoTranslation : public AbstractBlockTranslator
+class NoTranslation : public BlockTranslator
 {
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    NoTranslation(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+public:
+    /** Constructor */
+    NoTranslation();
+
+protected:
 
     /**
-     *  @copydoc AbstractBlockTranslator::Translate
-     *
-     *  @par Derived Implementation Details:
-     *
-     *  This particular implementation performs no translation
-     *  and assumes that the logical block number is the
-     *  same as that used by the disk hardware.  In other words, the
-     *  interface of the physical disk hardware presents itself as an
-     *  array of disk blocks.
+     * @return a hardware address for the give file system block
      */
-    virtual void Translate(cMessage *msg);
+    virtual long long getAddress(FSBlock block) const; 
 };
 
 #endif
+
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=8 sts=4 sw=4 expandtab
+ */

@@ -1,3 +1,23 @@
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2007 Brad Settlemyer
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
+
 #include <cassert>
 #include <cstring>
 #include <iostream>
@@ -24,6 +44,12 @@ void FSServer::initialize()
     serverName_ = "uninitialized";
     range_.first = -1;
     range_.last = -1;
+
+    // Retrieve the gate ids
+    netInGateId_ = gate("netIn")->id();
+    netOutGateId_ = gate("netOut")->id();
+    storageInGateId_ = gate("storageIn")->id();
+    storageOutGateId_ = gate("storageOut")->id();
 }
 
 void FSServer::setNumber(size_t number)
@@ -37,68 +63,65 @@ void FSServer::setNumber(size_t number)
     serverName_ = "server" + s.str();    
 }
 
-/**
- * Handle MPI-IO Response messages
- */
+
 void FSServer::handleMessage(cMessage* msg)
 {
-    // For now, construct the appropriate response and simply send it back
-    cMessage* response = 0;
-    
-    switch(msg->kind())
+    if (msg->arrivalGateId() == netInGateId_)
+    {
+        processMessage(dynamic_cast<spfsRequest*>(msg), msg);
+    }
+    else
+    {
+        cMessage* parentReq = static_cast<cMessage*>(msg->contextPointer());
+        spfsRequest* origRequest =
+            static_cast<spfsRequest*>(parentReq->contextPointer());
+        processMessage(origRequest, msg);
+    }
+}
+
+void FSServer::processMessage(spfsRequest* request, cMessage* msg)
+{
+    switch(request->kind())
     {
         case SPFS_CREATE_REQUEST:
         {
-            Create create(static_cast<spfsCreateRequest*>(msg));
-            response = create.handleServerMessage(msg);
+            Create create(this, dynamic_cast<spfsCreateRequest*>(request));
+            create.handleServerMessage(msg);
             break;
         }
         case SPFS_LOOKUP_PATH_REQUEST:
         {
-            Lookup lookup(static_cast<spfsLookupPathRequest*>(msg));
-            response = lookup.handleServerMessage(msg);
+            Lookup lookup(this, dynamic_cast<spfsLookupPathRequest*>(request));
+            lookup.handleServerMessage(msg);
             break;
         }
         case SPFS_GET_ATTR_REQUEST:
         {
-            GetAttr getAttr(static_cast<spfsGetAttrRequest*>(msg));
-            response = getAttr.handleServerMessage(msg);
+            GetAttr getAttr(this, dynamic_cast<spfsGetAttrRequest*>(request));
+            getAttr.handleServerMessage(msg);
             break;
         }
         case SPFS_READ_REQUEST:
         {
-            Read read(static_cast<spfsReadRequest*>(msg));
-            response = read.handleServerMessage(msg);
+            Read read(this, dynamic_cast<spfsReadRequest*>(request));
+            read.handleServerMessage(msg);
             break;
         }
         case SPFS_WRITE_REQUEST:
         {
-            Write write(static_cast<spfsWriteRequest*>(msg));
-            response = write.handleServerMessage(msg);
+            Write write(this, dynamic_cast<spfsWriteRequest*>(request));
+            write.handleServerMessage(msg);
             break;
         }
         default:
         {
-            cerr << "Error: Unknown server message type" << endl;
+            cerr << "FSServer Error: Unknown message kind:" << request->kind()
+                 << endl
+                 << "!!!!!!!!! ------------------------ !!!!!!!!!!!!!" << endl
+                 << "ERROR: Server unable to construct response" << endl
+                 << "!!!!!!!!! ------------------------ !!!!!!!!!!!!!" << endl;
         }
-    }
-
-    // Send server's response
-    if (spfsResponse* resp = dynamic_cast<spfsResponse*>(response))
-    {
-        //cerr << "Request message: " << msg->info() << " " << msg->kind() << endl;
-        spfsRequest* req = dynamic_cast<spfsRequest*>(msg);
-        assert(0 != req);
-        resp->setContextPointer(req);
-        resp->setSocketId(req->getSocketId());
-        send(resp, "netOut");
-    }
-    else
-    {
-        cerr << "!!!!!!!!! ------------------------ !!!!!!!!!!!!!!" << endl;
-        cerr << "ERROR: Server unable to construct proper response!" << endl;
-        cerr << "!!!!!!!!! ------------------------ !!!!!!!!!!!!!!" << endl;
-    }
+    }    
 }
 
 /*

@@ -3,6 +3,7 @@
 
 class cMessage;
 class spfsCreateRequest;
+class FSServer;
 
 /**
  *
@@ -12,19 +13,19 @@ class Create
 public:
 
     /** Constructor */
-    Create(spfsCreateRequest* createReq);
+    Create(FSServer* module, spfsCreateRequest* createReq);
 
     /**
      *
      */
-    cMessage* handleServerMessage(cMessage* msg);
+    void handleServerMessage(cMessage* msg);
 
 protected:
 
     /**
      *
      */
-    cMessage* enterFinish();
+    void enterFinish();
     
     /**
      *
@@ -33,6 +34,9 @@ protected:
     
 private:
 
+    /** The parent module */
+    FSServer* module_;
+    
     /** The originating create request */
     spfsCreateRequest* createReq_;
 };

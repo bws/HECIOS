@@ -1,3 +1,4 @@
+
 //#define FSM_DEBUG  // Enable FSM Debug output
 #include "fs_write.h"
 #include <cassert>
@@ -66,7 +67,7 @@ void FSWrite::handleMessage(cMessage* msg)
         case FSM_Exit(COUNT_RESPONSES):
         {
             assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
-            bool hasReceivedAllResponses;
+            bool hasReceivedAllResponses = false;
             exitCountResponses(hasReceivedAllResponses);
             if (hasReceivedAllResponses)
             {
@@ -148,14 +149,16 @@ void FSWrite::enterWrite()
 
 void FSWrite::exitCountResponses(bool& outHasReceivedAllResponses)
 {
-    outHasReceivedAllResponses = false;
-
     int numOutstandingResponses = writeReq_->getResponses();
     writeReq_->setResponses(--numOutstandingResponses);
 
     if (0 == numOutstandingResponses)
     {
         outHasReceivedAllResponses = true;
+    }
+    else
+    {
+        outHasReceivedAllResponses = false;
     }
 }
 

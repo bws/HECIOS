@@ -1,21 +1,31 @@
-//-------------------------------------------------------------
-// file: blocktrans.ned
-//        (part of File System Simulator)
 //
-//  $Joel-Id: blocktrans.ned,v 1.3 1999/05/12 21:01:24 omnetpp Exp $
-//-------------------------------------------------------------
+// This file is part of Hecios
+//
+// Copyright (C) 2007 Brad Settlemyer
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
 
-
 //
-// Abstract interface for Block Translators
+// Module responsible for translating file system blocks to physical hardware
+// addresses
 //
-// Implemented Block Translators:
-// -  NoTranslation: Simply pass through the request
-//
-simple ABlockTranslator
+simple BlockTranslator
   gates:
-    in: in;
-    out: out;
+    in: in, response;
+    out: out, request;
 endsimple
 
 

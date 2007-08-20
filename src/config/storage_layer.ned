@@ -1,22 +1,12 @@
 
-import
-    "io_library",
-    "system_call_interface",
-    "file_system",
-    "block_cache",
-    "block_translator",
-    "disk_scheduler",
-    "access_manager",
-    "hard_disk";
-
 module StorageLayer
 
     parameters:
         ioLibraryType : string,
         systemCallInterfaceType : string,
         fileSystemType : string,
-        blockCacheType : string,
         blockTranslatorType : string,
+        bufferCacheType : string,
         diskSchedulerType : string,
         accessManagerType : string;
 
@@ -26,26 +16,26 @@ module StorageLayer
 
     submodules:
 
-        ioLibrary: ioLibraryType like AIOLibrary;
+        ioLibrary: ioLibraryType like IOLibrary;
             display: "p=80,80;i=block/layer,white";
 
-        systemCall: systemCallInterfaceType like ASystemCallInterface;
+        systemCall: systemCallInterfaceType like SystemCallInterface;
             display: "p=80,180;i=block/layer,green";
 
-        fileSystem: fileSystemType like AFileSystem;
-            display: "p=80,280;i=block/wheelbarrow,forest green";
+        fileSystem: fileSystemType like FileSystem;
+            display: "p=80,280;i=block/wheelbarrow,yellow";
 
-        blockCache: blockCacheType like ABlockCache;
-            display: "p=80,380;i=block/buffer,yellow";
+        blockTrans: blockTranslatorType like BlockTranslator;
+            display: "p=80,380;i=block/classifier2,orange";
 
-        blockTrans: blockTranslatorType like ABlockTranslator;
-            display: "p=80,480;i=block/classifier2,orange";
+        bufferCache: bufferCacheType like BufferCache;
+            display: "p=80,480;i=block/buffer,red";
 
-        diskScheduler: diskSchedulerType like ADiskScheduler;
-            display: "p=80,580;i=block/control,orange red";
+        diskScheduler: diskSchedulerType like DiskScheduler;
+            display: "p=80,580;i=block/control,purple";
 
-        accessManager: accessManagerType like AAccessManager;
-            display: "p=80,680;i=block/cogwheel,red";
+        //            accessManager: accessManagerType like AccessManager;
+        //    display: "p=80,680;i=block/cogwheel,blue";
 
     connections:
 
@@ -58,22 +48,17 @@ module StorageLayer
     systemCall.request --> fileSystem.in;
     systemCall.response <-- fileSystem.out;
 
-    fileSystem.request --> blockCache.in;
-    fileSystem.response <-- blockCache.out;
+    fileSystem.request --> blockTrans.in;
+    fileSystem.response <-- blockTrans.out;
 
-    blockCache.request --> blockTrans.in;
-    blockTrans.out --> diskScheduler.in;
-    blockCache.response <-- diskScheduler.out;
+    blockTrans.request --> bufferCache.in;
+    blockTrans.response <-- bufferCache.out;
+
+    bufferCache.request --> diskScheduler.in;
+    bufferCache.response <-- diskScheduler.out;
     
-    accessManager.get_next_request --> diskScheduler.get_next_request;
-    diskScheduler.next_request --> accessManager.next_request;
-    diskScheduler.response <-- accessManager.out;
-
-    //accessManager.get_block --> hardDisk.in;
-    //accessManager.block <-- hardDisk.out;
-
-    accessManager.get_block --> toDisk;
-    accessManager.block <-- fromDisk;
+    diskScheduler.request --> toDisk;
+    diskScheduler.response <-- fromDisk;
 
 endmodule
 

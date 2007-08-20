@@ -101,21 +101,21 @@ void BMITcpServer::handleMessage(cMessage* msg)
     else if (0 != dynamic_cast<spfsResponse*>(msg))
     {
         // Retrieve the socket
-        spfsResponse* resp = dynamic_cast<spfsResponse*>(msg);
+        spfsRequest* req = static_cast<spfsRequest*>(msg->contextPointer());
         map<int,TCPSocket*>::iterator pos =
-            requestToSocketMap_.find(resp->getSocketId());
+            requestToSocketMap_.find(req->getSocketId());
         assert(requestToSocketMap_.end() != pos);
         
         TCPSocket* responseSocket = pos->second;
         assert(0 != responseSocket);
 
         // Remove the entry for this socket
-        requestToSocketMap_.erase(resp->getSocketId());
+        requestToSocketMap_.erase(req->getSocketId());
 
         // Encapsulate the file system response and send to the client
         spfsNetworkServerSendMessage* pkt = new spfsNetworkServerSendMessage();
         pkt->setByteLength(OVERHEAD_BYTES);
-        pkt->encapsulate(resp);
+        pkt->encapsulate(msg);
         pkt->setUniqueId(ev.getUniqueNumber());
         responseSocket->send(pkt);
      }

@@ -3,6 +3,7 @@
 
 class cMessage;
 class spfsWriteRequest;
+class FSServer;
 
 /**
  *
@@ -12,19 +13,19 @@ class Write
 public:
 
     /** Constructor */
-    Write(spfsWriteRequest* writeReq);
+    Write(FSServer* module, spfsWriteRequest* writeReq);
 
     /**
      *
      */
-    cMessage* handleServerMessage(cMessage* msg);
+    void handleServerMessage(cMessage* msg);
 
 protected:
 
     /**
      *
      */
-    cMessage* enterFinish();
+    void enterFinish();
     
     /**
      *
@@ -33,6 +34,9 @@ protected:
     
 private:
 
+    /** The parent module */
+    FSServer* module_;
+    
     /** The originating write request */
     spfsWriteRequest* writeReq_;
 };

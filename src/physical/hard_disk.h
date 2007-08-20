@@ -1,12 +1,29 @@
 #ifndef HARD_DISK_H
 #define HARD_DISK_H
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2004 Joel Sherrill <joel@oarcorp.com>
+// Copyright (C) 2007 Brad Settlemyer
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
 
-/**
- * @file hard_disk.h
- * @brief Disk Simulation Modules
- */
-
+#include <stdint.h>
 #include <omnetpp.h>
+#include "basic_types.h"
 
 /** @brief Abstract base class for hard disks  */
 class HardDisk : public cSimpleModule
@@ -40,10 +57,10 @@ class HardDisk : public cSimpleModule
 private:
     
     /** @return the disk service time for the message */
-    virtual double service(long long blockNumber, bool isRead) = 0;
+    virtual double service(LogicalBlockAddress blockNumber, bool isRead) = 0;
 
     /** @return the basic block size for the disk model */
-    virtual long basicBlockSize() const = 0;
+    virtual uint32_t basicBlockSize() const = 0;
     
 };
 
@@ -71,10 +88,10 @@ protected:
 private:
 
     /** Concrete implementation of service method */
-    virtual double service(long long blockNumber, bool isRead);
+    virtual double service(LogicalBlockAddress blockNumber, bool isRead);
 
     /** @return the basic block size for the disk model */
-    virtual long basicBlockSize() const;
+    virtual uint32_t basicBlockSize() const;
 
     // Data descibing disk characteristics
     double fixedControllerReadOverheadSecs_;
@@ -83,20 +100,22 @@ private:
     double averageReadSeekSecs_;
     double averageWriteSeekSecs_;
     
-    long long capacity_;
-    long numCylinders_;
-    long tracksPerCylinder_;
-    long sectorsPerTrack_;
-    long rpms_;
+    uint64_t capacity_;
+    uint32_t numCylinders_;
+    uint32_t numHeads_;
+    uint32_t headsPerCylinder_;
+    uint32_t tracksPerCylinder_;
+    uint32_t sectorsPerTrack_;
+    uint32_t rpms_;
 
     // Data derived from disk characteristics
-    long sectorsPerCylinder_;
-    long numSectors_;
+    uint32_t sectorsPerCylinder_;
+    uint32_t numSectors_;
     double timePerRevolution_;
     double timePerSector_;
 
     // Disk state
-    long lastCylinder_;
+    uint32_t lastCylinder_;
     double lastTime_;
 };
 

@@ -2,19 +2,18 @@
 #include "write.h"
 #include <cassert>
 #include <omnetpp.h>
+#include "fs_server.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-Write::Write(spfsWriteRequest* writeReq)
-    : writeReq_(writeReq)
+Write::Write(FSServer* module, spfsWriteRequest* writeReq)
+    : module_(module),
+      writeReq_(writeReq)
 {
 }
 
-cMessage* Write::handleServerMessage(cMessage* msg)
+void Write::handleServerMessage(cMessage* msg)
 {
-    // Message response
-    cMessage* resp;
-    
     // Restore the existing state for this request
     cFSM currentState = writeReq_->getState();
 
@@ -29,19 +28,18 @@ cMessage* Write::handleServerMessage(cMessage* msg)
         case FSM_Enter(INIT):
         {
             assert(0 != dynamic_cast<spfsWriteRequest*>(msg));
-            resp = enterFinish();
+            enterFinish();
             break;
         }
     }
-
-    return resp;
 }
 
-cMessage* Write::enterFinish()
+void Write::enterFinish()
 {
     spfsWriteResponse* resp = new spfsWriteResponse(
         0, SPFS_WRITE_RESPONSE);
-    return resp;
+    resp->setContextPointer(writeReq_);
+    module_->send(resp, "netOut");
 }
 
 /*

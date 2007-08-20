@@ -2,19 +2,18 @@
 #include "get_attr.h"
 #include <cassert>
 #include <omnetpp.h>
+#include "fs_server.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-GetAttr::GetAttr(spfsGetAttrRequest* getAttrReq)
-    : getAttrReq_(getAttrReq)
+GetAttr::GetAttr(FSServer* module, spfsGetAttrRequest* getAttrReq)
+    : module_(module),
+      getAttrReq_(getAttrReq)
 {
 }
 
-cMessage* GetAttr::handleServerMessage(cMessage* msg)
+void GetAttr::handleServerMessage(cMessage* msg)
 {
-    // Message response
-    cMessage* resp;
-    
     // Restore the existing state for this request
     cFSM currentState = getAttrReq_->getState();
 
@@ -29,21 +28,18 @@ cMessage* GetAttr::handleServerMessage(cMessage* msg)
         case FSM_Enter(INIT):
         {
             assert(0 != dynamic_cast<spfsGetAttrRequest*>(msg));
-            resp = enterFinish();
+            enterFinish();
             break;
         }
     }
-
-    return resp;
 }
 
-cMessage* GetAttr::enterFinish()
+void GetAttr::enterFinish()
 {
     spfsGetAttrResponse* resp = new spfsGetAttrResponse(
         0, SPFS_GET_ATTR_RESPONSE);
-    resp->setContextPointer(getAttrReq_->contextPointer());
-    resp->setSocketId(getAttrReq_->getSocketId());
-    return resp;
+    resp->setContextPointer(getAttrReq_);
+    module_->send(resp, "netOut");
 }
 
 /*

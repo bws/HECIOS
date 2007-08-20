@@ -3,6 +3,7 @@
 
 class cMessage;
 class spfsGetAttrRequest;
+class FSServer;
 
 /**
  *
@@ -12,19 +13,19 @@ class GetAttr
 public:
 
     /** Constructor */
-    GetAttr(spfsGetAttrRequest* getAttrReq);
+    GetAttr(FSServer* module, spfsGetAttrRequest* getAttrReq);
 
     /**
      *
      */
-    cMessage* handleServerMessage(cMessage* msg);
+    void handleServerMessage(cMessage* msg);
 
 protected:
 
     /**
      *
      */
-    cMessage* enterFinish();
+    void enterFinish();
     
     /**
      *
@@ -33,6 +34,9 @@ protected:
     
 private:
 
+    /** The parent module */
+    FSServer* module_;
+    
     /** The originating get attr request */
     spfsGetAttrRequest* getAttrReq_;
 };

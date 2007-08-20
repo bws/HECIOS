@@ -30,7 +30,7 @@ FSOffset SimpleStripeDistribution::convertLogicalToPhysicalOffset(
     FSOffset physicalOffset = completeStripes * stripSize_;
 
     // Adjust physical offset if we are not at beginning of the current strip
-    int leftOver =
+    FSSize leftOver =
         logicalOffset - (completeStripes * stripSize_ * numObjects_);
 
     if (leftOver >= (objectIdx * stripSize_))

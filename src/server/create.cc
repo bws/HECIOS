@@ -2,19 +2,18 @@
 #include <cassert>
 #include <omnetpp.h>
 #include "create.h"
+#include "fs_server.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-Create::Create(spfsCreateRequest* createReq)
-    : createReq_(createReq)
+Create::Create(FSServer* module, spfsCreateRequest* createReq)
+    : module_(module),
+      createReq_(createReq)
 {
 }
 
-cMessage* Create::handleServerMessage(cMessage* msg)
+void Create::handleServerMessage(cMessage* msg)
 {
-    // Message response
-    cMessage* resp;
-    
     // Restore the existing state for this request
     cFSM currentState;// = createReq_->getState();
 
@@ -29,18 +28,17 @@ cMessage* Create::handleServerMessage(cMessage* msg)
         case FSM_Enter(INIT):
         {
             assert(0 != dynamic_cast<spfsCreateRequest*>(msg));
-            resp = enterFinish();
+            enterFinish();
             break;
         }
     }
-
-    return resp;
 }
 
-cMessage* Create::enterFinish()
+void Create::enterFinish()
 {
     spfsCreateResponse* resp = new spfsCreateResponse(0, SPFS_CREATE_RESPONSE);
-    return resp;
+    resp->setContextPointer(createReq_);
+    module_->send(resp, "netOut");
 }
 
 /*

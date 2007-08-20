@@ -1,16 +1,23 @@
 #ifndef BASIC_TYPES_H
 #define BASIC_TYPES_H
 
+#include <stdint.h>
 #include <iostream>
 
+/** File system block data type */
+typedef uint64_t FSBlock;
+
 /** File system handle data type */
-typedef long long FSHandle;
+typedef uint64_t FSHandle;
 
 /** File system file offset data type */
-typedef long long FSOffset;
+typedef uint64_t FSOffset;
 
 /** File system file region length data type */
-typedef long long FSSize;
+typedef uint64_t FSSize;
+
+/** Logical Block Address data type */
+typedef uint64_t LogicalBlockAddress;
 
 /** A contguous handle range beginning at first and ending at last */
 struct HandleRange

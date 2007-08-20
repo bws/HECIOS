@@ -3,6 +3,7 @@
 
 class cMessage;
 class spfsLookupPathRequest;
+class FSServer;
 
 /**
  *
@@ -12,19 +13,19 @@ class Lookup
 public:
 
     /** Constructor */
-    Lookup(spfsLookupPathRequest* lookupReq);
+    Lookup(FSServer* module, spfsLookupPathRequest* lookupReq);
 
     /**
      *
      */
-    cMessage* handleServerMessage(cMessage* msg);
+    void handleServerMessage(cMessage* msg);
 
 protected:
 
     /**
      *
      */
-    cMessage* enterFinish();
+    void enterFinish();
     
     /**
      *
@@ -33,6 +34,9 @@ protected:
     
 private:
 
+    /** The parent module */
+    FSServer* module_;
+    
     /** The originating create request */
     spfsLookupPathRequest* lookupReq_;
 };

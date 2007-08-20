@@ -1,37 +1,40 @@
 #ifndef SYSTEM_CALL_INTERFACE_H
 #define SYSTEM_CALL_INTERFACE_H
-/**
- * @file system_call_interface.h
- * @brief System Call Modules
- *
- * Note: These classes are adapted from the FSS simulator project and are
- * licensed only under the GPL.  The FSS project is available at:
- * http://www.omnetpp.org/filemgmt/singlefile.php?lid=104 and
- * http://www.omnetpp.org/doc/FSS-doc/neddoc/index.html
-*/
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2006 Joel Sherrill <joel@oarcorp.com>
+// Copyright (C) 2007 Brad Settlemyer
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
 
 #include <omnetpp.h>
 
 /**
  * Abstract base class for system call interface models
  */
-class AbstractSystemCallInterface : public cSimpleModule
+class SystemCallInterface : public cSimpleModule
 {
-  public:
-    /**
-     *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
-     */
-    AbstractSystemCallInterface(
-      const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+public:
+    
+    /** Constructor */
+    SystemCallInterface();
 
-    cQueue queue;
-
-    int fromInGateId;
-
+protected:
+    
     /**
      *  This is the initialization routine for this simulation module.
      */
@@ -41,12 +44,20 @@ class AbstractSystemCallInterface : public cSimpleModule
      *  This is the finalization routine for this simulation module.
      */
     virtual void handleMessage(cMessage *msg);
+
+private:
+
+    int inGateId_;
+
+    int outGateId_;
+
+    int requestGateId_;
 };
 
 /**
  * simple File System model that passes requests through with no translation
  */
-class PassThroughSystemCallInterface : public AbstractSystemCallInterface
+class PassThroughSystemCallInterface : public SystemCallInterface
 {
   public:
     /**
@@ -56,8 +67,7 @@ class PassThroughSystemCallInterface : public AbstractSystemCallInterface
      *  @param parent (in) is the parent of this module
      *  @param stack (in) is the size in bytes of the stack for this module
      */
-    PassThroughSystemCallInterface(
-      const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    PassThroughSystemCallInterface();
 };
 
 #endif

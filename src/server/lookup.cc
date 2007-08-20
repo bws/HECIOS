@@ -1,22 +1,21 @@
 
+#include "lookup.h"
 #include <cassert>
 #include <omnetpp.h>
-#include "lookup.h"
+#include "fs_server.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-Lookup::Lookup(spfsLookupPathRequest* lookupReq)
-    : lookupReq_(lookupReq)
+Lookup::Lookup(FSServer* module, spfsLookupPathRequest* lookupReq)
+    : module_(module),
+      lookupReq_(lookupReq)
 {
 }
 
-cMessage* Lookup::handleServerMessage(cMessage* msg)
+void Lookup::handleServerMessage(cMessage* msg)
 {
-    // Message response
-    cMessage* resp;
-    
     // Restore the existing state for this request
-    cFSM currentState;// = lookupReq_->getState();
+    cFSM currentState = lookupReq_->getState();
 
     // Server lookup states
     enum {
@@ -29,15 +28,13 @@ cMessage* Lookup::handleServerMessage(cMessage* msg)
         case FSM_Enter(INIT):
         {
             assert(0 != dynamic_cast<spfsLookupPathRequest*>(msg));
-            resp = enterFinish();
+            enterFinish();
             break;
         }
     }
-
-    return resp;
 }
 
-cMessage* Lookup::enterFinish()
+void Lookup::enterFinish()
 {
     spfsLookupPathResponse* resp = new spfsLookupPathResponse(
         0, SPFS_LOOKUP_PATH_RESPONSE);
@@ -46,7 +43,8 @@ cMessage* Lookup::enterFinish()
     resp->setAttrCount(0);
     resp->setHandlesArraySize(1);
     resp->setHandles(0, 1200);
-    return resp;
+    resp->setContextPointer(lookupReq_);
+    module_->send(resp, "netOut");
 }
 
 /*

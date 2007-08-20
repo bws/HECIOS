@@ -20,15 +20,20 @@
 //
 
 //
-// Abstract interface for System Call Interfaces
+// Abstract interface for OS Buffer caches
 //
-// Implemented System Call Interfaces:
-// -  PassThroughSystemCallInterface
+// Implemented Cache Policies:
+// -  NoCache - all requests are passed through to the Disk Subsystem
+// -  LRUCache - Least Recently Used Cache Manager
 //
-simple SystemCallInterface
+simple BufferCache
+  parameters:
+    number_of_elements;
+
   gates:
     in: in, response;
     out: out, request;
+
 endsimple
 
 

@@ -1,36 +1,43 @@
 #ifndef ACCESS_MANAGER_H
 #define ACCESS_MANAGER_H
-/**
- * @file access_manager.h
- * @brief Access Manager Modules
- *
- * Note: These classes are adapted from the FSS simulator project and are
- * licensed only under the GPL.  The FSS project is available at:
- * http://www.omnetpp.org/filemgmt/singlefile.php?lid=104 and
- * http://www.omnetpp.org/doc/FSS-doc/neddoc/index.html
- */
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2006 Joel Sherrill <joel@oarcorp.com>
+// Copyright (C) 2007 Brad Settlemyer
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
 
 #include <omnetpp.h>
 
 /**
  * Abstract base class for single-server queues
  */
-class AbstractAccessManager : public cSimpleModule
+class AccessManager : public cSimpleModule
 {
 public:
     /**
      *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
      */
-    AbstractAccessManager(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    AccessManager();
 
     /**
      *  This is the destructor for this simulation module.
      */
-    ~AbstractAccessManager();
+    ~AccessManager();
 
     /**
      *  This is the initialization routine for this simulation module.
@@ -50,50 +57,53 @@ public:
     virtual void handleMessage(cMessage *msg);
 
 protected:
-    cMessage *RequestMsg;
     int fromSchedulerId;
     int fromDiskId;
-    bool RequestPending;
-    bool DiskIdle;
 
-private:
-    cMessage *msgServiced;
-    cMessage *endServiceMsg;
-    cQueue queue;    
+    int getNextRequestGateId_;
+
+    int nextRequestGateId_;
+
+    int getBlockGateId_;
+
+    int blockGateId_;
 };
 
 /**
  * AccessManager that passes through all requests
  */
-class SimpleAccessManager : public AbstractAccessManager
+class SimpleAccessManager : public AccessManager
 {
   public:
     /**
      *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
      */
-    SimpleAccessManager(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    SimpleAccessManager();
 };
 
 /**
  * AccessManager that allows only one outstanding request at a time
  */
-class MutexAccessManager : public AbstractAccessManager
+class MutexAccessManager : public AccessManager
 {
   public:
     /**
      *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
      */
-    MutexAccessManager(const char *namestr=NULL, cModule *parent=NULL, size_t stack=0);
+    MutexAccessManager();
+
+protected:
+    
+    virtual void initialize();
+
+    virtual void finish();
 
     virtual void handleMessage( cMessage *msg );
+
+private:
+
+    bool hasIdleDisk_;
+    cQueue pendingMessageQueue_;
 };
 
 #endif

@@ -3,36 +3,40 @@
 
 class cMessage;
 class spfsReadRequest;
+class FSServer;
 
 /**
- *
+ * Perform server side read processing
  */
 class Read
 {
 public:
 
     /** Constructor */
-    Read(spfsReadRequest* readReq);
+    Read(FSServer* module, spfsReadRequest* readReq);
 
     /**
-     *
+     * Perform server side read processing
      */
-    cMessage* handleServerMessage(cMessage* msg);
+    void handleServerMessage(cMessage* msg);
 
 protected:
 
     /**
-     *
+     * Create and send the disk requests
      */
-    cMessage* enterFinish();
+    void enterReadData();
     
     /**
-     *
+     * Create and send the final read response
      */
-    void exitFinish(spfsReadRequest* lookupReq);
+    void enterFinish();
     
 private:
 
+    /** The parent module */
+    FSServer* module_;
+    
     /** The originating read request */
     spfsReadRequest* readReq_;
 };

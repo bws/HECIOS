@@ -11,10 +11,8 @@
 using namespace std;
 
 // local function decls
-static void fsUnknownMessage(cMessage *req, cMessage *resp,
-                     fsModule *client);
-static void fsProcessMessage(cMessage *req, cMessage *resp,
-                     fsModule *client);
+static void fsUnknownMessage(cMessage *req, cMessage *resp, fsModule *client);
+static void fsProcessMessage(cMessage *req, cMessage *resp, fsModule *client);
 static void fsProcessTimer( cMessage *msg );
 
 
