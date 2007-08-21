@@ -135,10 +135,11 @@ double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
     // Service delay
     double totalDelay = 0.0;
 
-    // Determine physical destination
+    // Determine physical destination (from page 80 of Hitachi Deskstar
+    // documentation t7k500_sp.book)
     int temp = blockNumber % (headsPerCylinder_ * sectorsPerTrack_);
     int destCylinder = blockNumber / (headsPerCylinder_ * sectorsPerTrack_);
-    //int destHead = temp / sectorsPerTrack_;
+    int destHead = temp / sectorsPerTrack_;
     int destSector = temp % sectorsPerCylinder_ + 1;
 
     // Account for cylinder switch/arm movement
@@ -189,6 +190,7 @@ double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
 
     // Update disk state
     lastCylinder_ = destCylinder;
+    lastHead_ = destHead;
     
     return totalDelay;
 }

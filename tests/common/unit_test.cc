@@ -5,6 +5,7 @@
 #include <cppunit/TextTestRunner.h>
 #include "filename_test.h"
 #include "umd_io_trace_test.h"
+#include "lru_cache_test.h"
 #include "lru_timeout_cache_test.h"
 #include "pfs_utils_test.h"
 #include "ip_socket_map_test.h"
@@ -17,6 +18,7 @@ int main(int argc, char** argv)
 
     // Add all of the requisite tests
     runner.addTest( UMDIOTraceTest::suite() );
+    runner.addTest( LRUCacheTest::suite() );
     runner.addTest( LRUTimeoutCacheTest::suite() );
     runner.addTest( PFSUtilsTest::suite() );
     runner.addTest( IPSocketMapTest::suite() );

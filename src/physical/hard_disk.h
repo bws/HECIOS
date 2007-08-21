@@ -28,7 +28,7 @@
 /** @brief Abstract base class for hard disks  */
 class HardDisk : public cSimpleModule
 {
-  public:
+public:
 
     /** Constructor */
     HardDisk();
@@ -36,6 +36,7 @@ class HardDisk : public cSimpleModule
     /** Destructor */
     virtual ~HardDisk();
 
+protected:
     /**
      *  This is the initialization routine for this simulation module.
      */
@@ -116,6 +117,7 @@ private:
 
     // Disk state
     uint32_t lastCylinder_;
+    uint32_t lastHead_;
     double lastTime_;
 };
 

@@ -1,7 +1,6 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2006 Joel Sherrill <joel@oarcorp.com>
 // Copyright (C) 2007 Brad Settlemyer
 //
 // This program is free software; you can redistribute it and/or
@@ -23,13 +22,11 @@
 #include "os_proto_m.h"
 using namespace std;
 
-//------------------------------------------------
+//=============================================================================
 //
-//  BufferCache
+// BufferCache implementation (abstract class)
 //
-//  This is the base class for all Cache Management Algorithms.
-//  All cache algorithm implementations manage a single set of
-//  cache elements.
+//=============================================================================
 
 BufferCache::BufferCache()
 {
@@ -44,6 +41,9 @@ void BufferCache::initialize()
 
     // Store gate ids
     inGateId_ = gate("in")->id();
+
+    // Initialize derived cache implementations
+    initializeCache();
 }
 
 void BufferCache::finish()
@@ -95,17 +95,37 @@ void BufferCache::handleMessage(cMessage *msg)
     }
     else
     {
-        //  Data is back from the disk        
+        // Add data back from the disk to the cache
+        LogicalBlockAddress lba;
+        cMessage* req = static_cast<cMessage*>(msg->contextPointer());
+        if (spfsOSReadDeviceRequest* read =
+            dynamic_cast<spfsOSReadDeviceRequest*>(req))
+        {
+            lba = read->getAddress();
+        }
+        else if (spfsOSWriteDeviceRequest* write =
+                 dynamic_cast<spfsOSWriteDeviceRequest*>(req))
+        {
+            lba = write->getAddress();
+        }
+        else
+        {
+            assert(0);
+        }
+
+        // Add block to cache
+        addEntry(lba);
+
+        // Forward completed response up the chain
         send( msg, "out" );
     }
 }
 
-//------------------------------------------------
+//=============================================================================
 //
-//  NoBufferCache
+// NoBufferCache implementation (concrete BufferCache)
 //
-//  The No Cache Management Algorithm simulates having no cache at all.
-//  It says that the requested element is not in the cache.
+//=============================================================================
 Define_Module_Like( NoBufferCache, BufferCache )
 
 NoBufferCache::NoBufferCache()
@@ -117,23 +137,48 @@ bool NoBufferCache::isCached(LogicalBlockAddress address)
     return false;
 }
 
-//------------------------------------------------
+//=============================================================================
 //
-//  LRUBufferCache
+// LRUBufferCache implementation (concrete BufferCache)
 //
-//  The LRU Cache Management Algorithm chooses the element
-//  in the cache that was requested the longest time ago
-//  for replacement regardless of its priority.
-
+//=============================================================================
 Define_Module_Like(LRUBufferCache, BufferCache)
 
 LRUBufferCache::LRUBufferCache()
+    : cache_(0)
 {
+}
+
+void LRUBufferCache::initializeCache()
+{
+    // Remove the cache if one exists
+    if (0 != cache_)
+        delete cache_;
+    
+    long long gigabyte = 1073741824;
+    long long blockSize = 512;
+    long long numEntries = 4 * gigabyte / blockSize;
+    cache_ = new LRUCache<LogicalBlockAddress, int>(numEntries);
 }
 
 bool LRUBufferCache::isCached(LogicalBlockAddress address)
 {
-    return true;
+    if (cache_->exists(address))
+    {
+        // Use lookup to refresh the LRU ordering for this entry
+        cache_->lookup(address);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void LRUBufferCache::addEntry(LogicalBlockAddress address)
+{
+    assert(false == cache_->exists(address));
+    cache_->insert(address, 1);
 }
 
 /*

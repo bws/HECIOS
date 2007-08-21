@@ -24,6 +24,12 @@
 #include "os_proto_m.h"
 using namespace std;
 
+//=============================================================================
+//
+// DiskScheduler implementation (bastract class)
+//
+//=============================================================================
+
 DiskScheduler::DiskScheduler()
 {
 }
@@ -134,11 +140,11 @@ void DiskScheduler::handleMessage( cMessage *msg )
     }
 }
 
-//------------------------------------------------
+//=============================================================================
 //
-//  FCFSScheduler
+// FCFSDiskScheduler implementation (concrete DiskScheduler)
 //
-//  Simple FIFO Disk Scheduler
+//=============================================================================
 Define_Module_Like(FCFSDiskScheduler, DiskScheduler)
 
 FCFSDiskScheduler::FCFSDiskScheduler()
@@ -159,6 +165,16 @@ vector<SchedulerEntry*> FCFSDiskScheduler::popRequestsCompletedByRead(
     LogicalBlockAddress lba)
 {
     vector<SchedulerEntry*> completed;
+    for (cQueueIterator iter(fcfsQueue); !iter.end() ; iter++ )
+    {
+        SchedulerEntry* entry = static_cast<SchedulerEntry*>(iter());
+        if (entry->isReadRequest && lba == entry->lba)
+        {
+            completed.push_back(entry);
+            fcfsQueue.remove(entry);
+        }
+    }
+
     return completed;
 }
 
@@ -166,55 +182,79 @@ vector<SchedulerEntry*> FCFSDiskScheduler::popRequestsCompletedByWrite(
     LogicalBlockAddress lba)
 {
     vector<SchedulerEntry*> completed;
+    for (cQueueIterator iter(fcfsQueue); !iter.end() ; iter++ )
+    {
+        SchedulerEntry* entry = static_cast<SchedulerEntry*>(iter());
+        if (lba == entry->lba)
+        {
+            completed.push_back(entry);
+            fcfsQueue.remove(entry);
+        }
+    }
     return completed;
 }
 
-/*
-//------------------------------------------------
+
+//=============================================================================
 //
-//  SSTFScheduler
+// SSTFDiskScheduler implementation (concrete DiskScheduler)
 //
-//  Shortest Seek Time First Disk Scheduler
+//=============================================================================
 Define_Module_Like(SSTFDiskScheduler, DiskScheduler)
 
 SSTFDiskScheduler::SSTFDiskScheduler()
 {
-  current_block = 0;
 }
 
-cMessage *SSTFDiskScheduler::getNextToDo( void )
+void SSTFDiskScheduler::initializeScheduler()
 {
-  cMessage *msg;
-  cMessage *best_msg = NULL;
-  long shortest_distance = LONG_MAX;
-  long d;
+    // Assume the arm is at the origin on initialization
+    currentAddress_ = 0;
+}
 
-  if ( queue.empty() )
-    return NULL;
+void SSTFDiskScheduler::addEntry(SchedulerEntry* entry)
+{
+    sstfQueue.insert(entry);
+}
 
-  // Now grab as many messages as we can at the highest priority
-  // that has allocated units left to do.
+SchedulerEntry* SSTFDiskScheduler::popNextEntry()
+{
+    cQueueIterator iter(sstfQueue, false);
+    SchedulerEntry* closestEntry = static_cast<SchedulerEntry*>(iter());
+    int smallestDelta = abs(currentAddress_ - closestEntry->lba);
 
-  for ( cQueueIterator iter(queue, 1); !iter.end() ; iter++ ) {
-    msg = (cMessage *) iter();
-    d = abs(current_block - msg->par("block").longValue());
-
-    if ( d < shortest_distance ) {
-       best_msg = msg;
-       shortest_distance = d;
+    // Bruteforce though the queue to find the closest request
+    for ( ; !iter.end() ; iter++ )
+    {
+        SchedulerEntry* entry = static_cast<SchedulerEntry*>(iter());
+        LogicalBlockAddress delta =
+            abs(currentAddress_ - entry->lba);
+        if (delta < smallestDelta)
+        {
+            closestEntry = entry;
+            smallestDelta = delta;
+        }
     }
 
-  }
-
-  //  This should never happen, but ...
-
-  if ( !best_msg )
-    return NULL;
-
-  best_msg = (cMessage *) queue.remove( best_msg );
-  return best_msg;
+    sstfQueue.remove(closestEntry);
+    return closestEntry;
 }
 
+vector<SchedulerEntry*> SSTFDiskScheduler::popRequestsCompletedByRead(
+    LogicalBlockAddress lba)
+{
+    vector<SchedulerEntry*> completed;
+    return completed;
+}
+
+vector<SchedulerEntry*> SSTFDiskScheduler::popRequestsCompletedByWrite(
+    LogicalBlockAddress lba)
+{
+    vector<SchedulerEntry*> completed;
+    return completed;
+}
+
+/*
 //------------------------------------------------
 //
 //  CScanScheduler

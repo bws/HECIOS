@@ -140,7 +140,7 @@ protected:
 
     virtual void initializeScheduler();
 
-    virtual bool isEmpty() {return sstfQueue.empty(); };
+    virtual bool isEmpty() const {return sstfQueue.empty(); };
     
     virtual void addEntry( SchedulerEntry* entry);
     
@@ -155,7 +155,7 @@ private:
 
     cQueue sstfQueue;
 
-    LogicalBlockAddress currentBlock_;
+    LogicalBlockAddress currentAddress_;
 };
 
 /**

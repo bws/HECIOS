@@ -3,7 +3,6 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2006 Joel Sherrill <joel@oarcorp.com>
 // Copyright (C) 2007 Brad Settlemyer
 //
 // This program is free software; you can redistribute it and/or
@@ -23,6 +22,7 @@
 
 #include <omnetpp.h>
 #include "basic_types.h"
+#include "lru_cache.h"
 
 /**
  * Abstract base class for OS Buffer Cache Managers
@@ -143,7 +143,7 @@ protected:
      *
      *  This method implements the XXX
      */
-    virtual void initializeCache() {};
+    virtual void initializeCache();
 
     /**
      *  @copydoc AbstractCache::checkCache
@@ -157,7 +157,12 @@ protected:
     /**
      * Add an entry to the cache performing an eviction if neccesary
      */
-    virtual void addEntry(LogicalBlockAddress address) {};
+    virtual void addEntry(LogicalBlockAddress address);
+
+private:
+
+    /** Cache helper class */
+    LRUCache<LogicalBlockAddress, int>* cache_;
 };
 
 #endif

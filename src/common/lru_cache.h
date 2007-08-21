@@ -1,45 +1,38 @@
-#ifndef LRU_TIMEOUT_CACHE_H
-#define LRU_TIMEOUT_CACHE_H
+#ifndef LRU_CACHE_H
+#define LRU_CACHE_H
 
 #include <cassert>
-#include <iostream>
 #include <list>
 #include <map>
 #include <utility>
-#include <omnetpp.h>
-
+#include "spfs_exceptions.h"
 /**
- * A CacheEntry wrapper that includes a simulation timestamp
+ * A simple fixed size cache using LRU replacement.
  */
 template <class KeyType, class ValueType>
-struct LRUTimeoutCacheEntry
-{
-    ValueType data;
-    double timeStamp;
-    typename std::list<KeyType>::iterator lruRef;
-};
-
-/**
- *
- */
-template <class KeyType, class ValueType>
-class LRUTimeoutCache
+class LRUCache
 {
 public:
 
-    /** Convenience typedef of cache entries */
-    typedef LRUTimeoutCacheEntry<KeyType,ValueType> EntryType;
-
+    /**
+     * A cache entry for
+     */
+    struct EntryType
+    {
+        ValueType data;
+        typename std::list<KeyType>::iterator lruRef;
+    };
+    
     /** Convencience typedef of the key-value map */
     typedef std::map<KeyType,EntryType*> MapType;
 
     /**
      * Constructor
      */
-    LRUTimeoutCache(int capacity, double timeOut);
+    LRUCache(int capacity);
 
     /** Destructor */
-    ~LRUTimeoutCache();
+    ~LRUCache();
 
     /**
      * Insert a Key-Value pair into the cache.  If the cache already
@@ -52,11 +45,20 @@ public:
     void remove(const KeyType& key);
 
     /**
+     * Check if an entry exists without modifying its LRU status
+     *
+     * @return true if a value exists for the given key
+     */
+    bool exists(const KeyType& key) const;
+    
+    /**
      * @return The EntryType value wrapper for key.  The wrapper allows
      * the user to also determine the last time the entry was accessed.
      * If no entry exists for key, return 0
+     *
+     * @throw NoSuchEntry if key does not exist
      */
-    EntryType* lookup(const KeyType& key);
+    ValueType lookup(const KeyType& key);
 
     /**
      * @return the number of entries in the cache
@@ -68,30 +70,25 @@ private:
     std::map<KeyType, EntryType*> keyEntryMap_;
     std::list<KeyType> lruList_;
 
-    const size_t maxEntries_;
-    const double maxTime_;
-    size_t numEntries_;
+    const std::size_t maxEntries_;
+    std::size_t numEntries_;
 };
 
 template <class KeyType, class ValueType>
-LRUTimeoutCache<KeyType,ValueType>::LRUTimeoutCache(
-    int capacity, double timeOut) :
-    maxEntries_(capacity),
-    maxTime_(timeOut),
-    numEntries_(0)
+LRUCache<KeyType,ValueType>::LRUCache(int capacity)
+    : maxEntries_(capacity),
+      numEntries_(0)
 {
     assert(0 < maxEntries_);
-    assert(0.0 < maxTime_);
 }
 
 template <class KeyType, class ValueType>
-LRUTimeoutCache<KeyType,ValueType>::~LRUTimeoutCache()
+LRUCache<KeyType,ValueType>::~LRUCache()
 {
     // Delete any EntryTypes still contained in the map
     typename std::map<KeyType, EntryType*>::iterator iter;
     for (iter = keyEntryMap_.begin(); iter != keyEntryMap_.end(); ++iter)
     {
-        //std::cerr << "Want to delete" << iter->first << endl;
         delete iter->second;
     }
 
@@ -102,8 +99,8 @@ LRUTimeoutCache<KeyType,ValueType>::~LRUTimeoutCache()
 
 
 template<class KeyType, class ValueType>
-void LRUTimeoutCache<KeyType,ValueType>::insert(const KeyType& key,
-                                                const ValueType& value)
+void LRUCache<KeyType,ValueType>::insert(const KeyType& key,
+                                         const ValueType& value)
 {
     // Check to see if the entry already exists
     typename std::map<KeyType, EntryType*>::iterator pos;
@@ -112,7 +109,6 @@ void LRUTimeoutCache<KeyType,ValueType>::insert(const KeyType& key,
     {
         // Entry already exists, update it
         pos->second->data = value;
-        pos->second->timeStamp = simulation.simTime();
 
         // Update the LRU data
         lruList_.erase(pos->second->lruRef);
@@ -131,7 +127,6 @@ void LRUTimeoutCache<KeyType,ValueType>::insert(const KeyType& key,
         // Fill out the Cache entry data
         EntryType* entry = new EntryType();
         entry->data = value;
-        entry->timeStamp = simulation.simTime();
 
         // Add to the LRU list
         lruList_.push_front(key);
@@ -144,7 +139,7 @@ void LRUTimeoutCache<KeyType,ValueType>::insert(const KeyType& key,
 }
 
 template<class KeyType, class ValueType>
-void LRUTimeoutCache<KeyType,ValueType>::remove(const KeyType& key)
+void LRUCache<KeyType,ValueType>::remove(const KeyType& key)
 {
     typename std::map<KeyType, EntryType*>::iterator pos;
     pos = keyEntryMap_.find(key);
@@ -163,8 +158,21 @@ void LRUTimeoutCache<KeyType,ValueType>::remove(const KeyType& key)
 }
 
 template<class KeyType, class ValueType>
-typename LRUTimeoutCache<KeyType,ValueType>::EntryType*
-LRUTimeoutCache<KeyType,ValueType>::lookup(const KeyType& key)
+bool LRUCache<KeyType,ValueType>::exists(const KeyType& key) const
+{
+    typename std::map<KeyType, EntryType*>::const_iterator pos;
+
+    // Search the map for key
+    pos = keyEntryMap_.find(key);
+    if (pos != keyEntryMap_.end())
+    {
+        return true;
+    }
+    return false;
+}
+
+template<class KeyType, class ValueType>
+ValueType LRUCache<KeyType,ValueType>::lookup(const KeyType& key)
 {
     EntryType* entry = 0;
     typename std::map<KeyType, EntryType*>::iterator pos;
@@ -180,11 +188,16 @@ LRUTimeoutCache<KeyType,ValueType>::lookup(const KeyType& key)
         lruList_.push_front(key);
         entry->lruRef = lruList_.begin();
     }
-    return entry;
+    else
+    {
+        NoSuchEntry e;
+        throw e;
+    }
+    return entry->data;
 }
 
 template<class KeyType, class ValueType>
-int LRUTimeoutCache<KeyType,ValueType>::size() const
+int LRUCache<KeyType,ValueType>::size() const
 {
     assert(lruList_.size() == keyEntryMap_.size());
     assert(lruList_.size() == numEntries_);

@@ -5,7 +5,7 @@
 #include <iostream>
 
 /** File system block data type */
-typedef uint64_t FSBlock;
+typedef int64_t FSBlock;
 
 /** File system handle data type */
 typedef uint64_t FSHandle;
@@ -17,7 +17,7 @@ typedef uint64_t FSOffset;
 typedef uint64_t FSSize;
 
 /** Logical Block Address data type */
-typedef uint64_t LogicalBlockAddress;
+typedef int64_t LogicalBlockAddress;
 
 /** A contguous handle range beginning at first and ending at last */
 struct HandleRange
