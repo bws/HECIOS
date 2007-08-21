@@ -25,7 +25,9 @@
 #include <omnetpp.h>
 #include "basic_types.h"
 
-/** Scheduler entry for disk schedulers */
+/**
+ * Scheduler entry for disk schedulers
+ */
 struct SchedulerEntry : public cObject
 {
     LogicalBlockAddress lba;
@@ -39,6 +41,19 @@ struct SchedulerEntry : public cObject
 class DiskScheduler : public cSimpleModule
 {
   public:
+    /**
+     * Remove and return entries from the queue that match the address lba.
+     *  If readsOnly is set to true, only identical reads are extracted, if
+     *  set to false both reads and writes are extracted
+     *
+     * @param the queue to extract from
+     * @param the block address to compare for equality
+     * @param set to true to extract only reads, ow extract reads and writes
+     * @return the extracted entries
+     */
+    static std::vector<SchedulerEntry*> extractIdenticalEntries(
+        cQueue& queue, LogicalBlockAddress lba, bool readsOnly);
+
     /**
      *  This is the constructor for this simulation module.
      *

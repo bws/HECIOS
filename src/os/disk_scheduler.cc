@@ -30,6 +30,23 @@ using namespace std;
 //
 //=============================================================================
 
+vector<SchedulerEntry*> DiskScheduler::extractIdenticalEntries(
+    cQueue& queue, LogicalBlockAddress lba, bool readsOnly)
+{
+    vector<SchedulerEntry*> completed;
+    for (cQueueIterator iter(queue); !iter.end() ; iter++ )
+    {
+        SchedulerEntry* entry = static_cast<SchedulerEntry*>(iter());
+        if (lba == entry->lba &&
+            (entry->isReadRequest || !readsOnly))
+        {
+            completed.push_back(entry);
+            queue.remove(entry);
+        }
+    }
+    return completed;
+}
+
 DiskScheduler::DiskScheduler()
 {
 }
@@ -164,34 +181,13 @@ SchedulerEntry* FCFSDiskScheduler::popNextEntry()
 vector<SchedulerEntry*> FCFSDiskScheduler::popRequestsCompletedByRead(
     LogicalBlockAddress lba)
 {
-    vector<SchedulerEntry*> completed;
-    for (cQueueIterator iter(fcfsQueue); !iter.end() ; iter++ )
-    {
-        SchedulerEntry* entry = static_cast<SchedulerEntry*>(iter());
-        if (entry->isReadRequest && lba == entry->lba)
-        {
-            completed.push_back(entry);
-            fcfsQueue.remove(entry);
-        }
-    }
-
-    return completed;
+    return extractIdenticalEntries(fcfsQueue, lba, true);
 }
 
 vector<SchedulerEntry*> FCFSDiskScheduler::popRequestsCompletedByWrite(
     LogicalBlockAddress lba)
 {
-    vector<SchedulerEntry*> completed;
-    for (cQueueIterator iter(fcfsQueue); !iter.end() ; iter++ )
-    {
-        SchedulerEntry* entry = static_cast<SchedulerEntry*>(iter());
-        if (lba == entry->lba)
-        {
-            completed.push_back(entry);
-            fcfsQueue.remove(entry);
-        }
-    }
-    return completed;
+    return extractIdenticalEntries(fcfsQueue, lba, false);
 }
 
 
@@ -243,15 +239,13 @@ SchedulerEntry* SSTFDiskScheduler::popNextEntry()
 vector<SchedulerEntry*> SSTFDiskScheduler::popRequestsCompletedByRead(
     LogicalBlockAddress lba)
 {
-    vector<SchedulerEntry*> completed;
-    return completed;
+    return extractIdenticalEntries(sstfQueue, lba, true);
 }
 
 vector<SchedulerEntry*> SSTFDiskScheduler::popRequestsCompletedByWrite(
     LogicalBlockAddress lba)
 {
-    vector<SchedulerEntry*> completed;
-    return completed;
+    return extractIdenticalEntries(sstfQueue, lba, false);
 }
 
 /*
