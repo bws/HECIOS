@@ -9,6 +9,7 @@ cplusplus {{
 
 // Forward declarations
 class noncobject FSBlock;
+class cFSM;
 
 // Enumerate all OS message kinds
 enum spfsOSMessageKind
@@ -27,74 +28,98 @@ enum spfsOSMessageKind
     SPFS_OS_WRITE_DEVICE_RESPONSE = 612;
 };
 
-// The abstract base class for all OS File Read and File Write Requests
-message spfsOSFileRequest
+// Abstract base class for all OS File Read and File Write Requests
+message spfsOSFileIORequest
 {
     fields:
         long fileHandle;
+        long offset;
+        long extent;
+
+        // State fields used internally
+        long numRemainingResponses;
 };
 
-// The abstract base class for all OF File Read and File Write Responses
-message spfsOSFileResponse
+// Abstract base class for all OF File Read and File Write Responses
+message spfsOSFileIOResponse
 {
     fields:
         long fileHandle;
 };
 
 // File read request to the OS' native file system
-message spfsOSFileReadRequest extends spfsOSFileRequest
+message spfsOSFileReadRequest extends spfsOSFileIORequest
 {
-    fields:
-        long offset;
-        long extent;
 };
 
 // File Read response from the OS' native file system
-message spfsOSFileReadResponse extends spfsOSFileResponse
+message spfsOSFileReadResponse extends spfsOSFileIOResponse
 {
 };
 
 // File write request to the OS' native file system
-message spfsOSFileWriteRequest extends spfsOSFileRequest
+message spfsOSFileWriteRequest extends spfsOSFileIORequest
 {
-    fields:
-        long offset;
-        long extent;
 };
 
-// File write response from the OS' native file system
-message spfsOSReadBlocksRequest
+// Abstract base class for block read and write requests
+message spfsOSBlockIORequest
 {
     fields:
         FSBlock blocks[];
+
+        // State field used internally
+        long numRemainingResponses;
 };
 
-message spfsOSReadBlocksResponse
+// Abstract base class block read and write responses
+message spfsOSBlockIOResponse
 {
 };
 
-message spfsOSWriteBlocksRequest
+// Read request for file system blocks
+message spfsOSReadBlocksRequest extends spfsOSBlockIORequest
 {
-    fields:
-        FSBlock blocks[];
 };
 
-message spfsOSReadDeviceRequest
+// Read response for file system blocks
+message spfsOSReadBlocksResponse extends spfsOSBlockIOResponse
+{
+};
+
+// Write request for file system blocks 
+message spfsOSWriteBlocksRequest extends spfsOSBlockIORequest
+{
+};
+
+// Write response for file system blocks 
+message spfsOSWriteBlocksResponse extends spfsOSBlockIOResponse
+{
+};
+
+// Abstract base class for device I/O requests
+message spfsOSDeviceIORequest
 {
     fields:
         long address;
 };
 
+// Read block device request
+message spfsOSReadDeviceRequest extends spfsOSDeviceIORequest
+{
+};
+
+// Read block device response
 message spfsOSReadDeviceResponse
 {
 };
 
-message spfsOSWriteDeviceRequest
+// Write block device request
+message spfsOSWriteDeviceRequest extends spfsOSDeviceIORequest
 {
-    fields:
-        long address;
 };
 
+// Write block device response
 message spfsOSWriteDeviceResponse
 {
 };

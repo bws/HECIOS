@@ -3,4 +3,5 @@
 #
 DIR := tests/support
 
-SIM_TEST_SRC += $(DIR)/test_cenvir.cc
+SIM_TEST_SRC += $(DIR)/test_cenvir.cc \
+	$(DIR)/test_simulation.cc

@@ -12,10 +12,12 @@
  */
 
 #include "cenvir.h"
+#include "cdefaultlist.h"
 using namespace std;
 
 /** Global objects */
 cEnvir ev;
+cStaticFlag* staticFlag;
 
 /** Some weird dummy function that is apparently required */
 void envirDummy()
@@ -27,11 +29,23 @@ cEnvir::cEnvir() :
     ostream(&ev_buf),
     ev_buf(this)
 {
+    // Turn off garbage collection (see cdefaultlist.cc)
+    cDefaultList::doGC = false;
+
+    // Set the static flag (see cobject.h)
+    //
+    // Necessary to create cDefaultList type required to construct modules
+    // I am not using it the way the name implies it should work because
+    // apparently it is named poorly
+    //
+    staticFlag = new cStaticFlag();
 }
 
 /** Destructor */
 cEnvir::~cEnvir()
 {
+    delete staticFlag;
+    staticFlag = 0;
 }
 
 /** */

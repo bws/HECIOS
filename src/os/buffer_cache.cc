@@ -177,7 +177,7 @@ bool LRUBufferCache::isCached(LogicalBlockAddress address)
 
 void LRUBufferCache::addEntry(LogicalBlockAddress address)
 {
-    assert(false == cache_->exists(address));
+    //assert(false == cache_->exists(address));
     cache_->insert(address, 1);
 }
 

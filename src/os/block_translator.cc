@@ -23,6 +23,11 @@
 #include "os_proto_m.h"
 using namespace std;
 
+//=============================================================================
+//
+// BlockTranslator implementation (bastract class)
+//
+//=============================================================================
 BlockTranslator::BlockTranslator()
 {
 }
@@ -30,53 +35,131 @@ BlockTranslator::BlockTranslator()
 void BlockTranslator::initialize()
 {
     inGateId_ = gate("in")->id();
+
+    // Initialize derived translators
+    initializeTranslator();
 }
 
 void BlockTranslator::handleMessage(cMessage *msg)
 {
     if (msg->arrivalGateId() == inGateId_)
     {
-        spfsOSReadBlocksRequest* read =
-            dynamic_cast<spfsOSReadBlocksRequest*>(msg);
+        spfsOSBlockIORequest* blockIO = dynamic_cast<spfsOSBlockIORequest*>(msg);
         assert(0 != read);
 
-        const size_t numBlocks = read->getBlocksArraySize();
+        // Determine if we are building read or write requests
+        bool isRead = (0 != dynamic_cast<spfsOSReadBlocksRequest*>(blockIO));
+
+        // Generate requests for each block
+        size_t numRequestsGenerated = 0;
+        size_t numBlocks = blockIO->getBlocksArraySize();
         for (size_t i = 0; i < numBlocks; i++)
         {
-            long long address = getAddress(read->getBlocks(i));
-            spfsOSReadDeviceRequest* req = new spfsOSReadDeviceRequest();
-            req->setAddress(address);
-            req->setContextPointer(msg);
-            send(req, "request");
+            // Create multiple device requests for each block
+            vector<LogicalBlockAddress> lbas =
+                getAddresses(blockIO->getBlocks(i));
+            for (size_t j = 0; j < lbas.size(); j++)
+            {
+                spfsOSDeviceIORequest* req = 0;
+                if (isRead)
+                {
+                    req = new spfsOSReadDeviceRequest();
+                }
+                else
+                {
+                    req = new spfsOSWriteDeviceRequest();
+                }
+                req->setAddress(lbas[i]);
+                req->setContextPointer(msg);
+                send(req, "request");
+            }
+
+            // Track the number of requests generated
+            numRequestsGenerated += lbas.size();
         }
+
+        // Update the originating request with the number of requests created
+        blockIO->setNumRemainingResponses(numRequestsGenerated);
     }
     else
     {
-        //FIXME - doesn't do correct counting here
+        // Extract the originating device request
         cMessage* devRequest = (cMessage*)msg->contextPointer();
+
+        // Extract the parent block io request
         cMessage* parentRequest = (cMessage*)devRequest->contextPointer();
+        spfsOSBlockIORequest* ioRequest =
+            dynamic_cast<spfsOSBlockIORequest*>(parentRequest);
+        assert(0 != ioRequest);
 
-        // Construct the correct response type
-        spfsOSReadBlocksResponse* resp = new spfsOSReadBlocksResponse();
-        resp->setContextPointer(parentRequest);
-        send(resp, "out");
-
-        // Clean up the device request and responses
+        // If this is the last response for this request, send a respnse
+        // otherwise, decrement the number of remaining responses
+        int numRemainingResponses = ioRequest->getNumRemainingResponses();
+        if (1 == numRemainingResponses)
+        {
+            // Construct the correct response type
+            spfsOSReadBlocksResponse* resp = new spfsOSReadBlocksResponse();
+            resp->setContextPointer(ioRequest);
+            send(resp, "out");
+        }
+        else
+        {
+            ioRequest->setNumRemainingResponses(numRemainingResponses - 1);
+        }
+        
+        // Clean up the device request and response
         delete devRequest;
         delete msg;
     }
 }
 
-//------------------------------------------------
-Define_Module_Like( NoTranslation, BlockTranslator )
+//=============================================================================
+//
+// NoTranslation implementation (bastract class)
+//
+//=============================================================================
+Define_Module_Like(NoTranslation, BlockTranslator);
 
 NoTranslation::NoTranslation()
 {
 }
 
-long long NoTranslation::getAddress(FSBlock block) const
+vector<LogicalBlockAddress> NoTranslation::getAddresses(FSBlock block) const
 {
-    return block;
+    vector<LogicalBlockAddress> lba(1);
+    lba.push_back(block);
+    return lba;
+}
+
+//=============================================================================
+//
+// BasicTranslator implementation (bastract class)
+//
+//=============================================================================
+Define_Module_Like(BasicTranslator, BlockTranslator);
+
+BasicTranslator::BasicTranslator()
+    : addrsPerBlock_(0)
+{
+}
+
+void BasicTranslator::initializeTranslator()
+{
+    addrsPerBlock_ = 4096 / 512;
+}
+
+vector<LogicalBlockAddress> BasicTranslator::getAddresses(FSBlock block) const
+{
+    // Find the first address for this block
+    LogicalBlockAddress begAddr = block * addrsPerBlock_;
+
+    // Construct all the addresses for this block
+    vector<LogicalBlockAddress> addresses;
+    for (int i = 0; i < addrsPerBlock_; i++)
+    {
+        addresses.push_back(begAddr + i);
+    }
+    return addresses;
 }
 
 /*

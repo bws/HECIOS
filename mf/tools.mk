@@ -37,7 +37,7 @@ UNSAFE_CXXFLAGS += $(patsubst %,-I%,$(INCLUDES))
 #
 # Dependency generation flags
 #
-DEPFLAGS = $(patsubst %,-I%,$(INCLUDES))
+DEPFLAGS = $(patsubst %,-I%,$(INCLUDES)) $(patsubst %,-I%,$(TEST_INCLUDES))
 
 #
 # Link flags

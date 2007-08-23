@@ -1,4 +1,24 @@
 #
+# This file is part of Hecios
+#
+# Copyright (C) 2007 Brad Settlemyer
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+
+#
 # Top Level Makefile for HECIOS.  This makefile avoids recursive make and 
 # integrates the third party framework, INET, into HECIOS.
 #
@@ -64,6 +84,12 @@ INCLUDES = $(OMNET_DIR)/include \
         $(INET_DIR)/Transport/TCP \
         $(INET_DIR)/Transport/UDP \
         $(INET_DIR)/Util
+
+#
+# Testing subsystem include files.  Setup in tests.mk, but referenced here
+# so that it can be used
+#
+TEST_INCLUDES =
 
 #
 # Libraries to link
@@ -138,50 +164,11 @@ ifeq ($(filter all_clean clean doc ned_clean tests_clean, $(MAKECMDGOALS)), )
 endif
 
 #
-# Testing macros
-#
-TEST_DIR := tests
-
-TEST_CLIENT_DIR := $(TEST_DIR)/client
-TEST_COMMON_DIR := $(TEST_DIR)/common
-TEST_LAYOUT_DIR := $(TEST_DIR)/layout
-TEST_SUPPORT_DIR := $(TEST_DIR)/support
-
-TEST_INCLUDES := -I$(TEST_COMMON_DIR)
-
-TEST_LIBS := -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
-	-lsim_std -lnedxml -lxml2 \
-	-lcppunit -ldl
-
-#
-# Testing module includes
-#
-SIM_TEST_SRC :=
-include $(TEST_CLIENT_DIR)/module.mk
-include $(TEST_COMMON_DIR)/module.mk
-include $(TEST_LAYOUT_DIR)/module.mk
-include $(TEST_SUPPORT_DIR)/module.mk
-
-
-#
-# Testing dependencies
-#
-SIM_TEST_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_TEST_SRC)))
-ifeq ($(filter test, $(MAKECMDGOALS)), test)
--include $(SIM_TEST_DEPENDS)
-endif
-
-#
-# Derived files for tests
-#
-SIM_TEST_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_TEST_SRC)))
-
-
-#
 # Include all make system makefiles
 #
 include mf/rules.mk
 include mf/tools.mk
+include mf/tests.mk
 
 
 #
@@ -240,37 +227,7 @@ $(BIN_DIR)/hecios_cmd: lib/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS)
 #
 # Build unit test drivers
 #
-test: $(BIN_DIR)/common_test $(BIN_DIR)/client_test $(BIN_DIR)/layout_test
-
-#
-# client module unit tests
-#
-CLIENT_TEST_OBJS = $(TEST_CLIENT_DIR)/unit_test.o \
-	$(TEST_SUPPORT_DIR)/test_cenvir.o
-
-$(BIN_DIR)/client_test: $(CLIENT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
-	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $^ $(TEST_LIBS) -o $@
-
-#
-# common module unit tests
-#
-COMMON_TEST_OBJS = $(TEST_COMMON_DIR)/unit_test.o \
-	$(TEST_SUPPORT_DIR)/test_cenvir.o
-
-$(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
-	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $^ $(TEST_LIBS) -o $@
-
-#
-# layout module unit tests
-#
-LAYOUT_TEST_OBJS = $(TEST_LAYOUT_DIR)/unit_test.o \
-	$(TEST_SUPPORT_DIR)/test_cenvir.o
-
-$(BIN_DIR)/layout_test: $(LAYOUT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
-	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $^ $(TEST_LIBS) -o $@
+test: $(BIN_DIR)/common_test $(BIN_DIR)/client_test $(BIN_DIR)/layout_test $(BIN_DIR)/os_test
 
 #
 # Psuedotargets (required by make for some dependencies)

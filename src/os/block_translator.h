@@ -20,6 +20,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
+#include <vector>
 #include <omnetpp.h>
 #include "basic_types.h"
 
@@ -52,9 +53,15 @@ protected:
     virtual void handleMessage(cMessage *msg);
 
     /**
+     * Initialize derived translator functionality
+     */
+    virtual void initializeTranslator() = 0;
+    
+    /**
      * @return a hardware address for the give file system block
      */
-    virtual long long getAddress(FSBlock blocks) const = 0;
+    virtual std::vector<LogicalBlockAddress> getAddresses(
+        FSBlock blocks) const = 0;
 
 private:
 
@@ -72,10 +79,40 @@ public:
 
 protected:
 
+    /** Initialize the translator (no-op) */
+    virtual void initializeTranslator() {};
+    
     /**
      * @return a hardware address for the give file system block
      */
-    virtual long long getAddress(FSBlock block) const; 
+    virtual std::vector<LogicalBlockAddress> getAddresses(
+        FSBlock block) const; 
+};
+
+/**
+ * Translate 4K filesystem blocks into 512 byte disk blocks.  Uses an
+ * identical disk and filesystem fragmentation.
+ */
+class BasicTranslator : public BlockTranslator
+{
+public:
+    /** Constructor */
+    BasicTranslator();
+
+protected:
+
+    /** */
+    virtual void initializeTranslator();
+    
+    /**
+     * @return a hardware address for the give file system block
+     */
+    virtual std::vector<LogicalBlockAddress> getAddresses(
+        FSBlock block) const;
+
+private:
+
+    int addrsPerBlock_;
 };
 
 #endif
