@@ -25,7 +25,8 @@
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
 #include "block_translator.h"
-#include "cmodule_tester.h"
+#include "csimple_module_tester.h"
+#include "os_proto_m.h"
 using namespace std;
 
 /** Unit test for NoTranslation */
@@ -61,7 +62,7 @@ void NoTranslationTest::tearDown()
 void NoTranslationTest::testHandleMessage()
 {
     NoTranslation mod;
-    cModuleTester moduleTester(&mod);
+    cSimpleModuleTester moduleTester(&mod);
 }
 
 #endif

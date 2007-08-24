@@ -36,8 +36,12 @@ TEST_LIBS := -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
 #
 # Testing macros defined and used elsewhere
 #
-TEST_INCLUDES = -I$(TEST_SUPPORT_DIR)
+TEST_INCLUDES = $(TEST_SUPPORT_DIR)
 
+#
+# Additional flags used to build the tests
+#
+TESTCFLAGS = $(patsubst %,-I%,$(TEST_INCLUDES))
 
 #
 # Testing module includes
@@ -64,6 +68,20 @@ endif
 SIM_TEST_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_TEST_SRC)))
 
 #
+# Build unit test drivers
+#
+tests_all: $(BIN_DIR)/common_test $(BIN_DIR)/client_test $(BIN_DIR)/layout_test $(BIN_DIR)/os_test
+
+#
+# Cleanup test subsystem
+#
+tests_clean:
+	@echo "Removing test subsytem derived objects."
+	$(RM) $(SIM_TEST_OBJS)
+	$(RM) $(SIM_TEST_DEPENDS)
+	@echo "Derived files deleted."
+
+#
 # client module unit tests
 #
 CLIENT_TEST_OBJS = $(TEST_CLIENT_DIR)/unit_test.o \
@@ -71,7 +89,7 @@ CLIENT_TEST_OBJS = $(TEST_CLIENT_DIR)/unit_test.o \
 
 $(BIN_DIR)/client_test: $(CLIENT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $^ $(TEST_LIBS) -o $@
+	$(LD) -g $^ $(TEST_LIBS) -o $@
 
 #
 # common module unit tests
@@ -81,7 +99,7 @@ COMMON_TEST_OBJS = $(TEST_COMMON_DIR)/unit_test.o \
 
 $(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $^ $(TEST_LIBS) -o $@
+	$(LD) -g $^ $(TEST_LIBS) -o $@
 
 #
 # layout module unit tests
@@ -91,16 +109,16 @@ LAYOUT_TEST_OBJS = $(TEST_LAYOUT_DIR)/unit_test.o \
 
 $(BIN_DIR)/layout_test: $(LAYOUT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $^ $(TEST_LIBS) -o $@
+	$(LD) -g $^ $(TEST_LIBS) -o $@
 
 #
 # OS module unit tests
 #
 OS_TEST_OBJS = $(TEST_OS_DIR)/unit_test.o \
-	$(TEST_SUPPORT_DIR)/cmodule_tester.o \
+	$(TEST_SUPPORT_DIR)/csimple_module_tester.o \
 	$(TEST_SUPPORT_DIR)/test_cenvir.o
 
 $(BIN_DIR)/os_test: $(OS_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $(TEST_INCLUDES) $^ $(TEST_LIBS) -o $@
+	$(LD) -g $^ $(TEST_LIBS) -o $@
 

@@ -191,12 +191,6 @@ ned_clean:
 	$(RM) $(SIM_MSG_OUTPUT) $(SIM_MSG_OBJS)
 	@echo "Generated source files and objects removed."
 
-tests_clean:
-	@echo "Removing test subsytem derived objects."
-	$(RM) $(SIM_TEST_OBJS)
-	$(RM) $(SIM_TEST_DEPENDS)
-	@echo "Derived files deleted."
-
 all_clean: clean tests_clean inet_clean
 
 #
@@ -227,7 +221,7 @@ $(BIN_DIR)/hecios_cmd: lib/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS)
 #
 # Build unit test drivers
 #
-test: $(BIN_DIR)/common_test $(BIN_DIR)/client_test $(BIN_DIR)/layout_test $(BIN_DIR)/os_test
+test: tests_all
 
 #
 # Psuedotargets (required by make for some dependencies)
