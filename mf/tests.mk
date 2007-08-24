@@ -39,11 +39,6 @@ TEST_LIBS := -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
 TEST_INCLUDES = $(TEST_SUPPORT_DIR)
 
 #
-# Additional flags used to build the tests
-#
-TESTCFLAGS = $(patsubst %,-I%,$(TEST_INCLUDES))
-
-#
 # Testing module includes
 #
 SIM_TEST_SRC :=

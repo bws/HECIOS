@@ -40,6 +40,11 @@ UNSAFE_CXXFLAGS += $(patsubst %,-I%,$(INCLUDES))
 DEPFLAGS = $(patsubst %,-I%,$(INCLUDES)) $(patsubst %,-I%,$(TEST_INCLUDES))
 
 #
+# Addtional compilation flags to be used on unit tests
+#
+TESTCFLAGS = $(patsubst %,-I%,$(TEST_INCLUDES))
+
+#
 # Link flags
 #
 LDFLAGS += -g -Wl,--export-dynamic
