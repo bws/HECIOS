@@ -106,9 +106,9 @@ void FileBuilderTest::testGetNextHandle()
 void FileBuilderTest::testFileExists()
 {
     // Create files
-    string file1 = "/test1";
-    string file2 = "/test2";
-    string dir1 = "/dir1";
+    Filename file1("/test1");
+    Filename file2("/test2");
+    Filename dir1("/dir1");
     FileBuilder::instance().createFile(file1, 0, 1);
     FileBuilder::instance().createDirectory(dir1, 0);
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(file1));
@@ -123,7 +123,7 @@ void FileBuilderTest::testGetMetaData()
     FSMetaData* file1MD = FileBuilder::instance().getMetaData(file1);
     CPPUNIT_ASSERT(0 != file1MD);
     
-    string dir1 = "/dir1";
+    Filename dir1("/dir1");
     FileBuilder::instance().createDirectory(dir1, 0);
     //CPPUNIT_FAIL("Not implemented");
 }

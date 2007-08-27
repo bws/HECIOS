@@ -13,11 +13,13 @@
 
 #include "cenvir.h"
 #include "cdefaultlist.h"
+#include "onstartup.h"
 using namespace std;
 
 /** Global objects */
 cEnvir ev;
 cStaticFlag* staticFlag;
+static cDefaultList g_defaultList("globalTestingDefaultList");
 
 /** Some weird dummy function that is apparently required */
 void envirDummy()
@@ -39,6 +41,9 @@ cEnvir::cEnvir() :
     // apparently it is named poorly
     //
     staticFlag = new cStaticFlag();
+
+    // construct global lists
+    ExecuteOnStartup::executeAll();
 }
 
 /** Destructor */
@@ -226,8 +231,8 @@ string cEnvir::getParameter(int, char const*)
     return "";
 }
 
-/** Not needed for test drivers */
-void cEnvir::moduleCreated(cModule*)
+/** Add a module to the testing environment */
+void cEnvir::moduleCreated(cModule* module)
 {
 }
 

@@ -61,8 +61,20 @@ void NoTranslationTest::tearDown()
 
 void NoTranslationTest::testHandleMessage()
 {
-    NoTranslation mod;
-    cSimpleModuleTester moduleTester(&mod);
+    cSimpleModuleTester moduleTester("NoTranslation",
+                                     "src/os/block_translator.ned");
+
+    // Test a ReadBlocks request
+    spfsOSReadBlocksRequest req;
+    moduleTester.deliverMessage(&req, "in");
+    cMessage* output1 = moduleTester.getOutputMessage();
+    CPPUNIT_ASSERT(0 == output1);
+    
+    // Test a response
+    spfsOSReadDeviceResponse resp;
+    //moduleTester.deliverMessage(&resp, "response");
+    cMessage* output2 = moduleTester.getOutputMessage();
+    CPPUNIT_ASSERT(0 == output2);
 }
 
 #endif

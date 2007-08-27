@@ -6,32 +6,14 @@ using namespace std;
 Filename::Filename(const string& absolutePath)
 {
     assert('/' == absolutePath[0]);
+    initialize(absolutePath);
+}
 
-    // Remove extra slashes from the path (incl. trailing slashes)
-    bool foundSlash = false;
-    path_.reserve(absolutePath.size());
-    for (string::size_type i = 0; i < absolutePath.size(); i++)
-    {
-        if (!foundSlash && '/' != absolutePath[i])
-        {
-            path_.push_back(absolutePath[i]);
-        }
-        else if (foundSlash && '/' != absolutePath[i])
-        {
-            foundSlash = false;
-            path_.push_back('/');
-            path_.push_back(absolutePath[i]);
-        }
-        else if ('/' == absolutePath[i])
-        {
-            foundSlash = true;
-        }
-    }
-
-    // If the path was only slashes (i.e. the root dir), set it by hand
-    if (0 == path_.size())
-        path_.push_back('/');
-        
+Filename::Filename(const char* absolutePathStr)
+{
+    assert('/' == absolutePathStr[0]);
+    string absolutePath(absolutePathStr);
+    initialize(absolutePath);
 }
 
 size_t Filename::getNumPathSegments() const
@@ -87,5 +69,33 @@ Filename Filename::getSegment(size_t segIdx) const
             }
         }
     }
-    return segment;
+    return Filename(segment);
+}
+
+void Filename::initialize(const string& absolutePath)
+{
+    // Remove extra slashes from the path (incl. trailing slashes)
+    bool foundSlash = false;
+    path_.reserve(absolutePath.size());
+    for (string::size_type i = 0; i < absolutePath.size(); i++)
+    {
+        if (!foundSlash && '/' != absolutePath[i])
+        {
+            path_.push_back(absolutePath[i]);
+        }
+        else if (foundSlash && '/' != absolutePath[i])
+        {
+            foundSlash = false;
+            path_.push_back('/');
+            path_.push_back(absolutePath[i]);
+        }
+        else if ('/' == absolutePath[i])
+        {
+            foundSlash = true;
+        }
+    }
+
+    // If the path was only slashes (i.e. the root dir), set it by hand
+    if (0 == path_.size())
+        path_.push_back('/');
 }

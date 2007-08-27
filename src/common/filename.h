@@ -12,8 +12,12 @@
 class Filename
 {
 public:
+    
     /** Create a filename from an absolute path */
-    Filename(const std::string& absolutePath);
+    explicit Filename(const std::string& absolutePath);
+
+    /** Create a filename from an absolute path */
+    explicit Filename(const char* absolutePathStr);
 
     /** Return the filename as a string */
     std::string str() const { return path_; };
@@ -22,10 +26,13 @@ public:
     std::size_t getNumPathSegments() const;
 
     /** @return the absolute path segment */
-    Filename getSegment(size_t segNum) const;
+    Filename getSegment(std::size_t segNum) const;
     
 private:
 
+    /** Perform initialization tasks */
+    void initialize(const std::string& absolutePath);
+    
     /** Path data */
     std::string path_;
 };
