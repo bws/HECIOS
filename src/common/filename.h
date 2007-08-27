@@ -19,13 +19,15 @@ public:
     /** Create a filename from an absolute path */
     explicit Filename(const char* absolutePathStr);
 
-    /** Return the filename as a string */
+    /** @return the filename as a string */
     std::string str() const { return path_; };
     
     /** @return the number of path segments (including the root directory) */
     std::size_t getNumPathSegments() const;
 
-    /** @return the absolute path segment */
+    /**
+     * @return a filename containing the absolute path up to segment segNum
+     */
     Filename getSegment(std::size_t segNum) const;
     
 private:
