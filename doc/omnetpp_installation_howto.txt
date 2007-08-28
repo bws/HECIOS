@@ -1,0 +1,75 @@
+HowTo install OmNet++ under Linux (using Fedora)
+--
+
+PREQUISITES
+--
+Before installing OmNet++t is neccesary to install several packages.
+The package names are listed followed by instructions on how to install
+the package using Fedora
+
+TCL/TK
+--
+yum install tk.i386 tk-devel.i386
+yum install tcl.i386 tcl-devel.i386
+
+GraphViz
+--
+yum install graphviz.i386
+
+BLT
+--
+tar -xvfz BLT2.4z.tar.gz
+cd blt2.4z
+./configure
+make
+make install
+
+GIFTrans
+--
+rpm -i giftrans-1.12.2-20.src.rpm
+cd /usr/src/redhat/SOURCES
+tar -xvfz giftrans-1.12.2.tar.gz
+patch -p0 < giftrans-1.12.2-operator.patch
+cd giftrans-1.12.2
+gcc giftrans.c -o giftrans
+cp giftrans /usr/bin
+gzip giftrans.1
+cp giftrans.1.gz /usr/share/man/man1/
+
+INSTALLATION
+--
+1.  Download OmNet++
+	http://www.omnetpp.org/filemgmt/viewcat.php?cid=2
+
+2.  Extract source
+	cd /opt
+	tar -xvfz omnetpp-3.3-src.tgz
+
+3.  Update paths
+	set path = ($path /opt/omnetpp-3.3/bin)
+	setenv LD_LIBRARY_PATH .:/opt/omnetpp-3.3/lib
+
+4.  Configure for build
+	./configure
+
+    Notice the warnings and errors produced during configuration.  The
+    following warnings are okay:
+
+*WARNING: The configuration script could not detect the following packages:
+*
+*    MPI (optional)  Akaroa (optional)
+*
+*Scroll up to see the warning messages (use shift+PgUp key), and see config.log
+*for more details. While you can use OMNeT++/OMNEST in the current
+*configuration, please be aware that some functionality may be unavailable
+*or incomplete.
+*
+*Your PATH contains /opt/omnetpp-3.3/bin. Good!
+*Your LD_LIBRARY_PATH is set. Good!
+*
+
+5.  Build:
+	make
+
+6.  OmNet++ is now built and installed.  If you would like to move it to
+    another directory it will need to be rebuilt.
