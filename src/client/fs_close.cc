@@ -20,17 +20,17 @@
 #include "fs_close.h"
 #include <iostream>
 #include <omnetpp.h>
-#include "fs_module.h"
+#include "fs_client.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSClose::FSClose(fsModule* module, spfsMPIFileCloseRequest* closeReq)
-    : fsModule_(module),
+FSClose::FSClose(FSClient* client, spfsMPIFileCloseRequest* closeReq)
+    : client_(client),
       closeReq_(closeReq)
 {
-    assert(0 != fsModule_);
+    assert(0 != client_);
     assert(0 != closeReq_);
 }
 
@@ -40,7 +40,7 @@ void FSClose::handleMessage(cMessage* msg)
     spfsMPIFileCloseResponse* mpiResp =
             new spfsMPIFileCloseResponse(0, SPFS_MPI_FILE_CLOSE_RESPONSE);
     mpiResp->setContextPointer(closeReq_);
-    fsModule_->send(mpiResp, fsModule_->fsMpiOut);                 
+    client_->send(mpiResp, client_->getAppOutGate());                 
 
 }
 

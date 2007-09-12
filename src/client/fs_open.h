@@ -22,7 +22,7 @@
 
 class cFSM;
 class cMessage;
-class fsModule;
+class FSClient;
 class spfsMPIFileOpenRequest;
 class spfsCreateResponse;
 class spfsCreateDirEntResponse;
@@ -38,7 +38,7 @@ class FSOpen
 public:
 
     /** Constructor */
-    FSOpen(fsModule* module, spfsMPIFileOpenRequest* openReq);
+    FSOpen(FSClient* client, spfsMPIFileOpenRequest* openReq);
     
     /** Handle MPI-Open Message */
     void handleMessage(cMessage* msg);
@@ -94,8 +94,8 @@ protected:
     
 private:
 
-    /** The filesystem module */
-    fsModule* fsModule_;
+    /** The filesystem client module */
+    FSClient* client_;
 
     /** The originating MPI Open request */
     spfsMPIFileOpenRequest* openReq_;

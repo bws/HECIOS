@@ -21,7 +21,7 @@
 //
 
 class cMessage;
-class fsModule;
+class FSClient;
 class spfsMPIFileWriteAtRequest;
 class spfsWriteResponse;
 
@@ -33,7 +33,7 @@ class FSWrite
 public:
 
     /** Constructor */
-    FSWrite(fsModule* module, spfsMPIFileWriteAtRequest* writeReq);
+    FSWrite(FSClient* client, spfsMPIFileWriteAtRequest* writeReq);
     
     /** Handle MPI-Open Message */
     void handleMessage(cMessage* msg);
@@ -56,8 +56,8 @@ protected:
     
 private:
 
-    /** The filesystem module */
-    fsModule* fsModule_;
+    /** The filesystem client module */
+    FSClient* client_;
 
     /** The originating MPI write request */
     spfsMPIFileWriteAtRequest* writeReq_;

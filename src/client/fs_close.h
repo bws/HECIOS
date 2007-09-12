@@ -3,7 +3,7 @@
 
 class cFSM;
 class cMessage;
-class fsModule;
+class FSClient;
 class spfsMPIFileCloseRequest;
 
 /**
@@ -14,15 +14,15 @@ class FSClose
 public:
 
     /** Constructor */
-    FSClose(fsModule* module, spfsMPIFileCloseRequest* closeReq);
+    FSClose(FSClient* client, spfsMPIFileCloseRequest* closeReq);
     
     /** Handle MPI-Open Message */
     void handleMessage(cMessage* msg);
 
 private:
 
-    /** The filesystem module */
-    fsModule* fsModule_;
+    /** The filesystem client module */
+    FSClient* client_;
 
     /** The originating MPI close request */
     spfsMPIFileCloseRequest* closeReq_;

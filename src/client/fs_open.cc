@@ -24,17 +24,17 @@
 #include "client_fs_state.h"
 #include "filename.h"
 #include "file_builder.h"
-#include "fs_module.h"
+#include "fs_client.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSOpen::FSOpen(fsModule* module, spfsMPIFileOpenRequest* openReq)
-    : fsModule_(module),
+FSOpen::FSOpen(FSClient* client, spfsMPIFileOpenRequest* openReq)
+    : client_(client),
       openReq_(openReq)
 {
-    assert(0 != fsModule_);
+    assert(0 != client_);
     assert(0 != openReq_);
 }
 
@@ -194,7 +194,7 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
     fd->path = openFile.str();
     
     /* look for dir in cache */
-    FSHandle* lookup = fsModule_->fsState().lookupDir(fd->path);
+    FSHandle* lookup = client_->fsState().lookupDir(fd->path);
     if (0 == lookup)
     {
         /* dir entry not in cache go do lookup */
@@ -208,7 +208,7 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
         outIsInDirCache = true;
         
         /* dir entry in cache look for metadata in cache */
-        FSMetaData* meta = fsModule_->fsState().lookupAttr(*lookup);
+        FSMetaData* meta = client_->fsState().lookupAttr(*lookup);
         if (0 != meta)
         {
             // Found attribute cache entry
@@ -234,7 +234,7 @@ void FSOpen::enterLookup()
     Filename root("/");
     FSMetaData* rootMeta = FileBuilder::instance().getMetaData(root);
     req->setHandle(rootMeta->handle);
-    fsModule_->send(req, fsModule_->fsNetOut);
+    client_->send(req, client_->getNetOutGate());
 }
 
 void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
@@ -257,11 +257,11 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
         {
             /* enter handle in cache */
             FSOpenFile* filedes = (FSOpenFile*)openReq_->getFileDes();
-            fsModule_->fsState().insertDir(filedes->path,
+            client_->fsState().insertDir(filedes->path,
                                            filedes->metaData->handle);
             /* look for metadata in cache */
             FSMetaData* meta =
-                fsModule_->fsState().lookupAttr(filedes->metaData->handle);
+                client_->fsState().lookupAttr(filedes->metaData->handle);
             if (0 == meta)
             {
                 outIsMissingAttr = true;
@@ -298,7 +298,7 @@ void FSOpen::enterCreateMeta()
     int metaServer = FileBuilder::instance().getMetaServers()[0];
 
     req->setHandle(FileBuilder::instance().getFirstHandle(metaServer));
-    fsModule_->send(req, fsModule_->fsNetOut);
+    client_->send(req, client_->getNetOutGate());
 }
 
 void FSOpen::exitCreateMeta(spfsCreateResponse* createResp)
@@ -314,7 +314,7 @@ void FSOpen::enterCreateData()
     /* build a request message */
     req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
     req->setContextPointer(openReq_);
-    numservers = fsModule_->fsState().defaultNumServers();
+    numservers = client_->fsState().defaultNumServers();
     /* send request to each server */
     for (snum = 0; snum < numservers; snum++)
     {
@@ -324,9 +324,9 @@ void FSOpen::enterCreateData()
         //newReq->setByteLength(8);
             
         // use first handle of range to address server
-        int dataServer = fsModule_->fsState().selectServer();
+        int dataServer = client_->fsState().selectServer();
         newReq->setHandle(FileBuilder::instance().getFirstHandle(dataServer));
-        fsModule_->send(newReq, fsModule_->fsNetOut);
+        client_->send(newReq, client_->getNetOutGate());
     }
 
     delete req;
@@ -348,7 +348,7 @@ void FSOpen::enterWriteAttr()
     req->setContextPointer(openReq_);
     req->setHandle(fd->metaData->handle);
     req->setMeta(*fd->metaData);
-    fsModule_->send(req, fsModule_->fsNetOut);
+    client_->send(req, client_->getNetOutGate());   
 }
 
 void FSOpen::exitWriteAttr(spfsSetAttrResponse* sattrResp)
@@ -370,7 +370,7 @@ void FSOpen::enterWriteDirEnt()
     req->setNewHandle(fd->metaData->handle);
     /* this is the name of the file */
     req->setEntry(openReq_->getFileName());
-    fsModule_->send(req, fsModule_->fsNetOut);   
+    client_->send(req, client_->getNetOutGate());   
 }
 
 void FSOpen::exitWriteDirEnt(spfsCreateDirEntResponse* dirEntResp)
@@ -387,7 +387,7 @@ void FSOpen::enterReadAttr()
     spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
     req->setHandle(fd->metaData->handle);
-    fsModule_->send(req, fsModule_->fsNetOut);
+    client_->send(req, client_->getNetOutGate());
 }
 
 void FSOpen::exitReadAttr(spfsGetAttrResponse* gattrResp)
@@ -404,7 +404,7 @@ void FSOpen::enterFinish()
         0, SPFS_MPI_FILE_OPEN_RESPONSE);
     resp->setContextPointer(openReq_);
     resp->setFileDes(openReq_->getFileDes());
-    fsModule_->send(resp, fsModule_->fsMpiOut);
+    client_->send(resp, client_->getAppOutGate());
 }
             
 /*

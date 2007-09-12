@@ -24,17 +24,17 @@
 #include <omnetpp.h>
 #include "data_type_processor.h"
 #include "file_distribution.h"
-#include "fs_module.h"
+#include "fs_client.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSRead::FSRead(fsModule* module, spfsMPIFileReadAtRequest* readReq)
-    : fsModule_(module),
+FSRead::FSRead(FSClient* client, spfsMPIFileReadAtRequest* readReq)
+    : client_(client),
       readReq_(readReq)
 {
-    assert(0 != fsModule_);
+    assert(0 != client_);
     assert(0 != readReq_);
 }
 
@@ -153,7 +153,7 @@ void FSRead::enterRead()
             req->setHandle(filedes->metaData->dataHandles[i]);
             req->setDist(filedes->metaData->dist->clone());
             req->setByteLength(4 + 8 + 8 + 8);
-            fsModule_->send(req, fsModule_->fsNetOut);
+            client_->send(req, client_->getNetOutGate());
 
             // Increment the number of outstanding requests
             numRequests++;
@@ -185,7 +185,7 @@ void FSRead::enterFinish()
     mpiResp->setContextPointer(readReq_);
     mpiResp->setIsSuccessful(true);
     mpiResp->setBytesRead(0);  // FIXME
-    fsModule_->send(mpiResp, fsModule_->fsMpiOut);
+    client_->send(mpiResp, client_->getAppOutGate());
 }
 /*
  * Local variables:

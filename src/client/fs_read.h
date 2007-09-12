@@ -21,7 +21,7 @@
 //
 
 class cMessage;
-class fsModule;
+class FSClient;
 class spfsMPIFileReadAtRequest;
 class spfsReadResponse;
 
@@ -33,7 +33,7 @@ class FSRead
 public:
 
     /** Constructor */
-    FSRead(fsModule* module, spfsMPIFileReadAtRequest* readReq);
+    FSRead(FSClient* client, spfsMPIFileReadAtRequest* readReq);
 
     /** Destructor */
     virtual ~FSRead() {};
@@ -55,7 +55,7 @@ protected:
 private:
 
     /** The filesystem module */
-    fsModule* fsModule_;
+    FSClient* client_;
 
     /** The originating MPI read request */
     spfsMPIFileReadAtRequest* readReq_;

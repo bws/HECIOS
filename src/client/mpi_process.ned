@@ -43,7 +43,7 @@ module MPIProcess
         cache: middlewareCacheType like MiddlewareCache;
             display: "p=80,180;i=block/buffer2,green";
 
-        fsClient: fsModule;
+        fsClient: FSClient;
             display: "p=80,280;i=block/classifier,yellow";
 
     connections:

@@ -17,83 +17,108 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+#include "fs_client.h"
 #include <iostream>
+#include "fs_close.h"
+#include "fs_open.h"
+#include "fs_read.h"
+#include "fs_write.h"
+#include "pfs_types.h"
+#include "pvfs_proto_m.h"
 #include "mpi_proto_m.h"
-#include "umd_io_trace.h"
-#include <omnetpp.h>
 using namespace std;
 
-/**
- * Model of a file system client library.
- */
-class FSClient : public cSimpleModule
+// Define FSClient module for this class
+Define_Module(FSClient);
+
+void FSClient::initialize()
 {
-public:
-    /** Constructor */
-    FSClient() : cSimpleModule() {};
-    
-protected:
-    /** Implementation of initialize */
-    virtual void initialize() {};
+    appInGateId_ = findGate("appIn");
+    appOutGateId_ = findGate("appOut");
+    netInGateId_ = findGate("netIn");
+    netOutGateId_ = findGate("netOut");
+}
 
-    /** Implementation of finish */
-    virtual void finish() {};
-
-    /** Implementation of handleMessage */
-    virtual void handleMessage(cMessage* msg);
-
-};
-
-// OMNet Registriation Method
-//Define_Module(FSClient);
-
-/**
- * Handle MPI-IO Response messages
- */
-void FSClient::handleMessage(cMessage* msg)
+void FSClient::finish()
 {
-    switch(msg->kind())
+}
+
+void FSClient::handleMessage(cMessage *msg)
+{
+    if (msg->arrivalGateId() == appInGateId_)
+    {
+        processMessage(msg, msg);
+    }
+    else
+    {
+        cMessage* parentReq = static_cast<cMessage*>(msg->contextPointer());
+        cMessage* origRequest =
+            static_cast<cMessage*>(parentReq->contextPointer());
+        processMessage(origRequest, msg);
+
+        // Cleanup the server request
+        delete parentReq;
+    }
+}
+
+void FSClient::processMessage(cMessage* request, cMessage* msg)
+{
+    switch(request->kind())
     {
         case SPFS_MPI_FILE_OPEN_REQUEST:
-        case SPFS_MPI_FILE_CLOSE_REQUEST:
-        case SPFS_MPI_FILE_DELETE_REQUEST:
-        case SPFS_MPI_FILE_SET_SIZE_REQUEST:
-        case SPFS_MPI_FILE_PREALLOCATE_REQUEST:
-        case SPFS_MPI_FILE_GET_SIZE_REQUEST:
-        case SPFS_MPI_FILE_GET_INFO_REQUEST:
-        case SPFS_MPI_FILE_SET_INFO_REQUEST:
-        case SPFS_MPI_FILE_READ_AT_REQUEST:
-        case SPFS_MPI_FILE_READ_REQUEST:
-        case SPFS_MPI_FILE_WRITE_AT_REQUEST:
-        case SPFS_MPI_FILE_WRITE_REQUEST:
         {
-            cerr << "FSClient::handleMessage forwarding implementation "
-                 << "for request: "<< msg->kind() << endl;
-            send(msg, "netOut");
+            FSOpen open(this,
+                        static_cast<spfsMPIFileOpenRequest*>(request));
+            open.handleMessage(msg);
             break;
         }
-        case SPFS_MPI_FILE_OPEN_RESPONSE:
-        case SPFS_MPI_FILE_CLOSE_RESPONSE:
-        case SPFS_MPI_FILE_DELETE_RESPONSE:
-        case SPFS_MPI_FILE_SET_SIZE_RESPONSE:
-        case SPFS_MPI_FILE_PREALLOCATE_RESPONSE:
-        case SPFS_MPI_FILE_GET_SIZE_RESPONSE:
-        case SPFS_MPI_FILE_GET_INFO_RESPONSE:
-        case SPFS_MPI_FILE_SET_INFO_RESPONSE:
-        case SPFS_MPI_FILE_READ_AT_RESPONSE:
-        case SPFS_MPI_FILE_READ_RESPONSE:
-        case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
-        case SPFS_MPI_FILE_WRITE_RESPONSE:
+        case SPFS_MPI_FILE_CLOSE_REQUEST :
         {
-            cerr << "FSClient::handleMessage forwarding implementation "
-                 << "for response: "<< msg->kind() << endl;
-            send(msg, "appOut");
+            FSClose close(this,
+                          static_cast<spfsMPIFileCloseRequest*>(request));
+            close.handleMessage(msg);
+            break;
+        }
+        case SPFS_MPI_FILE_READ_AT_REQUEST:
+        {
+            FSRead read(this,
+                        static_cast<spfsMPIFileReadAtRequest*>(request));
+            read.handleMessage(msg);
+            break;
+        }
+        case SPFS_MPI_FILE_WRITE_AT_REQUEST:
+        {
+            FSWrite write(this,
+                          static_cast<spfsMPIFileWriteAtRequest*>(request));
+            write.handleMessage(msg);
+            break;
+        }
+        case SPFS_MPI_FILE_READ_REQUEST:
+        {
+            cerr << "ERROR: Illegal read message!" << endl;
+            break;
+        }
+        case SPFS_MPI_FILE_WRITE_REQUEST:
+        {
+            cerr << "ERROR: Illegal write message!" << endl;
+            break;
+        }
+        case SPFS_MPI_FILE_DELETE_REQUEST:
+        case SPFS_MPI_FILE_SET_SIZE_REQUEST :
+        case SPFS_MPI_FILE_PREALLOCATE_REQUEST :
+        case SPFS_MPI_FILE_GET_SIZE_REQUEST :
+        {
+            cerr << "ERROR FSClient: Unsupported client request type: "
+                 << request->kind()
+                 << endl;
             break;
         }
         default:
-            cerr << "FSClient::handleMessage not yet implemented "
-                 << "for kind: "<< msg->kind() << endl;
+        {
+            cerr << "FSClient: Unknown Message: " << request->kind()
+                 << " " << request->info() << endl;
             break;
+        }
     }
 }
 
@@ -103,5 +128,5 @@ void FSClient::handleMessage(cMessage* msg)
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=8 sts=4 sw=4 expandtab
+ * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
  */

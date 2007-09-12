@@ -25,18 +25,18 @@
 #include <numeric>
 #include <omnetpp.h>
 #include "data_type_processor.h"
-#include "fs_module.h"
+#include "fs_client.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "pvfs_proto_m.h"
 #include "file_distribution.h"
 using namespace std;
 
-FSWrite::FSWrite(fsModule* module, spfsMPIFileWriteAtRequest* writeReq)
-    : fsModule_(module),
+FSWrite::FSWrite(FSClient* client, spfsMPIFileWriteAtRequest* writeReq)
+    : client_(client),
       writeReq_(writeReq)
 {
-    assert(0 != fsModule_);
+    assert(0 != client_);
     assert(0 != writeReq_);
 }
 
@@ -155,7 +155,7 @@ void FSWrite::enterWrite()
                 write.dup());
             req->setByteLength(reqBytes);
             req->setHandle(filedes->metaData->dataHandles[i]);
-            fsModule_->send(req, fsModule_->fsNetOut);
+            client_->send(req, client_->getNetOutGate());
 
             // Increment the number of outstanding requests
             numRequests++;
@@ -187,7 +187,7 @@ void FSWrite::enterFinish()
         new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
     mpiResp->setContextPointer(writeReq_);
     mpiResp->setIsSuccessful(true);
-    fsModule_->send(mpiResp, fsModule_->fsMpiOut);
+    client_->send(mpiResp, client_->getAppOutGate());
 }
 /*
  * Local variables:
