@@ -137,7 +137,7 @@ void BMITcpServer::handleMessage(cMessage* msg)
         pkt->encapsulate(msg);
         pkt->setUniqueId(ev.getUniqueNumber());
         responseSocket->send(pkt);
-     }
+    }
     else if (0 != dynamic_cast<spfsRequest*>(msg))
     {
         send(msg, "bmiOut");

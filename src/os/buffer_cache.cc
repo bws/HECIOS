@@ -123,10 +123,20 @@ void BufferCache::handleMessage(cMessage *msg)
 
 //=============================================================================
 //
+// WriteBackBufferCache implementation (abstract class)
+//
+//=============================================================================
+void WriteBackBufferCache::handleMessage(cMessage* msg)
+{
+    cerr << "WriteBackBufferCache Error: Invalid message received." << endl;
+}
+
+//=============================================================================
+//
 // NoBufferCache implementation (concrete BufferCache)
 //
 //=============================================================================
-Define_Module_Like( NoBufferCache, BufferCache )
+Define_Module(NoBufferCache)
 
 NoBufferCache::NoBufferCache()
 {
@@ -142,7 +152,7 @@ bool NoBufferCache::isCached(LogicalBlockAddress address)
 // LRUBufferCache implementation (concrete BufferCache)
 //
 //=============================================================================
-Define_Module_Like(LRUBufferCache, BufferCache)
+Define_Module(LRUBufferCache)
 
 LRUBufferCache::LRUBufferCache()
     : cache_(0)

@@ -24,11 +24,11 @@ using namespace std;
 /**
  * Model of a middleware file system data cache.
  */
-class MiddlewareCache : public cSimpleModule
+class NoMiddlewareCache : public cSimpleModule
 {
 public:
     /** Constructor */
-    MiddlewareCache();
+    NoMiddlewareCache();
     
 protected:
     /** Implementation of initialize */
@@ -46,13 +46,13 @@ private:
 };
 
 // OMNet Registriation Method
-Define_Module(MiddlewareCache);
+Define_Module(NoMiddlewareCache);
 
-MiddlewareCache::MiddlewareCache()
+NoMiddlewareCache::NoMiddlewareCache()
 {
 }
 
-void MiddlewareCache::initialize()
+void NoMiddlewareCache::initialize()
 {
     appInGateId_ = gate("appIn")->id();
     fsInGateId_ = gate("fsIn")->id();
@@ -61,7 +61,7 @@ void MiddlewareCache::initialize()
 /**
  * Handle MPI-IO Response messages
  */
-void MiddlewareCache::handleMessage(cMessage* msg)
+void NoMiddlewareCache::handleMessage(cMessage* msg)
 {
     if (msg->arrivalGateId() == appInGateId_)
     {

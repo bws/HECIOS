@@ -25,6 +25,9 @@
 #include <vector>
 #include <omnetpp.h>
 #include "basic_types.h"
+class Filename;
+class StorageLayout;
+class spfsOSFileIORequest;
 
 /**
  * File System abstract base class module
@@ -39,32 +42,49 @@ class FileSystem : public cSimpleModule
     /** Destructor */
     virtual ~FileSystem() = 0;
 
+    /** Add a directory to the file system */
+    void createDirectory(const Filename& dirName);
+
+    /** Add a file to the file system */
+    void createFile(const Filename& filename, FSSize size);
+    
 protected:
     
-    /**
-     *  This is the initialization routine for this simulation module.
-     */
+    /** Initialize the simulation module */
     virtual void initialize();
 
-    /**
-     *  This is the finalization routine for this simulation module.
-     */
+    /** Finalize simulation module */
     virtual void finish();
 
-    /**
-     *  This is the finalization routine for this simulation module.
-     */
+    /** Handle simulation messages */
     virtual void handleMessage( cMessage *msg );
 
+    /** Initialize derived file systems */
+    virtual void initializeFileSystem() = 0;
+    
+    /** Finalize the native file system */
+    virtual void finishFileSystem() = 0;
+
+    /** Allocate disk storage for a new directory */
+    virtual void allocateDirectoryStorage(const Filename& filename) = 0;
+
+    /** Allocate disk storage for a new file */
+    virtual void allocateFileStorage(const Filename& filename,
+                                     FSSize size) = 0;
+    
     /** @return the blocks for an I/O request */
-    virtual std::vector<FSBlock> getRequestBlocks(cMessage* msg) const = 0;
+    virtual std::vector<FSBlock> getRequestBlocks(
+        spfsOSFileIORequest* ioRequest) const = 0;
     
 private:
-    
+
+    /** in gate id */
     int inGateId_;
 
+    /** out gate id */
     int outGateId_;
 
+    /** request gate id */
     int requestGateId_;
 };
 
@@ -80,17 +100,34 @@ class NativeFileSystem : public FileSystem
     static const std::size_t DEFAULT_BLOCK_SIZE_BYTES = 4096;
     
 public:
-
+    
     /** @return the file system's block size in bytes */
-    std::size_t getFileBlockSize() const { return DEFAULT_BLOCK_SIZE_BYTES; };
+    std::size_t getBlockSize() const { return DEFAULT_BLOCK_SIZE_BYTES; };
     
 protected:
 
+    /** Initialize the native file system */
+    virtual void initializeFileSystem();
+    
+    /** Finalize the native file system */
+    virtual void finishFileSystem();
+    
+    /** Allocate disk storage for a new directory */
+    virtual void allocateDirectoryStorage(const Filename& filename);
+
+    /** Allocate disk storage for a new file */
+    virtual void allocateFileStorage(const Filename& filename,
+                                     FSSize size);
+    
     /**
      * @return a list of blocks that map to the corresponding file region
      */
-    virtual std::vector<FSBlock> getRequestBlocks(cMessage* msg) const;
+    virtual std::vector<FSBlock> getRequestBlocks(
+        spfsOSFileIORequest* ioRequest) const;
 
+private:
+    /** Storage layout for this file system */
+    StorageLayout* storageLayout_;
 };
 
 #endif

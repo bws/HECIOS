@@ -34,12 +34,19 @@ public:
     /** Constructor */
     FSServer() : cSimpleModule() {};
 
+    /** @return the server's unique name */
     std::string getName() const { return serverName_; };
-    
+
+    /** @return the server's unique number */
+    std::size_t getNumber() const { return serverNumber_; };
+
+    /** @return the range of handles assigned to this server */
     HandleRange getHandleRange() const { return range_; };
 
+    /** Set the server's unique number */
     void setNumber(size_t number);
-    
+
+    /** Set the server's unique handle range */
     void setHandleRange(const HandleRange& range) {range_ = range;};
     
 protected:
@@ -59,7 +66,7 @@ protected:
 private:
 
     /** Unique server number */
-    size_t serverNumber_;
+    std::size_t serverNumber_;
 
     /** Unique server name */
     std::string serverName_;

@@ -20,10 +20,12 @@
 
 #include "file_builder.h"
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include "IPvXAddress.h"
 #include "filename.h"
 #include "simple_stripe_distribution.h"
+#include "storage_layout_manager.h"
 using namespace std;
 
 FileBuilder* FileBuilder::instance_ = 0;
@@ -122,6 +124,10 @@ void FileBuilder::createDirectory(const Filename& dirName, int metaServer)
         meta->handle = getNextHandle(metaServer);
         meta->dist = 0;
 
+        //Construct the storage layout
+        StorageLayoutManager::instance().addDirectory((size_t)metaServer,
+                                                      dirName);
+
         // Record bookkeeping information
         nameToHandleMap_[dirName.str()] = meta->handle;
         handleToMetaMap_[meta->handle] = meta;
@@ -157,6 +163,12 @@ void FileBuilder::createFile(const Filename& fileName,
         {
             int serverNum = (firstServer + i) % nextServerNumber_;
             dataHandles.push_back(getNextHandle(serverNum));
+
+            // Construct the storage layout
+            FSSize localFileSize = (FSSize)pow(2.0, 20.0);
+            StorageLayoutManager::instance().addFile((size_t)serverNum,
+                                                     fileName,
+                                                     localFileSize);
         }
         meta->dataHandles = dataHandles;
 

@@ -17,9 +17,13 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 #include "storage_layout_manager.h"
+#include <cassert>
+#include <omnetpp.h>
+#include "file_system.h"
 #include "filename.h"
+#include "fs_server.h"
+#include "storage_layout.h"
 using namespace std;
 
 StorageLayoutManager* StorageLayoutManager::instance_ = 0;
@@ -35,23 +39,57 @@ StorageLayoutManager::StorageLayoutManager()
 {
 }
 
-// For now, simply assume OS blocks are 4KB and disk blocks are 512B
-// Also simply assume the storage layout is contiguous
-// Later, maybe add something sophisticated here
-void StorageLayoutManager::addFile(std::size_t serverNumber,
-                                   Filename& filename,
-                                   FSSize size)
+void StorageLayoutManager::addDirectory(std::size_t serverNumber,
+                                        const Filename& dirName)
 {
+    FileSystem* serverFS = getLocalFileSystem(serverNumber);
+    assert(0 != serverFS);
+    serverFS->createDirectory(dirName);
 }
 
-vector<FSBlock> StorageLayoutManager::getFileSystemBlocks(
-    std::size_t serverNumber,
-    FSOffset offset,
-    FSSize extent)
+void StorageLayoutManager::addFile(std::size_t serverNumber,
+                                   const Filename& filename,
+                                   FSSize size)
 {
-    vector<FSBlock>blocks;
-    blocks.push_back(1);
-    return blocks;
+    FileSystem* serverFS = getLocalFileSystem(serverNumber);
+    assert(0 != serverFS);
+    serverFS->createFile(filename, size);
+}
+
+FileSystem* StorageLayoutManager::getLocalFileSystem(size_t serverNumber) const
+{
+    FileSystem* fs = 0;
+
+    // Traverse the simulation module tree to find the server's file system
+    cModule* clusterMod = simulation.systemModule();
+    assert(0 != clusterMod);
+
+    // Loop thru I/O Nodes
+    int numIONodes = clusterMod->par("numIONodes");
+    for (int i = 0; i < numIONodes; i++)
+    {
+        cModule* ionMod = clusterMod->submodule("ion", i);
+        assert(0 != ionMod);
+
+        cModule* daemonMod = ionMod->submodule("daemon");
+        assert(0 != daemonMod);
+
+        cModule* serverMod = daemonMod->submodule("server");
+        assert(0 != serverMod);
+        FSServer* fsServer = dynamic_cast<FSServer*>(serverMod);
+
+        // If server numbers match, find the local file system
+        if (serverNumber == fsServer->getNumber())
+        {
+            cModule* storageLayerMod = daemonMod->submodule("storage");
+            assert(0 != storageLayerMod);
+
+            cModule* fileSystemMod = storageLayerMod->submodule("fileSystem");
+            fs = dynamic_cast<FileSystem*>(fileSystemMod);
+            break;
+        }
+    }
+    return fs;
 }
 
 /*

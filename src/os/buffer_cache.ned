@@ -20,20 +20,40 @@
 //
 
 //
-// Abstract interface for OS Buffer caches
-//
-// Implemented Cache Policies:
-// -  NoCache - all requests are passed through to the Disk Subsystem
-// -  LRUCache - Least Recently Used Cache Manager
+// Template for OS Block device buffer caches
 //
 simple BufferCache
-  parameters:
-    number_of_elements;
-
-  gates:
-    in: in, response;
-    out: out, request;
-
+    gates:
+        in: in, response;
+        out: out, request;
 endsimple
 
+//
+// Passthrough/No-op buffer cache
+//
+simple NoBufferCache
+    gates:
+        in: in, response;
+        out: out, request;
+endsimple
 
+//
+// BufferCache using an LRU replacement policy
+//
+simple LRUBufferCache
+    parameters:
+        numEntries : const;
+
+    gates:
+        in: in, response;
+        out: out, request;
+endsimple
+
+//
+// Local variables:
+//  c-indent-level: 4
+//  c-basic-offset: 4
+// End:
+//
+// vim: ts=4 sts=4 sw=4 expandtab
+//

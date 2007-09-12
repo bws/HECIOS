@@ -19,12 +19,8 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-
 //
-// Abstract interface for File Systems
-//
-// Implemented File Systems:
-// -  PassThroughFileSystem
+// Template for File Systems
 //
 simple FileSystem
   gates:
@@ -32,4 +28,20 @@ simple FileSystem
     out: out, request;
 endsimple
 
+//
+// A UNIX/Linux file system model
+//
+simple NativeFileSystem
+  gates:
+    in: in, response;
+    out: out, request;
+endsimple
 
+//
+// Local variables:
+//  c-indent-level: 4
+//  c-basic-offset: 4
+// End:
+//
+// vim: ts=4 sts=4 sw=4 expandtab
+//

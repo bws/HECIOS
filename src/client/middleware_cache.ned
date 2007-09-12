@@ -18,10 +18,29 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
+//
+// Template for middleware MPI-IO process caching
+//
 simple MiddlewareCache
-
     gates:
-
         in: appIn, fsIn;
         out: appOut, fsOut;
 endsimple
+
+//
+// Passthrough/No-op middleware cache
+//
+simple NoMiddlewareCache
+    gates:
+        in: appIn, fsIn;
+        out: appOut, fsOut;
+endsimple
+
+//
+// Local variables:
+//  c-indent-level: 4
+//  c-basic-offset: 4
+// End:
+//
+// vim: ts=4 sts=4 sw=4 expandtab
+//

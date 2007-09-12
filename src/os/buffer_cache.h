@@ -101,7 +101,8 @@ class WriteBackBufferCache : public BufferCache
 protected:
     virtual void handleMessage(cMessage* msg);
     
-    virtual long long getNextEviction(LogicalBlockAddress address) = 0;
+    virtual LogicalBlockAddress getNextEviction(
+        LogicalBlockAddress address) = 0;
 };
 
 /**

@@ -47,10 +47,10 @@ void IOLibrary::handleMessage( cMessage *msg )
 }
 
 //-------------------------------------------------
-Define_Module_Like(ListIOLibrary, IOLibrary);
+Define_Module(ListIOLibrary);
 
 //------------------------------------------------
-Define_Module_Like( PassThroughIOLibrary, IOLibrary )
+Define_Module(PassThroughIOLibrary)
 
 
 /*

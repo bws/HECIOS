@@ -21,25 +21,31 @@
 //
 
 #include <cstddef>
+#include <map>
 #include <vector>
 #include "basic_types.h"
 class Filename;
+class FileSystem;
+class StorageLayout;
 
-/** */
+/** Manager for server physical data layout information */
 class StorageLayoutManager
 {
 public:
-
+    /** Convenience typedef */
+    typedef std::map<std::size_t, StorageLayout*> ServerToStorageMap;
+    
     /** Singleton accessor */
-    StorageLayoutManager& instance();
+    static StorageLayoutManager& instance();
+
+    /** Add a directory to a server's native file system */
+    void addDirectory(std::size_t serverNumber,
+                      const Filename& filename);
 
     /** Add a file to a server's native file system */
-    void addFile(std::size_t serverNumber, Filename& filename, FSSize size);
-
-    /** @return the file system blocks for a */
-    std::vector<FSBlock> getFileSystemBlocks(std::size_t serverNumber,
-                                             FSOffset offset,
-                                             FSSize extent);
+    void addFile(std::size_t serverNumber,
+                 const Filename& filename,
+                 FSSize size);
 
 private:
 
@@ -52,7 +58,13 @@ private:
     /** Hidden assignment operator */
     StorageLayoutManager& operator=(const StorageLayoutManager& other);
 
+    FileSystem* getLocalFileSystem(std::size_t serverNumber) const;
+    
+    /** Singleton instance */
     static StorageLayoutManager* instance_;
+
+    /** Map to the storage layout for a server */
+    ServerToStorageMap storageLayoutByServer_;
 };
 
 #endif

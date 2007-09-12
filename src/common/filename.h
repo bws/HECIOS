@@ -64,6 +64,12 @@ inline bool operator==(const Filename& lhs, const Filename& rhs)
     return (lhs.str() == rhs.str());
 }
 
+/** @return true if lhs is aphabetically < rhs */
+inline bool operator<(const Filename& lhs, const Filename& rhs)
+{
+    return (lhs.str() < rhs.str());
+}
+
 /** @return stream containing representation of the filename */
 inline std::ostream& operator<<(std::ostream& ost, const Filename& f)
 {

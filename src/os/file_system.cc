@@ -20,8 +20,11 @@
 //
 
 #include "file_system.h"
+#include <cassert>
 #include <vector>
+#include "filename.h"
 #include "os_proto_m.h"
+#include "storage_layout.h"
 using namespace std;
 
 FileSystem::FileSystem()
@@ -33,15 +36,31 @@ FileSystem::~FileSystem()
 {
 }
 
+void FileSystem::createDirectory(const Filename& dirName)
+{
+    // Assert name does not already exist
+    allocateDirectoryStorage(dirName);
+}
+
+void FileSystem::createFile(const Filename& filename, FSSize size)
+{
+    // Assert name does not already exist
+    allocateFileStorage(filename, size);
+}
+
 void FileSystem::initialize()
 {
     inGateId_ = gate("in")->id();
     outGateId_ = gate("out")->id();
     requestGateId_ = gate("request")->id();
+
+    // Initialize concrete file system
+    initializeFileSystem();
 }
 
 void FileSystem::finish()
 {
+    finishFileSystem();
 }
 
 void FileSystem::handleMessage(cMessage *msg)
@@ -49,7 +68,8 @@ void FileSystem::handleMessage(cMessage *msg)
     if (msg->arrivalGateId() == inGateId_)
     {
         // Convert the file system request into block requests
-        vector<FSBlock> blocks = getRequestBlocks(msg);
+        vector<FSBlock> blocks = getRequestBlocks(
+            dynamic_cast<spfsOSFileIORequest*>(msg));
 
         // Fill out the appropriate read or write message
         if (0 != dynamic_cast<spfsOSFileReadRequest*>(msg))
@@ -91,21 +111,41 @@ void FileSystem::handleMessage(cMessage *msg)
 }
 
 
-// Register the NativeFileSystem type as a concrete FileSystem type
-Define_Module_Like(NativeFileSystem, FileSystem);
+// Register the NativeFileSystem type
+Define_Module(NativeFileSystem);
 
-vector<FSBlock> NativeFileSystem::getRequestBlocks(cMessage* msg) const
+void NativeFileSystem::initializeFileSystem()
 {
-    std::vector<FSBlock> blocks;
-    blocks.push_back(1);
-    // for now assume all files start at block zero
-    //long startBlock = offset % BLOCK_SIZE_BYTES;
-    //long numBlocks = bytes % BLOCK_SIZE_BYTES;
-    //for (int i = startBlock; i < numBlocks; i++)
-    //{
-    //    blocks.push_back(i);
-    //}
-    return blocks;
+    // Construct the storage layout for the file system
+    storageLayout_ = new StorageLayout(getBlockSize());
+}
+
+void NativeFileSystem::finishFileSystem()
+{
+    // Free resources
+    delete storageLayout_;
+    storageLayout_ = 0;
+}
+
+void NativeFileSystem::allocateDirectoryStorage(const Filename& dirName)
+{
+    storageLayout_->addDirectory(dirName);
+}
+
+void NativeFileSystem::allocateFileStorage(const Filename& filename,
+                                           FSSize size)
+{
+    storageLayout_->addFile(filename, size);
+}
+
+vector<FSBlock> NativeFileSystem::getRequestBlocks(
+    spfsOSFileIORequest* ioRequest) const
+{
+    assert(0 != ioRequest);
+    Filename filename("/home5/uysal/skirt.8p.matrix");
+    FSOffset offset = ioRequest->getOffset();
+    FSSize extent = ioRequest->getExtent();
+    return storageLayout_->getFileDataBlocks(filename, offset, extent);
 }
 
 /*

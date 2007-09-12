@@ -352,5 +352,5 @@ message spfsListAttrResponse extends spfsResponse
 //  c-basic-offset: 4
 // End:
 //
-// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+// vim: ts=4 sts=4 sw=4 expandtab
 //

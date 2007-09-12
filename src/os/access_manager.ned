@@ -33,4 +33,11 @@ simple AccessManager
     out: get_next_request, get_block, out;
 endsimple
 
-
+//
+// Local variables:
+//  c-indent-level: 4
+//  c-basic-offset: 4
+// End:
+//
+// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+//
