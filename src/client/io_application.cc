@@ -27,6 +27,7 @@
 #include "file_builder.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
+#include "storage_layout_manager.h"
 #include "umd_io_trace.h"
 using namespace std;
 
@@ -182,8 +183,12 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
             if (!FileBuilder::instance().fileExists(openFile))
             {
                 // Create trace files as needed
+                StorageLayoutManager layoutManager;
                 int numServers = FileBuilder::instance().getNumDataServers();
-                FileBuilder::instance().createFile(openFile, 0, numServers);
+                FileBuilder::instance().createFile(openFile,
+                                                   0,
+                                                   numServers,
+                                                   layoutManager);
             }
             
             spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(

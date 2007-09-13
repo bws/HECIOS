@@ -105,15 +105,20 @@ FSHandle FileBuilder::getNextHandle(size_t serverNumber)
     return nextHandleByServer_[serverNumber]++;
 }
 
-void FileBuilder::createDirectory(const Filename& dirName, int metaServer)
+void FileBuilder::createDirectory(const Filename& dirName,
+                                  int metaServer,
+                                  StorageLayoutManager& layoutManager)
 {
     if (!fileExists(dirName))
     {
         // Create implied parent directories recursively
         size_t numSegs = dirName.getNumPathSegments();
         if (1 < numSegs)
-            createDirectory(dirName.getSegment(numSegs - 2), metaServer);
-
+        {
+            createDirectory(dirName.getSegment(numSegs - 2),
+                            metaServer,
+                            layoutManager);
+        }
         // Create the MetaData for the directory
         FSMetaData* meta = new FSMetaData();
         meta->mode = 777;
@@ -125,8 +130,7 @@ void FileBuilder::createDirectory(const Filename& dirName, int metaServer)
         meta->dist = 0;
 
         //Construct the storage layout
-        StorageLayoutManager::instance().addDirectory((size_t)metaServer,
-                                                      dirName);
+        layoutManager.addDirectory((size_t)metaServer, dirName);
 
         // Record bookkeeping information
         nameToHandleMap_[dirName.str()] = meta->handle;
@@ -136,14 +140,19 @@ void FileBuilder::createDirectory(const Filename& dirName, int metaServer)
 
 void FileBuilder::createFile(const Filename& fileName,
                              int metaServer,
-                             int numServers)
+                             int numServers,
+                             StorageLayoutManager& layoutManager)
 {
     if (!fileExists(fileName))
     {
         // Create implied parent directories recursively
         size_t numSegs = fileName.getNumPathSegments();
         if (1 < numSegs)
-            createDirectory(fileName.getSegment(numSegs - 2), metaServer);
+        {
+            createDirectory(fileName.getSegment(numSegs - 2),
+                            metaServer,
+                            layoutManager);
+        }
         
         // Create the MetaData for the file
         FSMetaData* meta = new FSMetaData();
@@ -166,9 +175,7 @@ void FileBuilder::createFile(const Filename& fileName,
 
             // Construct the storage layout
             FSSize localFileSize = (FSSize)pow(2.0, 20.0);
-            StorageLayoutManager::instance().addFile((size_t)serverNum,
-                                                     fileName,
-                                                     localFileSize);
+            layoutManager.addFile((size_t)serverNum, fileName, localFileSize);
         }
         meta->dataHandles = dataHandles;
 

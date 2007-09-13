@@ -13,6 +13,7 @@
 
 #include "cenvir.h"
 #include "cdefaultlist.h"
+#include "csimul.h"
 #include "onstartup.h"
 using namespace std;
 

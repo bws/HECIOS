@@ -7,6 +7,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "file_builder.h"
 #include "filename.h"
+#include "mock_storage_layout_manager.h"
 using namespace std;
 
 /** Unit test for FileBuilder */
@@ -109,8 +110,9 @@ void FileBuilderTest::testFileExists()
     Filename file1("/test1");
     Filename file2("/test2");
     Filename dir1("/dir1");
-    FileBuilder::instance().createFile(file1, 0, 1);
-    FileBuilder::instance().createDirectory(dir1, 0);
+    MockStorageLayoutManager layoutManager;
+    FileBuilder::instance().createFile(file1, 0, 1, layoutManager);
+    FileBuilder::instance().createDirectory(dir1, 0, layoutManager);
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(file1));
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(dir1));
     CPPUNIT_ASSERT(!FileBuilder::instance().fileExists(file2));
@@ -119,12 +121,13 @@ void FileBuilderTest::testFileExists()
 void FileBuilderTest::testGetMetaData()
 {
     Filename file1("/test1");
-    FileBuilder::instance().createFile(file1, 0, 1);
+    MockStorageLayoutManager layoutManager;
+    FileBuilder::instance().createFile(file1, 0, 1, layoutManager);
     FSMetaData* file1MD = FileBuilder::instance().getMetaData(file1);
     CPPUNIT_ASSERT(0 != file1MD);
     
     Filename dir1("/dir1");
-    FileBuilder::instance().createDirectory(dir1, 0);
+    FileBuilder::instance().createDirectory(dir1, 0, layoutManager);
     //CPPUNIT_FAIL("Not implemented");
 }
 
@@ -138,9 +141,10 @@ void FileBuilderTest::testCreateDirectory()
     Filename dir1("/dir1");
     Filename dir2("/");
     Filename dir3("/foo/bar/baz");
-    FileBuilder::instance().createDirectory(dir1, 0);
-    FileBuilder::instance().createDirectory(dir2, 0);
-    FileBuilder::instance().createDirectory(dir3, 0);
+    MockStorageLayoutManager layoutManager;
+    FileBuilder::instance().createDirectory(dir1, 0, layoutManager);
+    FileBuilder::instance().createDirectory(dir2, 0, layoutManager);
+    FileBuilder::instance().createDirectory(dir3, 0, layoutManager);
 
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(dir1));
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(dir2));
@@ -154,8 +158,9 @@ void FileBuilderTest::testCreateFile()
 {
     Filename file1("/file1");
     Filename file2("/foo/bar/baz");
-    FileBuilder::instance().createFile(file1, 0, 1);
-    FileBuilder::instance().createFile(file2, 0, 1);
+    MockStorageLayoutManager layoutManager;
+    FileBuilder::instance().createFile(file1, 0, 1, layoutManager);
+    FileBuilder::instance().createFile(file2, 0, 1, layoutManager);
 
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(file1));
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(Filename("/")));

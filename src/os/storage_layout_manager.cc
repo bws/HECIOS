@@ -26,30 +26,30 @@
 #include "storage_layout.h"
 using namespace std;
 
-StorageLayoutManager* StorageLayoutManager::instance_ = 0;
-
-StorageLayoutManager& StorageLayoutManager::instance()
-{
-    if (0 == instance_)
-        instance_ = new StorageLayoutManager();
-    return *instance_;
-}
-
-StorageLayoutManager::StorageLayoutManager()
-{
-}
-
-void StorageLayoutManager::addDirectory(std::size_t serverNumber,
+void StorageLayoutManager::addDirectory(size_t serverNumber,
                                         const Filename& dirName)
+{
+    addDirectoryToFS(serverNumber, dirName);
+}
+
+void StorageLayoutManager::addFile(size_t serverNumber,
+                                   const Filename& filename,
+                                   FSSize size)
+{
+    addFileToFS(serverNumber, filename, size);
+}
+
+void StorageLayoutManager::addDirectoryToFS(size_t serverNumber,
+                                            const Filename& dirName)
 {
     FileSystem* serverFS = getLocalFileSystem(serverNumber);
     assert(0 != serverFS);
     serverFS->createDirectory(dirName);
 }
 
-void StorageLayoutManager::addFile(std::size_t serverNumber,
-                                   const Filename& filename,
-                                   FSSize size)
+void StorageLayoutManager::addFileToFS(size_t serverNumber,
+                                       const Filename& filename,
+                                       FSSize size)
 {
     FileSystem* serverFS = getLocalFileSystem(serverNumber);
     assert(0 != serverFS);

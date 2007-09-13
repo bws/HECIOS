@@ -24,6 +24,7 @@
 #include <vector>
 #include "pfs_types.h"
 class Filename;
+class StorageLayoutManager;
 
 /** Builder functions for creating pre-existing parallel file system files */
 class FileBuilder
@@ -61,11 +62,15 @@ public:
     FSHandle getNextHandle(size_t serverNumber);
     
     /** Create the named directory in the file system */
-    void createDirectory(const Filename& dirName, int metaServer);
+    void createDirectory(const Filename& dirName,
+                         int metaServer,
+                         StorageLayoutManager& layoutManager);
     
     /** Create the named file in the file system */
-    void createFile(const Filename& fileName, int metaServer,
-                    int numDataServers);
+    void createFile(const Filename& fileName,
+                    int metaServer,
+                    int numDataServers,
+                    StorageLayoutManager& layoutManager);
 
     /** @return the list of blocks for a file handle */
     std::vector<int> getDiskBlocks(const FSHandle& handle) const;

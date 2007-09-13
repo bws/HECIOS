@@ -28,43 +28,46 @@ class Filename;
 class FileSystem;
 class StorageLayout;
 
-/** Manager for server physical data layout information */
+/**
+ * Access manager for server physical data layout information
+ *
+ * This is a crappy piece of code that is virtual simply so I can test the
+ * file builder and mainly exists to hunt down the file system for each
+ * server.  It would probably be better to move some of this code into the
+ * fs configurator at some level!!!
+ *
+ * Still unanswered is the question of whether a File is fragmented or a
+ * file system is fragmented.  There is probably a clean way to resolve that
+ * idea, but I don't need it yet, so for now I'm doing this!
+ */
 class StorageLayoutManager
 {
 public:
-    /** Convenience typedef */
-    typedef std::map<std::size_t, StorageLayout*> ServerToStorageMap;
+    /** Destructor */
+    virtual ~StorageLayoutManager() {};
     
-    /** Singleton accessor */
-    static StorageLayoutManager& instance();
-
-    /** Add a directory to a server's native file system */
+    /** Add a directory to a server's storage system */
     void addDirectory(std::size_t serverNumber,
-                      const Filename& filename);
+                      const Filename& dirName);
 
-    /** Add a file to a server's native file system */
+    /** Add a file to a server's storage system */
     void addFile(std::size_t serverNumber,
                  const Filename& filename,
                  FSSize size);
 
-private:
+protected:
+    /** Add a directory to a server's native file system */
+    virtual void addDirectoryToFS(std::size_t serverNumber,
+                                  const Filename& filename);
 
-    /** Constructor */
-    StorageLayoutManager();
-
-    /** Hidden copy constructor */
-    StorageLayoutManager(const StorageLayoutManager& other);
-
-    /** Hidden assignment operator */
-    StorageLayoutManager& operator=(const StorageLayoutManager& other);
-
-    FileSystem* getLocalFileSystem(std::size_t serverNumber) const;
+    /** Add a file to a server's native file system */
+    virtual void addFileToFS(std::size_t serverNumber,
+                             const Filename& filename,
+                             FSSize size);
     
-    /** Singleton instance */
-    static StorageLayoutManager* instance_;
-
-    /** Map to the storage layout for a server */
-    ServerToStorageMap storageLayoutByServer_;
+private:
+    /** @return the local file system for server number */
+    FileSystem* getLocalFileSystem(std::size_t serverNumber) const;    
 };
 
 #endif
