@@ -23,7 +23,7 @@
 #include "storage_layout_manager.h"
 class Filename;
 
-class MockStorageLayoutManager : public StorageLayoutManager
+class MockStorageLayoutManager : public StorageLayoutManagerIFace
 {
 protected:
     /** Add a directory to a server's native file system */
@@ -31,7 +31,7 @@ protected:
                                   const Filename& dirName) {};
 
     /** Add a file to a server's native file system */
-    virtual void addFile(std::size_t serverNumber,
+    virtual void addFileToFS(std::size_t serverNumber,
                          const Filename& filename,
                          FSSize size) {};
 };

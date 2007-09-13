@@ -40,11 +40,11 @@ class StorageLayout;
  * file system is fragmented.  There is probably a clean way to resolve that
  * idea, but I don't need it yet, so for now I'm doing this!
  */
-class StorageLayoutManager
+class StorageLayoutManagerIFace
 {
 public:
     /** Destructor */
-    virtual ~StorageLayoutManager() {};
+    virtual ~StorageLayoutManagerIFace() {};
     
     /** Add a directory to a server's storage system */
     void addDirectory(std::size_t serverNumber,
@@ -55,6 +55,19 @@ public:
                  const Filename& filename,
                  FSSize size);
 
+protected:
+    /** Add a directory to a server's native file system */
+    virtual void addDirectoryToFS(std::size_t serverNumber,
+                                  const Filename& filename) = 0;
+
+    /** Add a file to a server's native file system */
+    virtual void addFileToFS(std::size_t serverNumber,
+                             const Filename& filename,
+                             FSSize size) = 0;
+};
+
+class StorageLayoutManager : public StorageLayoutManagerIFace
+{
 protected:
     /** Add a directory to a server's native file system */
     virtual void addDirectoryToFS(std::size_t serverNumber,

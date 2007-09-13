@@ -107,7 +107,7 @@ FSHandle FileBuilder::getNextHandle(size_t serverNumber)
 
 void FileBuilder::createDirectory(const Filename& dirName,
                                   int metaServer,
-                                  StorageLayoutManager& layoutManager)
+                                  StorageLayoutManagerIFace& layoutManager)
 {
     if (!fileExists(dirName))
     {
@@ -141,7 +141,7 @@ void FileBuilder::createDirectory(const Filename& dirName,
 void FileBuilder::createFile(const Filename& fileName,
                              int metaServer,
                              int numServers,
-                             StorageLayoutManager& layoutManager)
+                             StorageLayoutManagerIFace& layoutManager)
 {
     if (!fileExists(fileName))
     {

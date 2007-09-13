@@ -26,13 +26,13 @@
 #include "storage_layout.h"
 using namespace std;
 
-void StorageLayoutManager::addDirectory(size_t serverNumber,
+void StorageLayoutManagerIFace::addDirectory(size_t serverNumber,
                                         const Filename& dirName)
 {
     addDirectoryToFS(serverNumber, dirName);
 }
 
-void StorageLayoutManager::addFile(size_t serverNumber,
+void StorageLayoutManagerIFace::addFile(size_t serverNumber,
                                    const Filename& filename,
                                    FSSize size)
 {
