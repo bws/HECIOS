@@ -130,7 +130,8 @@ void FileBuilder::createDirectory(const Filename& dirName,
         meta->dist = 0;
 
         //Construct the storage layout
-        layoutManager.addDirectory((size_t)metaServer, dirName);
+        Filename storageName(meta->handle);
+        layoutManager.addDirectory((size_t)metaServer, storageName);
 
         // Record bookkeeping information
         nameToHandleMap_[dirName.str()] = meta->handle;
@@ -174,8 +175,9 @@ void FileBuilder::createFile(const Filename& fileName,
             dataHandles.push_back(getNextHandle(serverNum));
 
             // Construct the storage layout
+            Filename storageName(dataHandles[i]);
             FSSize localFileSize = (FSSize)pow(2.0, 20.0);
-            layoutManager.addFile((size_t)serverNum, fileName, localFileSize);
+            layoutManager.addFile((size_t)serverNum, storageName, localFileSize);
         }
         meta->dataHandles = dataHandles;
 

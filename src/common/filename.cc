@@ -20,6 +20,7 @@
 
 #include "filename.h"
 #include <cassert>
+#include <sstream>
 using namespace std;
 
 Filename::Filename(const string& absolutePath)
@@ -33,6 +34,14 @@ Filename::Filename(const char* absolutePathStr)
     assert('/' == absolutePathStr[0]);
     string absolutePath(absolutePathStr);
     initialize(absolutePath);
+}
+
+Filename::Filename(const FSHandle& handle)
+{
+    // Prepend "/" to the handles string representation to create a filename
+    ostringstream s;
+    s << "/" << handle;
+    initialize(s.str());
 }
 
 size_t Filename::getNumPathSegments() const

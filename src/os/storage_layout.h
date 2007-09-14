@@ -30,6 +30,9 @@ class StorageLayout
 {
 public:
 
+    /** The number of data blocks to assign to a directory */
+    static const std::size_t NUM_DIRECTORY_DATA_BLOCKS = 10;
+    
     /** Constructor */
     StorageLayout(std::size_t blockSize);
 

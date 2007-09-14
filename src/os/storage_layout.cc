@@ -29,10 +29,14 @@ StorageLayout::StorageLayout(size_t blockSize)
     nextDataBlock_ = 1000;
 }
 
-void StorageLayout::addDirectory(const Filename& filename)
+void StorageLayout::addDirectory(const Filename& dirName)
 {
-    // Assign a single block for storing the inodes
-    metaDataBlocks_[filename] = nextMetaDataBlock_++;
+    // Assign a single block for storing directory metadata
+    metaDataBlocks_[dirName] = nextMetaDataBlock_++;
+
+    // Assign a fixed number of blocks for storing directory entries
+    dataBlocks_[dirName] = nextDataBlock_;
+    nextDataBlock_ += NUM_DIRECTORY_DATA_BLOCKS;
 }
 
 void StorageLayout::addFile(const Filename& filename, FSSize fileSize)

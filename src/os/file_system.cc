@@ -50,9 +50,9 @@ void FileSystem::createFile(const Filename& filename, FSSize size)
 
 void FileSystem::initialize()
 {
-    inGateId_ = gate("in")->id();
-    outGateId_ = gate("out")->id();
-    requestGateId_ = gate("request")->id();
+    inGateId_ = findGate("in");
+    outGateId_ = findGate("out");
+    requestGateId_ = findGate("request");
 
     // Initialize concrete file system
     initializeFileSystem();
@@ -63,46 +63,47 @@ void FileSystem::finish()
     finishFileSystem();
 }
 
+//
+// First retrieve the metadata to determine where the data blocks are located
+// Then retrieve the actual data blocks
+//
 void FileSystem::handleMessage(cMessage *msg)
 {
     if (msg->arrivalGateId() == inGateId_)
     {
-        // Convert the file system request into block requests
-        vector<FSBlock> blocks = getRequestBlocks(
-            dynamic_cast<spfsOSFileIORequest*>(msg));
+        // Handle the incoming File I/O request
+        spfsOSFileIORequest* ioReq = dynamic_cast<spfsOSFileIORequest*>(msg);
 
-        // Fill out the appropriate read or write message
-        if (0 != dynamic_cast<spfsOSFileReadRequest*>(msg))
-        {
-            spfsOSReadBlocksRequest* readBlocks =
-                new spfsOSReadBlocksRequest(0, SPFS_OS_READ_BLOCKS_REQUEST);
-            readBlocks->setContextPointer(msg);
-            readBlocks->setBlocksArraySize(blocks.size());
-            for (size_t i = 0; i < blocks.size(); i++)
-                readBlocks->setBlocks(i, blocks[i]);
-            send(readBlocks, requestGateId_);
-        }
-        else
-        {
-            spfsOSWriteBlocksRequest* writeBlocks =
-                new spfsOSWriteBlocksRequest(0, SPFS_OS_WRITE_BLOCKS_REQUEST);
-            writeBlocks->setContextPointer(msg);
-            writeBlocks->setBlocksArraySize(blocks.size());
-            for (size_t i = 0; i < blocks.size(); i++)
-                writeBlocks->setBlocks(i, blocks[i]);
-            send(writeBlocks, requestGateId_);
-        }
+        // Mark the metadata as not yet loaded
+        ioReq->setHasMetaDataLoaded(false);
+
+        // Send the meta data request
+        sendMetaDataRequest(ioReq);
     }
     else
     {
         cMessage* blockRequest = (cMessage*)msg->contextPointer();
         cMessage* parentRequest = (cMessage*)blockRequest->contextPointer();
-
-        // Construct the correct response type
-        spfsOSFileReadResponse* resp =
-            new spfsOSFileReadResponse(0, SPFS_OS_FILE_READ_RESPONSE);
-        resp->setContextPointer(parentRequest);
-        send(resp, outGateId_);
+        spfsOSFileIORequest* ioReq =
+            dynamic_cast<spfsOSFileIORequest*>(parentRequest);
+        assert(0 != ioReq);
+        
+        // If this is metadata, send the data request
+        // else send out the final response
+        if (!ioReq->getHasMetaDataLoaded())
+        {
+            // Mark the meta data loaded
+            ioReq->setHasMetaDataLoaded(true);
+            sendDataRequest(ioReq);
+        }
+        else
+        {
+            // Construct the correct response type
+            spfsOSFileReadResponse* resp =
+                new spfsOSFileReadResponse(0, SPFS_OS_FILE_READ_RESPONSE);
+            resp->setContextPointer(ioReq);
+            send(resp, outGateId_);
+        }
 
         // Clean up the block request and response
         delete blockRequest;
@@ -110,12 +111,61 @@ void FileSystem::handleMessage(cMessage *msg)
     }
 }
 
+void FileSystem::sendMetaDataRequest(spfsOSFileIORequest* ioRequest)
+{
+    // Lookup the metadata blocks
+    Filename filename(ioRequest->getFilename());
+    vector<FSBlock> blocks = getMetaDataBlocks(filename);
+
+    // Construct the read message
+    spfsOSReadBlocksRequest* readBlocks =
+        new spfsOSReadBlocksRequest(0, SPFS_OS_READ_BLOCKS_REQUEST);
+    readBlocks->setContextPointer(ioRequest);
+    readBlocks->setBlocksArraySize(blocks.size());
+    for (size_t i = 0; i < blocks.size(); i++)
+        readBlocks->setBlocks(i, blocks[i]);
+    send(readBlocks, requestGateId_);
+}
+
+void FileSystem::sendDataRequest(spfsOSFileIORequest* ioRequest)
+{
+    // Convert the file system request into block requests
+    Filename filename(ioRequest->getFilename());
+    FSOffset offset = ioRequest->getOffset();
+    FSSize extent = ioRequest->getExtent();
+    vector<FSBlock> blocks = getDataBlocks(filename, offset, extent);
+
+    // Fill out the appropriate read or write message
+    if (0 != dynamic_cast<spfsOSFileReadRequest*>(ioRequest))
+    {
+        spfsOSReadBlocksRequest* readBlocks =
+            new spfsOSReadBlocksRequest(0, SPFS_OS_READ_BLOCKS_REQUEST);
+        readBlocks->setContextPointer(ioRequest);
+        readBlocks->setBlocksArraySize(blocks.size());
+        for (size_t i = 0; i < blocks.size(); i++)
+            readBlocks->setBlocks(i, blocks[i]);
+        send(readBlocks, requestGateId_);
+    }
+    else
+    {
+        spfsOSWriteBlocksRequest* writeBlocks =
+            new spfsOSWriteBlocksRequest(0, SPFS_OS_WRITE_BLOCKS_REQUEST);
+        writeBlocks->setContextPointer(ioRequest);
+        writeBlocks->setBlocksArraySize(blocks.size());
+        for (size_t i = 0; i < blocks.size(); i++)
+            writeBlocks->setBlocks(i, blocks[i]);
+        send(writeBlocks, requestGateId_);
+    }
+}
 
 // Register the NativeFileSystem type
 Define_Module(NativeFileSystem);
 
 void NativeFileSystem::initializeFileSystem()
 {
+    // Retrieve the block size
+    blockSize_ = par("blockSizeBytes").longValue();
+    
     // Construct the storage layout for the file system
     storageLayout_ = new StorageLayout(getBlockSize());
 }
@@ -138,13 +188,15 @@ void NativeFileSystem::allocateFileStorage(const Filename& filename,
     storageLayout_->addFile(filename, size);
 }
 
-vector<FSBlock> NativeFileSystem::getRequestBlocks(
-    spfsOSFileIORequest* ioRequest) const
+vector<FSBlock> NativeFileSystem::getMetaDataBlocks(
+    const Filename& filename) const
 {
-    assert(0 != ioRequest);
-    Filename filename("/home5/uysal/skirt.8p.matrix");
-    FSOffset offset = ioRequest->getOffset();
-    FSSize extent = ioRequest->getExtent();
+    return storageLayout_->getFileMetaDataBlocks(filename);
+}
+
+vector<FSBlock> NativeFileSystem::getDataBlocks(
+    const Filename& filename, FSOffset offset, FSSize extent) const
+{
     return storageLayout_->getFileDataBlocks(filename, offset, extent);
 }
 

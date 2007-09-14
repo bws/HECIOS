@@ -25,6 +25,7 @@
 #include "data_type_processor.h"
 #include "fs_server.h"
 #include "file_distribution.h"
+#include "filename.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
@@ -97,8 +98,9 @@ void Read::enterReadData()
     // Construct the list i/o request
     spfsOSFileReadRequest* fileRead =
         new spfsOSFileReadRequest(0, SPFS_OS_FILE_READ_REQUEST);
+    Filename filename(readReq_->getHandle());
     fileRead->setContextPointer(readReq_);
-    fileRead->setFileHandle(readReq_->getHandle());
+    fileRead->setFilename(filename.c_str());
     fileRead->setOffset(layout.offsets[0]);
     fileRead->setExtent(layout.extents[0]);
     module_->send(fileRead, "storageOut");

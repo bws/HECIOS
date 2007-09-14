@@ -29,6 +29,8 @@ cplusplus {{
 
 // Forward declarations
 class noncobject FSBlock;
+class noncobject FSOffset;
+class noncobject FSSize;
 class cFSM;
 
 // Enumerate all OS message kinds
@@ -52,11 +54,12 @@ enum spfsOSMessageKind
 message spfsOSFileIORequest
 {
     fields:
-        long fileHandle;
-        long offset;
-        long extent;
+        string filename;
+        FSOffset offset;
+        FSSize extent;
 
         // State fields used internally
+        bool hasMetaDataLoaded;
         long numRemainingResponses;
 };
 
@@ -64,7 +67,7 @@ message spfsOSFileIORequest
 message spfsOSFileIOResponse
 {
     fields:
-        long fileHandle;
+        string filename;
 };
 
 // File read request to the OS' native file system

@@ -23,18 +23,21 @@
 // Template for File Systems
 //
 simple FileSystem
-  gates:
-    in: in, response;
-    out: out, request;
+    gates:
+        in: in, response;
+        out: out, request;
 endsimple
 
 //
 // A UNIX/Linux file system model
 //
 simple NativeFileSystem
-  gates:
-    in: in, response;
-    out: out, request;
+    parameters:
+        blockSizeBytes : const;
+
+    gates:
+        in: in, response;
+        out: out, request;
 endsimple
 
 //

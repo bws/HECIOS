@@ -23,6 +23,7 @@
 #include <cstddef>
 #include <iostream>
 #include <string>
+#include "basic_types.h"
 
 /**
  * An absolute file or directory name with all extraneous data (slashes)
@@ -38,8 +39,14 @@ public:
     /** Create a filename from an absolute path */
     explicit Filename(const char* absolutePathStr);
 
+    /** Create a filename from a unique file handle */
+    explicit Filename(const FSHandle& handle);
+    
     /** @return the filename as a string */
     std::string str() const { return path_; };
+
+    /** @return the filename as a char* */
+    const char* c_str() const { return path_.c_str(); };
     
     /** @return the number of path segments (including the root directory) */
     std::size_t getNumPathSegments() const;

@@ -72,12 +72,22 @@ protected:
     virtual void allocateFileStorage(const Filename& filename,
                                      FSSize size) = 0;
     
-    /** @return the blocks for an I/O request */
-    virtual std::vector<FSBlock> getRequestBlocks(
-        spfsOSFileIORequest* ioRequest) const = 0;
-    
 private:
 
+    /** Send a request for the meta data blocks for a File I/O request */
+    void sendMetaDataRequest(spfsOSFileIORequest* ioRequest);
+
+    /** Send a request for the data blocks for a file I/O request */
+    void sendDataRequest(spfsOSFileIORequest* ioRequest);
+    
+    /** @return the meta data blocks for a filename */
+    virtual std::vector<FSBlock> getMetaDataBlocks(
+        const Filename& filename) const = 0;
+    
+    /** @return the data blocks for a file region */
+    virtual std::vector<FSBlock> getDataBlocks(
+        const Filename& filename, FSOffset offset, FSSize extent) const = 0;
+    
     /** in gate id */
     int inGateId_;
 
@@ -96,13 +106,10 @@ private:
  */
 class NativeFileSystem : public FileSystem
 {
-    /** The default file system block size */
-    static const std::size_t DEFAULT_BLOCK_SIZE_BYTES = 4096;
-    
 public:
     
     /** @return the file system's block size in bytes */
-    std::size_t getBlockSize() const { return DEFAULT_BLOCK_SIZE_BYTES; };
+    std::size_t getBlockSize() const { return blockSize_; };
     
 protected:
 
@@ -119,13 +126,19 @@ protected:
     virtual void allocateFileStorage(const Filename& filename,
                                      FSSize size);
     
-    /**
-     * @return a list of blocks that map to the corresponding file region
-     */
-    virtual std::vector<FSBlock> getRequestBlocks(
-        spfsOSFileIORequest* ioRequest) const;
-
 private:
+
+    /** @return the meta data blocks for a filename */
+    virtual std::vector<FSBlock> getMetaDataBlocks(
+        const Filename& filename) const;
+    
+    /** @return the data blocks for a file region */
+    virtual std::vector<FSBlock> getDataBlocks(
+        const Filename& filename, FSOffset offset, FSSize extent) const;
+
+    /** File system block size in bytes */
+    std::size_t blockSize_;
+    
     /** Storage layout for this file system */
     StorageLayout* storageLayout_;
 };
