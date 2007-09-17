@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <cppunit/TestAssert.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include "lru_cache.h"
 using namespace std;
@@ -17,6 +18,8 @@ class LRUCacheTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testInsert);
     CPPUNIT_TEST(testRemove);
     CPPUNIT_TEST(testLookup);
+    CPPUNIT_TEST(testCapacity);
+    CPPUNIT_TEST(testNextEviction);
     CPPUNIT_TEST(testSize);
     CPPUNIT_TEST(testLRUPolicy);
     CPPUNIT_TEST_SUITE_END();
@@ -36,6 +39,10 @@ public:
     void testRemove();
     
     void testLookup();
+
+    void testCapacity();
+
+    void testNextEviction();
 
     void testSize();
 
@@ -134,8 +141,35 @@ void LRUCacheTest::testLookup()
     
     CPPUNIT_ASSERT_EQUAL(string("value2009"), cache1_->lookup(2009));
     
-    //FIXME Lookup a non-existant entry
-    //CPPUNIT_ASSERT(0 == cache1_->lookup(2010));
+    // Lookup a non-existant entry
+    CPPUNIT_ASSERT_THROW(cache1_->lookup(2010), NoSuchEntry);
+}
+
+void LRUCacheTest::testCapacity()
+{
+    LRUCache<int,int> cache1(10);
+    CPPUNIT_ASSERT_EQUAL(10, cache1.capacity());
+
+    LRUCache<int,int> cache2(20);
+    CPPUNIT_ASSERT_EQUAL(20, cache2.capacity());
+}
+
+void LRUCacheTest::testNextEviction()
+{
+    LRUCache<int,int> cache1(2);
+
+    // Test next eviction on an empty cache
+    CPPUNIT_ASSERT_THROW(cache1.nextEviction(), NoSuchEntry);
+
+    // Test next eviction when cache has available capacity
+    cache1.insert(1, 100);
+    CPPUNIT_ASSERT_EQUAL(100, cache1.nextEviction());
+
+    // Test next eviction
+    cache1.insert(2, 200);
+    CPPUNIT_ASSERT_EQUAL(100, cache1.nextEviction());
+    cache1.insert(3, 300);
+    CPPUNIT_ASSERT_EQUAL(200, cache1.nextEviction());
 }
 
 void LRUCacheTest::testSize()

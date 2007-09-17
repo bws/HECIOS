@@ -45,6 +45,9 @@ public:
     /** Convencience typedef of the key-value map */
     typedef std::map<KeyType,EntryType*> MapType;
 
+    /** Convencience typedef of the lru list */
+    typedef std::list<KeyType> LRUListType;
+
     /**
      * Constructor
      */
@@ -80,10 +83,22 @@ public:
     ValueType lookup(const KeyType& key);
 
     /**
+     * @return the next entry that will be evicted on a new insertion
+     *
+     * @throw NoSuchEntry if the cache is empty
+     */
+    ValueType nextEviction() const;
+
+    /**
+     * @return the cache capacity
+     */
+    int capacity() const;
+    
+    /**
      * @return the number of entries in the cache
      */
-    int size() const;;
-    
+    int size() const;
+
 private:
 
     std::map<KeyType, EntryType*> keyEntryMap_;
@@ -216,12 +231,41 @@ ValueType LRUCache<KeyType,ValueType>::lookup(const KeyType& key)
 }
 
 template<class KeyType, class ValueType>
+ValueType LRUCache<KeyType,ValueType>::nextEviction() const
+{
+    EntryType* entry = 0;
+        
+    if (0 != numEntries_)
+    {
+        assert(0 != lruList_.size());
+        typename LRUListType::const_iterator lruIter = lruList_.end();
+        typename MapType::const_iterator mapIter =
+            keyEntryMap_.find(*(--lruIter));
+        assert(keyEntryMap_.end() != mapIter);
+        entry = mapIter->second;
+    }
+    else
+    {
+        NoSuchEntry e;
+        throw e;
+    }
+    return entry->data;
+}
+
+template<class KeyType, class ValueType>
+int LRUCache<KeyType,ValueType>::capacity() const
+{
+    return maxEntries_;
+}
+
+template<class KeyType, class ValueType>
 int LRUCache<KeyType,ValueType>::size() const
 {
     assert(lruList_.size() == keyEntryMap_.size());
     assert(lruList_.size() == numEntries_);
     return numEntries_;
 }
+
 #endif
 
 /*
