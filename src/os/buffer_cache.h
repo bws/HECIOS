@@ -26,6 +26,8 @@
 
 /**
  * Abstract base class for OS Buffer Cache Managers
+ *
+ * Provides an interface to a write back cache for its message handler
  */
 class BufferCache : public cSimpleModule
 {
@@ -36,6 +38,14 @@ public:
     BufferCache();
 
 protected:
+    /**
+     *
+     */
+    struct Entry
+    {
+        LogicalBlockAddress lba;
+        bool isDirty;
+    }; 
     
     /**
      *  This is the initialization routine for this simulation module.
@@ -75,34 +85,44 @@ protected:
     virtual bool isCached(LogicalBlockAddress address) = 0;
 
     /**
+     * @return true if the cache is filled to capacity
+     */
+    virtual bool isFull() = 0;
+    
+    /**
      * Add an entry to the cache
      *
      * @return the address value of the cache entry that is evicted
      *
      */
-    virtual void addEntry(LogicalBlockAddress address) = 0;
+    virtual void insertEntry(const Entry& entry) = 0;
+
+    /**
+     * @return the next
+     */
+    virtual Entry getNextEviction() = 0;
     
 private:
 
+    /** Handle caching for incoming block requests from the file system */
+    void handleBlockRequest(cMessage* msg);
+
+    /** Handle caching for incoming block device responses */
+    void handleBlockResponse(cMessage* msg);
+
+    /**
+     * Evict a cache entry if the cache is full and write the block to disk
+     * if it is marked dirty
+     */
+    void evictCacheEntry(LogicalBlockAddress lba);
+    
+    /** in gate id */
     int inGateId_;
 
     // Metric data collected at runtime
     double statNumRequests_;
     double statNumHits_;
     double statNumMisses_;
-};
-
-/**
- * Abstract base class for all buffer caches implementing a write-back
- * policy
- */
-class WriteBackBufferCache : public BufferCache
-{
-protected:
-    virtual void handleMessage(cMessage* msg);
-    
-    virtual LogicalBlockAddress getNextEviction(
-        LogicalBlockAddress address) = 0;
 };
 
 /**
@@ -118,11 +138,24 @@ class NoBufferCache : public BufferCache
 
 protected:
 
-    virtual void initializeCache() {};
+    /** No-op */
+    virtual void initializeCache();
 
+    /** @return false */
     virtual bool isCached(LogicalBlockAddress address);
 
-    virtual void addEntry(LogicalBlockAddress address) {};
+    /** @return false */
+    virtual bool isFull();
+
+    /** No-op */
+    virtual void insertEntry(const Entry& newEntry);
+
+    /**
+     * @return an invalid LogicalBlockAddress
+     * @throw logic_error if invoked
+     */
+    virtual Entry getNextEviction();
+
 };
 
 /**
@@ -138,27 +171,23 @@ public:
 
 protected:
     /**
-     *  @copydoc AbstractCache::setup
-     *
-     *  @par Derived Implementation Details:
-     *
-     *  This method implements the XXX
      */
     virtual void initializeCache();
 
     /**
-     *  @copydoc AbstractCache::checkCache
-     *
-     *  @par Derived Implementation Details:
-     *
-     *  This method implements the XXX
      */
     virtual bool isCached(LogicalBlockAddress address);
+
+    /** @return true if the cache is full */
+    virtual bool isFull();
 
     /**
      * Add an entry to the cache performing an eviction if neccesary
      */
-    virtual void addEntry(LogicalBlockAddress address);
+    virtual void insertEntry(const Entry& newEntry);
+
+    /** @return the least recently used entry */
+    virtual Entry getNextEviction();
 
 private:
 

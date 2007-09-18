@@ -62,9 +62,20 @@ public:
      * recently used item
      */
     void insert(const KeyType& key, const ValueType& value);
-
-    /** Remove the value for key from the cache */
+    
+    /**
+     * Remove the value for key from the cache
+     *
+     * @throw NoSuchEntry if no entry exists for key
+     */
     void remove(const KeyType& key);
+
+    /**
+     * @return The value for key and update the LRU ordering
+     *
+     * @throw NoSuchEntry if no entry exists for key
+     */
+    ValueType lookup(const KeyType& key);
 
     /**
      * Check if an entry exists without modifying its LRU status
@@ -72,32 +83,23 @@ public:
      * @return true if a value exists for the given key
      */
     bool exists(const KeyType& key) const;
-    
-    /**
-     * @return The EntryType value wrapper for key.  The wrapper allows
-     * the user to also determine the last time the entry was accessed.
-     * If no entry exists for key, return 0
-     *
-     * @throw NoSuchEntry if key does not exist
-     */
-    ValueType lookup(const KeyType& key);
 
     /**
      * @return the next entry that will be evicted on a new insertion
      *
      * @throw NoSuchEntry if the cache is empty
      */
-    ValueType nextEviction() const;
+    std::pair<KeyType, ValueType> getLRU() const;
 
     /**
      * @return the cache capacity
      */
-    int capacity() const;
+    std::size_t capacity() const;
     
     /**
      * @return the number of entries in the cache
      */
-    int size() const;
+    std::size_t size() const;
 
 private:
 
@@ -189,6 +191,11 @@ void LRUCache<KeyType,ValueType>::remove(const KeyType& key)
         keyEntryMap_.erase(pos);
         numEntries_--;
     }
+    else
+    {
+        NoSuchEntry e;
+        throw e;
+    }
 }
 
 template<class KeyType, class ValueType>
@@ -213,53 +220,50 @@ ValueType LRUCache<KeyType,ValueType>::lookup(const KeyType& key)
 
     // Search the map for key
     pos = keyEntryMap_.find(key);
-    if (pos != keyEntryMap_.end())
-    {
-        entry = pos->second;
-
-        // Refresh the LRU list
-        lruList_.erase(entry->lruRef);
-        lruList_.push_front(key);
-        entry->lruRef = lruList_.begin();
-    }
-    else
+    if (pos == keyEntryMap_.end())
     {
         NoSuchEntry e;
         throw e;
     }
+    
+    entry = pos->second;
+
+    // Refresh the LRU list
+    lruList_.erase(entry->lruRef);
+    lruList_.push_front(key);
+    entry->lruRef = lruList_.begin();
     return entry->data;
 }
 
 template<class KeyType, class ValueType>
-ValueType LRUCache<KeyType,ValueType>::nextEviction() const
+std::pair<KeyType, ValueType> LRUCache<KeyType,ValueType>::getLRU() const
 {
-    EntryType* entry = 0;
-        
-    if (0 != numEntries_)
-    {
-        assert(0 != lruList_.size());
-        typename LRUListType::const_iterator lruIter = lruList_.end();
-        typename MapType::const_iterator mapIter =
-            keyEntryMap_.find(*(--lruIter));
-        assert(keyEntryMap_.end() != mapIter);
-        entry = mapIter->second;
-    }
-    else
+    // Throw an exception if the cache is empty
+    if (0 == numEntries_)
     {
         NoSuchEntry e;
         throw e;
     }
-    return entry->data;
+
+    // Locate the LRU entry
+    assert(0 != lruList_.size());
+    typename LRUListType::const_iterator lruIter = lruList_.end();
+    typename MapType::const_iterator mapIter = keyEntryMap_.find(*(--lruIter));
+
+    // Create a pair containing the LRU key and value
+    KeyType lruKey = mapIter->first;
+    ValueType lruValue = mapIter->second->data;
+    return make_pair(lruKey, lruValue);
 }
 
 template<class KeyType, class ValueType>
-int LRUCache<KeyType,ValueType>::capacity() const
+std::size_t LRUCache<KeyType,ValueType>::capacity() const
 {
     return maxEntries_;
 }
 
 template<class KeyType, class ValueType>
-int LRUCache<KeyType,ValueType>::size() const
+std::size_t LRUCache<KeyType,ValueType>::size() const
 {
     assert(lruList_.size() == keyEntryMap_.size());
     assert(lruList_.size() == numEntries_);

@@ -17,7 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include <stdexcept>
 #include "buffer_cache.h"
 #include "os_proto_m.h"
 using namespace std;
@@ -62,73 +62,110 @@ void BufferCache::handleMessage(cMessage *msg)
     //  to a disk access request made as the result of a miss.
     if ( msg->arrivalGateId() == inGateId_ )
     {
-        if (spfsOSReadDeviceRequest* read =
-            dynamic_cast<spfsOSReadDeviceRequest*>(msg))
-        {
-            // Update statistics
-            statNumRequests_++;
-        
-            if (isCached(read->getAddress()))
-            {
-                // Update statistics
-                statNumHits_++;
-
-                // Create and send response
-                spfsOSReadDeviceResponse* resp =
-                    new spfsOSReadDeviceResponse();
-                resp->setContextPointer(msg);
-                send(resp, "out"); 
-            }
-            else
-            {
-                // Update statistics
-                statNumMisses_++;
-
-                // Forward request to next module
-                send(msg, "request");
-            }
-        }
-        else
-        {
-            cerr << "Buffer Cache Error: Invalid message received." << endl;
-        }
+        handleBlockRequest(msg);
     }
     else
     {
-        // Add data back from the disk to the cache
-        LogicalBlockAddress lba;
-        cMessage* req = static_cast<cMessage*>(msg->contextPointer());
-        if (spfsOSReadDeviceRequest* read =
-            dynamic_cast<spfsOSReadDeviceRequest*>(req))
+        handleBlockResponse(msg);
+    }
+}
+
+void BufferCache::handleBlockRequest(cMessage* msg)
+{
+    if (spfsOSReadDeviceRequest* read =
+        dynamic_cast<spfsOSReadDeviceRequest*>(msg))
+    {
+        // Update statistics
+        statNumRequests_++;
+        
+        if (isCached(read->getAddress()))
         {
-            lba = read->getAddress();
-        }
-        else if (spfsOSWriteDeviceRequest* write =
-                 dynamic_cast<spfsOSWriteDeviceRequest*>(req))
-        {
-            lba = write->getAddress();
+            // Update statistics
+            statNumHits_++;
+
+            // Create and send response
+            spfsOSReadDeviceResponse* resp =
+                new spfsOSReadDeviceResponse();
+            resp->setContextPointer(msg);
+            send(resp, "out"); 
         }
         else
         {
-            assert(0);
-        }
+            // Update statistics
+            statNumMisses_++;
 
-        // Add block to cache
-        addEntry(lba);
+            // Forward request to next module
+            send(msg, "request");
+        }
+    }
+    else if (spfsOSWriteDeviceRequest* write =
+             dynamic_cast<spfsOSWriteDeviceRequest*>(msg))
+    {
+        // Perform cache eviction if needed
+        evictCacheEntry(write->getAddress());
+            
+        // Add a dirty entry to the cache
+        Entry newEntry;
+        newEntry.lba = write->getAddress();
+        newEntry.isDirty = true;
+        insertEntry(newEntry);
+
+        // Create and send response
+        spfsOSWriteDeviceResponse* resp = new spfsOSWriteDeviceResponse();
+        resp->setContextPointer(msg);
+        send(resp, "out"); 
+    }
+    else
+    {
+        cerr << "Buffer Cache Error: Invalid message received." << endl;
+    }
+}
+
+void BufferCache::handleBlockResponse(cMessage* msg)
+{
+    // Add data read from the disk to the cache
+    cMessage* req = static_cast<cMessage*>(msg->contextPointer());
+    if (spfsOSReadDeviceRequest* read =
+        dynamic_cast<spfsOSReadDeviceRequest*>(req))
+    {
+        LogicalBlockAddress lba = read->getAddress();
+
+        // If a cache entry does not exist for this block, then no later
+        // write has arrived and the returned value is valid to cache
+        if (!isCached(lba))
+        {
+            // Perform cache eviction if needed
+            evictCacheEntry(lba);
+            
+            // Add block to cache
+            Entry newEntry;
+            newEntry.lba = lba;
+            newEntry.isDirty = false;
+            insertEntry(newEntry);
+        }
 
         // Forward completed response up the chain
         send( msg, "out" );
     }
+    else
+    {
+        // Discard dirty block write back responses
+        delete msg;
+    }
 }
 
-//=============================================================================
-//
-// WriteBackBufferCache implementation (abstract class)
-//
-//=============================================================================
-void WriteBackBufferCache::handleMessage(cMessage* msg)
+void BufferCache::evictCacheEntry(LogicalBlockAddress lba)
 {
-    cerr << "WriteBackBufferCache Error: Invalid message received." << endl;
+    if (isFull() && !isCached(lba))
+    {
+        Entry evictee = getNextEviction();
+        if (evictee.isDirty)
+        {
+            spfsOSWriteDeviceRequest* write = new spfsOSWriteDeviceRequest();
+            write->setAddress(evictee.lba);
+            send(write, "request");
+        }
+    }
 }
 
 //=============================================================================
@@ -142,9 +179,30 @@ NoBufferCache::NoBufferCache()
 {
 }
 
+void NoBufferCache::initializeCache()
+{
+}
+
+bool NoBufferCache::isFull()
+{
+    return false;
+}
+
 bool NoBufferCache::isCached(LogicalBlockAddress address)
 {
     return false;
+}
+
+void NoBufferCache::insertEntry(const BufferCache::Entry& newEntry)
+{
+}
+
+BufferCache::Entry NoBufferCache::getNextEviction()
+{
+    logic_error e("Illegal to invoke getNextEviction");
+    throw e;
+    Entry* null = 0;
+    return *null;
 }
 
 //=============================================================================
@@ -185,10 +243,25 @@ bool LRUBufferCache::isCached(LogicalBlockAddress address)
     }
 }
 
-void LRUBufferCache::addEntry(LogicalBlockAddress address)
+bool LRUBufferCache::isFull()
 {
-    //assert(false == cache_->exists(address));
-    cache_->insert(address, 1);
+    return (cache_->capacity() == cache_->size());
+}
+
+void LRUBufferCache::insertEntry(const BufferCache::Entry& entry)
+{
+    cache_->insert(entry.lba, entry.isDirty);
+}
+
+BufferCache::Entry LRUBufferCache::getNextEviction()
+{
+    // Retrieve the LRU item to be evicted
+    pair<LogicalBlockAddress,bool> lruEntry = cache_->getLRU();
+    
+    Entry evictee;
+    evictee.lba = lruEntry.first;
+    evictee.isDirty = lruEntry.second;
+    return evictee;
 }
 
 /*
