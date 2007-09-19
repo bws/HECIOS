@@ -79,6 +79,9 @@ private:
 
     /** Send a request for the data blocks for a file I/O request */
     void sendDataRequest(spfsOSFileIORequest* ioRequest);
+
+    /** Send the final read or write response */
+    void sendFileIOResponse(spfsOSFileIORequest* ioRequest);
     
     /** @return the meta data blocks for a filename */
     virtual std::vector<FSBlock> getMetaDataBlocks(

@@ -21,7 +21,11 @@
 #include "write.h"
 #include <cassert>
 #include <omnetpp.h>
+#include "data_type_processor.h"
+#include "file_distribution.h"
+#include "filename.h"
 #include "fs_server.h"
+#include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
@@ -39,18 +43,66 @@ void Write::handleServerMessage(cMessage* msg)
     // Server lookup states
     enum {
         INIT = 0,
-        FINISH = FSM_Steady(1),
+        WRITE_DATA = FSM_Steady(1),
+        FINISH = FSM_Steady(2),
     };
 
     FSM_Switch(currentState)
     {
-        case FSM_Enter(INIT):
+        case FSM_Exit(INIT):
         {
             assert(0 != dynamic_cast<spfsWriteRequest*>(msg));
+            FSM_Goto(currentState, WRITE_DATA);
+            break;
+        }
+        case FSM_Enter(WRITE_DATA):
+        {
+            assert(0 != dynamic_cast<spfsWriteRequest*>(msg));
+            enterWriteData();
+            break;
+        }
+        case FSM_Exit(WRITE_DATA):
+        {
+            FSM_Goto(currentState, FINISH);
+            break;
+        }
+        case FSM_Enter(FINISH):
+        {
+            assert(0 != dynamic_cast<spfsOSFileWriteResponse*>(msg));
             enterFinish();
+
+            // Cleanup the message created to read data and its response
+            delete static_cast<cMessage*>(msg->contextPointer());
+            delete msg;
+            
             break;
         }
     }
+
+    // Store current state
+    writeReq_->setState(currentState);
+}
+
+void Write::enterWriteData()
+{
+    // Determine the local file layout
+    FileLayout layout;
+    DataTypeProcessor::createFileLayoutForServer(writeReq_->getOffset(),
+                                                 writeReq_->getDataType(),
+                                                 writeReq_->getCount(),
+                                                 *(writeReq_->getDist()),
+                                                 10000000,
+                                                 layout);
+
+    // Construct the list i/o request
+    spfsOSFileWriteRequest* fileWrite =
+        new spfsOSFileWriteRequest(0, SPFS_OS_FILE_WRITE_REQUEST);
+    Filename filename(writeReq_->getHandle());
+    fileWrite->setContextPointer(writeReq_);
+    fileWrite->setFilename(filename.c_str());
+    fileWrite->setOffset(layout.offsets[0]);
+    fileWrite->setExtent(layout.extents[0]);
+    module_->send(fileWrite, "storageOut");
 }
 
 void Write::enterFinish()

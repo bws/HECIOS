@@ -192,7 +192,7 @@ protected:
 private:
 
     /** Cache helper class */
-    LRUCache<LogicalBlockAddress, int>* cache_;
+    LRUCache<LogicalBlockAddress, bool>* cache_;
 };
 
 #endif

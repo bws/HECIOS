@@ -98,11 +98,7 @@ void FileSystem::handleMessage(cMessage *msg)
         }
         else
         {
-            // Construct the correct response type
-            spfsOSFileReadResponse* resp =
-                new spfsOSFileReadResponse(0, SPFS_OS_FILE_READ_RESPONSE);
-            resp->setContextPointer(ioReq);
-            send(resp, outGateId_);
+            sendFileIOResponse(ioReq);
         }
 
         // Clean up the block request and response
@@ -155,6 +151,25 @@ void FileSystem::sendDataRequest(spfsOSFileIORequest* ioRequest)
         for (size_t i = 0; i < blocks.size(); i++)
             writeBlocks->setBlocks(i, blocks[i]);
         send(writeBlocks, requestGateId_);
+    }
+}
+
+void FileSystem::sendFileIOResponse(spfsOSFileIORequest* ioRequest)
+{
+    // Respond to the read or write request
+    if (0 != dynamic_cast<spfsOSFileReadRequest*>(ioRequest))
+    {
+        spfsOSFileReadResponse* resp =
+            new spfsOSFileReadResponse(0, SPFS_OS_FILE_READ_RESPONSE);
+        resp->setContextPointer(ioRequest);
+        send(resp, outGateId_);
+    }
+    else
+    {
+        spfsOSFileWriteResponse* resp =
+            new spfsOSFileWriteResponse(0, SPFS_OS_FILE_WRITE_RESPONSE);
+        resp->setContextPointer(ioRequest);
+        send(resp, outGateId_);
     }
 }
 

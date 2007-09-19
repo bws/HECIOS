@@ -128,6 +128,9 @@ void BasicModelDisk::initialize()
     // Derived performance parameters
     timePerRevolution_ = 1.0 / rpms_;
     timePerSector_ = timePerRevolution_ / sectorsPerCylinder_;
+
+    // Park the head at cylinder 0 to begin with
+    lastCylinder_ = 0;
 }
 
 double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)

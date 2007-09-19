@@ -153,8 +153,9 @@ void FSWrite::enterWrite()
             // Set the message size in bytes
             spfsWriteRequest* req = static_cast<spfsWriteRequest*>(
                 write.dup());
-            req->setByteLength(reqBytes);
             req->setHandle(filedes->metaData->dataHandles[i]);
+            req->setDist(filedes->metaData->dist->clone());
+            req->setByteLength(reqBytes);
             client_->send(req, client_->getNetOutGate());
 
             // Increment the number of outstanding requests

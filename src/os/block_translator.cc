@@ -69,7 +69,7 @@ void BlockTranslator::handleMessage(cMessage *msg)
                 {
                     req = new spfsOSWriteDeviceRequest();
                 }
-                req->setAddress(lbas[i]);
+                req->setAddress(lbas[j]);
                 req->setContextPointer(msg);
                 send(req, "request");
             }

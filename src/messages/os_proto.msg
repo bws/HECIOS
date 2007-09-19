@@ -85,6 +85,11 @@ message spfsOSFileWriteRequest extends spfsOSFileIORequest
 {
 };
 
+// File write response to the OS' native file system
+message spfsOSFileWriteResponse extends spfsOSFileIOResponse
+{
+};
+
 // Abstract base class for block read and write requests
 message spfsOSBlockIORequest
 {

@@ -41,6 +41,9 @@ public:
 
 protected:
 
+    /** */
+    void enterWriteData();
+
     /**
      *
      */
