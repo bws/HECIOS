@@ -1,47 +1,73 @@
 dnl
 dnl Process this file with autoconf to produce a configure script
 dnl
-AC_INIT(Makefile.in)
-
-
-dnl
-dnl Use the OmNet++ distribution
-dnl
-AC_ARG_WITH([omnet],
-            [  --with-omnet=path    Use OmNet++ installation at "path"],
-            if test x$withval = xyes ; then
-                AC_MSG_ERROR(--with-omnet must be a given pathname)
-            else
-                AC_SUBST(OMNET_DIR, "$withval", [OmNet++ directory])
-            fi,
-            AC_MSG_FAILURE(--with-omnet must be set to the OmNet++ directory.))
-
+AC_INIT(Hecios,0.0.0.0)
 
 dnl
 dnl Check for programs (needs check for ar and install)
 dnl
 AC_PROG_CXX
+AC_LANG_CPLUSPLUS
 
 dnl 
 dnl Check for headers
 dnl
 AC_HEADER_STDC
+AC_CHECK_HEADER([list], 
+                [], 
+                AC_MSG_ERROR(Must include headers for libstdc++))
+AC_CHECK_HEADER([map], 
+                [], 
+                AC_MSG_ERROR(Must include headers for libstdc++))
+AC_CHECK_HEADER([vector], 
+                [], 
+                AC_MSG_ERROR(Must include headers for libstdc++))
 
 dnl
 dnl Checks for typedefs, structures, and compiler characteristics.
 dnl
-AC_C_CONST
-AC_TYPE_MODE_T
-AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 
 dnl
 dnl Checks for library functions.
 dnl
-AC_FUNC_MALLOC
 AC_CHECK_FUNCS([memset])
+
+dnl
+dnl Use the OmNet++ distribution
+dnl
+AC_ARG_WITH([omnet],
+            [  --with-omnet=<path>    Use OmNet++ installation at "path"],
+            [omnet_dir=$withval],
+            AC_MSG_FAILURE(--with-omnet must be set to the OmNet++ directory.))
+if test x$withval = xyes ; then
+    AC_MSG_ERROR(--with-omnet must be a given pathname)
+else
+    AC_SUBST(OMNET_DIR, "$omnet_dir")
+fi
+
+dnl
+dnl Sets the compilation options
+dnl
+AC_ARG_WITH([mode],
+            [  --with-mode=<mode>    Specify a compile mode: release or debug],
+            [comp_mode=$withval],
+            [comp_mode=debug])
+case "$comp_mode" in
+    debug)
+        CONFIG_CXXFLAGS=-g 
+        ;;
+    release)
+        CONFIG_CXXFLAGS="-O2 -DNDEBUG" 
+        ;;
+    *)
+        AC_MSG_ERROR(Valid compilation modes are debug or release)
+        ;;
+esac
+AC_SUBST(CONFIG_CXXFLAGS, "$CONFIG_CXXFLAGS")
 
 dnl
 dnl Generate output
 dnl
 AC_OUTPUT(Makefile)
+AC_OUTPUT(mf/tools.mk)

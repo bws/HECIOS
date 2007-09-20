@@ -48,8 +48,8 @@ SERVER_DIR= $(SRC_DIR)/server
 #
 # Master Makefile default targets
 #
-ALL_TARGETS = $(BIN_DIR)/hecios
-all: $(ALL_TARGETS)
+DEFAULT_TARGETS = $(BIN_DIR)/hecios
+default: $(ALL_TARGETS)
 
 
 #
@@ -177,7 +177,9 @@ include mf/tests.mk
 #
 # Top level psuedo targets
 #
-gui: $(BIN_DIR)/hecios_gui
+all: $(BIN_DIR)/hecios_cmd $(BIN_DIR)/hecios
+
+gui: $(BIN_DIR)/hecios
 
 clean:
 	@echo "Removing all derived files."
@@ -229,4 +231,4 @@ test: tests_all
 #
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all all_clean clean doc gui ned_clean test tests_clean
+.PHONY: all all_clean clean default doc gui ned_clean test tests_clean
