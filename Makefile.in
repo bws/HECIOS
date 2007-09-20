@@ -49,7 +49,7 @@ SERVER_DIR= $(SRC_DIR)/server
 # Master Makefile default targets
 #
 DEFAULT_TARGETS = $(BIN_DIR)/hecios
-default: $(ALL_TARGETS)
+default: $(DEFAULT_TARGETS)
 
 
 #
