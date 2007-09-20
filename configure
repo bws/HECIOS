@@ -308,7 +308,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CXXCPP EGREP OMNET_DIR CONFIG_CXXFLAGS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CXXCPP EGREP OMNET_DIR CONFIG_CXXFLAGS CONFIG_UNSAFE_CXXFLAGS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2990,10 +2990,12 @@ else
 fi;
 case "$comp_mode" in
     debug)
-        CONFIG_CXXFLAGS=-g
+        CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror"
+        CONFIG_UNSAFE_CXXFLAGS="-g"
         ;;
     release)
         CONFIG_CXXFLAGS="-O2 -DNDEBUG"
+        CONFIG_UNSAFE_CXXFLAGS="-O2 -DNDEBUG"
         ;;
     *)
         { { echo "$as_me:$LINENO: error: Valid compilation modes are debug or release" >&5
@@ -3002,6 +3004,8 @@ echo "$as_me: error: Valid compilation modes are debug or release" >&2;}
         ;;
 esac
 CONFIG_CXXFLAGS="$CONFIG_CXXFLAGS"
+
+CONFIG_UNSAFE_CXXFLAGS="$CONFIG_UNSAFE_CXXFLAGS"
 
 
           ac_config_files="$ac_config_files Makefile"
@@ -3650,6 +3654,7 @@ s,@CXXCPP@,$CXXCPP,;t t
 s,@EGREP@,$EGREP,;t t
 s,@OMNET_DIR@,$OMNET_DIR,;t t
 s,@CONFIG_CXXFLAGS@,$CONFIG_CXXFLAGS,;t t
+s,@CONFIG_UNSAFE_CXXFLAGS@,$CONFIG_UNSAFE_CXXFLAGS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -4562,6 +4567,7 @@ s,@CXXCPP@,$CXXCPP,;t t
 s,@EGREP@,$EGREP,;t t
 s,@OMNET_DIR@,$OMNET_DIR,;t t
 s,@CONFIG_CXXFLAGS@,$CONFIG_CXXFLAGS,;t t
+s,@CONFIG_UNSAFE_CXXFLAGS@,$CONFIG_UNSAFE_CXXFLAGS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

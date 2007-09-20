@@ -23,14 +23,13 @@ DEPENDC = scripts/depend.sh
 # Compilation flags
 #
 CXXFLAGS += @CONFIG_CXXFLAGS@
-CXXFLAGS += -Wno-unused -Wall -Werror
 CXXFLAGS += -DWITH_PARSIM -DWITH_NETBUILDER
 CXXFLAGS += $(patsubst %,-I%,$(INCLUDES))
 
 #
 # More permissive compilation flags for generated source (warnings disabled)
 #
-UNSAFE_CXXFLAGS += @CONFIG_CXXFLAGS@
+UNSAFE_CXXFLAGS += @CONFIG_UNSAFE_CXXFLAGS@
 UNSAFE_CXXFLAGS += -DWITH_PARSIM -DWITH_NETBUILDER
 UNSAFE_CXXFLAGS += $(patsubst %,-I%,$(INCLUDES))
 
