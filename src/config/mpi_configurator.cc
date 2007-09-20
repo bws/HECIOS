@@ -145,7 +145,7 @@ void MPIConfigurator::createTCPApps(cModule* computeNode)
     cModule* mpiServer = mpiServerType->create("tcpApp2", hca);
     mpiServer->buildInside();
 
-    // Set the MPITcpClient parameters and connect gates
+    // Set the MPITcpServer parameters and connect gates
     mpiServer->par("listenPort") = 8000;
     hca->gate("bmiIn", 2)->connectTo(mpiServer->gate("appIn"));
     mpiServer->gate("appOut")->connectTo(hca->gate("bmiOut", 2));
