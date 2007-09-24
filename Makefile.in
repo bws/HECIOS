@@ -24,15 +24,17 @@
 #
 
 #
-# System paths
+# Variables set by the configure script
 #
-HECIOS_DIR := $(shell pwd)
+HECIOS_DIR := @CONFIG_PROJECT_DIR@
+BUILD_DIR := @CONFIG_BUILD_DIR@
 OMNET_DIR := @OMNET_DIR@
+CONFIG_CXXFLAGS := @CONFIG_CXXFLAGS@
+CONFIG_UNSAFE_CXXFLAGS := @CONFIG_UNSAFE_CXXFLAGS@
 
 #
 # Module locations
 #
-BIN_DIR = bin
 DOC_DIR = doc
 SRC_DIR = src
 INET_DIR = INET
@@ -44,6 +46,17 @@ MESSAGES_DIR= $(SRC_DIR)/messages
 OS_DIR= $(SRC_DIR)/os
 PHYSICAL_DIR= $(SRC_DIR)/physical
 SERVER_DIR= $(SRC_DIR)/server
+
+#
+# Build target directories
+#
+BIN_DIR = bin
+LIB_DIR = lib
+
+#
+# Set the VPATH to enable out of tree builds
+#
+VPATH = $(HECIOS_DIR)
 
 #
 # Master Makefile default targets
@@ -119,7 +132,7 @@ SIM_SRC :=
 #
 # Include module makefiles
 #
-include mf/inet.mk
+include $(HECIOS_DIR)/mf/inet.mk
 include $(DOC_DIR)/module.mk
 include $(CLIENT_DIR)/module.mk
 include $(COMMON_DIR)/module.mk
@@ -169,10 +182,9 @@ endif
 #
 # Include all make system makefiles
 #
-include mf/rules.mk
-include mf/tools.mk
-include mf/tests.mk
-
+include $(HECIOS_DIR)/mf/rules.mk
+include $(HECIOS_DIR)/mf/tools.mk
+include $(HECIOS_DIR)/mf/tests.mk
 
 #
 # Top level psuedo targets
@@ -210,17 +222,17 @@ doc: $(DOC_EPS) $(DOC_PDF)
 #
 # Targets to build HECIOS simulator (gui and command line versions)
 #
-$(SIM_MSG_OUTPUT): lib/inet.o
+$(SIM_MSG_OUTPUT): $(LIB_DIR)/inet.o
 
 $(SIM_OBJS): $(SIM_MSG_OUTPUT)
 
-$(BIN_DIR)/hecios: lib/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) 
+$(BIN_DIR)/hecios: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) 
 	@mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o $(LIBS_GUI) -o $@
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(LIB_DIR)/inet.o $(LIBS_GUI) -o $@
 
-$(BIN_DIR)/hecios_cmd: lib/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS)
+$(BIN_DIR)/hecios_cmd: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS)
 	@mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o $(LIBS_CMD) -o $@
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(LIB_DIR)/inet.o $(LIBS_CMD) -o $@
 
 
 #

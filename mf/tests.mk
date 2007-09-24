@@ -21,8 +21,11 @@
 #
 # Testing macros local to file
 #
-TEST_DIR := tests
+TEST_DIR := $(HECIOS_DIR)/tests
 
+#
+# Testing directories
+#
 TEST_CLIENT_DIR := $(TEST_DIR)/client
 TEST_COMMON_DIR := $(TEST_DIR)/common
 TEST_LAYOUT_DIR := $(TEST_DIR)/layout

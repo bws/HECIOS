@@ -19,6 +19,7 @@
 //
 #include <iostream>
 #include <omnetpp.h>
+#include "cache_proto_m.h"
 using namespace std;
 
 /**
@@ -63,7 +64,11 @@ void NoMiddlewareCache::initialize()
  */
 void NoMiddlewareCache::handleMessage(cMessage* msg)
 {
-    if (msg->arrivalGateId() == appInGateId_)
+    if (0 != dynamic_cast<spfsCacheInvalidateRequest*>(msg))
+    {
+        delete msg;
+    }
+    else if (msg->arrivalGateId() == appInGateId_)
     {
         send(msg, "fsOut");
     }

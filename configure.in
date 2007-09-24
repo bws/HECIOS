@@ -4,6 +4,15 @@ dnl
 AC_INIT(Hecios,0.0.0.0)
 
 dnl
+dnl Determine source and build directories
+dnl
+CONFIG_BUILD_DIR=`pwd`
+CONFIG_PROJECT_RELATIVE_DIR=$srcdir
+CONFIG_PROJECT_DIR=`cd $srcdir; pwd`
+AC_SUBST(CONFIG_BUILD_DIR)
+AC_SUBST(CONFIG_PROJECT_DIR)
+
+dnl
 dnl Check for programs (needs check for ar and install)
 dnl
 AC_PROG_CXX
@@ -73,4 +82,3 @@ dnl
 dnl Generate output
 dnl
 AC_OUTPUT(Makefile)
-AC_OUTPUT(mf/tools.mk)

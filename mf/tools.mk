@@ -11,8 +11,8 @@ LD = g++
 #
 # OmNet++ tools
 #
-NEDC = @OMNET_DIR@/bin/nedtool
-MSGC = @OMNET_DIR@/bin/opp_msgc
+NEDC = $(OMNET_DIR)/bin/nedtool
+MSGC = $(OMNET_DIR)/bin/opp_msgc
 
 #
 # Hecios tools
@@ -22,14 +22,14 @@ DEPENDC = scripts/depend.sh
 #
 # Compilation flags
 #
-CXXFLAGS += @CONFIG_CXXFLAGS@
+CXXFLAGS += $(CONFIG_CXXFLAGS)
 CXXFLAGS += -DWITH_PARSIM -DWITH_NETBUILDER
 CXXFLAGS += $(patsubst %,-I%,$(INCLUDES))
 
 #
 # More permissive compilation flags for generated source (warnings disabled)
 #
-UNSAFE_CXXFLAGS += @CONFIG_UNSAFE_CXXFLAGS@
+UNSAFE_CXXFLAGS += $(CONFIG_UNSAFE_CXXFLAGS)
 UNSAFE_CXXFLAGS += -DWITH_PARSIM -DWITH_NETBUILDER
 UNSAFE_CXXFLAGS += $(patsubst %,-I%,$(INCLUDES))
 
