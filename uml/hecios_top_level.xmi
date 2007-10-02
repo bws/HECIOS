@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2007-09-21T15:55:11" xmi.version="1.2" >
+<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2007-09-26T20:52:11" xmi.version="1.2" >
  <XMI.header>
   <XMI.documentation>
    <XMI.exporter>umbrello uml modeller http://uml.sf.net</XMI.exporter>
@@ -31,14 +31,14 @@
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="5bmSGwFemOo5" isRoot="false" isAbstract="false" name="unsigned short" />
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="zmmTQctcs5Gx" isRoot="false" isAbstract="false" name="unsigned long" />
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="ev8n3WGqRx1Q" isRoot="false" isAbstract="false" name="string" />
-        <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="E9Twsz86KWPL" isRoot="false" isAbstract="false" name="cMessage*" elementReference="B7KbFvdpRci9" />
+        <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="E9Twsz86KWPL" isRoot="false" isAbstract="false" name="cMessage*" elementReference="LlBQ0hZKje3Q" />
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="AytjRXazHbQm" isRoot="false" isAbstract="false" name="std::vector&lt; LogicalBlockAddress >" elementReference="dL2Jz2QnpDlL" />
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="4zR9dFMAU9UZ" isRoot="false" isAbstract="false" name="const Entry&amp;" elementReference="lwaaas92GZRC" />
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="qntM9LsXLl3Z" isRoot="false" isAbstract="false" name="LRUCache&lt; LogicalBlockAddress, bool >*" elementReference="mJzRgucz4znE" />
-        <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="rex45z13gqI7" isRoot="false" isAbstract="false" name="cQueue&amp;" elementReference="OagHatlaGP9F" />
+        <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="rex45z13gqI7" isRoot="false" isAbstract="false" name="cQueue&amp;" elementReference="vp11ltgej3JE" />
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="7nGODTwKDVQr" isRoot="false" isAbstract="false" name="std::vector&lt; SchedulerEntry * >" elementReference="dL2Jz2QnpDlL" />
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="PshgIbqh7ONj" isRoot="false" isAbstract="false" name="SchedulerEntry*" elementReference="jWJHuKxcE9fq" />
-        <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="5LzEQK9wpJ5w" isRoot="false" isAbstract="false" name="const Filename&amp;" elementReference="kWAqta1ysaDo" />
+        <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="5LzEQK9wpJ5w" isRoot="false" isAbstract="false" name="const Filename&amp;" elementReference="w8JaJlu2uK2Z" />
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="ae9czEyTKunp" isRoot="false" isAbstract="false" name="spfsOSFileIORequest*" elementReference="dRrM5itd2xrQ" />
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="RDkQwSvT27Ej" isRoot="false" isAbstract="false" name="std::vector&lt; FSBlock >" elementReference="dL2Jz2QnpDlL" />
         <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="guqUHuvgHeAN" isRoot="false" isAbstract="false" name="StorageLayout*" elementReference="UdHWxw0TOyBu" />
@@ -54,7 +54,7 @@
          <UML:Classifier.feature>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000826" isRoot="false" isAbstract="false" isQuery="false" name="initialize" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="g5tmp3njr0C9" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
+            <UML:Parameter kind="return" xmi.id="xM12tiyajK5p" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
          </UML:Classifier.feature>
@@ -63,7 +63,7 @@
          <UML:Classifier.feature>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63-3d034abf:10fa1be15ff:-8000:0000000000000867" isRoot="false" isAbstract="false" isQuery="false" name="initialize" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="OcL70Snovech" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
+            <UML:Parameter kind="return" xmi.id="e94akFs2vMDT" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
          </UML:Classifier.feature>
@@ -75,7 +75,7 @@
          <UML:Classifier.feature>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63-3d034abf:10fa1be15ff:-8000:0000000000000845" isRoot="false" isAbstract="false" isQuery="false" name="initialize" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="rmfbMRR2WKnL" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
+            <UML:Parameter kind="return" xmi.id="eEVVgLndhnda" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
          </UML:Classifier.feature>
@@ -84,7 +84,7 @@
          <UML:Classifier.feature>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63-3d034abf:10fa1be15ff:-8000:0000000000000843" isRoot="false" isAbstract="false" isQuery="false" name="initialize" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="LY3DXDKtpfyn" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
+            <UML:Parameter kind="return" xmi.id="VbACvEzXL385" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
          </UML:Classifier.feature>
@@ -111,7 +111,7 @@
          <UML:Classifier.feature>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63-3d034abf:10fa1be15ff:-8000:000000000000088C" isRoot="false" isAbstract="false" isQuery="false" name="initialize" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="6lb1NBhCyKnK" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
+            <UML:Parameter kind="return" xmi.id="H08CKJdxV8SB" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
          </UML:Classifier.feature>
@@ -276,9 +276,9 @@
       </UML:Package>
       <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="Logical View" xmi.id="-126-127-24--63-6e377152:10fa16a00b4:-8000:00000000000007DE" isRoot="false" isAbstract="false" name="os" >
        <UML:Namespace.ownedElement>
-        <UML:Generalization isSpecification="false" child="D2DniKS6u7LU" visibility="public" namespace="-126-127-24--63-6e377152:10fa16a00b4:-8000:00000000000007DE" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:0000000000000914" parent="y44FUCSCgd2X" discriminator="" name="" />
-        <UML:Generalization isSpecification="false" child="D1V5birmi2ZQ" visibility="public" namespace="-126-127-24--63-6e377152:10fa16a00b4:-8000:00000000000007DE" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:0000000000000915" parent="y44FUCSCgd2X" discriminator="" name="" />
-        <UML:Generalization isSpecification="false" child="M2UG9ni7rlKJ" visibility="public" namespace="-126-127-24--63-6e377152:10fa16a00b4:-8000:00000000000007DE" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:000000000000091A" parent="vnWbQY8babgB" discriminator="" name="" />
+        <UML:Generalization isSpecification="false" child="uKHWLhkGUlGF" visibility="public" namespace="-126-127-24--63-6e377152:10fa16a00b4:-8000:00000000000007DE" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:0000000000000914" parent="ewrL0AZuGqVZ" discriminator="" name="" />
+        <UML:Generalization isSpecification="false" child="ZPZThZ1ZtI6C" visibility="public" namespace="-126-127-24--63-6e377152:10fa16a00b4:-8000:00000000000007DE" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:0000000000000915" parent="ewrL0AZuGqVZ" discriminator="" name="" />
+        <UML:Generalization isSpecification="false" child="xqRRbhgEdVXb" visibility="public" namespace="-126-127-24--63-6e377152:10fa16a00b4:-8000:00000000000007DE" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:000000000000091A" parent="f5WwtzTTM3u3" discriminator="" name="" />
         <UML:Class comment="//// This file is part of Hecios//// Copyright (C) 2006 Joel Sherrill &lt;joel@oarcorp.com>// Copyright (C) 2007 Brad Settlemyer//// This program is free software; you can redistribute it and/or// modify it under the terms of the GNU General Public License// as published by the Free Software Foundation; either version 2// of the License, or (at your option) any later version.//// This program is distributed in the hope that it will be useful,// but WITHOUT ANY WARRANTY; without even the implied warranty of// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the// GNU General Public License for more details.//// You should have received a copy of the GNU General Public License// along with this program; if not, write to the Free Software// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.///**
 Abstract base class for system call interface models" isSpecification="false" isLeaf="false" visibility="public" namespace="-126-127-24--63-6e377152:10fa16a00b4:-8000:00000000000007DE" xmi.id="DqcAsP1zBwnh" isRoot="false" isAbstract="false" name="SystemCallInterface" >
          <UML:GeneralizableElement.generalization>
@@ -357,7 +357,7 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           </UML:Operation>
           <UML:Operation comment="return the local file system for server number" isSpecification="false" isLeaf="false" visibility="private" xmi.id="NgeRlCuQy2nr" isRoot="false" isAbstract="false" isQuery="false" name="getLocalFileSystem" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="lCKFU7bqec1B" type="FsLN9lPWR1xC" />
+            <UML:Parameter kind="return" xmi.id="REp81SgW2phx" type="FsLN9lPWR1xC" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="9oxqVQEaol1h" value="" type="oJ6LZaEwOfzc" name="serverNumber" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -390,7 +390,7 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           </UML:Operation>
           <UML:Operation comment="return vector of data blocks for a file's offset and extent" isSpecification="false" isLeaf="false" visibility="public" xmi.id="eKxqkcMALYte" isRoot="false" isAbstract="false" isQuery="false" name="getFileDataBlocks" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="pL4cz2N3ly28" type="RDkQwSvT27Ej" />
+            <UML:Parameter kind="return" xmi.id="3gVMkbR1ZXBr" type="RDkQwSvT27Ej" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="xSshr2SCa3DM" value="" type="5LzEQK9wpJ5w" name="file" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="S24bwR0YmvOU" value="" type="Vw5DkI1FIXBj" name="offset" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="YjerHWTDyLsn" value="" type="D9ellH0BUY7Z" name="extent" />
@@ -398,7 +398,7 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           </UML:Operation>
           <UML:Operation comment="return the metadata blocks associated with a file" isSpecification="false" isLeaf="false" visibility="public" xmi.id="02VFNtM7F1eU" isRoot="false" isAbstract="false" isQuery="false" name="getFileMetaDataBlocks" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="7jJ526NnHi1j" type="RDkQwSvT27Ej" />
+            <UML:Parameter kind="return" xmi.id="qooKuFVLTITS" type="RDkQwSvT27Ej" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="3eInFulO0yTR" value="" type="5LzEQK9wpJ5w" name="file" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -409,7 +409,7 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           </UML:Operation>
           <UML:Operation comment="Assignment" isSpecification="false" isLeaf="false" visibility="private" xmi.id="mVp9HWC8Tyhv" isRoot="false" isAbstract="false" isQuery="false" name="operator =" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="naXRCYazseZr" type="UdHWxw0TOyBu" />
+            <UML:Parameter kind="return" xmi.id="j9ylyfizKBJ4" type="UdHWxw0TOyBu" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="DClj11Qb6NEE" value="" type="swlZSHVsWpGj" name="other" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -428,7 +428,7 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           <UML:Generalization xmi.idref="pKogxlTMJJQw" />
          </UML:GeneralizableElement.generalization>
          <UML:Classifier.feature>
-          <UML:Attribute isSpecification="false" visibility="private" xmi.id="Jk2Tolfoi3Py" type="OagHatlaGP9F" name="scanQueue" />
+          <UML:Attribute isSpecification="false" visibility="private" xmi.id="Jk2Tolfoi3Py" type="vp11ltgej3JE" name="scanQueue" />
           <UML:Attribute isSpecification="false" visibility="private" xmi.id="l6u4TjU8ac8B" type="eJYLJANayWor" name="isGoingUp_" />
           <UML:Operation stereotype="constructor" comment="Constructor" isSpecification="false" isLeaf="false" visibility="public" xmi.id="CxsVFIROKcfV" isRoot="false" isAbstract="false" isQuery="false" name="ScanDiskScheduler" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="fr8HPgSvdaTf" isRoot="false" isAbstract="false" isQuery="false" name="initializeScheduler" />
@@ -439,18 +439,18 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="abLE9mrwrKKO" isRoot="false" isAbstract="false" isQuery="false" name="popNextEntry" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="ewsNsuUzen3g" type="PshgIbqh7ONj" />
+            <UML:Parameter kind="return" xmi.id="kj5HGE952xPw" type="PshgIbqh7ONj" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="IB7EuLMtzvBE" isRoot="false" isAbstract="false" isQuery="false" name="popSupercededRequests" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="rOR86Sss2PHC" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="CuHdBk5ur2fo" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="4z73vGQTrlfy" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="dGhz4yFDaMK7" isRoot="false" isAbstract="false" isQuery="false" name="popAllSatisfiedRequests" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="ys9oUif7cXUU" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="fLlzV51Fo4X4" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="ddhv6J4lKhH7" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -461,13 +461,13 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           <UML:Generalization xmi.idref="hZS9bXEHom5X" />
          </UML:GeneralizableElement.generalization>
          <UML:Classifier.feature>
-          <UML:Attribute isSpecification="false" visibility="private" xmi.id="P2hCAkDfrdzp" type="OagHatlaGP9F" name="sstfQueue" />
+          <UML:Attribute isSpecification="false" visibility="private" xmi.id="P2hCAkDfrdzp" type="vp11ltgej3JE" name="sstfQueue" />
           <UML:Attribute isSpecification="false" visibility="private" xmi.id="RZq4drdHA7tx" type="s1pLHYWWfj4N" name="currentAddress_" />
           <UML:Operation stereotype="constructor" comment="Constructor" isSpecification="false" isLeaf="false" visibility="public" xmi.id="ZrALbFsXpcrX" isRoot="false" isAbstract="false" isQuery="false" name="SSTFDiskScheduler" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="earAWRBPtugi" isRoot="false" isAbstract="false" isQuery="false" name="initializeScheduler" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="hIC1Mruug5FI" isRoot="false" isAbstract="false" isQuery="false" name="isEmpty" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="RyS3jThbr7jw" type="eJYLJANayWor" />
+            <UML:Parameter kind="return" xmi.id="Ie7KbUGmNXPY" type="eJYLJANayWor" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="K8p7ifcMFTWk" isRoot="false" isAbstract="false" isQuery="false" name="addEntry" >
@@ -477,18 +477,18 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="TAL9DYRVgFdM" isRoot="false" isAbstract="false" isQuery="false" name="popNextEntry" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="XZmYz3kvtujM" type="PshgIbqh7ONj" />
+            <UML:Parameter kind="return" xmi.id="FTS7V7v8Qe8v" type="PshgIbqh7ONj" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="uFi7hDrcszMS" isRoot="false" isAbstract="false" isQuery="false" name="popRequestsCompletedByRead" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="aMTDrvfGs5Ib" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="j99XCgaUKhpt" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="nmgtQuKr2f0F" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="GNjnGO3PqtQH" isRoot="false" isAbstract="false" isQuery="false" name="popRequestsCompletedByWrite" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="WxCO4wIaV48S" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="A5fXb35qUVvx" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="3rVzwaJu0Ut4" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -515,13 +515,13 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           <UML:Operation comment="No-op" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="pLLztGCHdft4" isRoot="false" isAbstract="false" isQuery="false" name="initializeCache" />
           <UML:Operation comment="return false" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="kKyS3dwH95pG" isRoot="false" isAbstract="false" isQuery="false" name="isCached" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="5qLzi4LJOmUF" type="eJYLJANayWor" />
+            <UML:Parameter kind="return" xmi.id="ao50TBwCJ5kV" type="eJYLJANayWor" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="lgI5H5H6Qb5I" value="" type="s1pLHYWWfj4N" name="address" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="return false" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="rFXSvRUflT6m" isRoot="false" isAbstract="false" isQuery="false" name="isFull" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="f7UXDm9jjL5m" type="eJYLJANayWor" />
+            <UML:Parameter kind="return" xmi.id="jIz1xos7sWeR" type="eJYLJANayWor" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="No-op" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="423E8sUrWkxn" isRoot="false" isAbstract="false" isQuery="false" name="insertEntry" >
@@ -532,7 +532,7 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           <UML:Operation comment="@return an invalid LogicalBlockAddress
 @throw logic_error if invoked" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="RcfC3ly7m0Ls" isRoot="false" isAbstract="false" isQuery="false" name="getNextEviction" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="FNMjRSBXIXU1" type="JWy1YVRvXt9g" />
+            <UML:Parameter kind="return" xmi.id="ZhH3CBymz3nS" type="avdSBje8Z5X8" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
          </UML:Classifier.feature>
@@ -546,7 +546,7 @@ idea, but I don't need it yet, so for now I'm doing this!" isSpecification="fals
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="BNZfWFiJ3Rgy" isRoot="false" isAbstract="false" isQuery="false" name="initializeTranslator" />
           <UML:Operation comment="@return a hardware address for the give file system block" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="a5QjRjTEd6Ui" isRoot="false" isAbstract="false" isQuery="false" name="getAddresses" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="ZnIyXmBCrfk4" type="AytjRXazHbQm" />
+            <UML:Parameter kind="return" xmi.id="DhdWkLzRdySa" type="AytjRXazHbQm" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="QJiRJoBUAk8g" value="" type="FgHdqh0kig17" name="block" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -569,7 +569,7 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           <UML:Attribute comment="Storage layout for this file system" isSpecification="false" visibility="private" xmi.id="v1BuxK5iK6ux" type="guqUHuvgHeAN" name="storageLayout_" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="pBySzlUwXEJL" isRoot="false" isAbstract="false" isQuery="false" name="getBlockSize" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="Rrm9CpvQDF9c" type="oJ6LZaEwOfzc" />
+            <UML:Parameter kind="return" xmi.id="lKgbqK2N2HOC" type="oJ6LZaEwOfzc" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="Initialize the native file system" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="jItdlicatZ0q" isRoot="false" isAbstract="false" isQuery="false" name="initializeFileSystem" />
@@ -587,13 +587,13 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           </UML:Operation>
           <UML:Operation comment="return the meta data blocks for a filename" isSpecification="false" isLeaf="false" visibility="private" xmi.id="mNjfGIDwb7gV" isRoot="false" isAbstract="false" isQuery="false" name="getMetaDataBlocks" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="hI7znZyNMGJr" type="RDkQwSvT27Ej" />
+            <UML:Parameter kind="return" xmi.id="SMzSOksbPT59" type="RDkQwSvT27Ej" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="1EkUCB7YcAls" value="" type="5LzEQK9wpJ5w" name="filename" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="return the data blocks for a file region" isSpecification="false" isLeaf="false" visibility="private" xmi.id="3sJc49QWBDXK" isRoot="false" isAbstract="false" isQuery="false" name="getDataBlocks" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="0S4s8muXdgen" type="RDkQwSvT27Ej" />
+            <UML:Parameter kind="return" xmi.id="m4aP00yjIcK9" type="RDkQwSvT27Ej" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="d2QII0AjgWkU" value="" type="5LzEQK9wpJ5w" name="filename" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="dekKRBPS1i25" value="" type="Vw5DkI1FIXBj" name="offset" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="sTZ3g5LH5jaN" value="" type="D9ellH0BUY7Z" name="extent" />
@@ -606,7 +606,7 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           <UML:Generalization xmi.idref="92Ksd48eLIyw" />
          </UML:GeneralizableElement.generalization>
          <UML:Classifier.feature>
-          <UML:Attribute isSpecification="false" visibility="private" xmi.id="zLBCKRSgRK6j" type="OagHatlaGP9F" name="scanQueue" />
+          <UML:Attribute isSpecification="false" visibility="private" xmi.id="zLBCKRSgRK6j" type="vp11ltgej3JE" name="scanQueue" />
           <UML:Attribute isSpecification="false" visibility="private" xmi.id="o68LxV29lw8U" type="eJYLJANayWor" name="isGoingUp_" />
           <UML:Operation stereotype="constructor" comment="Constructor" isSpecification="false" isLeaf="false" visibility="public" xmi.id="HCHaUFUcY4R6" isRoot="false" isAbstract="false" isQuery="false" name="NStepScanDiskScheduler" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="nDTXZUiaexnj" isRoot="false" isAbstract="false" isQuery="false" name="initializeScheduler" />
@@ -617,18 +617,18 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="eEwICj19Pw7I" isRoot="false" isAbstract="false" isQuery="false" name="popNextEntry" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="WZBhoKHTdNTO" type="PshgIbqh7ONj" />
+            <UML:Parameter kind="return" xmi.id="wKUwcr94D8UZ" type="PshgIbqh7ONj" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="wjR6Z8idJxGX" isRoot="false" isAbstract="false" isQuery="false" name="popSupercededRequests" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="wRlHg28gVAWb" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="qLAFmDOZHwwG" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="cybR87okKi1W" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="KUUj1Pig4Jce" isRoot="false" isAbstract="false" isQuery="false" name="popAllSatisfiedRequests" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="uR6V5lHZKSE7" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="wszCUKJRcoNE" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="94oy7QsImYks" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -639,7 +639,7 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           <UML:Generalization xmi.idref="6mcX4hEqnMCi" />
          </UML:GeneralizableElement.generalization>
          <UML:Classifier.feature>
-          <UML:Attribute isSpecification="false" visibility="private" xmi.id="WU0kVeGzlfrW" type="OagHatlaGP9F" name="scanQueue" />
+          <UML:Attribute isSpecification="false" visibility="private" xmi.id="WU0kVeGzlfrW" type="vp11ltgej3JE" name="scanQueue" />
           <UML:Operation stereotype="constructor" comment="Constructor" isSpecification="false" isLeaf="false" visibility="public" xmi.id="faATxK9nWzMd" isRoot="false" isAbstract="false" isQuery="false" name="NStepCScanDiskScheduler" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="xPLqwwui448q" isRoot="false" isAbstract="false" isQuery="false" name="initializeScheduler" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="aUhqR5A6fJXa" isRoot="false" isAbstract="false" isQuery="false" name="addEntry" >
@@ -649,18 +649,18 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="0Jh4NqtyIaoj" isRoot="false" isAbstract="false" isQuery="false" name="popNextEntry" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="nWaOt1mnRW47" type="PshgIbqh7ONj" />
+            <UML:Parameter kind="return" xmi.id="fUHqalOQ4Wfr" type="PshgIbqh7ONj" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="dxqIGLrt2A1h" isRoot="false" isAbstract="false" isQuery="false" name="popSupercededRequests" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="YBl1JIcCjhhm" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="k1QzvMFpFF2j" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="qkHvohwp0brO" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="63G9IQTtReXb" isRoot="false" isAbstract="false" isQuery="false" name="popAllSatisfiedRequests" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="SyMkRapC4OYx" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="XL897UOmydbZ" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="qnclNXVcL1tl" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -672,7 +672,7 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
          </UML:GeneralizableElement.generalization>
          <UML:Classifier.feature>
           <UML:Attribute isSpecification="false" visibility="private" xmi.id="Wdum3fpyORGl" type="eJYLJANayWor" name="hasIdleDisk_" />
-          <UML:Attribute isSpecification="false" visibility="private" xmi.id="BscQSTNy4Fi6" type="OagHatlaGP9F" name="pendingMessageQueue_" />
+          <UML:Attribute isSpecification="false" visibility="private" xmi.id="BscQSTNy4Fi6" type="vp11ltgej3JE" name="pendingMessageQueue_" />
           <UML:Operation stereotype="constructor" comment=" This is the constructor for this simulation module." isSpecification="false" isLeaf="false" visibility="public" xmi.id="JIjmrUzXMflu" isRoot="false" isAbstract="false" isQuery="false" name="MutexAccessManager" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="lFScWqvXAfcJ" isRoot="false" isAbstract="false" isQuery="false" name="initialize" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="t7jkhxl0FSk5" isRoot="false" isAbstract="false" isQuery="false" name="finish" />
@@ -699,13 +699,13 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="dYnLhX7DJQgl" isRoot="false" isAbstract="false" isQuery="false" name="initializeCache" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="L7htfp2b1cjy" isRoot="false" isAbstract="false" isQuery="false" name="isCached" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="PIjqmlvJuhKE" type="eJYLJANayWor" />
+            <UML:Parameter kind="return" xmi.id="OzxRTdIDcgDY" type="eJYLJANayWor" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="xbMBXyFAW2WB" value="" type="s1pLHYWWfj4N" name="address" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="return true if the cache is full" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="XdOo12ZM9EFn" isRoot="false" isAbstract="false" isQuery="false" name="isFull" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="xvQgc5Q22mmT" type="eJYLJANayWor" />
+            <UML:Parameter kind="return" xmi.id="0SNFfPxCj3Kq" type="eJYLJANayWor" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="Add an entry to the cache performing an eviction if neccesary" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="3HO4s51nfNxC" isRoot="false" isAbstract="false" isQuery="false" name="insertEntry" >
@@ -715,7 +715,7 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           </UML:Operation>
           <UML:Operation comment="return the least recently used entry" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="O1sYE8LHNjKD" isRoot="false" isAbstract="false" isQuery="false" name="getNextEviction" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="LcdP09NNR4CE" type="JWy1YVRvXt9g" />
+            <UML:Parameter kind="return" xmi.id="XgbUJA1h7y8a" type="avdSBje8Z5X8" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
          </UML:Classifier.feature>
@@ -794,13 +794,13 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           </UML:Operation>
           <UML:Operation comment="return the meta data blocks for a filename" isSpecification="false" isLeaf="false" visibility="private" xmi.id="ZcBmiM2opsEY" isRoot="false" isAbstract="true" isQuery="false" name="getMetaDataBlocks" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="p7XkmpwjiMNI" type="RDkQwSvT27Ej" />
+            <UML:Parameter kind="return" xmi.id="ZOoC4zi5R5I5" type="RDkQwSvT27Ej" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="Yilj9kMY94b3" value="" type="5LzEQK9wpJ5w" name="filename" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="return the data blocks for a file region" isSpecification="false" isLeaf="false" visibility="private" xmi.id="XzWwTsTgbX3J" isRoot="false" isAbstract="true" isQuery="false" name="getDataBlocks" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="PoKRY7sthVJf" type="RDkQwSvT27Ej" />
+            <UML:Parameter kind="return" xmi.id="TDHAHb0mHbEY" type="RDkQwSvT27Ej" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="DRT4Z2p7U4g5" value="" type="5LzEQK9wpJ5w" name="filename" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="OePxCQGNriPO" value="" type="Vw5DkI1FIXBj" name="offset" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="iCUCH8Hk5Kxn" value="" type="D9ellH0BUY7Z" name="extent" />
@@ -825,7 +825,7 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
 @param set to true to extract only reads, ow extract reads and writes
 @return the extracted entries" isSpecification="false" isLeaf="false" visibility="public" xmi.id="09GpHkb30t4c" isRoot="false" isAbstract="false" isQuery="false" name="extractIdenticalEntries" ownerScope="classifier" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="ce24iEGXKlF6" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="lFGsEMTljFxl" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="avXhNABOJPDY" value="" type="rex45z13gqI7" name="queue" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="7mZ8ddkVHgZL" value="" type="s1pLHYWWfj4N" name="lba" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="fYMKOcPxVxes" value="" type="eJYLJANayWor" name="readsOnly" />
@@ -847,7 +847,7 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           <UML:Operation comment="Perform initialization tasks on scheduler before messages arrive" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="wf9WAo8nGRuA" isRoot="false" isAbstract="true" isQuery="false" name="initializeScheduler" />
           <UML:Operation comment="return true if the disk scheduler has no outstanding entries" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="PVaiefSiQcoH" isRoot="false" isAbstract="true" isQuery="false" name="isEmpty" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="YBoHVBZvxsMW" type="eJYLJANayWor" />
+            <UML:Parameter kind="return" xmi.id="Efodj7iAI0KX" type="eJYLJANayWor" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="Add entry to the scheduler" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="b6PYI6TEldkw" isRoot="false" isAbstract="true" isQuery="false" name="addEntry" >
@@ -857,7 +857,7 @@ bytes since that seems to match modern Linux systems." isSpecification="false" i
           </UML:Operation>
           <UML:Operation comment="return the next scheduled entry" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="D0oxbZt0PYeh" isRoot="false" isAbstract="true" isQuery="false" name="popNextEntry" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="zFPeigJLKLN0" type="PshgIbqh7ONj" />
+            <UML:Parameter kind="return" xmi.id="ZIKpuWNdmbUy" type="PshgIbqh7ONj" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="Remove a superceded request if one exists.  A read or write request
@@ -865,13 +865,13 @@ becomes superceded if an incoming write request is to the same address.
 
 @return the superceded request" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="AVMFrjytWOKt" isRoot="false" isAbstract="true" isQuery="false" name="popRequestsCompletedByRead" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="YbYsKnwsxk7S" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="wvjdAfOMIDz1" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="a3rs8OSMMGJx" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="@return a list of all satisfied requests" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="ENaFadAVfwu3" isRoot="false" isAbstract="true" isQuery="false" name="popRequestsCompletedByWrite" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="ufNrXiNUvl8d" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="Ii9YgR6DkO0e" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="2C1BKpRo51ea" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -922,13 +922,13 @@ Provides an interface to a write back cache for its message handler" isSpecifica
  @note This method is a hook function which is assumed to be
  provided by a derived class to (re)define the behaviour." isSpecification="false" isLeaf="false" visibility="protected" xmi.id="Jn2PKZqgfKfy" isRoot="false" isAbstract="true" isQuery="false" name="isCached" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="RRwkkHkIqG8A" type="eJYLJANayWor" />
+            <UML:Parameter kind="return" xmi.id="uMFexjcreKUm" type="eJYLJANayWor" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="dCY3uNT14dqD" value="" type="s1pLHYWWfj4N" name="address" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="@return true if the cache is filled to capacity" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="ZHpK5syMf0lz" isRoot="false" isAbstract="true" isQuery="false" name="isFull" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="251zn6RhjpZG" type="eJYLJANayWor" />
+            <UML:Parameter kind="return" xmi.id="zr8H48HKoOsU" type="eJYLJANayWor" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="Add an entry to the cache
@@ -941,7 +941,7 @@ Provides an interface to a write back cache for its message handler" isSpecifica
           </UML:Operation>
           <UML:Operation comment="@return the next" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="ZJc209S38rCl" isRoot="false" isAbstract="true" isQuery="false" name="getNextEviction" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="VuiQdq35Fyn0" type="lwaaas92GZRC" />
+            <UML:Parameter kind="return" xmi.id="qwfaKgCD2Rrx" type="lwaaas92GZRC" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="Handle caching for incoming block requests from the file system" isSpecification="false" isLeaf="false" visibility="private" xmi.id="5WvZdN7dq3IF" isRoot="false" isAbstract="false" isQuery="false" name="handleBlockRequest" >
@@ -994,7 +994,7 @@ hardware addresses (which for a hard drive will be sector numbers)." isSpecifica
           <UML:Operation comment="Initialize derived translator functionality" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="w1fHR9phDhDE" isRoot="false" isAbstract="true" isQuery="false" name="initializeTranslator" />
           <UML:Operation comment="@return a hardware address for the give file system block" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="3ZJ6J28AwlmG" isRoot="false" isAbstract="true" isQuery="false" name="getAddresses" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="DXG4oPCqSBnF" type="AytjRXazHbQm" />
+            <UML:Parameter kind="return" xmi.id="BSpnmHal8i0A" type="AytjRXazHbQm" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="npoyWzCaZVes" value="" type="FgHdqh0kig17" name="blocks" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -1005,7 +1005,7 @@ hardware addresses (which for a hard drive will be sector numbers)." isSpecifica
           <UML:Generalization xmi.idref="9yMq1jokpinH" />
          </UML:GeneralizableElement.generalization>
          <UML:Classifier.feature>
-          <UML:Attribute isSpecification="false" visibility="private" xmi.id="dakfSDIfldmG" type="OagHatlaGP9F" name="sstfQueue" />
+          <UML:Attribute isSpecification="false" visibility="private" xmi.id="dakfSDIfldmG" type="vp11ltgej3JE" name="sstfQueue" />
           <UML:Attribute isSpecification="false" visibility="private" xmi.id="2GCMdrMghE9z" type="s1pLHYWWfj4N" name="currentBlock_" />
           <UML:Operation stereotype="constructor" comment="Constructor" isSpecification="false" isLeaf="false" visibility="public" xmi.id="HT75CuMZ9jZy" isRoot="false" isAbstract="false" isQuery="false" name="CScanDiskScheduler" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="Dimrah5TyA9g" isRoot="false" isAbstract="false" isQuery="false" name="initializeScheduler" />
@@ -1016,18 +1016,18 @@ hardware addresses (which for a hard drive will be sector numbers)." isSpecifica
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="pQgnbnTABy64" isRoot="false" isAbstract="false" isQuery="false" name="popNextEntry" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="GEvz1SGWMwwy" type="PshgIbqh7ONj" />
+            <UML:Parameter kind="return" xmi.id="oHUceL6UHm4a" type="PshgIbqh7ONj" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="8QHoqXb79yYV" isRoot="false" isAbstract="false" isQuery="false" name="popSupercededRequests" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="ny30uoy7LF97" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="QGnSfeNq4Acq" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="tv1Y4NjtnPfM" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="LwLKaL5luz5R" isRoot="false" isAbstract="false" isQuery="false" name="popAllSatisfiedRequests" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="cKv4ViHjvCjw" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="SAZYsajfpBHT" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="QvqlikBsOTnQ" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -1038,12 +1038,12 @@ hardware addresses (which for a hard drive will be sector numbers)." isSpecifica
           <UML:Generalization xmi.idref="W5u2YwjewZjk" />
          </UML:GeneralizableElement.generalization>
          <UML:Classifier.feature>
-          <UML:Attribute isSpecification="false" visibility="private" xmi.id="hIZqlCWEQ8KP" type="OagHatlaGP9F" name="fcfsQueue" />
+          <UML:Attribute isSpecification="false" visibility="private" xmi.id="hIZqlCWEQ8KP" type="vp11ltgej3JE" name="fcfsQueue" />
           <UML:Operation stereotype="constructor" comment="Constructor" isSpecification="false" isLeaf="false" visibility="public" xmi.id="dwLZT2Irr1l3" isRoot="false" isAbstract="false" isQuery="false" name="FCFSDiskScheduler" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="X0Q0INDqshOY" isRoot="false" isAbstract="false" isQuery="false" name="initializeScheduler" />
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="jEkruvYXrr5K" isRoot="false" isAbstract="false" isQuery="false" name="isEmpty" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="exRztNxeJyfB" type="eJYLJANayWor" />
+            <UML:Parameter kind="return" xmi.id="UMxm6zKWF7wv" type="eJYLJANayWor" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="rLCjMvkstAsB" isRoot="false" isAbstract="false" isQuery="false" name="addEntry" >
@@ -1053,18 +1053,18 @@ hardware addresses (which for a hard drive will be sector numbers)." isSpecifica
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="cs0Rh3lZOvGi" isRoot="false" isAbstract="false" isQuery="false" name="popNextEntry" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="mdJ5qQDSi6WC" type="PshgIbqh7ONj" />
+            <UML:Parameter kind="return" xmi.id="jJjoUJeuTESK" type="PshgIbqh7ONj" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="p0ai9TseWs2F" isRoot="false" isAbstract="false" isQuery="false" name="popRequestsCompletedByRead" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="povkyeedb5aV" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="m9zbJG5nc0Xg" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="Gzjqe3IEtIda" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="qXHAW3dxejv6" isRoot="false" isAbstract="false" isQuery="false" name="popRequestsCompletedByWrite" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="RX7iTmuFOBIE" type="7nGODTwKDVQr" />
+            <UML:Parameter kind="return" xmi.id="0rCDy86gQoUu" type="7nGODTwKDVQr" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="r7ny0Jfy5an9" value="" type="s1pLHYWWfj4N" name="lba" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -1081,7 +1081,7 @@ identical disk and filesystem fragmentation." isSpecification="false" isLeaf="fa
           <UML:Operation isSpecification="false" isLeaf="false" visibility="protected" xmi.id="9IAvrqvzSimP" isRoot="false" isAbstract="false" isQuery="false" name="initializeTranslator" />
           <UML:Operation comment="@return a hardware address for the give file system block" isSpecification="false" isLeaf="false" visibility="protected" xmi.id="5dMOoxlksZjl" isRoot="false" isAbstract="false" isQuery="false" name="getAddresses" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="bVhKcBUPxP7w" type="AytjRXazHbQm" />
+            <UML:Parameter kind="return" xmi.id="76obIEt4Osef" type="AytjRXazHbQm" />
             <UML:Parameter isSpecification="false" visibility="private" xmi.id="F6UvKBNRRVNG" value="" type="FgHdqh0kig17" name="block" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
@@ -1123,7 +1123,7 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
          <UML:Classifier.feature>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63-3d034abf:10fa1be15ff:-8000:0000000000000830" isRoot="false" isAbstract="true" isQuery="false" name="initialize" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="4lXdp76EcEw3" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
+            <UML:Parameter kind="return" xmi.id="8hSjhyNfparm" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63-3d034abf:10fa1be15ff:-8000:0000000000000832" isRoot="false" isAbstract="false" isQuery="false" name="handleMessage" >
@@ -1133,17 +1133,17 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63-3d034abf:10fa1be15ff:-8000:000000000000088E" isRoot="false" isAbstract="true" isQuery="false" name="finish" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="0qGO1Ybb4Gte" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
+            <UML:Parameter kind="return" xmi.id="gxS4juyrykQH" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63-3d034abf:10fa1be15ff:-8000:0000000000000890" isRoot="false" isAbstract="false" isQuery="false" name="handleParameterChange" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="RN1Nm8HoroSe" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
+            <UML:Parameter kind="return" xmi.id="xJJJ9xyFcOyI" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:000000000000092A" isRoot="false" isAbstract="false" isQuery="false" name="send" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="tYsTmnWldm7d" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
+            <UML:Parameter kind="return" xmi.id="MKxCumwYiOdR" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
             <UML:Parameter isSpecification="false" visibility="public" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:000000000000092C" value="" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007F3" name="msg" />
             <UML:Parameter isSpecification="false" visibility="public" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:000000000000092F" value="" type="-126-127-24--63-3d034abf:10fa1be15ff:-8000:000000000000089F" name="gate" />
            </UML:BehavioralFeature.parameter>
@@ -1157,7 +1157,7 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
          <UML:Classifier.feature>
           <UML:Operation isSpecification="false" isLeaf="false" visibility="public" xmi.id="-126-127-24--63-3d034abf:10fa1be15ff:-8000:0000000000000835" isRoot="false" isAbstract="true" isQuery="false" name="initialize" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="KiEMy5yOSzjC" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
+            <UML:Parameter kind="return" xmi.id="GZGCIeTFvlW4" type="-126-127-24--63--21f7cdbe:10fa175affb:-8000:0000000000000825" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
          </UML:Classifier.feature>
@@ -1243,8 +1243,8 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
          </UML:GeneralizableElement.generalization>
         </UML:Class>
         <UML:Generalization isSpecification="false" child="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:0000000000000930" visibility="public" namespace="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E5" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:0000000000000932" parent="-126-127-24--63--40fea36f:111b84679be:-8000:00000000000008C0" discriminator="" name="" />
-        <UML:Generalization isSpecification="false" child="y44FUCSCgd2X" visibility="public" namespace="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E5" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:0000000000000995" parent="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E6" discriminator="" name="" />
-        <UML:Generalization isSpecification="false" child="vnWbQY8babgB" visibility="public" namespace="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E5" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:0000000000000996" parent="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E6" discriminator="" name="" />
+        <UML:Generalization isSpecification="false" child="ewrL0AZuGqVZ" visibility="public" namespace="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E5" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:0000000000000995" parent="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E6" discriminator="" name="" />
+        <UML:Generalization isSpecification="false" child="f5WwtzTTM3u3" visibility="public" namespace="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E5" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:0000000000000996" parent="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E6" discriminator="" name="" />
        </UML:Namespace.ownedElement>
       </UML:Package>
       <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="Logical View" xmi.id="-126-127-24--63--40fea36f:111b84679be:-8000:00000000000008DC" isRoot="false" isAbstract="false" name="Requirements" >
@@ -1347,6 +1347,7 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
         <UML:Generalization isSpecification="false" child="-126-127-24--63-595b4153:1129a9a5b66:-8000:000000000000095F" visibility="public" namespace="-126-127-24--63-595b4153:1129a9a5b66:-8000:00000000000008E2" xmi.id="-126-127-24--63-595b4153:1129a9a5b66:-8000:0000000000000967" parent="-126-127-24--63-595b4153:1129a9a5b66:-8000:000000000000095B" discriminator="" name="" />
         <UML:Generalization isSpecification="false" child="-126-127-24--63-595b4153:1129a9a5b66:-8000:0000000000000961" visibility="public" namespace="-126-127-24--63-595b4153:1129a9a5b66:-8000:00000000000008E2" xmi.id="-126-127-24--63-595b4153:1129a9a5b66:-8000:0000000000000968" parent="-126-127-24--63-595b4153:1129a9a5b66:-8000:000000000000095D" discriminator="" name="" />
         <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="-126-127-24--63-595b4153:1129a9a5b66:-8000:00000000000008E2" xmi.id="dRrM5itd2xrQ" isRoot="false" isAbstract="false" name="spfsOSFileIORequest" />
+        <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="-126-127-24--63-595b4153:1129a9a5b66:-8000:00000000000008E2" xmi.id="A9kjPzyQXbbR" isRoot="false" isAbstract="false" name="spfsOSFileReadRequest" />
        </UML:Namespace.ownedElement>
       </UML:Package>
       <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="Logical View" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:000000000000091E" isRoot="false" isAbstract="false" name="config" >
@@ -1355,12 +1356,12 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
       <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="Logical View" xmi.id="-126-127-24--63-786cbbc7:1151f6be5f5:-8000:000000000000091F" isRoot="false" isAbstract="false" name="layout" >
        <UML:Namespace.ownedElement/>
       </UML:Package>
-      <UML:Generalization isSpecification="false" child="y44FUCSCgd2X" visibility="public" namespace="Logical View" xmi.id="nWR8mVed5tFp" parent="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E6" discriminator="" name="" />
-      <UML:Generalization isSpecification="false" child="vnWbQY8babgB" visibility="public" namespace="Logical View" xmi.id="G4PbkxmLHBig" parent="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E6" discriminator="" name="" />
-      <UML:Generalization isSpecification="false" child="Qy2vb6xH4eYh" visibility="public" namespace="Logical View" xmi.id="odLnDFDCH9lN" parent="gqmVb4pUpJ3F" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="ewrL0AZuGqVZ" visibility="public" namespace="Logical View" xmi.id="nWR8mVed5tFp" parent="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E6" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="f5WwtzTTM3u3" visibility="public" namespace="Logical View" xmi.id="G4PbkxmLHBig" parent="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E6" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="Qy2vb6xH4eYh" visibility="public" namespace="Logical View" xmi.id="odLnDFDCH9lN" parent="mBMOgszMxTGo" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="hSTVHIPm21aB" visibility="public" namespace="Logical View" xmi.id="J7O2i06Gb1h2" parent="Qy2vb6xH4eYh" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="2kmsSkxT6pVQ" visibility="public" namespace="Logical View" xmi.id="Hd6pAj5hTZnE" parent="Qy2vb6xH4eYh" discriminator="" name="" />
-      <UML:Generalization isSpecification="false" child="sX4FxKyiir4j" visibility="public" namespace="Logical View" xmi.id="QT8cU74dze3P" parent="gqmVb4pUpJ3F" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="sX4FxKyiir4j" visibility="public" namespace="Logical View" xmi.id="QT8cU74dze3P" parent="mBMOgszMxTGo" discriminator="" name="" />
       <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="Logical View" xmi.id="Xm1TVlhkRwLI" isRoot="false" isAbstract="false" name="std" >
        <UML:Namespace.ownedElement>
         <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="Xm1TVlhkRwLI" xmi.id="dL2Jz2QnpDlL" isRoot="false" isAbstract="false" name="vector" />
@@ -1370,12 +1371,12 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
       </UML:Package>
       <UML:Generalization isSpecification="false" child="4MvtZfChb4R2" visibility="public" namespace="Logical View" xmi.id="Z1zraQdwW8hY" parent="sX4FxKyiir4j" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="xox0FbwqeKX6" visibility="public" namespace="Logical View" xmi.id="10Kf4mLS61rN" parent="sX4FxKyiir4j" discriminator="" name="" />
-      <UML:Generalization isSpecification="false" child="TB8Lip4vvZqD" visibility="public" namespace="Logical View" xmi.id="iCf9h2P3IcpG" parent="gqmVb4pUpJ3F" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="TB8Lip4vvZqD" visibility="public" namespace="Logical View" xmi.id="iCf9h2P3IcpG" parent="mBMOgszMxTGo" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="Hx1n1rRKG6bo" visibility="public" namespace="Logical View" xmi.id="VdJiqWvfKbZJ" parent="TB8Lip4vvZqD" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="u3H15N3Wxig0" visibility="public" namespace="Logical View" xmi.id="Sd5EbR4RDnml" parent="TB8Lip4vvZqD" discriminator="" name="" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="rOoC56QsPNH3" client="u3H15N3Wxig0" name="" supplier="s1pLHYWWfj4N" />
-      <UML:Generalization isSpecification="false" child="jWJHuKxcE9fq" visibility="public" namespace="Logical View" xmi.id="7r3rm2SWWknO" parent="rBoPkVZ3zV4X" discriminator="" name="" />
-      <UML:Generalization isSpecification="false" child="hFtllYfuHkvQ" visibility="public" namespace="Logical View" xmi.id="3OrCMYWnq8Vm" parent="gqmVb4pUpJ3F" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="jWJHuKxcE9fq" visibility="public" namespace="Logical View" xmi.id="7r3rm2SWWknO" parent="ShFoiAsJ3TlF" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="hFtllYfuHkvQ" visibility="public" namespace="Logical View" xmi.id="3OrCMYWnq8Vm" parent="mBMOgszMxTGo" discriminator="" name="" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="99MOpthSS1ko" client="hFtllYfuHkvQ" name="" supplier="jWJHuKxcE9fq" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="nAvDiasq3F5u" client="hFtllYfuHkvQ" name="" supplier="jWJHuKxcE9fq" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="uPsv4LfGiDWH" client="hFtllYfuHkvQ" name="" supplier="jWJHuKxcE9fq" />
@@ -1397,23 +1398,23 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
       <UML:Generalization isSpecification="false" child="bxTvBIWAdfMw" visibility="public" namespace="Logical View" xmi.id="6mcX4hEqnMCi" parent="hFtllYfuHkvQ" discriminator="" name="" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="RiMkI8Tv5HCL" client="bxTvBIWAdfMw" name="" supplier="jWJHuKxcE9fq" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="NVdSSCpWF3gW" client="bxTvBIWAdfMw" name="" supplier="jWJHuKxcE9fq" />
-      <UML:Generalization isSpecification="false" child="OARd8Lhcyz8t" visibility="public" namespace="Logical View" xmi.id="t6KI5WCgv320" parent="gqmVb4pUpJ3F" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="OARd8Lhcyz8t" visibility="public" namespace="Logical View" xmi.id="t6KI5WCgv320" parent="mBMOgszMxTGo" discriminator="" name="" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="RGVE9jkhRTOY" client="OARd8Lhcyz8t" name="" supplier="FgHdqh0kig17" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="dx2tSBcqqzn0" client="OARd8Lhcyz8t" name="" supplier="FgHdqh0kig17" />
       <UML:Generalization isSpecification="false" child="uxHlO9MZgPdI" visibility="public" namespace="Logical View" xmi.id="4s9a3MK1dqm2" parent="OARd8Lhcyz8t" discriminator="" name="" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="SZxASEUCbBsq" client="uxHlO9MZgPdI" name="" supplier="FgHdqh0kig17" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="ji6NCprpTc7s" client="uxHlO9MZgPdI" name="" supplier="FgHdqh0kig17" />
-      <UML:Generalization isSpecification="false" child="AyGkKMYzGMTW" visibility="public" namespace="Logical View" xmi.id="HOCW3MsyN3tL" parent="gqmVb4pUpJ3F" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="AyGkKMYzGMTW" visibility="public" namespace="Logical View" xmi.id="HOCW3MsyN3tL" parent="mBMOgszMxTGo" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="AMhoS7MPczeN" visibility="public" namespace="Logical View" xmi.id="Cv1xGUNCm09w" parent="AyGkKMYzGMTW" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="0kymj5gOYNtb" visibility="public" namespace="Logical View" xmi.id="DdjN5iyb0ykG" parent="AyGkKMYzGMTW" discriminator="" name="" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="OKzwLDGoFLN9" client="UdHWxw0TOyBu" name="" supplier="FgHdqh0kig17" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="2JGQ9z99zfNK" client="UdHWxw0TOyBu" name="" supplier="FgHdqh0kig17" />
-      <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="wL8zgOAVuHLW" client="UdHWxw0TOyBu" name="" supplier="kWAqta1ysaDo" />
+      <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="wL8zgOAVuHLW" client="UdHWxw0TOyBu" name="" supplier="w8JaJlu2uK2Z" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="SLTMdps4EZt9" client="UdHWxw0TOyBu" name="" supplier="FgHdqh0kig17" />
-      <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="roO7DvecOOKx" client="UdHWxw0TOyBu" name="" supplier="kWAqta1ysaDo" />
+      <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="roO7DvecOOKx" client="UdHWxw0TOyBu" name="" supplier="w8JaJlu2uK2Z" />
       <UML:Dependency isSpecification="false" visibility="public" namespace="Logical View" xmi.id="x3HJRZGjXEGh" client="UdHWxw0TOyBu" name="" supplier="FgHdqh0kig17" />
       <UML:Generalization isSpecification="false" child="jkwUsmLNeTBp" visibility="public" namespace="Logical View" xmi.id="5Y1LDtOZ3qDN" parent="aVQ6bT2MADbt" discriminator="" name="" />
-      <UML:Generalization isSpecification="false" child="DqcAsP1zBwnh" visibility="public" namespace="Logical View" xmi.id="MzHAlGsy6DLG" parent="gqmVb4pUpJ3F" discriminator="" name="" />
+      <UML:Generalization isSpecification="false" child="DqcAsP1zBwnh" visibility="public" namespace="Logical View" xmi.id="MzHAlGsy6DLG" parent="mBMOgszMxTGo" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="tkJTSdngwoi5" visibility="public" namespace="Logical View" xmi.id="UAC2RARUZLct" parent="DqcAsP1zBwnh" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="Qy2vb6xH4eYh" visibility="public" namespace="Logical View" xmi.id="H6ofrBVIR8Ks" parent="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E6" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="TB8Lip4vvZqD" visibility="public" namespace="Logical View" xmi.id="6RZcuGjXSCpB" parent="-126-127-24--63--21f7cdbe:10fa175affb:-8000:00000000000007E6" discriminator="" name="" />
@@ -1503,7 +1504,7 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="1" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="1" showopsig="0" usefillcolor="1" snapx="10" canvaswidth="852" snapy="10" showatts="1" xmi.id="aq65V4kpoK1t" documentation="" type="4" showops="1" showpackage="0" name="Storage Layer Collaboration" localid="GdA4owmpEftP" showstereotype="0" showscope="1" snapcsgrid="0" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="762" >
+       <diagram snapgrid="1" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="1" showopsig="0" usefillcolor="1" snapx="10" canvaswidth="804" snapy="10" showatts="1" xmi.id="aq65V4kpoK1t" documentation="" type="4" showops="1" showpackage="0" name="Storage Layer Collaboration" localid="PpIEkgM43QFU" showstereotype="0" showscope="1" snapcsgrid="0" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="762" >
         <widgets>
          <objectwidget usesdiagramfillcolor="0" width="202" x="90" fillcolor="#ffffc0" y="550" instancename="bufferCache" linewidth="none" height="28" usefillcolor="1" isinstance="0" xmi.id="u3H15N3Wxig0" decon="0" localid="7EWbesdAh82Q" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="0" font="Sans,10,-1,5,50,0,1,0,0,0" linecolor="#ff0000" />
          <objectwidget usesdiagramfillcolor="0" width="204" x="90" fillcolor="#ffffc0" y="330" instancename="fileSystem" linewidth="none" height="28" usefillcolor="1" isinstance="0" xmi.id="uxHlO9MZgPdI" decon="0" localid="FHihuT4Pc0Vj" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="0" font="Sans,10,-1,5,50,0,1,0,0,0" linecolor="#ff0000" />
@@ -1512,6 +1513,7 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
          <objectwidget usesdiagramfillcolor="0" width="215" x="500" fillcolor="#ffffc0" y="330" instancename="storageLayout_" linewidth="none" height="28" usefillcolor="1" isinstance="0" xmi.id="UdHWxw0TOyBu" decon="0" localid="6BYSjNZykVoA" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="0" font="Sans,10,-1,5,50,0,1,0,0,0" linecolor="#ff0000" />
          <objectwidget usesdiagramfillcolor="0" width="307" x="40" fillcolor="#ffffc0" y="190" instancename="systemCall" linewidth="none" height="28" usefillcolor="1" isinstance="0" xmi.id="tkJTSdngwoi5" decon="0" localid="dbEaqXr6mQ2Z" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="0" font="Sans,10,-1,5,50,0,1,0,0,0" linecolor="#ff0000" />
          <objectwidget usesdiagramfillcolor="0" width="161" x="110" fillcolor="#ffffc0" y="50" instancename="ioLibrary" linewidth="none" height="28" usefillcolor="1" isinstance="0" xmi.id="AMhoS7MPczeN" decon="0" localid="GdA4owmpEftP" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="0" font="Sans,10,-1,5,50,0,1,0,0,0" linecolor="#ff0000" />
+         <objectwidget usesdiagramfillcolor="0" width="221" x="440" fillcolor="#ffffc0" y="40" instancename="ioRequest" linewidth="none" height="28" usefillcolor="1" isinstance="0" xmi.id="dRrM5itd2xrQ" decon="0" localid="PpIEkgM43QFU" multipleinstance="0" drawasactor="0" usesdiagramusefillcolor="0" font="Sans,10,-1,5,50,0,1,0,0,0" linecolor="#ff0000" />
         </widgets>
         <messages/>
         <associations>
@@ -1520,42 +1522,42 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
            <startpoint startx="190" starty="78" />
            <endpoint endx="190" endy="190" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="237" x="200" fillcolor="none" y="130" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="nonQZx26t1wH" text=": send(msg : cMessage, gate : char)" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="237" x="200" fillcolor="none" y="130" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="tBrmoIpJHtsD" text=": send(msg : cMessage, gate : char)" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="FHihuT4Pc0Vj" widgetaid="dbEaqXr6mQ2Z" roleBdoc="" documentation="" roleAdoc="" type="505" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="190" starty="218" />
            <endpoint endx="190" endy="330" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="237" x="200" fillcolor="none" y="270" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="h9G0lzaIVzyD" text=": send(msg : cMessage, gate : char)" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="237" x="200" fillcolor="none" y="270" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="IThp25X0RgU9" text=": send(msg : cMessage, gate : char)" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="6BYSjNZykVoA" widgetaid="FHihuT4Pc0Vj" roleBdoc="" documentation="" roleAdoc="" type="505" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="294" starty="340" />
            <endpoint endx="500" endy="340" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="175" x="310" fillcolor="none" y="350" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="IemvFlu0ahR7" text=": getFileMetaDataBlocks()" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="175" x="310" fillcolor="none" y="350" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="kFFV5ZzyiojW" text=": getFileMetaDataBlocks()" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="F019RquqIoEZ" widgetaid="FHihuT4Pc0Vj" roleBdoc="" documentation="" roleAdoc="" type="505" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="190" starty="358" />
            <endpoint endx="190" endy="440" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="237" x="190" fillcolor="none" y="400" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="fTDWT8oAF280" text=": send(msg : cMessage, gate : char)" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="237" x="190" fillcolor="none" y="400" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="7YnORfah7HW9" text=": send(msg : cMessage, gate : char)" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="7EWbesdAh82Q" widgetaid="F019RquqIoEZ" roleBdoc="" documentation="" roleAdoc="" type="505" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="190" starty="468" />
            <endpoint endx="190" endy="550" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="237" x="190" fillcolor="none" y="510" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="0gJTgFfyrRr5" text=": send(msg : cMessage, gate : char)" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="237" x="190" fillcolor="none" y="510" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="K47liZsRo8wt" text=": send(msg : cMessage, gate : char)" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" visibilityB="200" totalcountb="2" indexb="1" linewidth="none" widgetbid="fNrStsVfa5g2" widgetaid="7EWbesdAh82Q" roleBdoc="" documentation="" roleAdoc="" type="505" changeabilityA="900" changeabilityB="900" linecolor="none" visibilityA="200" >
           <linepath>
            <startpoint startx="190" starty="578" />
            <endpoint endx="190" endy="670" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="237" x="190" fillcolor="none" y="620" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="Cl5mRUs4w3aP" text=": send(msg : cMessage, gate : char)" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="237" x="190" fillcolor="none" y="620" linewidth="none" posttext="" role="706" height="22" usefillcolor="1" pretext="" isinstance="0" xmi.id="htqNhXto5gBU" text=": send(msg : cMessage, gate : char)" usesdiagramusefillcolor="1" font="Sans,10,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
         </associations>
        </diagram>
@@ -1578,7 +1580,7 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
   </UML:Model>
  </XMI.content>
  <XMI.extensions xmi.extender="umbrello" >
-  <docsettings viewid="aq65V4kpoK1t" documentation="" uniqueid="KiEMy5yOSzjC" />
+  <docsettings viewid="aq65V4kpoK1t" documentation="" uniqueid="GZGCIeTFvlW4" />
   <listview>
    <listitem open="1" type="800" label="Views" >
     <listitem open="1" type="801" id="Logical View" >
@@ -1692,6 +1694,7 @@ Abstract base class for single-server queues" isSpecification="false" isLeaf="fa
       <listitem open="0" type="813" id="-126-127-24--63-595b4153:1129a9a5b66:-8000:000000000000094E" />
       <listitem open="0" type="813" id="-126-127-24--63-595b4153:1129a9a5b66:-8000:000000000000095D" />
       <listitem open="0" type="813" id="dRrM5itd2xrQ" />
+      <listitem open="1" type="813" id="A9kjPzyQXbbR" />
      </listitem>
      <listitem open="0" type="818" id="-126-127-24--63-6e377152:10fa16a00b4:-8000:00000000000007DE" >
       <listitem open="0" type="813" id="Qy2vb6xH4eYh" >

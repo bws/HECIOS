@@ -64,12 +64,14 @@ AC_ARG_WITH([mode],
             [comp_mode=debug])
 case "$comp_mode" in
     debug)
-        CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror"
+        CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror -D_GLIBCXX_DEBUG"
         CONFIG_UNSAFE_CXXFLAGS="-g" 
+	CONFIG_LDFLAGS="-g -D_GLIBCXX_DEBUG"
         ;;
     release)
         CONFIG_CXXFLAGS="-O2 -DNDEBUG" 
         CONFIG_UNSAFE_CXXFLAGS="-O2 -DNDEBUG" 
+	CONFIG_LDFLAGS=""
         ;;
     *)
         AC_MSG_ERROR(Valid compilation modes are debug or release)
@@ -77,6 +79,7 @@ case "$comp_mode" in
 esac
 AC_SUBST(CONFIG_CXXFLAGS, "$CONFIG_CXXFLAGS")
 AC_SUBST(CONFIG_UNSAFE_CXXFLAGS, "$CONFIG_UNSAFE_CXXFLAGS")
+AC_SUBST(CONFIG_LDFLAGS, "$CONFIG_LDFLAGS")
 
 dnl
 dnl Generate output

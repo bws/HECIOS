@@ -664,6 +664,7 @@ EGREP
 OMNET_DIR
 CONFIG_CXXFLAGS
 CONFIG_UNSAFE_CXXFLAGS
+CONFIG_LDFLAGS
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -3537,12 +3538,14 @@ fi
 
 case "$comp_mode" in
     debug)
-        CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror"
+        CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror -D_GLIBCXX_DEBUG"
         CONFIG_UNSAFE_CXXFLAGS="-g"
+	CONFIG_LDFLAGS="-g -D_GLIBCXX_DEBUG"
         ;;
     release)
         CONFIG_CXXFLAGS="-O2 -DNDEBUG"
         CONFIG_UNSAFE_CXXFLAGS="-O2 -DNDEBUG"
+	CONFIG_LDFLAGS=""
         ;;
     *)
         { { echo "$as_me:$LINENO: error: Valid compilation modes are debug or release" >&5
@@ -3553,6 +3556,8 @@ esac
 CONFIG_CXXFLAGS="$CONFIG_CXXFLAGS"
 
 CONFIG_UNSAFE_CXXFLAGS="$CONFIG_UNSAFE_CXXFLAGS"
+
+CONFIG_LDFLAGS="$CONFIG_LDFLAGS"
 
 
 ac_config_files="$ac_config_files Makefile"
@@ -4237,11 +4242,12 @@ EGREP!$EGREP$ac_delim
 OMNET_DIR!$OMNET_DIR$ac_delim
 CONFIG_CXXFLAGS!$CONFIG_CXXFLAGS$ac_delim
 CONFIG_UNSAFE_CXXFLAGS!$CONFIG_UNSAFE_CXXFLAGS$ac_delim
+CONFIG_LDFLAGS!$CONFIG_LDFLAGS$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 54; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 55; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

@@ -46,7 +46,8 @@ TESTCFLAGS = $(patsubst %,-I%,$(TEST_INCLUDES))
 #
 # Link flags
 #
-LDFLAGS += -g -Wl,--export-dynamic
+LDFLAGS += $(CONFIG_LDFLAGS)
+LDFLAGS += -Wl,--export-dynamic
 
 #
 # Nedtool flags
