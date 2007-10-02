@@ -129,8 +129,9 @@ void IOApplication::handleMessage(cMessage* msg)
                 }
                 else
                 {
-                    cerr << "IOApplication: No more messages to post."
-                         << endl;
+                    cerr << "Rank " << rank_
+                         << " IOApplication Time: " << simTime()
+                         << ": No more messages to post." << endl;
                 }
                 break;
             }

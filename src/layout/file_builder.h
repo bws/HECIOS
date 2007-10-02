@@ -31,6 +31,12 @@ class FileBuilder
 {
 public:
 
+    /** Default size for a PFS directory */
+    static const std::size_t DEFAULT_DIRECTORY_SIZE = 8192;
+    
+    /** Default size for a PFS metadata entry */
+    static const std::size_t DEFAULT_METADATA_SIZE = 8192;
+    
     /** Singleton accessor */
     static FileBuilder& instance();
 

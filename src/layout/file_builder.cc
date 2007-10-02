@@ -129,9 +129,11 @@ void FileBuilder::createDirectory(const Filename& dirName,
         meta->handle = getNextHandle(metaServer);
         meta->dist = 0;
 
-        //Construct the storage layout
+        // Construct the storage layout for the directory metadata
         Filename storageName(meta->handle);
-        layoutManager.addDirectory((size_t)metaServer, storageName);
+        layoutManager.addFile((size_t)metaServer,
+                              storageName,
+                              DEFAULT_METADATA_SIZE);
 
         // Record bookkeeping information
         nameToHandleMap_[dirName.str()] = meta->handle;
@@ -165,6 +167,11 @@ void FileBuilder::createFile(const Filename& fileName,
         meta->handle = getNextHandle(metaServer);
         meta->dist = new SimpleStripeDistribution(0, numServers);
 
+        // Construct the storage layout for the file metadata
+        Filename storageMeta(meta->handle);
+        layoutManager.addFile((size_t)metaServer, storageMeta,
+                              DEFAULT_METADATA_SIZE);
+        
         // Construct the data handles
         cerr << "Creating file on " << numServers << endl;
         int firstServer = rand() % nextServerNumber_;
@@ -174,7 +181,7 @@ void FileBuilder::createFile(const Filename& fileName,
             int serverNum = (firstServer + i) % nextServerNumber_;
             dataHandles.push_back(getNextHandle(serverNum));
 
-            // Construct the storage layout
+            // Construct the storage layout for the PFS file
             Filename storageName(dataHandles[i]);
             FSSize localFileSize = (FSSize)pow(2.0, 20.0);
             layoutManager.addFile((size_t)serverNum, storageName, localFileSize);
