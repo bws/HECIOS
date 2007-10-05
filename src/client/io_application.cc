@@ -29,6 +29,7 @@
 #include "pfs_utils.h"
 #include "storage_layout_manager.h"
 #include "umd_io_trace.h"
+
 using namespace std;
 
 // OMNet Registriation Method
@@ -43,8 +44,8 @@ void IOApplication::initialize()
     // Cache the gate descriptors
     ioInGate_ = findGate("ioIn");
     ioOutGate_ = findGate("ioOut");
-    mpiClientOutGate_ = findGate("mpiClientOut");
-    mpiServerInGate_ = findGate("mpiServerIn");
+    mpiOutGate_ = findGate("mpiOut");
+    mpiInGate_ = findGate("mpiIn");
     
     // Set the process rank
     rank_ = rank_seed++;
@@ -147,11 +148,11 @@ void IOApplication::handleMessage(cMessage* msg)
         // Delete the response
         delete msg;
     }
-    else if (msg->arrivalGateId() == mpiServerInGate_)
+
+    else if (msg->arrivalGateId() == mpiInGate_)
     {
-        cMessage* cacheMsg = msg->decapsulate();
-        delete msg;
-        send(cacheMsg, ioOutGate_);
+        // TODO: forwarding to cache?
+        send(msg, ioOutGate_);
     }
 }
 
@@ -271,22 +272,15 @@ FSOpenFile* IOApplication::getDescriptor(int fileId) const
 
 void IOApplication::invalidateCaches(spfsMPIFileWriteAtRequest* writeAt)
 {
+    // send msg to mpiOut, encapsulating spfsCacheInvalidateRequest
     cMessage* inval = createCacheInvalidationMessage(writeAt);
-    vector<IPvXAddress*> ips = PFSUtils::instance().getAllRankIP();
-
-    for (unsigned int i = 0; i < ips.size(); i++)
-    {
-        if (i != rank_)
-        {
-            spfsMPISendRequest* msg = new spfsMPISendRequest();
-            msg->setRank(i);
-            msg->encapsulate(static_cast<cMessage*>(inval->dup()));
-            send(msg, mpiClientOutGate_);
-        }
-    }
-
-    // Cleanup memory
-    delete inval;
+    spfsMPIBcastRequest* req =
+        new spfsMPIBcastRequest("MPI_BCAST", SPFS_MPI_BCAST_REQUEST);
+    
+    req->setRoot(this->rank_);
+    req->setIsGlobal(true);
+    req->encapsulate(inval);
+    send(req, mpiOutGate_);
 }
 
 spfsCacheInvalidateRequest* IOApplication::createCacheInvalidationMessage(

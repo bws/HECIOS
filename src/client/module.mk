@@ -11,4 +11,6 @@ SIM_SRC += $(DIR)/client_fs_state.cc \
 	$(DIR)/fs_read.cc \
 	$(DIR)/fs_write.cc \
 	$(DIR)/io_application.cc \
-	$(DIR)/middleware_cache.cc
+	$(DIR)/middleware_cache.cc \
+	$(DIR)/mpi_middleware.cc \
+	$(DIR)/mpi_middleware_bcast_sm.cc

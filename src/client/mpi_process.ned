@@ -23,6 +23,7 @@ import
     "cache_module",
     "fs_client",
     "bmi_transport",
+    "mpi_middleware",
     "cacheModule";
 
 //
@@ -38,7 +39,10 @@ module MPIProcess
 
     submodules:
         app: IOApplication;
-            display: "p=80,80;i=block/app,white";
+            display: "p=130,80;i=block/app,white";
+
+	mpiMiddleware: MpiMiddleware;
+	    display: "p=180,180;i=block/classifier,red";
 
         cache: middlewareCacheType like MiddlewareCache;
             display: "p=80,180;i=block/buffer2,green";
@@ -47,11 +51,15 @@ module MPIProcess
             display: "p=80,280;i=block/classifier,yellow";
 
     connections:
-        // Connect the MPI application to the MPI messaging network
-        app.mpiClientOut --> mpiClientOut;
-        app.mpiClientIn <-- mpiClientIn;
-        app.mpiServerOut --> mpiServerOut;
-        app.mpiServerIn <-- mpiServerIn;
+        // Connect the MPI application to the MPI middleware
+	app.mpiOut --> mpiMiddleware.appIn;
+	app.mpiIn <-- mpiMiddleware.appOut;
+
+	// Connect the MPI middleware to the MPI messaging network
+        mpiMiddleware.netClientOut --> mpiClientOut;
+        mpiMiddleware.netClientIn <-- mpiClientIn;
+        mpiMiddleware.netServerOut --> mpiServerOut;
+        mpiMiddleware.netServerIn <-- mpiServerIn;
 
         // Connect the MPI application to the cache
         app.ioOut --> cache.appIn;

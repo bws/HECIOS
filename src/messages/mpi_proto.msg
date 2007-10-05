@@ -64,6 +64,9 @@ enum mpiRequestKind
     SPFS_MPI_FILE_READ_REQUEST = 110;
     SPFS_MPI_FILE_WRITE_AT_REQUEST = 111;
     SPFS_MPI_FILE_WRITE_REQUEST = 112;
+
+    //MPI COLLECTIVE REQUEST MSGS
+    SPFS_MPI_BCAST_REQUEST = 2;
 };
 
 enum mpiResponseKind
@@ -81,6 +84,9 @@ enum mpiResponseKind
     SPFS_MPI_FILE_READ_RESPONSE = 310;
     SPFS_MPI_FILE_WRITE_AT_RESPONSE = 311;
     SPFS_MPI_FILE_WRITE_RESPONSE = 312;
+
+    //MPI COLLECTIVE RESPONSE MSGS
+    SPFS_MPI_BCAST_RESPONSE = 202;
 };
 
 // The abstract base class for all MPI message requests
@@ -281,6 +287,21 @@ message spfsMPIFileWriteAtRequest extends spfsMPIFileWriteRequest
 message spfsMPIFileWriteAtResponse extends spfsMPIFileWriteResponse
 {
 };
+
+// Broadcast request
+message spfsMPIBcastRequest extends spfsMPIRequest
+{
+    fields:	
+        long root;
+        bool isGlobal;
+};
+
+// Broadcast response
+message spfsMPIBcastResponse extends spfsMPIResponse
+{
+};
+
+
 
 //
 // Local variables:

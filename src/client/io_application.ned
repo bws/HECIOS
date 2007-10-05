@@ -8,7 +8,7 @@ simple IOApplication
         numTraceProcs : const;
 
     gates:
-        in: ioIn, mpiClientIn, mpiServerIn;
-        out: ioOut, mpiClientOut, mpiServerOut;
+        in: ioIn, mpiIn;
+        out: ioOut, mpiOut;
 
 endsimple

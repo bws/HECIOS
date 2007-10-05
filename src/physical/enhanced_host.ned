@@ -60,7 +60,6 @@ module EnhancedHost
         in: ethIn[];
         out: ethOut[];
 
-        // Additional gates for bmi applications
         in: bmiIn[];
         out: bmiOut[];
 
@@ -80,26 +79,26 @@ module EnhancedHost
                 routingFile = routingFile;
             display: "p=60,230;i=block/table";
         tcpApp: tcpAppType[numTcpApps] like TCPApp;
-            display: "p=163,67,m,3;i=block/app";
+            display: "p=275,91,m,3;i=block/app";
         tcp: TCP;
-            display: "p=163,154;i=block/wheelbarrow";
+            display: "p=243,186;i=block/wheelbarrow";
         udpApp: udpAppType[numUdpApps] like UDPApp;
-            display: "i=block/app;p=272,67";
+            display: "i=block/app;p=400,91";
         udp: UDP;
-            display: "p=272,154;i=block/transport";
+            display: "p=344,186;i=block/transport";
         pingApp: PingApp;
-            display: "i=block/app;p=343,200";
+            display: "i=block/app;p=391,272";
         networkLayer: NetworkLayer;
             parameters:
                 proxyARP = false;
             gatesizes:
                 ifIn[sizeof(out)+sizeof(ethOut)],
                 ifOut[sizeof(out)+sizeof(ethOut)];
-            display: "p=248,247;i=block/fork;q=queue";
+            display: "p=296,271;i=block/fork;q=queue";
         ppp: PPPInterface[sizeof(out)];
-            display: "p=205,350,row,90;q=txQueue;i=block/ifcard";
+            display: "p=237,358,row,90;q=txQueue;i=block/ifcard";
         eth: EthernetInterface[sizeof(ethOut)];
-            display: "p=240,350,row,90;q=txQueue;i=block/ifcard";
+            display: "p=360,358,row,90;q=txQueue;i=block/ifcard";
     connections nocheck:
         for i=0..numTcpApps-1 do
             tcpApp[i].tcpOut --> tcp.from_appl++;
@@ -141,4 +140,6 @@ module EnhancedHost
             bmiOut[i] <-- tcpApp[i].bmiOut;
         endfor;
 
+    display: "b=457,419";
 endmodule
+

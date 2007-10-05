@@ -74,8 +74,8 @@ private:
     unsigned int rank_;
     int ioInGate_;
     int ioOutGate_;
-    int mpiClientOutGate_;
-    int mpiServerInGate_;
+    int mpiOutGate_;
+    int mpiInGate_;
 
     /** */
     std::map<int, FSDescriptor*> descriptorById_;
