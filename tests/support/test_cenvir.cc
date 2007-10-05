@@ -75,6 +75,7 @@ void cEnvir::displayStringChanged(cModule *submodule)
 /** Not needed for test drivers */
 void cEnvir::connectionCreated(cGate *srcgate)
 {
+    cerr << "Connection created." << endl;
 }
 
 /** Not needed for test drivers */

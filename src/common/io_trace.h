@@ -19,9 +19,10 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include <cstddef>
 #include <iostream>
 #include <map>
+#include <string>
 #include <omnetpp.h>
 
 /** Forward declarations */
@@ -82,7 +83,7 @@ public:
 
     /** Constructor */
     IOTraceRecord(IOTrace::operation opType, int fileId,
-                  size_t offset, size_t length) :
+                  std::size_t offset, std::size_t length) :
         opType_(opType), fileId_(fileId), offset_(offset), length_(length) {};
 
     /** Destructor */
@@ -95,17 +96,24 @@ public:
     int fileId() const {return fileId_;};
     
     /** File offset getter */
-    size_t offset() const {return offset_;};
+    std::size_t offset() const {return offset_;};
 
     /** Length getter */
-    size_t length() const {return length_;};
+    std::size_t length() const {return length_;};
+
+    /** Set the parsed string for debugging purposes */
+    void setSource(const std::string& source) {source_ = source;};
+
+    /** @return the source for this trace record */
+    std::string source() const {return source_;};
     
 private:
 
     IOTrace::operation opType_;
     int fileId_;
-    size_t offset_;
-    size_t length_; 
+    std::size_t offset_;
+    std::size_t length_;
+    std::string source_;
 };
 
 #endif

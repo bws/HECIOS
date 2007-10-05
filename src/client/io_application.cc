@@ -214,7 +214,7 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
         case IOTrace::READ_AT:
         {
             spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
-                0, SPFS_MPI_FILE_READ_AT_REQUEST);
+                rec->source().c_str(), SPFS_MPI_FILE_READ_AT_REQUEST);
             read->setCount(1);
             read->setDataType(rec->length());
             read->setOffset(rec->offset());

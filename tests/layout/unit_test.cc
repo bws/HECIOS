@@ -3,8 +3,8 @@
  */
 
 #include <cppunit/TextTestRunner.h>
+#include "data_type_processor_test.h"
 #include "file_builder_test.h"
-
 
 /** Main test driver */
 int main(int argc, char** argv)
@@ -12,6 +12,7 @@ int main(int argc, char** argv)
     CppUnit::TextTestRunner runner;
 
     // Add all of the requisite tests
+    runner.addTest( DataTypeProcessorTest::suite() );
     runner.addTest( FileBuilderTest::suite() );
 
     bool success = runner.run();

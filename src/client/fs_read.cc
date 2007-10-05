@@ -20,7 +20,7 @@
 #include "fs_read.h"
 #include <iostream>
 #include <numeric>
-//#define FSM_DEBUG  // Enable FSM Debug output
+#define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
 #include "data_type_processor.h"
 #include "file_distribution.h"
@@ -74,11 +74,14 @@ void FSRead::handleMessage(cMessage* msg)
         case FSM_Exit(READ):
         {
             assert(0 != dynamic_cast<spfsMPIFileReadAtRequest*>(msg));
-            FSM_Goto(currentState, COUNT_RESPONSES);
-            break;
-        }
-        case FSM_Enter(COUNT_RESPONSES):
-        {
+            if (0 == readReq_->getResponses())
+            {
+                FSM_Goto(currentState, FINISH);
+            }
+            else
+            {
+                FSM_Goto(currentState, COUNT_RESPONSES);
+            }
             break;
         }
         case FSM_Exit(COUNT_RESPONSES):
@@ -117,8 +120,8 @@ void FSRead::handleMessage(cMessage* msg)
 
 void FSRead::enterRead()
 {
-    FSOpenFile* filedes = (FSOpenFile*)readReq_->getFileDes();
-    assert(0 != filedes);
+    assert(0 != readReq_->getFileDes());
+    FSOpenFile* filedes = readReq_->getFileDes();
     
     // Construct the template read request
     spfsReadRequest read("ReadStuff", SPFS_READ_REQUEST);

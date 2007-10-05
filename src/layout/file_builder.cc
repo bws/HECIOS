@@ -48,6 +48,18 @@ FileBuilder::FileBuilder()
 {
 }
 
+FileBuilder::~FileBuilder()
+{
+    map<FSHandle, FSMetaData*>::const_iterator iter = handleToMetaMap_.begin();
+    while (handleToMetaMap_.end() != iter)
+    {
+        FSMetaData* meta = iter->second;
+        delete meta->dist;
+        delete meta;
+        ++iter;
+    }
+}
+
 int FileBuilder::registerFSServer(const HandleRange& range, bool isMetaServer)
 {
     assert(nextServerNumber_ == handlesByServer_.size());
@@ -90,7 +102,15 @@ FSMetaData* FileBuilder::getMetaData(const Filename& fileName) const
 
 FSDescriptor* FileBuilder::getDescriptor(const Filename& fileName) const
 {
-    return 0;
+    FSDescriptor* descriptor = 0;
+    if (fileExists(fileName))
+    {
+        descriptor = new FSDescriptor();
+        descriptor->metaData = getMetaData(fileName);
+        descriptor->path = fileName.str();
+        descriptor->filePtr = 0;
+    }
+    return descriptor;
 }
 
 FSHandle FileBuilder::getFirstHandle(size_t serverNumber)

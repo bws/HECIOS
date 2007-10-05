@@ -20,6 +20,7 @@
 #include "umd_io_trace.h"
 #include <cassert>
 #include <iomanip>
+#include <sstream>
 #include "filename.h"
 #include "pfs_utils.h"
 using namespace std;
@@ -90,16 +91,32 @@ IOTraceRecord* UMDIOTrace::nextRecord()
         long offset;
         long length;
 
-        // Read the tracefile record in
-        traceFile_ >> opType;
-        traceFile_ >> numRecords;
-        traceFile_ >> pid >> fileId >> wallClock >> processClock;
-        traceFile_ >> offset >> length;
+        // Read the tracefile record into a string and then parse so that
+        // we can keep a copy of what was parsed.  For time and space
+        // efficiency it may be necessary to simplify this later
+        string sourceLine;
+        if ('\n' == traceFile_.peek())
+        {
+            getline(traceFile_, sourceLine);
+        }
+        getline(traceFile_, sourceLine);
+        istringstream source(sourceLine);
 
+        // Read the tracefile record in
+        source >> opType;
+        source >> numRecords;
+        source >> pid >> fileId >> wallClock >> processClock;
+        source >> offset >> length;
+        
         // Create a new message and fill it out with the relevant data
         rec = createIOTraceRecord(static_cast<OpType>(opType), fileId,
                                   offset, length);
-        // Increment the current record
+
+        // Add the trace source to the record
+        if (0 != rec)
+            rec->setSource(sourceLine);
+        
+        // Increment the current record count
         curRecord_++;    
     }
     

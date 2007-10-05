@@ -37,8 +37,8 @@ module JobProcess
     connections:
 
         // Connect the MPI process I/O network to this Job's network
-        mpi.ioOut --> delay 10us --> out++;
-        mpi.ioIn <-- delay 10us <-- in++;
+        mpi.ioOut --> out++;
+        mpi.ioIn <-- in++;
 
         // Connect the MPI process messaging network to this Job's network
         // (The connection order here is important)

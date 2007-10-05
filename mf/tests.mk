@@ -21,7 +21,7 @@
 #
 # Testing macros local to file
 #
-TEST_DIR := $(HECIOS_DIR)/tests
+TEST_DIR := tests
 
 #
 # Testing directories
@@ -56,7 +56,11 @@ include $(TEST_SUPPORT_DIR)/module.mk
 # Testing dependencies
 #
 SIM_TEST_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_TEST_SRC)))
-ifeq ($(filter test, $(MAKECMDGOALS)), test)
+
+#
+# Include testing dependencies if a test target is being built
+#
+ifneq ($(filter %test, $(MAKECMDGOALS)), "")
 -include $(SIM_TEST_DEPENDS)
 endif
 
@@ -83,11 +87,12 @@ tests_clean:
 # client module unit tests
 #
 CLIENT_TEST_OBJS = $(TEST_CLIENT_DIR)/unit_test.o \
+	$(TEST_SUPPORT_DIR)/csimple_module_tester.o \
 	$(TEST_SUPPORT_DIR)/test_cenvir.o
 
 $(BIN_DIR)/client_test: $(CLIENT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $^ $(TEST_LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
 
 #
 # common module unit tests
@@ -97,7 +102,7 @@ COMMON_TEST_OBJS = $(TEST_COMMON_DIR)/unit_test.o \
 
 $(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $^ $(TEST_LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
 
 #
 # layout module unit tests
@@ -107,7 +112,7 @@ LAYOUT_TEST_OBJS = $(TEST_LAYOUT_DIR)/unit_test.o \
 
 $(BIN_DIR)/layout_test: $(LAYOUT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $^ $(TEST_LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
 
 #
 # OS module unit tests
@@ -118,5 +123,5 @@ OS_TEST_OBJS = $(TEST_OS_DIR)/unit_test.o \
 
 $(BIN_DIR)/os_test: $(OS_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
-	$(LD) -g $^ $(TEST_LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
 

@@ -79,4 +79,4 @@ dirname = $(patsubst %/,%,$(dir $(1)))
 # Build rules for CppUnit tests
 #
 %_test.o: %_test.cc
-	$(CXX) -c -g $(CXXFLAGS) $(TESTCFLAGS) $< -o $@
+	$(CXX) -c $(CXXFLAGS) $(TESTCFLAGS) $< -o $@

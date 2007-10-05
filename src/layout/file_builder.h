@@ -39,7 +39,7 @@ public:
     
     /** Singleton accessor */
     static FileBuilder& instance();
-
+    
     /** Clear all state information */
     static void clearState();
     
@@ -89,6 +89,9 @@ private:
     /** Disabled copy constructor */
     FileBuilder(const FileBuilder& other);
 
+    /** Hidden destructor */
+    ~FileBuilder();
+    
     /** Singleton instance */
     static FileBuilder* instance_;
 

@@ -81,7 +81,7 @@ void ClientFSStateTest::testConstructor()
 void ClientFSStateTest::testInsertAttr()
 {
     ClientFSState state;
-    FSMetaData attr1;
+    FSMetaData attr1 = {0};
     FSHandle handle1 = 1;
 
     state.insertAttr(handle1, attr1);
@@ -91,7 +91,7 @@ void ClientFSStateTest::testInsertAttr()
 void ClientFSStateTest::testRemoveAttr()
 {
     ClientFSState state;
-    FSMetaData attr1;
+    FSMetaData attr1 = {0};
     FSHandle handle1 = 1;
 
     state.insertAttr(handle1, attr1);
@@ -102,7 +102,7 @@ void ClientFSStateTest::testRemoveAttr()
 void ClientFSStateTest::testLookupAttr()
 {
     ClientFSState state;
-    FSMetaData attr1;
+    FSMetaData attr1 = {0};
     FSHandle handle1 = 1;
 
     state.insertAttr(handle1, attr1);

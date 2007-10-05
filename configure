@@ -3538,9 +3538,9 @@ fi
 
 case "$comp_mode" in
     debug)
-        CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror -D_GLIBCXX_DEBUG"
+        	        CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror"
         CONFIG_UNSAFE_CXXFLAGS="-g"
-	CONFIG_LDFLAGS="-g -D_GLIBCXX_DEBUG"
+	CONFIG_LDFLAGS="-g"
         ;;
     release)
         CONFIG_CXXFLAGS="-O2 -DNDEBUG"
