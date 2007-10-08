@@ -235,7 +235,7 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
             mpiMsg = write;
 
             // Generate corresponding cache invalidation messages
-            invalidateCaches(write);
+            //invalidateCaches(write);
             break;
         }
         case IOTrace::SEEK:
