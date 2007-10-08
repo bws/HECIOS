@@ -41,7 +41,8 @@ cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
     assert(0 != moduleType);
 
     // Create the correct module type
-    module_ = dynamic_cast<cSimpleModule*>(moduleType->create(0,0));
+    module_ = dynamic_cast<cSimpleModule*>(moduleType->create("ModuleToTest",
+                                                              this));
     assert(0 != module_);
 
     // Construct dummy gates to connect to each of the modules gates
@@ -57,7 +58,8 @@ cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
     }
     
     // Register the module with the simulation
-    sim_->registerModule(module_);
+    //sim_->setSystemModule(module_);
+    //sim_->registerModule(module_);
 
     // Initialize the module
     module_->callInitialize();
@@ -65,28 +67,30 @@ cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
 
 cSimpleModuleTester::~cSimpleModuleTester()
 {
-    // Finalize the module
+    // Cleanup the message arrivals
+    for (size_t i = 0; i < arrivals_.size(); i++)
+    {
+        delete arrivals_[i];
+    }
+
+    // Cleanup the simulation
+    //sim_->callFinish();
+    //sim_->transferToMain();
+    //module_->removeFromOwnershipTree();
+    //sim_->deleteNetwork();
+    delete sim_;
+    sim_ = 0;
+    
+    // Cleanup module
     module_->callFinish();
+    delete module_;
+    module_ = 0;
 
     // Cleanup the dummy gates created for testing
     for (size_t i = 0; i < dummyGates_.size(); i++)
     {
         delete dummyGates_[i];
     }
-
-    // Cleanup the message arrivals
-    for (size_t i = 0; i < arrivals_.size(); i++)
-    {
-        delete arrivals_[i];
-    }
-    
-    // Cleanup module
-    delete module_;
-    module_ = 0;
-
-    // Cleanup the simulation
-    delete sim_;
-    sim_ = 0;
 }
 
 void cSimpleModuleTester::deliverMessage(cMessage* msg, const char* inGateName)
@@ -107,10 +111,25 @@ void cSimpleModuleTester::deliverMessage(cMessage* msg, cGate* inGate)
     sim_->doOneEvent(module_);
 }
 
-cMessage* cSimpleModuleTester::getOutputMessage()
+size_t cSimpleModuleTester::getNumOutputMessages() const
 {
-    assert(0 != arrivals_.size());
-    return arrivals_[0];
+    return arrivals_.size();
+}
+
+cMessage* cSimpleModuleTester::getOutputMessage() const
+{
+    cMessage* out = 0;
+    if (0 < arrivals_.size())
+    {
+        out = arrivals_.back();
+    }
+    return out;
+}
+
+cMessage* cSimpleModuleTester::getOutputMessage(size_t idx) const
+{
+    assert(idx < arrivals_.size());
+    return arrivals_[idx];
 }
 
 void cSimpleModuleTester::arrived(cMessage* msg, int, simtime_t)

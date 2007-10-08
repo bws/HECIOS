@@ -79,6 +79,8 @@ void FSClientTest::tearDown()
 {
     delete moduleTester_;
     moduleTester_ = 0;
+
+    FileBuilder::clearState();
 }
 
 // Test a MPIFileReadAt with 0 offset, 0 length
@@ -96,10 +98,11 @@ void FSClientTest::testReadAtNoOffsetNoLength()
     // Ensure the output message is a ReadAtResponse
     moduleTester_->deliverMessage(&req, "appIn");
     cMessage* output1 = moduleTester_->getOutputMessage();
+    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsMPIFileReadAtResponse*>(output1));
-
-    // Ensure no more messages were added to the output queue
-    //CPPUNIT_ASSERT(0 == moduleTester_->getOutputMessage());
+    
+    // Cleanup test data
+    delete fd;
 }
 
 #endif

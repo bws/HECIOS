@@ -64,17 +64,23 @@ void NoTranslationTest::testHandleMessage()
     cSimpleModuleTester moduleTester("NoTranslation",
                                      "src/os/block_translator.ned");
 
+    // Setup the originating request
+    spfsOSBlockIORequest ioRequest;
+    
     // Test a ReadBlocks request
-    spfsOSReadBlocksRequest req;
-    moduleTester.deliverMessage(&req, "in");
+    spfsOSReadBlocksRequest blocksRequest;
+    blocksRequest.setContextPointer(&ioRequest);
+    moduleTester.deliverMessage(&blocksRequest, "in");
     cMessage* output1 = moduleTester.getOutputMessage();
     CPPUNIT_ASSERT(0 == output1);
     
-    // Test a response
+    // Test a response that triggers a response
+    ioRequest.setNumRemainingResponses(1);
     spfsOSReadDeviceResponse resp;
+    resp.setContextPointer(&blocksRequest);
     //moduleTester.deliverMessage(&resp, "response");
-    cMessage* output2 = moduleTester.getOutputMessage();
-    CPPUNIT_ASSERT(0 == output2);
+    //cMessage* output2 = moduleTester.getOutputMessage();
+    //CPPUNIT_ASSERT(0 == output2);
 }
 
 #endif

@@ -19,7 +19,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include <cstddef>
 #include <vector>
 #include <omnetpp.h>
 
@@ -45,11 +45,20 @@ public:
     void deliverMessage(cMessage* msg, cGate* inGate);
 
     /**
-     * Get an output message created by the module
-     *   (may be called multiple times for a single input message)
+     * @return the number of output messages sent by the module
      */
-    cMessage* getOutputMessage();
+    std::size_t getNumOutputMessages() const;
+    
+    /**
+     * @return the most recently sent message by the module
+     */
+    cMessage* getOutputMessage() const;
 
+    /**
+     * @return the (idx + 1)th message sent by the module
+     */
+    cMessage* getOutputMessage(std::size_t idx) const;
+    
 protected:
 
     /** Called when the module to test sends an outgoing message */
