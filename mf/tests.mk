@@ -60,7 +60,8 @@ SIM_TEST_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_TEST_SRC)))
 #
 # Include testing dependencies if a test target is being built
 #
-ifneq ($(filter %test, $(MAKECMDGOALS)), "")
+TEST_MAKECMDGOALS := $(filter %test, $(MAKECMDGOALS))
+ifneq ($(strip $(TEST_MAKECMDGOALS)),)
 -include $(SIM_TEST_DEPENDS)
 endif
 
