@@ -70,7 +70,7 @@ protected:
 private:
 
     /** The simulation object required to deliver messages */
-    cSimulation* sim_;
+    static cSimulation* sim_;
 
     /** The module to send the test message to */
     cSimpleModule* module_;

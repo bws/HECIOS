@@ -24,6 +24,7 @@
 simple FSServerConfigurator
 
     parameters:
-        handlesPerServer: const;
+        handlesPerServer: const,
+        metaDataSizeInBytes: const;
 
 endsimple

@@ -34,15 +34,15 @@ public:
     /** Default size for a PFS directory */
     static const std::size_t DEFAULT_DIRECTORY_SIZE = 8192;
     
-    /** Default size for a PFS metadata entry */
-    static const std::size_t DEFAULT_METADATA_SIZE = 8192;
-    
     /** Singleton accessor */
     static FileBuilder& instance();
     
     /** Clear all state information */
     static void clearState();
-    
+
+    /** Set the default meta data size */
+    void setDefaultMetaDataSize(std::size_t metaDataSize);
+
     /** @return the server id for the registering server */
     int registerFSServer(const HandleRange& range, bool isMetaServer);
 
@@ -95,11 +95,15 @@ private:
     /** Singleton instance */
     static FileBuilder* instance_;
 
+    /** Size of metadata entries */
+    std::size_t defaultMetaDataSize_;
+
+    /** Next serer number to assign */
+    std::size_t nextServerNumber_;
+
     std::map<std::string, FSHandle> nameToHandleMap_;
 
     std::map<FSHandle, FSMetaData*> handleToMetaMap_;
-
-    size_t nextServerNumber_;
 
     std::vector<HandleRange> handlesByServer_;
     

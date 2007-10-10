@@ -22,15 +22,28 @@
 #include <string>
 using namespace std;
 
+cSimulation* cSimpleModuleTester::sim_ = 0;
+
 cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
                                          const char* nedFile)
     : cModule(),
-      sim_(new cSimulation("TestDriverSimulation")),
       module_(0)
 {
-    // Load the ned file to construct the gates
-    sim_->loadNedFile(nedFile);
+    // Create the simulation if one does not exist
+    if (0 == sim_)
+    {
+        sim_ = new cSimulation("cSimpleModuleTesterSimulation");
 
+        // FIXME: Strictly speaking, this is not correct, we need to make
+        // sure that this ned file has not been loaded before
+        //
+        // Better would be to figure out why we can't just create a new
+        // simulation for each cSimpleModuleTester
+        //
+        // Load the ned file to construct the gates
+        sim_->loadNedFile(nedFile);
+    }
+    
     // Retrieve the constructed module interface
     cModuleInterface* moduleIF =
         dynamic_cast<cModuleInterface*>(modinterfaces.instance()->get(0));
@@ -52,7 +65,8 @@ cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
         ostringstream s;
         s << "dummy" << i;
         string gateName = s.str();
-        dummyGates_.push_back(new cGate(gateName.c_str(), 'I'));
+        cGate* gate = new cGate(gateName.c_str(), 'I');
+        dummyGates_.push_back(gate);
         dummyGates_[i]->setOwnerModule(this, i);
         module_->gate(i)->connectTo(dummyGates_[i]);
     }
@@ -78,8 +92,8 @@ cSimpleModuleTester::~cSimpleModuleTester()
     //sim_->transferToMain();
     //module_->removeFromOwnershipTree();
     //sim_->deleteNetwork();
-    delete sim_;
-    sim_ = 0;
+    //delete sim_;
+    //sim_ = 0;
     
     // Cleanup module
     module_->callFinish();

@@ -19,18 +19,24 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include <cstddef>
 #include <string>
 #include <omnetpp.h>
 #include "pfs_types.h"
 class spfsRequest;
 
 /**
- * Model of a file system client library.
+ * Model of a parallel file system server process.
  */
 class FSServer : public cSimpleModule
 {
 public:
+    /** Get the default size of metadata/attributes */
+    static std::size_t getDefaultAttrSize();
+    
+    /** Set the default size of metadata/attributes */
+    static void setDefaultAttrSize(std::size_t attrSize);
+    
     /** Constructor */
     FSServer() : cSimpleModule() {};
 
@@ -44,7 +50,7 @@ public:
     HandleRange getHandleRange() const { return range_; };
 
     /** Set the server's unique number */
-    void setNumber(size_t number);
+    void setNumber(std::size_t number);
 
     /** Set the server's unique handle range */
     void setHandleRange(const HandleRange& range) {range_ = range;};
@@ -65,6 +71,9 @@ protected:
     
 private:
 
+    /** Default attribute size */
+    static std::size_t defaultAttrSize_;
+    
     /** Unique server number */
     std::size_t serverNumber_;
 

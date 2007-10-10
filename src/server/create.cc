@@ -45,11 +45,11 @@ void Create::handleServerMessage(cMessage* msg)
     FSM_Switch(currentState)
     {
         case FSM_Enter(INIT):
-        {
-            assert(0 != dynamic_cast<spfsCreateRequest*>(msg));
-            enterFinish();
-            break;
-        }
+            {
+                assert(0 != dynamic_cast<spfsCreateRequest*>(msg));
+                enterFinish();
+                break;
+            }
     }
 }
 
@@ -66,5 +66,5 @@ void Create::enterFinish()
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab cino=g0:
  */

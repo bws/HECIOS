@@ -36,25 +36,44 @@ class cFSM;
 // Enumerate all OS message kinds
 enum spfsOSMessageKind
 {
-    SPFS_OS_FILE_READ_REQUEST = 601;
-    SPFS_OS_FILE_READ_RESPONSE = 602;
-    SPFS_OS_FILE_WRITE_REQUEST = 603;
-    SPFS_OS_FILE_WRITE_RESPONSE = 604;
-    SPFS_OS_READ_BLOCKS_REQUEST = 605;
-    SPFS_OS_READ_BLOCKS_RESPONSE = 606;
-    SPFS_OS_WRITE_BLOCKS_REQUEST = 607;
-    SPFS_OS_WRITE_BLOCKS_RESPONSE = 608;
-    SPFS_OS_READ_DEVICE_REQUEST = 609;
-    SPFS_OS_READ_DEVICE_RESPONSE = 610;
-    SPFS_OS_WRITE_DEVICE_REQUEST = 611;
-    SPFS_OS_WRITE_DEVICE_RESPONSE = 612;
+    SPFS_OS_FILE_OPEN_REQUEST = 601;
+    SPFS_OS_FILE_OPEN_RESPONSE = 602;
+    SPFS_OS_FILE_READ_REQUEST = 603;
+    SPFS_OS_FILE_READ_RESPONSE = 604;
+    SPFS_OS_FILE_WRITE_REQUEST = 605;
+    SPFS_OS_FILE_WRITE_RESPONSE = 606;
+    SPFS_OS_FILE_SYNC_REQUEST = 607;
+    SPFS_OS_FILE_SYNC_RESPONSE = 608;
+    SPFS_OS_READ_BLOCKS_REQUEST = 609;
+    SPFS_OS_READ_BLOCKS_RESPONSE = 610;
+    SPFS_OS_WRITE_BLOCKS_REQUEST = 611;
+    SPFS_OS_WRITE_BLOCKS_RESPONSE = 612;
+    SPFS_OS_READ_DEVICE_REQUEST = 613;
+    SPFS_OS_READ_DEVICE_RESPONSE = 614;
+    SPFS_OS_WRITE_DEVICE_REQUEST = 615;
+    SPFS_OS_WRITE_DEVICE_RESPONSE = 616;
+    SPFS_OS_SYNC_REQUEST = 617;
+    SPFS_OS_SYNC_RESPONSE = 618;
 };
 
-// Abstract base class for all OS File Read and File Write Requests
-message spfsOSFileIORequest
+// Abstract base class for all OS File requests
+message spfsOSFileRequest
 {
     fields:
         string filename;
+}
+
+// Abstract base class for all OS File requests
+message spfsOSFileResponse
+{
+    fields:
+        string filename;
+}
+
+// Abstract base class for all OS File Read and File Write Requests
+message spfsOSFileIORequest extends spfsOSFileRequest
+{
+    fields:
         FSOffset offset;
         FSSize extent;
 
@@ -64,10 +83,20 @@ message spfsOSFileIORequest
 };
 
 // Abstract base class for all OF File Read and File Write Responses
-message spfsOSFileIOResponse
+message spfsOSFileIOResponse extends spfsOSFileResponse
+{
+};
+
+// File open request to the OS' native file system
+message spfsOSFileOpenRequest extends spfsOSFileRequest
 {
     fields:
-        string filename;
+        bool isCreate;
+};
+
+// File open response from the OS' native file system
+message spfsOSFileOpenResponse extends spfsOSFileResponse
+{
 };
 
 // File read request to the OS' native file system
@@ -87,6 +116,16 @@ message spfsOSFileWriteRequest extends spfsOSFileIORequest
 
 // File write response to the OS' native file system
 message spfsOSFileWriteResponse extends spfsOSFileIOResponse
+{
+};
+
+// File sync request to the OS' native file system
+message spfsOSFileSyncRequest extends spfsOSFileRequest
+{
+};
+
+// File sync response from the OS' native file system
+message spfsOSFileSyncResponse extends spfsOSFileResponse
 {
 };
 
@@ -149,6 +188,16 @@ message spfsOSWriteDeviceRequest extends spfsOSDeviceIORequest
 
 // Write block device response
 message spfsOSWriteDeviceResponse
+{
+};
+
+// Sync system call request to the OS' native file system
+message spfsOSSyncRequest
+{
+};
+
+// Sync system call response from the OS' native file system
+message spfsOSSyncResponse
 {
 };
 

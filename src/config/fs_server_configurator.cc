@@ -64,14 +64,20 @@ private:
 // OMNet Registriation Method
 Define_Module(FSServerConfigurator);
 
-/**
- * Initialization - Set the handle ranges and register the assigned IP address
- */
+//
+// Stage 0 - set the file system options into the layout and file building
+//           frameworks
+// Stage 3 - assign handle ranges and register the IP addresses for the
+//           file system servers (IP addresses should be set at this time)
 void FSServerConfigurator::initialize(int stage)
 {
-    // Stage 4 initialiazation should ensure that IP addresses have been
-    // assigned
-    if (3 == stage)
+    if (0 == stage)
+    {
+        size_t metaDataSize = par("metaDataSizeInBytes");
+        FSServer::setDefaultAttrSize(metaDataSize);
+        FileBuilder::instance().setDefaultMetaDataSize(metaDataSize);
+    }
+    else if (3 == stage)
     {
         // Retrieve the handles per server
         handlesPerServer_ = par("handlesPerServer");

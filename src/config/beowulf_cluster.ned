@@ -43,7 +43,7 @@ module BeowulfCluster
         switch: EtherSwitch;
             display: "p=256,250;i=abstract/switch,cyan";
 
-        fsConfig: FSServerConfigurator;
+        pfsConfig: FSServerConfigurator;
             parameters:
                 handlesPerServer = 10000;
             display: "p=40,50;i=abstract/table2,light blue";

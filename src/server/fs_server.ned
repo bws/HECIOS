@@ -33,6 +33,4 @@ simple FSServer
         in: storageIn;
         out: storageOut;
 
-        out: schedulerOut;
-
 endsimple

@@ -102,10 +102,17 @@ private:
 };
 
 /**
- * Model of a Native OS File System.  At present the only additional
- * functionality provided by this file system is the ability to convert
- * file locations into block numbers.  The block size is assumed to be 4096
- * bytes since that seems to match modern Linux systems.
+ * Model of a Native OS File System.  Supports the following features:
+ *
+ * - Configurable block size
+ * - Contiguous disk layout
+ * - Loads metadata before accessing data blocks
+ *
+ * TODO: The following additional feature(s) are desired:
+ * - Read block before writing partial blocks
+ * - Journal structures for metadata writing
+ * - Support for an O_DIRECT type mode that bypasses the block cache
+ *
  */
 class NativeFileSystem : public FileSystem
 {

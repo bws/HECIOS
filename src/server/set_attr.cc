@@ -17,7 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "get_attr.h"
+#include "set_attr.h"
 #include <cassert>
 #include <omnetpp.h>
 #include "filename.h"
@@ -26,21 +26,21 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
-GetAttr::GetAttr(FSServer* module, spfsGetAttrRequest* getAttrReq)
+SetAttr::SetAttr(FSServer* module, spfsSetAttrRequest* setAttrReq)
     : module_(module),
-      getAttrReq_(getAttrReq)
+      setAttrReq_(setAttrReq)
 {
 }
 
-void GetAttr::handleServerMessage(cMessage* msg)
+void SetAttr::handleServerMessage(cMessage* msg)
 {
     // Restore the existing state for this request
-    cFSM currentState = getAttrReq_->getState();
+    cFSM currentState = setAttrReq_->getState();
 
     // Server lookup states
     enum {
         INIT = 0,
-        READ_ATTR = FSM_Steady(1),
+        WRITE_ATTR = FSM_Steady(1),
         FINISH = FSM_Steady(2),
     };
 
@@ -48,55 +48,55 @@ void GetAttr::handleServerMessage(cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            FSM_Goto(currentState, READ_ATTR);
+            FSM_Goto(currentState, WRITE_ATTR);
             break;
         }
-        case FSM_Enter(READ_ATTR):
+        case FSM_Enter(WRITE_ATTR):
         {
-            assert(0 != dynamic_cast<spfsGetAttrRequest*>(msg));
-            enterReadAttr();
+            assert(0 != dynamic_cast<spfsSetAttrRequest*>(msg));
+            enterWriteAttr();
             break;
         }
-        case FSM_Exit(READ_ATTR):
+        case FSM_Exit(WRITE_ATTR):
         {
             FSM_Goto(currentState, FINISH);
             break;
         }
         case FSM_Enter(FINISH):
         {
-            assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
+            assert(0 != dynamic_cast<spfsOSFileWriteResponse*>(msg));
             enterFinish();
             break;
         }
     }
 
     // Store current state
-    getAttrReq_->setState(currentState);
+    setAttrReq_->setState(currentState);
 }
 
-void GetAttr::enterReadAttr()
+void SetAttr::enterWriteAttr()
 {
     // Convert the handle into a local file name
-    Filename filename(getAttrReq_->getHandle());
+    Filename filename(setAttrReq_->getHandle());
 
     // Create the file write request
-    spfsOSFileReadRequest* fileRead = new spfsOSFileReadRequest();
-    fileRead->setFilename(filename.c_str());
-    fileRead->setOffset(0);
-    fileRead->setExtent(module_->getDefaultAttrSize());
-    fileRead->setContextPointer(getAttrReq_);
+    spfsOSFileWriteRequest* fileWrite = new spfsOSFileWriteRequest();
+    fileWrite->setFilename(filename.c_str());
+    fileWrite->setOffset(0);
+    fileWrite->setExtent(module_->getDefaultAttrSize());
+    fileWrite->setContextPointer(setAttrReq_);
     
     // Send the write request
-    module_->send(fileRead, "storageOut");
+    module_->send(fileWrite, "storageOut");
 }
 
-void GetAttr::enterFinish()
+void SetAttr::enterFinish()
 {
     // Send the final response
-    spfsGetAttrResponse* resp = new spfsGetAttrResponse(
+    spfsSetAttrResponse* resp = new spfsSetAttrResponse(
         0, SPFS_GET_ATTR_RESPONSE);
-    resp->setContextPointer(getAttrReq_);
-    resp->setByteLength(FSServer::getDefaultAttrSize());
+    resp->setContextPointer(setAttrReq_);
+    resp->setByteLength(4);
     module_->send(resp, "netOut");
 }
 

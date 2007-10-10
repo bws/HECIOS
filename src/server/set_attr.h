@@ -1,5 +1,5 @@
-#ifndef GET_ATTR_H
-#define GET_ATTR_H
+#ifndef SET_ATTR_H
+#define SET_ATTR_H
 //
 // This file is part of Hecios
 //
@@ -21,30 +21,30 @@
 //
 
 class cMessage;
-class spfsGetAttrRequest;
+class spfsSetAttrRequest;
 class FSServer;
 
 /**
- * Provides the FSM for procesing Get Attribute requests to this server
+ * Provides the FSM for procesing Set Attribute requests to this server
  */
-class GetAttr
+class SetAttr
 {
 public:
 
     /** Constructor */
-    GetAttr(FSServer* module, spfsGetAttrRequest* getAttrReq);
+    SetAttr(FSServer* module, spfsSetAttrRequest* setAttrReq);
 
     /**
-     * Handle the arrival of a message during get attr processing
+     * Handle the arrival of a message during set attr processing
      */
     void handleServerMessage(cMessage* msg);
 
 protected:
 
     /**
-     * Perform action when entering the READ_ATTR state
+     * Perform action when entering the WRITE_ATTR state
      */
-    void enterReadAttr();
+    void enterWriteAttr();
     
     /**
      * Perform action when entering the FINISH state
@@ -56,8 +56,8 @@ private:
     /** The parent module */
     FSServer* module_;
     
-    /** The originating get attr request */
-    spfsGetAttrRequest* getAttrReq_;
+    /** The originating set attr request */
+    spfsSetAttrRequest* setAttrReq_;
 };
 
 #endif
@@ -68,5 +68,5 @@ private:
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

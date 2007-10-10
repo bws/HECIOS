@@ -44,7 +44,8 @@ void FileBuilder::clearState()
 }
 
 FileBuilder::FileBuilder()
-    : nextServerNumber_(0)
+    : defaultMetaDataSize_(0),
+      nextServerNumber_(0)
 {
 }
 
@@ -58,6 +59,11 @@ FileBuilder::~FileBuilder()
         delete meta;
         ++iter;
     }
+}
+
+void FileBuilder::setDefaultMetaDataSize(size_t metaDataSize)
+{
+    defaultMetaDataSize_ = metaDataSize;
 }
 
 int FileBuilder::registerFSServer(const HandleRange& range, bool isMetaServer)
@@ -153,7 +159,7 @@ void FileBuilder::createDirectory(const Filename& dirName,
         Filename storageName(meta->handle);
         layoutManager.addFile((size_t)metaServer,
                               storageName,
-                              DEFAULT_METADATA_SIZE);
+                              defaultMetaDataSize_);
 
         // Record bookkeeping information
         nameToHandleMap_[dirName.str()] = meta->handle;
@@ -190,7 +196,7 @@ void FileBuilder::createFile(const Filename& fileName,
         // Construct the storage layout for the file metadata
         Filename storageMeta(meta->handle);
         layoutManager.addFile((size_t)metaServer, storageMeta,
-                              DEFAULT_METADATA_SIZE);
+                              defaultMetaDataSize_);
         
         // Construct the data handles
         cerr << "Creating file on " << numServers << endl;

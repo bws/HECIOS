@@ -25,6 +25,7 @@
 #include "get_attr.h"
 #include "lookup.h"
 #include "read.h"
+#include "set_attr.h"
 #include "write.h"
 #include "pvfs_proto_m.h"
 #include "pfs_utils.h"
@@ -33,6 +34,18 @@ using namespace std;
 
 // OMNet Registration Method
 Define_Module(FSServer);
+
+size_t FSServer::defaultAttrSize_ = 0;
+
+size_t FSServer::getDefaultAttrSize()
+{
+    return defaultAttrSize_;
+}
+
+void FSServer::setDefaultAttrSize(size_t attrSize)
+{
+    defaultAttrSize_ = attrSize;
+}
 
 /**
  * Initialization - Set the name and handle range
@@ -105,6 +118,12 @@ void FSServer::processMessage(spfsRequest* request, cMessage* msg)
         {
             Read read(this, dynamic_cast<spfsReadRequest*>(request));
             read.handleServerMessage(msg);
+            break;
+        }
+        case SPFS_SET_ATTR_REQUEST:
+        {
+            SetAttr setAttr(this, dynamic_cast<spfsSetAttrRequest*>(request));
+            setAttr.handleServerMessage(msg);
             break;
         }
         case SPFS_WRITE_REQUEST:

@@ -30,6 +30,7 @@ TEST_CLIENT_DIR := $(TEST_DIR)/client
 TEST_COMMON_DIR := $(TEST_DIR)/common
 TEST_LAYOUT_DIR := $(TEST_DIR)/layout
 TEST_OS_DIR := $(TEST_DIR)/os
+TEST_SERVER_DIR := $(TEST_DIR)/server
 TEST_SUPPORT_DIR := $(TEST_DIR)/support
 
 TEST_LIBS := -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
@@ -49,8 +50,8 @@ include $(TEST_CLIENT_DIR)/module.mk
 include $(TEST_COMMON_DIR)/module.mk
 include $(TEST_LAYOUT_DIR)/module.mk
 include $(TEST_OS_DIR)/module.mk
+include $(TEST_SERVER_DIR)/module.mk
 include $(TEST_SUPPORT_DIR)/module.mk
-
 
 #
 # Testing dependencies
@@ -73,7 +74,13 @@ SIM_TEST_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_TEST_SRC)))
 #
 # Build unit test drivers
 #
-tests_all: $(BIN_DIR)/common_test $(BIN_DIR)/client_test $(BIN_DIR)/layout_test $(BIN_DIR)/os_test
+TEST_EXES = $(BIN_DIR)/common_test \
+	$(BIN_DIR)/client_test \
+	$(BIN_DIR)/layout_test \
+	$(BIN_DIR)/os_test \
+	$(BIN_DIR)/server_test
+
+tests_all: $(TEST_EXES)
 
 #
 # Cleanup test subsystem
@@ -85,7 +92,7 @@ tests_clean:
 	@echo "Derived files deleted."
 
 #
-# client module unit tests
+# client package unit tests
 #
 CLIENT_TEST_OBJS = $(TEST_CLIENT_DIR)/unit_test.o \
 	$(TEST_SUPPORT_DIR)/csimple_module_tester.o \
@@ -96,7 +103,7 @@ $(BIN_DIR)/client_test: $(CLIENT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet
 	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
 
 #
-# common module unit tests
+# common package unit tests
 #
 COMMON_TEST_OBJS = $(TEST_COMMON_DIR)/unit_test.o \
 	$(TEST_SUPPORT_DIR)/test_cenvir.o
@@ -106,7 +113,7 @@ $(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet
 	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
 
 #
-# layout module unit tests
+# layout package unit tests
 #
 LAYOUT_TEST_OBJS = $(TEST_LAYOUT_DIR)/unit_test.o \
 	$(TEST_SUPPORT_DIR)/test_cenvir.o
@@ -116,13 +123,24 @@ $(BIN_DIR)/layout_test: $(LAYOUT_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet
 	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
 
 #
-# OS module unit tests
+# OS package unit tests
 #
 OS_TEST_OBJS = $(TEST_OS_DIR)/unit_test.o \
 	$(TEST_SUPPORT_DIR)/csimple_module_tester.o \
 	$(TEST_SUPPORT_DIR)/test_cenvir.o
 
 $(BIN_DIR)/os_test: $(OS_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
+	@mkdir -p $(BIN_DIR)
+	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
+
+#
+# Server package unit tests
+#
+SERVER_TEST_OBJS = $(TEST_SERVER_DIR)/unit_test.o \
+	$(TEST_SUPPORT_DIR)/csimple_module_tester.o \
+	$(TEST_SUPPORT_DIR)/test_cenvir.o
+
+$(BIN_DIR)/server_test: $(SERVER_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
 	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
 
