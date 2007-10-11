@@ -92,6 +92,8 @@ void FSServer::handleMessage(cMessage* msg)
         spfsRequest* origRequest =
             static_cast<spfsRequest*>(parentReq->contextPointer());
         processMessage(origRequest, msg);
+        delete parentReq;
+        delete msg;
     }
 }
 

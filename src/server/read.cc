@@ -71,11 +71,6 @@ void Read::handleServerMessage(cMessage* msg)
         {
             assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
             enterFinish();
-
-            // Cleanup the message created to read data and its response
-            delete static_cast<cMessage*>(msg->contextPointer());
-            delete msg;
-            
             break;
         }
     }
