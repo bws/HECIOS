@@ -22,6 +22,7 @@
  * Unit test driver for subsystem module
  */
 #include <cppunit/TextTestRunner.h>
+#include "native_file_system_test.h"
 #include "no_translation_test.h"
 #include "storage_layout_test.h"
 
@@ -32,6 +33,7 @@ int main(int argc, char** argv)
     CppUnit::TextTestRunner runner;
 
     // Add all of the requisite tests
+    runner.addTest( NativeFileSystemTest::suite() );
     runner.addTest( NoTranslationTest::suite() );
     runner.addTest( StorageLayoutTest::suite() );
 

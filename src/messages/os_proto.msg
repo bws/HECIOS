@@ -61,6 +61,9 @@ message spfsOSFileRequest
 {
     fields:
         string filename;
+
+        // internal fields
+        cFSM state;
 }
 
 // Abstract base class for all OS File requests

@@ -71,14 +71,19 @@ protected:
     /** Allocate disk storage for a new file */
     virtual void allocateFileStorage(const Filename& filename,
                                      FSSize size) = 0;
-    
+
 private:
+    /** Process the the multiple messages for a single File request */
+    void processMessage(spfsOSFileIORequest* request, cMessage* msg);
 
     /** Send a request for the meta data blocks for a File I/O request */
-    void sendMetaDataRequest(spfsOSFileIORequest* ioRequest);
+    void readMetaData(spfsOSFileIORequest* ioRequest);
 
     /** Send a request for the data blocks for a file I/O request */
-    void sendDataRequest(spfsOSFileIORequest* ioRequest);
+    void performIO(spfsOSFileIORequest* ioRequest);
+
+    /** Update the meta data to signal the file I/O has been performed */
+    void writeMetaData(spfsOSFileIORequest* ioRequest);
 
     /** Send the final read or write response */
     void sendFileIOResponse(spfsOSFileIORequest* ioRequest);
@@ -107,6 +112,7 @@ private:
  * - Configurable block size
  * - Contiguous disk layout
  * - Loads metadata before accessing data blocks
+ * - Writes first metadata block on reads and writes (i.e. modifies the atime)
  *
  * TODO: The following additional feature(s) are desired:
  * - Read block before writing partial blocks

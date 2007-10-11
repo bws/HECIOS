@@ -71,7 +71,7 @@ void NoTranslationTest::testHandleMessage()
     spfsOSReadBlocksRequest blocksRequest;
     blocksRequest.setContextPointer(&ioRequest);
     moduleTester.deliverMessage(&blocksRequest, "in");
-    cMessage* output1 = moduleTester.getOutputMessage();
+    cMessage* output1 = moduleTester.popOutputMessage();
     CPPUNIT_ASSERT(0 == output1);
     
     // Test a response that triggers a response

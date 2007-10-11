@@ -1,7 +1,6 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2006 Joel Sherrill <joel@oarcorp.com>
 // Copyright (C) 2007 Brad Settlemyer
 //
 // This program is free software; you can redistribute it and/or
@@ -69,49 +68,122 @@ void FileSystem::finish()
 //
 void FileSystem::handleMessage(cMessage *msg)
 {
+    // If the message is a new client request, process it directly
+    // Otherwise its a response, extract the originating request
+    // and then process the response
     if (msg->arrivalGateId() == inGateId_)
     {
-        // Handle the incoming File I/O request
-        spfsOSFileIORequest* ioReq = dynamic_cast<spfsOSFileIORequest*>(msg);
-
-        // Mark the metadata as not yet loaded
-        ioReq->setHasMetaDataLoaded(false);
-
-        // Send the meta data request
-        sendMetaDataRequest(ioReq);
+        processMessage(dynamic_cast<spfsOSFileIORequest*>(msg), msg);
     }
     else
     {
-        cMessage* blockRequest = (cMessage*)msg->contextPointer();
-        cMessage* parentRequest = (cMessage*)blockRequest->contextPointer();
-        spfsOSFileIORequest* ioReq =
-            dynamic_cast<spfsOSFileIORequest*>(parentRequest);
-        assert(0 != ioReq);
-        
-        // If this is metadata, send the data request
-        // else send out the final response
-        if (!ioReq->getHasMetaDataLoaded())
-        {
-            // Mark the meta data loaded
-            ioReq->setHasMetaDataLoaded(true);
-            sendDataRequest(ioReq);
-        }
-        else
-        {
-            sendFileIOResponse(ioReq);
-        }
-
-        // Clean up the block request and response
-        delete blockRequest;
+        cMessage* parentReq = static_cast<cMessage*>(msg->contextPointer());
+        spfsOSFileIORequest* origRequest =
+            static_cast<spfsOSFileIORequest*>(parentReq->contextPointer());
+        processMessage(origRequest, msg);
+        delete parentReq;
         delete msg;
     }
+
 }
 
-void FileSystem::sendMetaDataRequest(spfsOSFileIORequest* ioRequest)
+void FileSystem::processMessage(spfsOSFileIORequest* request, cMessage* msg)
+{
+    // Restore the existing state for this request
+    assert(0 != request);
+    cFSM currentState = request->getState();
+
+    // File System I/O states
+    enum {
+        INIT = 0,
+        READ_META = FSM_Steady(1),
+        SEND_IO_REQUEST = FSM_Transient(2),
+        WRITE_META = FSM_Steady(3),
+        IO_COMPLETE = FSM_Steady(4),
+        META_COMPLETE = FSM_Steady(5),
+        FINISH = FSM_Steady(7),
+    };
+
+    FSM_Switch(currentState)
+    {
+        case FSM_Exit(INIT):
+        {
+            assert(0 != dynamic_cast<spfsOSFileIORequest*>(msg));
+            FSM_Goto(currentState, READ_META);
+            break;
+        }
+        case FSM_Enter(READ_META):
+        {
+            assert(0 != dynamic_cast<spfsOSFileIORequest*>(msg));
+            readMetaData(request);
+            break;
+        }
+        case FSM_Exit(READ_META):
+        {
+            assert(0 != dynamic_cast<spfsOSReadBlocksResponse*>(msg));
+            FSM_Goto(currentState, SEND_IO_REQUEST);
+            break;
+        }
+        case FSM_Enter(SEND_IO_REQUEST):
+        {
+            assert(0 != dynamic_cast<spfsOSReadBlocksResponse*>(msg));
+            performIO(request);
+            break;
+        }
+        case FSM_Exit(SEND_IO_REQUEST):
+        {
+            assert(0 != dynamic_cast<spfsOSReadBlocksResponse*>(msg));
+            FSM_Goto(currentState, WRITE_META);
+            break;
+        }
+        case FSM_Enter(WRITE_META):
+        {
+            assert(0 != dynamic_cast<spfsOSReadBlocksResponse*>(msg));
+            writeMetaData(request);
+            break;
+        }
+        case FSM_Exit(WRITE_META):
+        {
+            // Note this is a little misleading, but it works okay
+            // The point is we need both the io and meta to finish
+            // before sending the final response
+            if (0 == dynamic_cast<spfsOSReadBlocksResponse*>(msg))
+            {
+                FSM_Goto(currentState, IO_COMPLETE);
+            }
+            else
+            {
+                FSM_Goto(currentState, META_COMPLETE);
+            }
+            break;
+        }
+        case FSM_Exit(IO_COMPLETE):
+        {
+            FSM_Goto(currentState, FINISH);
+            break;
+        }
+        case FSM_Exit(META_COMPLETE):
+        {
+            FSM_Goto(currentState, FINISH);
+            break;
+        }
+        case FSM_Enter(FINISH):
+        {
+            sendFileIOResponse(request);
+            break;
+        }
+    }
+
+    // Store current state
+    request->setState(currentState);
+}
+
+void FileSystem::readMetaData(spfsOSFileIORequest* ioRequest)
 {
     // Lookup the metadata blocks
     Filename filename(ioRequest->getFilename());
     vector<FSBlock> blocks = getMetaDataBlocks(filename);
+    assert(0 != blocks.size());
 
     // Construct the read message
     spfsOSReadBlocksRequest* readBlocks =
@@ -123,7 +195,7 @@ void FileSystem::sendMetaDataRequest(spfsOSFileIORequest* ioRequest)
     send(readBlocks, requestGateId_);
 }
 
-void FileSystem::sendDataRequest(spfsOSFileIORequest* ioRequest)
+void FileSystem::performIO(spfsOSFileIORequest* ioRequest)
 {
     // Convert the file system request into block requests
     Filename filename(ioRequest->getFilename());
@@ -152,6 +224,22 @@ void FileSystem::sendDataRequest(spfsOSFileIORequest* ioRequest)
             writeBlocks->setBlocks(i, blocks[i]);
         send(writeBlocks, requestGateId_);
     }
+}
+
+void FileSystem::writeMetaData(spfsOSFileIORequest* ioRequest)
+{
+    // Lookup the metadata blocks
+    Filename filename(ioRequest->getFilename());
+    vector<FSBlock> blocks = getMetaDataBlocks(filename);
+    assert(0 != blocks.size());
+    
+    // Write the first meta data block to simulate updating the atime
+    spfsOSWriteBlocksRequest* writeBlock =
+        new spfsOSWriteBlocksRequest(0, SPFS_OS_WRITE_BLOCKS_REQUEST);
+    writeBlock->setContextPointer(ioRequest);
+    writeBlock->setBlocksArraySize(1);
+    writeBlock->setBlocks(0, blocks[0]);
+    send(writeBlock, requestGateId_);
 }
 
 void FileSystem::sendFileIOResponse(spfsOSFileIORequest* ioRequest)

@@ -24,6 +24,8 @@ using namespace std;
 StorageLayout::StorageLayout(size_t blockSize)
     : fsBlockSize_(blockSize)
 {
+    assert(0 < fsBlockSize_);
+    
     // Assume the IONodes are in blocks 0 - 999
     nextMetaDataBlock_ = 0;
     nextDataBlock_ = 1000;

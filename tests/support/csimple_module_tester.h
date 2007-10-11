@@ -20,6 +20,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <cstddef>
+#include <string>
 #include <vector>
 #include <omnetpp.h>
 
@@ -33,10 +34,15 @@ class cSimpleModuleTester : public cModule
 public:
 
     /** Create the tester for module */
-    cSimpleModuleTester(const char* moduleTypeName, const char* nedFile);
+    cSimpleModuleTester(const char* moduleTypeName,
+                        const char* nedFile,
+                        bool autoInitialize = true);
 
     /** Destructor */
     ~cSimpleModuleTester();
+
+    /** Initialize the module */
+    void callInitialize();
     
     /** Deliver a message to the module */
     void deliverMessage(cMessage* msg, const char* inGateName);
@@ -44,6 +50,9 @@ public:
     /** Deliver a message to the module */
     void deliverMessage(cMessage* msg, cGate* inGate);
 
+    /** @return the module being tested */
+    cSimpleModule* getModule() const { return module_; };
+    
     /**
      * @return the number of output messages sent by the module
      */
@@ -59,6 +68,12 @@ public:
      */
     cMessage* getOutputMessage(std::size_t idx) const;
     
+    /**
+     * @return the most recently sent message by the module and removes it
+     * from the list of output messages
+     */
+    cMessage* popOutputMessage();
+
 protected:
 
     /** Called when the module to test sends an outgoing message */
@@ -69,11 +84,20 @@ protected:
 
 private:
 
+    /** Load a ned file if it hasn't been previously loaded */
+    static void loadNedFile(const char* nedFile);
+    
     /** The simulation object required to deliver messages */
     static cSimulation* sim_;
 
+    /** List of nedfiles that have been loaded */
+    static std::vector<std::string> loadedNedFiles_;
+    
     /** The module to send the test message to */
     cSimpleModule* module_;
+
+    /** Set to true after the model has been initialized */
+    bool moduleInitialized_;
 
     /** Dummy gates to connect to the test module */
     std::vector<cGate*> dummyGates_;

@@ -18,31 +18,29 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "csimple_module_tester.h"
+#include <algorithm>
 #include <cassert>
 #include <string>
 using namespace std;
 
 cSimulation* cSimpleModuleTester::sim_ = 0;
+vector<string> cSimpleModuleTester::loadedNedFiles_;
 
 cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
-                                         const char* nedFile)
+                                         const char* nedFile,
+                                         bool autoInitialize)
     : cModule(),
-      module_(0)
+      module_(0),
+      moduleInitialized_(false)
 {
     // Create the simulation if one does not exist
     if (0 == sim_)
     {
         sim_ = new cSimulation("cSimpleModuleTesterSimulation");
-
-        // FIXME: Strictly speaking, this is not correct, we need to make
-        // sure that this ned file has not been loaded before
-        //
-        // Better would be to figure out why we can't just create a new
-        // simulation for each cSimpleModuleTester
-        //
-        // Load the ned file to construct the gates
-        sim_->loadNedFile(nedFile);
     }
+
+    // Attempt to load the ned file into the simulation
+    loadNedFile(nedFile);
     
     // Retrieve the constructed module interface
     cModuleInterface* moduleIF =
@@ -75,13 +73,16 @@ cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
     //sim_->setSystemModule(module_);
     //sim_->registerModule(module_);
 
-    // Initialize the module
-    module_->callInitialize();
+    // Initialize if requested
+    if (autoInitialize)
+    {
+        callInitialize();
+    }
 }
 
 cSimpleModuleTester::~cSimpleModuleTester()
 {
-    // Cleanup the message arrivals
+    // Cleanup the message arrivals first
     for (size_t i = 0; i < arrivals_.size(); i++)
     {
         delete arrivals_[i];
@@ -96,7 +97,10 @@ cSimpleModuleTester::~cSimpleModuleTester()
     //sim_ = 0;
     
     // Cleanup module
-    module_->callFinish();
+    if (moduleInitialized_)
+    {
+        module_->callFinish();
+    }
     delete module_;
     module_ = 0;
 
@@ -107,14 +111,24 @@ cSimpleModuleTester::~cSimpleModuleTester()
     }
 }
 
+void cSimpleModuleTester::callInitialize()
+{
+    module_->callInitialize();
+    moduleInitialized_ = true;    
+}
+
 void cSimpleModuleTester::deliverMessage(cMessage* msg, const char* inGateName)
 {
+    assert(true == moduleInitialized_);
     cGate* inGate = module_->gate(inGateName);
     deliverMessage(msg, inGate);
 }
 
 void cSimpleModuleTester::deliverMessage(cMessage* msg, cGate* inGate)
 {
+    assert(true == moduleInitialized_);
+    assert(0 != inGate);
+    
     // Set the message's arrival data
     msg->setArrival(module_, inGate->id());
 
@@ -146,6 +160,17 @@ cMessage* cSimpleModuleTester::getOutputMessage(size_t idx) const
     return arrivals_[idx];
 }
 
+cMessage* cSimpleModuleTester::popOutputMessage()
+{
+    cMessage* out = 0;
+    if (0 < arrivals_.size())
+    {
+        out = arrivals_.back();
+        arrivals_.pop_back();
+    }
+    return out;
+}
+
 void cSimpleModuleTester::arrived(cMessage* msg, int, simtime_t)
 {
     arrivals_.push_back(msg);
@@ -156,6 +181,28 @@ void cSimpleModuleTester::scheduleStart(simtime_t)
     cerr << "Schedule started" << endl;
 }
 
+void cSimpleModuleTester::loadNedFile(const char* nedFile)
+{
+    assert(0 != sim_);
+    // FIXME: Strictly speaking, this is not correct, we need to make
+    // sure that this ned file has not been loaded before, but because
+    // relative and absolute paths may differ, this only works because
+    // I always use the shortest possible relative path
+    //
+    // Better would be to figure out why we can't just create a new
+    // simulation for each cSimpleModuleTester
+    //
+    vector<string>::const_iterator iter = find(loadedNedFiles_.begin(),
+                                               loadedNedFiles_.end(),
+                                               nedFile);
+    // If the nedfile isn't already loaded
+    if (loadedNedFiles_.end() == iter)
+    {
+        // Load the ned file to construct the gates
+        sim_->loadNedFile(nedFile);
+        loadedNedFiles_.push_back(nedFile);
+    }
+}
 /*
  * Local variables:
  *  c-indent-level: 4

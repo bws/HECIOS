@@ -79,6 +79,9 @@ void FSServer::setNumber(size_t number)
 
 void FSServer::handleMessage(cMessage* msg)
 {
+    // If the message is a new client request, process it directly
+    // Otherwise its a response, extract the originating request
+    // and then process the response
     if (msg->arrivalGateId() == netInGateId_)
     {
         processMessage(dynamic_cast<spfsRequest*>(msg), msg);
@@ -102,16 +105,16 @@ void FSServer::processMessage(spfsRequest* request, cMessage* msg)
             create.handleServerMessage(msg);
             break;
         }
-        case SPFS_LOOKUP_PATH_REQUEST:
-        {
-            Lookup lookup(this, dynamic_cast<spfsLookupPathRequest*>(request));
-            lookup.handleServerMessage(msg);
-            break;
-        }
         case SPFS_GET_ATTR_REQUEST:
         {
             GetAttr getAttr(this, dynamic_cast<spfsGetAttrRequest*>(request));
             getAttr.handleServerMessage(msg);
+            break;
+        }
+        case SPFS_LOOKUP_PATH_REQUEST:
+        {
+            Lookup lookup(this, dynamic_cast<spfsLookupPathRequest*>(request));
+            lookup.handleServerMessage(msg);
             break;
         }
         case SPFS_READ_REQUEST:
