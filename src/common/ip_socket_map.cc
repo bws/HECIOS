@@ -24,6 +24,11 @@ using namespace std;
 
 IPSocketMap::~IPSocketMap()
 {
+    clear();
+}
+
+void IPSocketMap::clear()
+{
     // Delete the allocated sockets
     map<string, TCPSocket *>::iterator iter;
     for (iter = ipSocketMap_.begin(); iter != ipSocketMap_.end(); ++iter)
@@ -60,10 +65,10 @@ void IPSocketMap::removeSocket(const string& ipAddr)
     }
 }
 
-TCPSocket* IPSocketMap::getSocket(const string& ipAddr)
+TCPSocket* IPSocketMap::getSocket(const string& ipAddr) const
 {
     TCPSocket* socket = 0;
-    map<string, TCPSocket *>::iterator pos = ipSocketMap_.find(ipAddr);
+    map<string, TCPSocket *>::const_iterator pos = ipSocketMap_.find(ipAddr);
     if (ipSocketMap_.end() != pos)
     {
         socket = pos->second;

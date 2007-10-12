@@ -73,13 +73,13 @@ void FileSystem::handleMessage(cMessage *msg)
     // and then process the response
     if (msg->arrivalGateId() == inGateId_)
     {
-        processMessage(dynamic_cast<spfsOSFileIORequest*>(msg), msg);
+        processMessage(dynamic_cast<spfsOSFileRequest*>(msg), msg);
     }
     else
     {
         cMessage* parentReq = static_cast<cMessage*>(msg->contextPointer());
-        spfsOSFileIORequest* origRequest =
-            static_cast<spfsOSFileIORequest*>(parentReq->contextPointer());
+        spfsOSFileRequest* origRequest =
+            static_cast<spfsOSFileRequest*>(parentReq->contextPointer());
         processMessage(origRequest, msg);
         delete parentReq;
         delete msg;
@@ -87,7 +87,50 @@ void FileSystem::handleMessage(cMessage *msg)
 
 }
 
-void FileSystem::processMessage(spfsOSFileIORequest* request, cMessage* msg)
+void FileSystem::processMessage(spfsOSFileRequest* request, cMessage* msg)
+{
+    if (spfsOSFileIORequest* ioReq =
+        dynamic_cast<spfsOSFileIORequest*>(request))
+    {
+        processIOMessage(ioReq, msg);
+    }
+    else if (spfsOSFileOpenRequest* openReq =
+             dynamic_cast<spfsOSFileOpenRequest*>(request))
+    {
+        processOpenMessage(openReq, msg);
+    }
+    else
+    {
+        cerr << "FileSystem: Illegal request sent to file system!!!" << endl;
+    }
+}
+
+void FileSystem::processOpenMessage(spfsOSFileOpenRequest* request,
+                                    cMessage* msg)
+{
+    // If this is the opening request, send the metadata request
+    // else its the meta data response, send the final response
+    if (request == msg)
+    {
+        if (true == request->getIsCreate())
+        {
+            writeMetaData(request);
+        }
+        else
+        {
+            readMetaData(request);
+        }
+    }
+    else
+    {
+        spfsOSFileOpenResponse* response =
+            new spfsOSFileOpenResponse(0, SPFS_OS_FILE_OPEN_RESPONSE);
+        response->setContextPointer(request);
+        send(response, outGateId_);
+    }
+}
+
+void FileSystem::processIOMessage(spfsOSFileIORequest* request, cMessage* msg)
 {
     // Restore the existing state for this request
     assert(0 != request);
@@ -178,21 +221,37 @@ void FileSystem::processMessage(spfsOSFileIORequest* request, cMessage* msg)
     request->setState(currentState);
 }
 
-void FileSystem::readMetaData(spfsOSFileIORequest* ioRequest)
+void FileSystem::readMetaData(spfsOSFileRequest* request)
 {
     // Lookup the metadata blocks
-    Filename filename(ioRequest->getFilename());
+    Filename filename(request->getFilename());
     vector<FSBlock> blocks = getMetaDataBlocks(filename);
     assert(0 != blocks.size());
 
     // Construct the read message
     spfsOSReadBlocksRequest* readBlocks =
         new spfsOSReadBlocksRequest(0, SPFS_OS_READ_BLOCKS_REQUEST);
-    readBlocks->setContextPointer(ioRequest);
+    readBlocks->setContextPointer(request);
     readBlocks->setBlocksArraySize(blocks.size());
     for (size_t i = 0; i < blocks.size(); i++)
         readBlocks->setBlocks(i, blocks[i]);
     send(readBlocks, requestGateId_);
+}
+
+void FileSystem::writeMetaData(spfsOSFileRequest* request)
+{
+    // Lookup the metadata blocks
+    Filename filename(request->getFilename());
+    vector<FSBlock> blocks = getMetaDataBlocks(filename);
+    assert(0 != blocks.size());
+    
+    // Write the first meta data block to simulate updating the atime
+    spfsOSWriteBlocksRequest* writeBlock =
+        new spfsOSWriteBlocksRequest(0, SPFS_OS_WRITE_BLOCKS_REQUEST);
+    writeBlock->setContextPointer(request);
+    writeBlock->setBlocksArraySize(1);
+    writeBlock->setBlocks(0, blocks[0]);
+    send(writeBlock, requestGateId_);
 }
 
 void FileSystem::performIO(spfsOSFileIORequest* ioRequest)
@@ -224,22 +283,6 @@ void FileSystem::performIO(spfsOSFileIORequest* ioRequest)
             writeBlocks->setBlocks(i, blocks[i]);
         send(writeBlocks, requestGateId_);
     }
-}
-
-void FileSystem::writeMetaData(spfsOSFileIORequest* ioRequest)
-{
-    // Lookup the metadata blocks
-    Filename filename(ioRequest->getFilename());
-    vector<FSBlock> blocks = getMetaDataBlocks(filename);
-    assert(0 != blocks.size());
-    
-    // Write the first meta data block to simulate updating the atime
-    spfsOSWriteBlocksRequest* writeBlock =
-        new spfsOSWriteBlocksRequest(0, SPFS_OS_WRITE_BLOCKS_REQUEST);
-    writeBlock->setContextPointer(ioRequest);
-    writeBlock->setBlocksArraySize(1);
-    writeBlock->setBlocks(0, blocks[0]);
-    send(writeBlock, requestGateId_);
 }
 
 void FileSystem::sendFileIOResponse(spfsOSFileIORequest* ioRequest)

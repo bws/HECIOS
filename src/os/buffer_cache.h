@@ -77,6 +77,18 @@ protected:
     virtual void initializeCache() = 0;
 
     /**
+     *  This method is invoked at the end of the simulation
+     *  run by the @ref BufferCache::finish method to allow for
+     *  Cache algorithm specific finalization actions.
+     *
+     *  @param msg (in) is the message to be processed.
+     *
+     *  @note This method is a hook function which is assumed to be
+     *  provided by a derived class to (re)define the behaviour.
+     */
+    virtual void finalizeCache() = 0;
+
+    /**
      *  @param msg (in) is the message to be processed.
      *
      *  @note This method is a hook function which is assumed to be
@@ -141,6 +153,9 @@ protected:
     /** No-op */
     virtual void initializeCache();
 
+    /** No-op */
+    virtual void finalizeCache();
+
     /** @return false */
     virtual bool isCached(LogicalBlockAddress address);
 
@@ -173,6 +188,10 @@ protected:
     /**
      */
     virtual void initializeCache();
+
+    /**
+     */
+    virtual void finalizeCache();
 
     /**
      */

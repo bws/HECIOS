@@ -25,7 +25,7 @@ class spfsCreateRequest;
 class FSServer;
 
 /**
- *
+ * State machine for performing data object creation processing
  */
 class Create
 {
@@ -35,21 +35,21 @@ public:
     Create(FSServer* module, spfsCreateRequest* createReq);
 
     /**
-     *
+     * Handle message as part of the creation process
      */
     void handleServerMessage(cMessage* msg);
 
 protected:
 
     /**
-     *
+     * Send the file creation message to the OS
      */
-    void enterFinish();
+    void enterCreate();
     
     /**
-     *
+     * Send the final response to the client
      */
-    void exitFinish(spfsCreateRequest* createReq);
+    void enterFinish();
     
 private:
 

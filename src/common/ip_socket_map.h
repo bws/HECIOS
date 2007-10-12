@@ -35,14 +35,17 @@ public:
     /** Destructor */
     ~IPSocketMap();
     
+    /** @return the TCPSocket for key ip, or NULL if ip is not in the map */
+    TCPSocket* getSocket(const std::string& ip) const;
+
+    /** Remove and deallocate all stored sockets */
+    void clear();
+    
     /** Add a IP to TCPSocket map entry */
     void addSocket(const std::string& ip, TCPSocket* socket);
 
     /** Remove the mapping entry for key ip */
     void removeSocket(const std::string& ip);
-
-    /** @return the TCPSocket for key ip, or NULL if ip is not in the map */
-    TCPSocket* getSocket(const std::string& ip);
 
 private:
 

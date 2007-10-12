@@ -45,7 +45,7 @@ protected:
     virtual void initialize();
 
     /** Implementation of finish */
-    virtual void finish() {};
+    virtual void finish();
 
     /** Implementation of cSimpleModule::handleMessage */
     virtual void handleMessage(cMessage* msg);
@@ -95,6 +95,11 @@ void BMITcpServer::initialize()
     bmiInGateId_ = gate("bmiIn")->id();
     tcpInGateId_ = gate("tcpIn")->id();
 
+}
+
+void BMITcpServer::finish()
+{
+    socketMap_.deleteSockets();
 }
 
 /**

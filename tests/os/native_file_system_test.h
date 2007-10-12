@@ -37,6 +37,8 @@ class NativeFileSystemTest : public CppUnit::TestFixture
     // Create generic unit test and register test functions for automatic
     // exercise
     CPPUNIT_TEST_SUITE(NativeFileSystemTest);
+    CPPUNIT_TEST(testFileOpenNoCreate);
+    CPPUNIT_TEST(testFileOpenWithCreate);
     CPPUNIT_TEST(testFileRead);
     CPPUNIT_TEST(testFileWrite);
     CPPUNIT_TEST_SUITE_END();
@@ -48,6 +50,12 @@ public:
 
     /** Called after each test function */
     virtual void tearDown();
+
+    /** Test components of a OSFileOpen request without creation */
+    void testFileOpenNoCreate();
+
+    /** Test components of a OSFileOpen request with creation */
+    void testFileOpenWithCreate();
 
     /** Test components of a OSFileRead request */
     void testFileRead();
@@ -78,6 +86,68 @@ void NativeFileSystemTest::tearDown()
     // Cleanup module
     delete moduleTester_;
     moduleTester_ = 0;
+}
+
+// Test an OSFileOpen request with IsCreate set to false
+void NativeFileSystemTest::testFileOpenNoCreate()
+{
+    // Allocate the file system storage manually
+    Filename testFile("/testFile");
+    FileSystem* fs = (FileSystem*)moduleTester_->getModule();
+    fs->createFile(testFile, 10000);
+
+    // Send the OSFileOpen request
+    spfsOSFileOpenRequest fileOpen(0, SPFS_OS_FILE_OPEN_REQUEST);
+    fileOpen.setFilename(testFile.c_str());
+    fileOpen.setIsCreate(false);
+    moduleTester_->deliverMessage(&fileOpen, "in");
+
+    // Test that file system reads meta data
+    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    cMessage* out1 = moduleTester_->popOutputMessage();
+    CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSReadBlocksRequest*>(out1));
+
+    // Send the read data response
+    spfsOSReadBlocksResponse* readDataResponse =
+        new spfsOSReadBlocksResponse(0, SPFS_OS_READ_BLOCKS_RESPONSE);
+    readDataResponse->setContextPointer(out1);
+    moduleTester_->deliverMessage(readDataResponse, "response");
+
+    // Test that final response is sent
+    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    cMessage* out2 = moduleTester_->getOutputMessage();
+    CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSFileOpenResponse*>(out2));    
+}
+
+// Test an OSFileOpen request with IsCreate set to true
+void NativeFileSystemTest::testFileOpenWithCreate()
+{
+    // Allocate the file system storage manually
+    Filename testFile("/testFile");
+    FileSystem* fs = (FileSystem*)moduleTester_->getModule();
+    fs->createFile(testFile, 10000);
+
+    // Send the OSFileOpen request
+    spfsOSFileOpenRequest fileOpen(0, SPFS_OS_FILE_OPEN_REQUEST);
+    fileOpen.setFilename(testFile.c_str());
+    fileOpen.setIsCreate(true);
+    moduleTester_->deliverMessage(&fileOpen, "in");
+
+    // Test that file system writes meta data
+    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    cMessage* out1 = moduleTester_->popOutputMessage();
+    CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSWriteBlocksRequest*>(out1));
+
+    // Send the write data response
+    spfsOSWriteBlocksResponse* writeDataResponse =
+        new spfsOSWriteBlocksResponse(0, SPFS_OS_WRITE_BLOCKS_RESPONSE);
+    writeDataResponse->setContextPointer(out1);
+    moduleTester_->deliverMessage(writeDataResponse, "response");
+
+    // Test that final response is sent
+    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    cMessage* out2 = moduleTester_->getOutputMessage();
+    CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSFileOpenResponse*>(out2));    
 }
 
 // Test an OSFileRead request

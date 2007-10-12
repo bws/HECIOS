@@ -48,6 +48,10 @@ void BufferCache::initialize()
 
 void BufferCache::finish()
 {
+    // Finalize derived cache implementations
+    finalizeCache();
+
+    // Record statistics
     double statHitRate = (double)statNumHits_ / (double) statNumRequests_;
     recordScalar("Buffer Cache Requests", statNumRequests_);
     recordScalar("Buffer Cache Hits", statNumHits_);
@@ -183,6 +187,10 @@ void NoBufferCache::initializeCache()
 {
 }
 
+void NoBufferCache::finalizeCache()
+{
+}
+
 bool NoBufferCache::isFull()
 {
     return false;
@@ -219,14 +227,16 @@ LRUBufferCache::LRUBufferCache()
 
 void LRUBufferCache::initializeCache()
 {
-    // Remove the cache if one exists
-    if (0 != cache_)
-        delete cache_;
-    
     long long gigabyte = 1073741824;
     long long blockSize = 512;
     long long numEntries = 4 * gigabyte / blockSize;
     cache_ = new LRUCache<LogicalBlockAddress, bool>(numEntries);
+}
+
+void LRUBufferCache::finalizeCache()
+{
+    assert(0 != cache_);
+    delete cache_;
 }
 
 bool LRUBufferCache::isCached(LogicalBlockAddress address)

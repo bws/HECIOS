@@ -28,9 +28,23 @@
 class Filename;
 class StorageLayout;
 class spfsOSFileIORequest;
+class spfsOSFileOpenRequest;
+class spfsOSFileRequest;
 
 /**
- * File System abstract base class module
+ * File System abstract base class module.  Supports the following standard
+ * file system features:
+ *
+ * - Writes meta data on file cretion
+ * - Reads meta data on file open
+ * - Loads metadata before accessing data blocks
+ * - Writes first metadata block on reads and writes (i.e. modifies the atime)
+ *
+ * TODO: The following additional feature(s) are desired:
+ * - Read block before writing partial blocks
+ * - Journal structures for metadata writing
+ * - Support for an O_DIRECT type mode that bypasses the block cache
+ *
  */
 class FileSystem : public cSimpleModule
 {
@@ -74,16 +88,22 @@ protected:
 
 private:
     /** Process the the multiple messages for a single File request */
-    void processMessage(spfsOSFileIORequest* request, cMessage* msg);
+    void processMessage(spfsOSFileRequest* request, cMessage* msg);
+
+    /** Process the the multiple messages for a single File open request */
+    void processOpenMessage(spfsOSFileOpenRequest* request, cMessage* msg);
+
+    /** Process the the multiple messages for a single File I/O request */
+    void processIOMessage(spfsOSFileIORequest* request, cMessage* msg);
 
     /** Send a request for the meta data blocks for a File I/O request */
-    void readMetaData(spfsOSFileIORequest* ioRequest);
+    void readMetaData(spfsOSFileRequest* request);
+
+    /** Update the meta data to signal the file I/O has been performed */
+    void writeMetaData(spfsOSFileRequest* request);
 
     /** Send a request for the data blocks for a file I/O request */
     void performIO(spfsOSFileIORequest* ioRequest);
-
-    /** Update the meta data to signal the file I/O has been performed */
-    void writeMetaData(spfsOSFileIORequest* ioRequest);
 
     /** Send the final read or write response */
     void sendFileIOResponse(spfsOSFileIORequest* ioRequest);
@@ -111,13 +131,6 @@ private:
  *
  * - Configurable block size
  * - Contiguous disk layout
- * - Loads metadata before accessing data blocks
- * - Writes first metadata block on reads and writes (i.e. modifies the atime)
- *
- * TODO: The following additional feature(s) are desired:
- * - Read block before writing partial blocks
- * - Journal structures for metadata writing
- * - Support for an O_DIRECT type mode that bypasses the block cache
  *
  */
 class NativeFileSystem : public FileSystem

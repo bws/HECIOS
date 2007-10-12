@@ -97,6 +97,10 @@ void FSWrite::handleMessage(cMessage* msg)
                 FSM_Goto(currentState, COUNT_RESPONSES);
             }
             
+            // Delete originating request's distribution
+            spfsWriteRequest* req = (spfsWriteRequest*)msg->contextPointer();
+            delete req->getDist();
+                
             // Cleanup responses
             delete msg;
             msg = 0;

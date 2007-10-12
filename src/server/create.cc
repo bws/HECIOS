@@ -21,7 +21,9 @@
 #include <cassert>
 #include <omnetpp.h>
 #include "create.h"
+#include "filename.h"
 #include "fs_server.h"
+#include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
@@ -34,23 +36,60 @@ Create::Create(FSServer* module, spfsCreateRequest* createReq)
 void Create::handleServerMessage(cMessage* msg)
 {
     // Restore the existing state for this request
-    cFSM currentState;// = createReq_->getState();
+    cFSM currentState = createReq_->getState();
 
     // Server create states
     enum {
         INIT = 0,
-        FINISH = FSM_Steady(1),
+        CREATE = FSM_Steady(1),
+        FINISH = FSM_Steady(2),
     };
 
     FSM_Switch(currentState)
     {
-        case FSM_Enter(INIT):
-            {
-                assert(0 != dynamic_cast<spfsCreateRequest*>(msg));
-                enterFinish();
-                break;
-            }
+    case FSM_Exit(INIT):
+        {
+            assert(0 != dynamic_cast<spfsCreateRequest*>(msg));
+            FSM_Goto(currentState, CREATE);
+            break;
+        }
+    case FSM_Enter(CREATE):
+        {
+            assert(0 != dynamic_cast<spfsCreateRequest*>(msg));
+            enterCreate();
+            break;
+        }
+    case FSM_Exit(CREATE):
+        {
+            assert(0 != dynamic_cast<spfsOSFileOpenResponse*>(msg));
+            FSM_Goto(currentState, FINISH);
+            break;
+        }
+    case FSM_Enter(FINISH):
+        {
+            assert(0 != dynamic_cast<spfsOSFileOpenResponse*>(msg));
+            enterFinish();
+            break;
+        }
     }
+
+    // Store the state in the request
+    createReq_->setState(currentState);
+}
+
+void Create::enterCreate()
+{
+    spfsOSFileOpenRequest* openRequest =
+        new spfsOSFileOpenRequest(0, SPFS_OS_FILE_OPEN_REQUEST);
+    openRequest->setContextPointer(createReq_);
+
+    // Extract the handle as the file name
+    Filename f(createReq_->getHandle());
+    openRequest->setFilename(f.c_str());
+    openRequest->setIsCreate(true);
+    
+    // Send the request to the storage layer
+    module_->send(openRequest, "storageOut");
 }
 
 void Create::enterFinish()
