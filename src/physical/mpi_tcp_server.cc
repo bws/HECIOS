@@ -61,7 +61,7 @@ private:
     /** The server's listening socket */
     TCPSocket listenSocket_;
 
-    /** Mapping from a messages uniqueId to the amount of data received */
+    /** Mapping from a messages socketId to the sending socket */
     std::map<int,TCPSocket*> requestToSocketMap_;
 
     /** Gate id for appOut */
@@ -127,7 +127,6 @@ void MPITcpServer::handleMessage(cMessage* msg)
         spfsNetworkServerSendMessage* pkt = new spfsNetworkServerSendMessage();
         pkt->encapsulate(msg);
         pkt->setByteLength(4);
-        pkt->setUniqueId(ev.getUniqueNumber());
         responseSocket->send(pkt);
      }
     else if (0 != dynamic_cast<spfsMPISendRequest*>(msg))

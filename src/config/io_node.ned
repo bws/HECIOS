@@ -36,7 +36,7 @@ module IONode
         hca: BMIEnhancedHost;
             parameters:
                 numTcpApps = 1,
-                tcpAppType = "BMITcpServer";
+                tcpAppType = "BMITcpEndpoint";
             display: "p=100,80;i=block/rxtx,medium purple";
 
         daemon: DaemonProcess;

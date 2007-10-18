@@ -137,8 +137,8 @@ module BMIEnhancedHost
 
         // Connections for BMI messaging applications
         for i=0..numTcpApps-1 do
-            bmiIn[i] --> tcpApp[i].bmiIn;
-            bmiOut[i] <-- tcpApp[i].bmiOut;
+            bmiIn[i] --> tcpApp[i].appIn;
+            bmiOut[i] <-- tcpApp[i].appOut;
         endfor;
 
 endmodule

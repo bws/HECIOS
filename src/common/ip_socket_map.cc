@@ -24,7 +24,8 @@ using namespace std;
 
 IPSocketMap::~IPSocketMap()
 {
-    clear();
+    // Sockets are currently shared, this does not need to clear the sockets
+    // clear();
 }
 
 void IPSocketMap::clear()

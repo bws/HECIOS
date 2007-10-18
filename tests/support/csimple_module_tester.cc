@@ -23,7 +23,6 @@
 #include <string>
 using namespace std;
 
-cSimulation* cSimpleModuleTester::sim_ = 0;
 vector<string> cSimpleModuleTester::loadedNedFiles_;
 
 cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
@@ -33,12 +32,6 @@ cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
       module_(0),
       moduleInitialized_(false)
 {
-    // Create the simulation if one does not exist
-    if (0 == sim_)
-    {
-        sim_ = new cSimulation("cSimpleModuleTesterSimulation");
-    }
-
     // Attempt to load the ned file into the simulation
     loadNedFile(nedFile);
     
@@ -69,10 +62,6 @@ cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
         module_->gate(i)->connectTo(dummyGates_[i]);
     }
     
-    // Register the module with the simulation
-    //sim_->setSystemModule(module_);
-    //sim_->registerModule(module_);
-
     // Initialize if requested
     if (autoInitialize)
     {
@@ -88,13 +77,8 @@ cSimpleModuleTester::~cSimpleModuleTester()
         delete arrivals_[i];
     }
 
-    // Cleanup the simulation
-    //sim_->callFinish();
-    //sim_->transferToMain();
-    //module_->removeFromOwnershipTree();
-    //sim_->deleteNetwork();
-    //delete sim_;
-    //sim_ = 0;
+    // Cleanup the simulation (NOTE: this is likely to fail in the future)
+    simulation.setContextModule(0);
     
     // Cleanup module
     if (moduleInitialized_)
@@ -114,12 +98,17 @@ cSimpleModuleTester::~cSimpleModuleTester()
 void cSimpleModuleTester::callInitialize()
 {
     module_->callInitialize();
+    simulation.setContextModule(module_);
     moduleInitialized_ = true;    
 }
 
 void cSimpleModuleTester::deliverMessage(cMessage* msg, const char* inGateName)
 {
     assert(true == moduleInitialized_);
+    assert(0 != msg);
+    assert(0 != inGateName);
+
+    // Send the message over the gate
     cGate* inGate = module_->gate(inGateName);
     deliverMessage(msg, inGate);
 }
@@ -127,16 +116,17 @@ void cSimpleModuleTester::deliverMessage(cMessage* msg, const char* inGateName)
 void cSimpleModuleTester::deliverMessage(cMessage* msg, cGate* inGate)
 {
     assert(true == moduleInitialized_);
+    assert(0 != msg);
     assert(0 != inGate);
     
     // Set the message's arrival data
     msg->setArrival(module_, inGate->id());
 
     // Add the message to the simulator's message queue
-    sim_->msgQueue.insert(msg);
+    simulation.msgQueue.insert(msg);
 
     // perform the message
-    sim_->doOneEvent(module_);
+    simulation.doOneEvent(module_);
 }
 
 size_t cSimpleModuleTester::getNumOutputMessages() const
@@ -183,7 +173,7 @@ void cSimpleModuleTester::scheduleStart(simtime_t)
 
 void cSimpleModuleTester::loadNedFile(const char* nedFile)
 {
-    assert(0 != sim_);
+    //assert(0 != sim_);
     // FIXME: Strictly speaking, this is not correct, we need to make
     // sure that this ned file has not been loaded before, but because
     // relative and absolute paths may differ, this only works because
@@ -199,12 +189,13 @@ void cSimpleModuleTester::loadNedFile(const char* nedFile)
     if (loadedNedFiles_.end() == iter)
     {
         // Load the ned file to construct the gates
-        sim_->loadNedFile(nedFile);
+        simulation.loadNedFile(nedFile);
         loadedNedFiles_.push_back(nedFile);
     }
 }
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

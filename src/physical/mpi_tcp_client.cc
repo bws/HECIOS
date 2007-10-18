@@ -102,7 +102,6 @@ void MPITcpClient::handleMessage(cMessage* msg)
         spfsNetworkClientSendMessage* pkt = new spfsNetworkClientSendMessage();
         pkt->encapsulate(msg);
         pkt->setByteLength(256);
-        pkt->setUniqueId(ev.getUniqueNumber());
         sock->send(pkt);
     }
     else if (0 != dynamic_cast<spfsMPISendResponse*>(msg))

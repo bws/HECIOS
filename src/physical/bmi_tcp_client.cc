@@ -116,7 +116,6 @@ void BMITcpClient::handleMessage(cMessage* msg)
         spfsNetworkClientSendMessage* pkt = new spfsNetworkClientSendMessage();
         pkt->setByteLength(OVERHEAD_BYTES);
         pkt->encapsulate(msg);
-        pkt->setUniqueId(ev.getUniqueNumber());
         sock->send(pkt);
     }
     else if (0 != dynamic_cast<spfsResponse*>(msg))

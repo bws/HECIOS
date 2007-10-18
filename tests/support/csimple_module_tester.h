@@ -87,9 +87,6 @@ private:
     /** Load a ned file if it hasn't been previously loaded */
     static void loadNedFile(const char* nedFile);
     
-    /** The simulation object required to deliver messages */
-    static cSimulation* sim_;
-
     /** List of nedfiles that have been loaded */
     static std::vector<std::string> loadedNedFiles_;
     
@@ -110,6 +107,7 @@ private:
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

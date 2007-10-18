@@ -65,7 +65,7 @@ private:
     /** The server's listening socket */
     TCPSocket listenSocket_;
 
-    /** Mapping from a messages uniqueId to the amount of data received */
+    /** Mapping from a messages socketId to the socket */
     std::map<int,TCPSocket*> requestToSocketMap_;
 
     /** Gate id for bmiIn */
@@ -140,7 +140,6 @@ void BMITcpServer::handleMessage(cMessage* msg)
         spfsNetworkServerSendMessage* pkt = new spfsNetworkServerSendMessage();
         pkt->setByteLength(OVERHEAD_BYTES);
         pkt->encapsulate(msg);
-        pkt->setUniqueId(ev.getUniqueNumber());
         responseSocket->send(pkt);
     }
     else if (0 != dynamic_cast<spfsRequest*>(msg))

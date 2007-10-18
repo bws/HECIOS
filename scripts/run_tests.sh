@@ -15,3 +15,10 @@ bin/layout_test
 echo "Running OS subsystem tests:"
 bin/os_test
 
+echo "Running Physical subsystem tests:"
+bin/physical_test
+
+echo "Running Server subsystem tests:"
+bin/server_test
+
+exit 0

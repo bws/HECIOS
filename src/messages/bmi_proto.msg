@@ -24,31 +24,35 @@
 
 enum spfsBMIMessageKinds
 {
-    SPFS_BMI_CLIENT_SEND = 401;
-    SPFS_BMI_CLIENT_RECV = 402;
-    SPFS_BMI_SERVER_SEND = 403;
-    SPFS_BMI_SERVER_RECV = 404;
+    SPFS_BMI_EXPECTED_MESSAGE = 401;
+    SPFS_BMI_UNEXPECTED_MESSAGE = 402;
+    SPFS_BMI_READ_DATA_REQUEST = 403;
+    SPFS_BMI_READ_DATA_RESPONSE = 404;
+    SPFS_BMI_WRITE_DATA_REQUEST = 405;
+    SPFS_BMI_WRITE_DATA_RESPONSE = 406;
 };
 
 // The abstract base class for all BMI Messages
 message spfsBMIMessage
 {
     fields:
-        unsigned long uniqueId;
 };
 
-// Message sent from a BMI client 
-message spfsBMIClientSendMessage extends spfsBMIMessage
+// Message sent over an established BMI connection 
+message spfsBMIExpectedMessage extends spfsBMIMessage
 {
+    fields:
 };
 
-// Message sent from a BMI server 
-message spfsBMIServerSendMessage extends spfsBMIMessage
+// Message sent that establishes a BMI connection
+message spfsBMIUnexpectedMessage extends spfsBMIMessage
 {
+    fields:
 };
 
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:

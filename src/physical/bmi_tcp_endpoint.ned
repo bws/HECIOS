@@ -19,38 +19,22 @@
 //
 
 //
-// Network wrapper messages for transporting data from the client to server
+// Implements the BMIEndpoint and TCPApp interfaces (gates)
 //
+simple BMITcpEndpoint
 
-enum spfsNetworkMessageKinds
-{
-    SPFS_NETWORK_CLIENT_SEND = 801;
-    SPFS_NETWORK_SERVER_SEND = 802;
-};
+    parameters:
+        // Port endpoint should bind to listen on (set to 0 to disable listen)
+        listenPort: numeric const,
 
-// The abstract base class for all Network Messages
-message spfsNetworkMessage
-{
-    fields:
-};
+        // Port to contact other servers on
+        connectPort: numeric const;
 
-// Message sent over the network from a client 
-message spfsNetworkClientSendMessage extends spfsNetworkMessage
-{
-    fields:
-};
+    gates:
+        in: appIn;
+        out: appOut;
 
-// Message sent over the network from a server 
-message spfsNetworkServerSendMessage extends spfsNetworkMessage
-{
-    fields:
-};
+        in: tcpIn;
+        out: tcpOut;
 
-//
-// Local variables:
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
-//
+endsimple

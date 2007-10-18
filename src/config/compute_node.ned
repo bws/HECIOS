@@ -44,7 +44,7 @@ module ComputeNode
         hca: EnhancedHost;
         parameters:
             numTcpApps = 3,
-            tcpAppType = "BMITcpClient";
+            tcpAppType = "BMITcpEndpoint";
         display: "p=100,80;i=block/rxtx,medium purple";
 
     connections:
