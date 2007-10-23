@@ -189,7 +189,7 @@ inline void LRUComplexCache::removeHandle(const int& handle)
         delete pos->second;
         fileEntryMap.erase(pos->first);
         numEntries_--;
-        printf("removing handle %d %d \n", numEntries_, fileEntryMap.size());
+        //printf("removing handle %d %d \n", numEntries_, fileEntryMap.size());
     }
 }
 

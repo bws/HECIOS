@@ -141,8 +141,8 @@ void MpiMiddleware::appBcastHandler(spfsMPIBcastRequest* mpiReq)
     mpiMidReq->setRankSetArraySize(rankSize);
     for(int i = 0; i < rankSize; i++)
     {
-        unsigned int rank = mpiReq->getCommMembers(i);
-        if(rank_ == (unsigned)mpiReq->getRoot())
+        int rank = mpiReq->getCommMembers(i);
+        if(rank_ == mpiReq->getRoot())
             mpiMidReq->setRoot(i);
         mpiMidReq->setRankSet(i, rank);
 

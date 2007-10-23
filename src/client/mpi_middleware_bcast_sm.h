@@ -60,9 +60,9 @@ private:
     ~MPIMidBcastSM() {};
     
     MpiMiddleware *mpiMiddleware_; // point to owner class
-    unsigned int rspRank_; // point to parent rank
-    unsigned int rankNum_; // direct children number
-    unsigned int rspNum_; // direct children that responsed
+    int rspRank_; // point to parent rank
+    int rankNum_; // direct children number
+    int rspNum_; // direct children that responsed
     long rspUniId_; // unique id for parent rank (used for its owner class to find it)
     cFSM currentState_; // finite state machine
 };

@@ -39,6 +39,13 @@ typedef uint64_t FSSize;
 /** Logical Block Address data type */
 typedef int64_t LogicalBlockAddress;
 
+/** A contiguous region of a file, i.e. an offset and an extent */
+struct FileRegion
+{
+    FSOffset offset;
+    FSSize extent;
+};
+    
 /** A contguous handle range beginning at first and ending at last */
 struct HandleRange
 {
@@ -69,6 +76,7 @@ inline bool operator<(const HandleRange& lhs, const HandleRange& rhs)
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

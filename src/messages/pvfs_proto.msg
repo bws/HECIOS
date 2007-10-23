@@ -35,47 +35,47 @@ class noncobject FSDataType;
 class noncobject FSMetaData;
 class noncobject FileDistributionPtr;
 
-// PVFS Request Protocol Messages
-enum spfsRequestKind 
+// PVFS Protocol Message Kind values
+enum spfsMessageKind 
 {
     SPFS_CREATE_REQUEST = 401;
-    SPFS_REMOVE_REQUEST = 402;
-    SPFS_READ_REQUEST = 403;
-    SPFS_WRITE_REQUEST = 404;
-    SPFS_GET_ATTR_REQUEST = 405;
-    SPFS_SET_ATTR_REQUEST = 406;
-    SPFS_LOOKUP_PATH_REQUEST = 407;
-    SPFS_CREATE_DIR_ENT_REQUEST = 408;
-    SPFS_REMOVE_DIR_ENT_REQUEST = 409;
-    SPFS_CHANGE_DIR_ENT_REQUEST = 410;
-    SPFS_TRUNCATE_REQUEST = 411;
-    SPFS_MAKE_DIR_REQUEST = 412;
-    SPFS_READ_DIR_REQUEST = 413;
-    SPFS_FLUSH_REQUEST = 414;
-    SPFS_STAT_REQUEST = 415;
-    SPFS_LIST_ATTR_REQUEST = 416;
+    SPFS_CREATE_RESPONSE = 402;
+    SPFS_REMOVE_REQUEST = 403;
+    SPFS_REMOVE_RESPONSE = 404;
+    SPFS_READ_REQUEST = 405;
+    SPFS_READ_RESPONSE = 406;
+    SPFS_WRITE_REQUEST = 407;
+    SPFS_WRITE_RESPONSE = 408;
+    SPFS_WRITE_COMPLETION_RESPONSE = 409;
+    SPFS_GET_ATTR_REQUEST = 410;
+    SPFS_GET_ATTR_RESPONSE = 411;
+    SPFS_SET_ATTR_REQUEST = 412;
+    SPFS_SET_ATTR_RESPONSE = 413;
+    SPFS_LOOKUP_PATH_REQUEST = 414;
+    SPFS_LOOKUP_PATH_RESPONSE = 415;
+    SPFS_CREATE_DIR_ENT_REQUEST = 416;
+    SPFS_CREATE_DIR_ENT_RESPONSE = 517;
+    SPFS_REMOVE_DIR_ENT_REQUEST = 418;
+    SPFS_REMOVE_DIR_ENT_RESPONSE = 419;
+    SPFS_CHANGE_DIR_ENT_REQUEST = 420;
+    SPFS_CHANGE_DIR_ENT_RESPONSE = 421;
+    SPFS_TRUNCATE_REQUEST = 422;
+    SPFS_TRUNCATE_RESPONSE = 423;
+    SPFS_MAKE_DIR_REQUEST = 424;
+    SPFS_MAKE_DIR_RESPONSE = 425;
+    SPFS_READ_DIR_REQUEST = 426;
+    SPFS_READ_DIR_RESPONSE = 427;
+    SPFS_FLUSH_REQUEST = 428;
+    SPFS_FLUSH_RESPONSE = 429;
+    SPFS_STAT_REQUEST = 430;
+    SPFS_STAT_RESPONSE = 431;
+    SPFS_LIST_ATTR_REQUEST = 432;
+    SPFS_LIST_ATTR_RESPONSE = 433;
+    SPFS_DATA_FLOW_PUSH_REQUEST = 434;
+    SPFS_DATA_FLOW_PUSH_RESPONSE = 435;
+    SPFS_DATA_FLOW_PULL_REQUEST = 436;
+    SPFS_DATA_FLOW_PULL_RESPONSE = 437;
 };
-
-// PVFS Response Protocol Messages
-enum spfsResponseKind {
-    SPFS_CREATE_RESPONSE = 501;
-    SPFS_REMOVE_RESPONSE = 502;
-    SPFS_READ_RESPONSE = 503;
-    SPFS_WRITE_RESPONSE = 504;
-    SPFS_GET_ATTR_RESPONSE = 505;
-    SPFS_SET_ATTR_RESPONSE = 506;
-    SPFS_LOOKUP_PATH_RESPONSE = 507;
-    SPFS_CREATE_DIR_ENT_RESPONSE = 508;
-    SPFS_REMOVE_DIR_ENT_RESPONSE = 509;
-    SPFS_CHANGE_DIR_ENT_RESPONSE = 510;
-    SPFS_TRUNCATE_RESPONSE = 511;
-    SPFS_MAKE_DIR_RESPONSE = 512;
-    SPFS_READ_DIR_RESPONSE = 513;
-    SPFS_WRITE_COMPLETION_RESPONSE = 514;
-    SPFS_FLUSH_RESPONSE = 515;
-    SPFS_STAT_RESPONSE = 516;
-    SPFS_LIST_ATTR_RESPONSE = 517;
-}
 
 enum spfsLookupStatus {
     SPFS_FOUND = 1;
@@ -346,8 +346,35 @@ message spfsListAttrResponse extends spfsResponse
         unsigned long numHandles;
 };
 
+// Push file data from sender to recipient
+message spfsDataFlowPushRequest extends spfsRequest
+{
+    fields:
+        unsigned long dataSize;
+};
+
+// Data push response
+message spfsDataFlowPushResponse extends spfsResponse
+{
+    fields:
+};
+
+// Request data from the recipient
+message spfsDataFlowPullRequest extends spfsRequest
+{
+    fields:
+};
+
+// Respond with data requested
+message spfsDataFlowPullResponse extends spfsResponse
+{
+    fields:
+        unsigned long dataSize;
+};
+
 //
 // Local variables:
+//  indent-tab-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:

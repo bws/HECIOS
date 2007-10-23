@@ -19,6 +19,7 @@
 //
 #include "bmi_endpoint.h"
 #include <cassert>
+#include <climits>
 #include <iostream>
 #include <omnetpp.h>
 #include "bmi_proto_m.h"
@@ -37,7 +38,7 @@ void BMIEndpoint::initialize()
     appOutGateId_ = findGate("appOut");
 
     // Set the handle range to an invalid range
-    HandleRange init = {-1, -1};
+    HandleRange init = {UINT_MAX, UINT_MAX - 1};
     setHandleRange(init);
     
     // Initialize the derived implementation

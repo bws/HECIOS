@@ -22,6 +22,7 @@
 #include <numeric>
 #define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
+#include "data_type_layout.h"
 #include "data_type_processor.h"
 #include "file_distribution.h"
 #include "fs_client.h"
@@ -136,7 +137,7 @@ void FSRead::enterRead()
     for (int i = 0; i < read.getServerCnt(); i++)
     {
         // Process the data type to determine the read size
-        FileLayout layout;
+        DataTypeLayout layout;
         filedes->metaData->dist->setObjectIdx(i);
         DataTypeProcessor::createFileLayoutForClient(read.getOffset(),
                                                      read.getDataType(),
@@ -145,9 +146,8 @@ void FSRead::enterRead()
                                                      10000000,
                                                      layout);
 
-        // Sum all the extents to determine total write size
-        size_t reqBytes = accumulate(layout.extents.begin(),
-                                     layout.extents.end(), 0);
+        // Sum all the extents to determine total read size
+        size_t reqBytes = layout.getLength();
 
         if (0 != reqBytes)
         {
@@ -192,9 +192,10 @@ void FSRead::enterFinish()
 }
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

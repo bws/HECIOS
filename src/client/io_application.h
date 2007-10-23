@@ -71,7 +71,7 @@ protected:
 private:
 
     IOTrace* trace_;
-    unsigned int rank_;
+    int rank_;
     int ioInGate_;
     int ioOutGate_;
     int mpiOutGate_;

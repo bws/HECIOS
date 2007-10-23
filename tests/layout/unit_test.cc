@@ -3,6 +3,7 @@
  */
 
 #include <cppunit/TextTestRunner.h>
+#include "data_type_layout_test.h"
 #include "data_type_processor_test.h"
 #include "file_builder_test.h"
 
@@ -12,6 +13,7 @@ int main(int argc, char** argv)
     CppUnit::TextTestRunner runner;
 
     // Add all of the requisite tests
+    runner.addTest( DataTypeLayoutTest::suite() );
     runner.addTest( DataTypeProcessorTest::suite() );
     runner.addTest( FileBuilderTest::suite() );
 

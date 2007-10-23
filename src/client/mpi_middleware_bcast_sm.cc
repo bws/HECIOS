@@ -136,7 +136,7 @@ void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
     rspRank_ = msg->getRoot();
 
     // if not the tree root, send the embedded msg to app
-    if(rspRank_ != (unsigned)mpiMiddleware_->getRank())
+    if(rspRank_ != mpiMiddleware_->getRank())
     {
         cMessage * enmsg = static_cast<cMessage*>(msg->encapsulatedMsg()->dup());
         if(enmsg)mpiMiddleware_->sendApp(enmsg);
@@ -197,7 +197,7 @@ void MPIMidBcastSM::enterWait(spfsMPIMidBcastResponse* msg)
 void MPIMidBcastSM::enterRsp()
 {
     // if i am the root
-    if(rspRank_ == (unsigned)mpiMiddleware_->getRank())
+    if(rspRank_ == mpiMiddleware_->getRank())
     {
         // may need to response to app
     }

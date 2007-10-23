@@ -66,7 +66,7 @@ private:
     int netClientInGate_;
     int netServerOutGate_;
     int netClientOutGate_;
-    unsigned int rank_;
+    int rank_;
 };
 
 

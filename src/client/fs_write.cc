@@ -24,6 +24,7 @@
 #include <iostream>
 #include <numeric>
 #include <omnetpp.h>
+#include "data_type_layout.h"
 #include "data_type_processor.h"
 #include "fs_client.h"
 #include "mpi_proto_m.h"
@@ -135,7 +136,7 @@ void FSWrite::enterWrite()
     for (int i = 0; i < write.getServerCnt(); i++)
     {
         // Process the data type to determine the write size
-        FileLayout layout;
+        DataTypeLayout layout;
         filedes->metaData->dist->setObjectIdx(i);
         DataTypeProcessor::createFileLayoutForClient(write.getOffset(),
                                                      write.getDataType(),
@@ -145,8 +146,7 @@ void FSWrite::enterWrite()
                                                      layout);
 
         // Sum all the extents to determine total write size
-        size_t reqBytes = accumulate(layout.extents.begin(),
-                                     layout.extents.end(), 0);
+        size_t reqBytes = layout.getLength();
 
         // Send write request if server hosts data
         if (0 != reqBytes)
