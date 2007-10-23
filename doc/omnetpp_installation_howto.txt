@@ -5,16 +5,25 @@ PREQUISITES
 --
 Before installing OmNet++t is neccesary to install several packages.
 The package names are listed followed by instructions on how to install
-the package using Fedora
+the package using Fedora and Red Hat Enterprise Linux 4
 
 TCL/TK
 --
+Fedora:
 yum install tk.i386 tk-devel.i386
 yum install tcl.i386 tcl-devel.i386
 
+RHEL4:
+up2date -i tcl-devel tk-devel
+
 GraphViz
 --
+Fedora:
 yum install graphviz.i386
+
+RHEL4:
+Acquire RPMs from /parl/bradles/omnet_packages.tgz
+rpm -Uhv graphviz-*
 
 BLT
 --
@@ -23,6 +32,9 @@ cd blt2.4z
 ./configure
 make
 make install
+
+On 64 bit platforms, the code will need to be edited.  Please see:
+http://www.omnetpp.org/pmwiki/index.php?n=Main.TclTkRelatedProblems
 
 GIFTrans
 --
