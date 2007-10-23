@@ -36,6 +36,10 @@ make install
 On 64 bit platforms, the code will need to be edited.  Please see:
 http://www.omnetpp.org/pmwiki/index.php?n=Main.TclTkRelatedProblems
 
+Additionally, on RHEL 4 (and maybe fedora if BLT is not installed):
+ln -s /usr/lib/blt2.4 /usr/share
+
+
 GIFTrans
 --
 rpm -i giftrans-1.12.2-20.src.rpm
