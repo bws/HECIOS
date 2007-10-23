@@ -22,10 +22,12 @@
 #include <cassert>
 #include <numeric>
 #include <omnetpp.h>
+#include "data_type_layout.h"
 #include "data_type_processor.h"
 #include "fs_server.h"
 #include "file_distribution.h"
 #include "filename.h"
+#include "lio_data_flow.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
@@ -44,7 +46,7 @@ void Read::handleServerMessage(cMessage* msg)
     // Server lookup states
     enum {
         INIT = 0,
-        READ_DATA = FSM_Steady(1),
+        START_DATA_FLOW = FSM_Steady(1),
         FINISH = FSM_Steady(2),
     };
 
@@ -53,16 +55,16 @@ void Read::handleServerMessage(cMessage* msg)
         case FSM_Exit(INIT):
         {
             assert(0 != dynamic_cast<spfsReadRequest*>(msg));
-            FSM_Goto(currentState, READ_DATA);
+            FSM_Goto(currentState, START_DATA_FLOW);
             break;
         }
-        case FSM_Enter(READ_DATA):
+        case FSM_Enter(START_DATA_FLOW):
         {
             assert(0 != dynamic_cast<spfsReadRequest*>(msg));
             enterReadData();
             break;
         }
-        case FSM_Exit(READ_DATA):
+        case FSM_Exit(START_DATA_FLOW):
         {
             FSM_Goto(currentState, FINISH);
             break;
@@ -79,10 +81,24 @@ void Read::handleServerMessage(cMessage* msg)
     readReq_->setState(currentState);
 }
 
+/*
+void Read::enterStartDataFlow()
+{
+    // Create the data flow
+    LIODataFlow* flow = new LIODataFlow(readReq_);
+    
+    // Register the data flow with the server
+    module_->registerDataFlow(flow);
+    
+    // Begin the data flow
+    flow->begin();
+}
+*/
+
 void Read::enterReadData()
 {
     // Determine the local file layout
-    FileLayout layout;
+    DataTypeLayout layout;
     DataTypeProcessor::createFileLayoutForServer(readReq_->getOffset(),
                                                  readReq_->getDataType(),
                                                  readReq_->getCount(),
@@ -91,20 +107,21 @@ void Read::enterReadData()
                                                  layout);
 
     // Construct the list i/o request
+    FileRegion fr = layout.getRegion(0);
     spfsOSFileReadRequest* fileRead =
         new spfsOSFileReadRequest(0, SPFS_OS_FILE_READ_REQUEST);
     Filename filename(readReq_->getHandle());
     fileRead->setContextPointer(readReq_);
     fileRead->setFilename(filename.c_str());
-    fileRead->setOffset(layout.offsets[0]);
-    fileRead->setExtent(layout.extents[0]);
+    fileRead->setOffset(fr.offset);
+    fileRead->setExtent(fr.extent);
     module_->send(fileRead, "storageOut");
 }
 
 void Read::enterFinish()
 {
     // Calculate the response size
-    FileLayout layout;
+    DataTypeLayout layout;
     DataTypeProcessor::createFileLayoutForServer(readReq_->getOffset(),
                                                  readReq_->getDataType(),
                                                  readReq_->getCount(),
@@ -113,8 +130,8 @@ void Read::enterFinish()
                                                  layout);
 
     // Sum all the extents to determine total write size
-    size_t reqBytes = accumulate(layout.extents.begin(),
-                                 layout.extents.end(), 0);
+    FileRegion fr = layout.getRegion(0);
+    size_t reqBytes = fr.extent;
     assert(0 != reqBytes);
     
     spfsReadResponse* resp = new spfsReadResponse(

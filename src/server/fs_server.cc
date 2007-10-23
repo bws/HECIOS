@@ -19,6 +19,7 @@
 //
 
 #include <cassert>
+#include <climits>
 #include <cstring>
 #include <iostream>
 #include "create.h"
@@ -53,10 +54,10 @@ void FSServer::setDefaultAttrSize(size_t attrSize)
 void FSServer::initialize()
 {
     // Set the number, name, and range to invalid values
-    serverNumber_ = -1;
+    serverNumber_ = UINT_MAX;
     serverName_ = "uninitialized";
-    range_.first = -1;
-    range_.last = -1;
+    range_.first = UINT_MAX;
+    range_.last = UINT_MAX - 1;
 
     // Retrieve the gate ids
     netInGateId_ = gate("netIn")->id();

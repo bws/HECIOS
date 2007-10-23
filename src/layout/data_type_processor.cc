@@ -20,6 +20,7 @@
 
 #include "data_type_processor.h"
 #include <cassert>
+#include "data_type_layout.h"
 #include "file_distribution.h"
 using namespace std;
 
@@ -30,7 +31,7 @@ int DataTypeProcessor::createFileLayoutForClient(
     const size_t& count,
     const FileDistribution& dist,
     const size_t& maxBytesToProcess,
-    FileLayout& layout)
+    DataTypeLayout& layout)
 {
     size_t bytesProcessed = processClientRequest(offset,
                                                  dataType,
@@ -48,7 +49,7 @@ int DataTypeProcessor::createFileLayoutForServer(
     const size_t& count,
     const FileDistribution& dist,
     const size_t& maxBytesToProcess,
-    FileLayout& layout)
+    DataTypeLayout& layout)
 {
     size_t bytesProcessed = processServerRequest(offset,
                                                  dataType,
@@ -68,7 +69,7 @@ int DataTypeProcessor::processClientRequest(
     const std::size_t& count,
     const FileDistribution& dist,
     const std::size_t& maxBytesToProcess,
-    FileLayout& layout)
+    DataTypeLayout& layout)
 {
     int bytesProcessed = 0;
     bytesProcessed = processContiguousServerRegion(offset,
@@ -85,7 +86,7 @@ int DataTypeProcessor::processServerRequest(
     const std::size_t& count,
     const FileDistribution& dist,
     const std::size_t& maxBytesToProcess,
-    FileLayout& layout)
+    DataTypeLayout& layout)
 {
     int bytesProcessed = 0;
     bytesProcessed = processContiguousServerRegion(offset,
@@ -101,7 +102,7 @@ int DataTypeProcessor::processContiguousClientRegion(
     const FSSize& extent,
     const FileDistribution& dist,
     const std::size_t& maxBytesToProcess,
-    FileLayout& layout)
+    DataTypeLayout& layout)
 {
     // Determine the first mapped offset for this server
     FSOffset logServerOffset = dist.nextMappedLogicalOffset(offset);
@@ -114,8 +115,7 @@ int DataTypeProcessor::processContiguousClientRegion(
         FSSize serverExtent = dist.contiguousLength(physOffset);
 
         // Add region to the client's layout
-        layout.offsets.push_back(logServerOffset);
-        layout.extents.push_back(serverExtent);
+        layout.addRegion(logServerOffset, serverExtent);
 
         // Determine the next mapped offset for this server
         logServerOffset = dist.nextMappedLogicalOffset(logServerOffset +
@@ -130,7 +130,7 @@ int DataTypeProcessor::processContiguousServerRegion(
     const FSSize& extent,
     const FileDistribution& dist,
     const std::size_t& maxBytesToProcess,
-    FileLayout& layout)
+    DataTypeLayout& layout)
 {
     // Determine the first mapped offset for this server
     FSOffset logServerOffset = dist.nextMappedLogicalOffset(offset);
@@ -143,8 +143,7 @@ int DataTypeProcessor::processContiguousServerRegion(
         FSSize serverExtent = dist.contiguousLength(physOffset);
 
         // Add region to the server's file layout
-        layout.offsets.push_back(physOffset);
-        layout.extents.push_back(serverExtent);
+        layout.addRegion(physOffset, serverExtent);
 
         // Determine the next mapped offset for this server
         logServerOffset = dist.nextMappedLogicalOffset(logServerOffset +

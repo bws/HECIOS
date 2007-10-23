@@ -21,6 +21,7 @@
 #include "write.h"
 #include <cassert>
 #include <omnetpp.h>
+#include "data_type_layout.h"
 #include "data_type_processor.h"
 #include "file_distribution.h"
 #include "filename.h"
@@ -81,7 +82,7 @@ void Write::handleServerMessage(cMessage* msg)
 void Write::enterWriteData()
 {
     // Determine the local file layout
-    FileLayout layout;
+    DataTypeLayout layout;
     DataTypeProcessor::createFileLayoutForServer(writeReq_->getOffset(),
                                                  writeReq_->getDataType(),
                                                  writeReq_->getCount(),
@@ -90,13 +91,14 @@ void Write::enterWriteData()
                                                  layout);
 
     // Construct the list i/o request
+    FileRegion fr = layout.getRegion(0);
     spfsOSFileWriteRequest* fileWrite =
         new spfsOSFileWriteRequest(0, SPFS_OS_FILE_WRITE_REQUEST);
     Filename filename(writeReq_->getHandle());
     fileWrite->setContextPointer(writeReq_);
     fileWrite->setFilename(filename.c_str());
-    fileWrite->setOffset(layout.offsets[0]);
-    fileWrite->setExtent(layout.extents[0]);
+    fileWrite->setOffset(fr.offset);
+    fileWrite->setExtent(fr.extent);
     module_->send(fileWrite, "storageOut");
 }
 

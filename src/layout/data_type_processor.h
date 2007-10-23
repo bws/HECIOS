@@ -1,5 +1,5 @@
-#ifndef REQUEST_PROCESSOR
-#define REQUEST_PROCESSOR
+#ifndef DATA_TYPE_PROCESSOR
+#define DATA_TYPE_PROCESSOR
 //
 // This file is part of Hecios
 //
@@ -23,14 +23,8 @@
 #include <cstddef>
 #include <vector>
 #include "pfs_types.h"
+class DataTypeLayout;
 class FileDistribution;
-
-/** A file layout */
-struct FileLayout
-{
-    std::vector<FSOffset> offsets;
-    std::vector<FSSize> extents;
-};
 
 /** Data type processor to determine which file portions are alloted
  *  to each I/O node for a give MPI data type and file distribution
@@ -46,7 +40,7 @@ public:
                                          const std::size_t& count,
                                          const FileDistribution& dist,
                                          const std::size_t& maxBytesToProcess,
-                                         FileLayout& layout);
+                                         DataTypeLayout& layout);
 
     /** @return the number of bytes processed */
     static int createFileLayoutForServer(const FSOffset& offset,
@@ -54,7 +48,7 @@ public:
                                          const std::size_t& count,
                                          const FileDistribution& dist,
                                          const std::size_t& maxBytesToProcess,
-                                         FileLayout& layout);
+                                         DataTypeLayout& layout);
 
 private:
 
@@ -64,7 +58,7 @@ private:
                                     const std::size_t& count,
                                     const FileDistribution& dist,
                                     const std::size_t& maxBytesToProcess,
-                                    FileLayout& layout);
+                                    DataTypeLayout& layout);
     
     /** @return the number of bytes processed */
     static int processServerRequest(const FSOffset& offset,
@@ -72,7 +66,7 @@ private:
                                     const std::size_t& count,
                                     const FileDistribution& dist,
                                     const std::size_t& maxBytesToProcess,
-                                    FileLayout& layout);
+                                    DataTypeLayout& layout);
 
     /** @return the number of bytes processed */
     static int processContiguousClientRegion(
@@ -80,7 +74,7 @@ private:
         const FSSize& extent,
         const FileDistribution& dist,
         const std::size_t& maxBytesToProcess,
-        FileLayout& layout);
+        DataTypeLayout& layout);
     
     /** @return the number of bytes processed */
     static int processContiguousServerRegion(
@@ -88,8 +82,18 @@ private:
         const FSSize& extent,
         const FileDistribution& dist,
         const std::size_t& maxBytesToProcess,
-        FileLayout& layout);
+        DataTypeLayout& layout);
     
 };
 
 #endif
+
+/*
+ * Local variables:
+ *  indent-tabs-mode: nil
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=4 sts=4 sw=4 expandtab
+ */
