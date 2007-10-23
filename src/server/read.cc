@@ -27,7 +27,6 @@
 #include "fs_server.h"
 #include "file_distribution.h"
 #include "filename.h"
-#include "lio_data_flow.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
@@ -143,9 +142,10 @@ void Read::enterFinish()
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */
