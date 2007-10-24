@@ -36,10 +36,10 @@ class BMITcpEndpointTest : public CppUnit::TestFixture
     // Create generic unit test and register test functions for automatic
     // exercise
     CPPUNIT_TEST_SUITE(BMITcpEndpointTest);
-    CPPUNIT_TEST(testClientRequest);
-    CPPUNIT_TEST(testClientResponse);
-    CPPUNIT_TEST(testServerRequest);
-    CPPUNIT_TEST(testServerResponse);
+    //CPPUNIT_TEST(testClientRequest);
+    //CPPUNIT_TEST(testClientResponse);
+    //CPPUNIT_TEST(testServerRequest);
+    //CPPUNIT_TEST(testServerResponse);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -99,7 +99,7 @@ void BMITcpEndpointTest::testClientRequest()
     moduleTester_->deliverMessage(getAttrRequest, "appIn");
 
     // Test output
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->getOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsBMIUnexpectedMessage*>(out1));
 }

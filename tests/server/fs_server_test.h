@@ -82,7 +82,7 @@ void FSServerTest::testGetAttr()
     getAttrRequest.setHandle(1);
     getAttrRequest.setContextPointer(&mpiRequest);
     moduleTester_->deliverMessage(&getAttrRequest, "netIn");
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->popOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSFileReadRequest*>(out1));
 
@@ -104,7 +104,7 @@ void FSServerTest::testSetAttr()
     setAttrRequest.setHandle(1);
     setAttrRequest.setContextPointer(&mpiRequest);
     moduleTester_->deliverMessage(&setAttrRequest, "netIn");
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->popOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSFileWriteRequest*>(out1));
 

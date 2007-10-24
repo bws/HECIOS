@@ -70,7 +70,7 @@ void LRUCacheTest::tearDown()
 void LRUCacheTest::testConstructor()
 {
     LRUCache<int, int> cache(1);
-    CPPUNIT_ASSERT_EQUAL(0u, cache.size());
+    CPPUNIT_ASSERT_EQUAL((size_t)0, cache.size());
 }
 
 void LRUCacheTest::testInsert()
@@ -80,23 +80,23 @@ void LRUCacheTest::testInsert()
     
     cache1_->insert(1, "value1");
     cache1_->insert(2, "Value2");
-    CPPUNIT_ASSERT_EQUAL(2u, cache1_->size());
+    CPPUNIT_ASSERT_EQUAL((size_t)2, cache1_->size());
         
     cache2_->insert(101, "Value101");
     cache2_->insert(102, "Value102");
-    CPPUNIT_ASSERT_EQUAL(2u, cache2_->size());
+    CPPUNIT_ASSERT_EQUAL((size_t)2, cache2_->size());
 }
 
 void LRUCacheTest::testRemove()
 {
     // Remove from an empty cache
-    CPPUNIT_ASSERT_EQUAL(0u, cache1_->size());
+    CPPUNIT_ASSERT_EQUAL((size_t)0, cache1_->size());
     CPPUNIT_ASSERT_THROW(cache1_->remove(77), NoSuchEntry);
 
     // Remove an existing entry from a cache
     cache1_->insert(63, "value63");
     cache1_->remove(63);
-    CPPUNIT_ASSERT_EQUAL(0u, cache1_->size());
+    CPPUNIT_ASSERT_EQUAL((size_t)0, cache1_->size());
 }
 
 void LRUCacheTest::testLookup()
@@ -147,10 +147,10 @@ void LRUCacheTest::testLookup()
 void LRUCacheTest::testCapacity()
 {
     LRUCache<int,int> cache1(10);
-    CPPUNIT_ASSERT_EQUAL(10u, cache1.capacity());
+    CPPUNIT_ASSERT_EQUAL((size_t)10, cache1.capacity());
 
     LRUCache<int,int> cache2(20);
-    CPPUNIT_ASSERT_EQUAL(20u, cache2.capacity());
+    CPPUNIT_ASSERT_EQUAL((size_t)20, cache2.capacity());
 }
 
 void LRUCacheTest::testGetLRU()
@@ -178,20 +178,20 @@ void LRUCacheTest::testGetLRU()
 void LRUCacheTest::testSize()
 {
     // Check the size of an empty cache
-    CPPUNIT_ASSERT_EQUAL(0u, cache1_->size());
+    CPPUNIT_ASSERT_EQUAL((size_t)0, cache1_->size());
 
     // Check the size of cache after insert
     cache1_->insert(74, "value74");
-    CPPUNIT_ASSERT_EQUAL(1u, cache1_->size());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, cache1_->size());
 
     // Check the size of cache after remove
     cache1_->remove(74);
-    CPPUNIT_ASSERT_EQUAL(0u, cache1_->size());
+    CPPUNIT_ASSERT_EQUAL((size_t)0, cache1_->size());
 
     // Check the size after duplicate insertion
     cache1_->insert(640, "val640");
     cache1_->insert(640, "val640");
-    CPPUNIT_ASSERT_EQUAL(1u, cache1_->size());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, cache1_->size());
 
     // Check the size after maximum fill
     cache1_->insert(640, "val640");
@@ -208,7 +208,7 @@ void LRUCacheTest::testSize()
     cache1_->insert(651, "val651");
     cache1_->insert(652, "val652");
     cache1_->insert(653, "val653");
-    CPPUNIT_ASSERT_EQUAL(10u, cache1_->size());
+    CPPUNIT_ASSERT_EQUAL((size_t)10, cache1_->size());
 }
 
 void LRUCacheTest::testLRUPolicy()

@@ -98,7 +98,7 @@ void FSClientTest::testReadAtNoOffsetNoLength()
     // Ensure the output message is a ReadAtResponse
     moduleTester_->deliverMessage(&req, "appIn");
     cMessage* output1 = moduleTester_->getOutputMessage();
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsMPIFileReadAtResponse*>(output1));
     
     // Cleanup test data

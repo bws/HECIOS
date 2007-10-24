@@ -103,7 +103,7 @@ void NativeFileSystemTest::testFileOpenNoCreate()
     moduleTester_->deliverMessage(&fileOpen, "in");
 
     // Test that file system reads meta data
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->popOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSReadBlocksRequest*>(out1));
 
@@ -114,7 +114,7 @@ void NativeFileSystemTest::testFileOpenNoCreate()
     moduleTester_->deliverMessage(readDataResponse, "response");
 
     // Test that final response is sent
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out2 = moduleTester_->getOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSFileOpenResponse*>(out2));    
 }
@@ -134,7 +134,7 @@ void NativeFileSystemTest::testFileOpenWithCreate()
     moduleTester_->deliverMessage(&fileOpen, "in");
 
     // Test that file system writes meta data
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->popOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSWriteBlocksRequest*>(out1));
 
@@ -145,7 +145,7 @@ void NativeFileSystemTest::testFileOpenWithCreate()
     moduleTester_->deliverMessage(writeDataResponse, "response");
 
     // Test that final response is sent
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out2 = moduleTester_->getOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSFileOpenResponse*>(out2));    
 }
@@ -166,7 +166,7 @@ void NativeFileSystemTest::testFileRead()
     moduleTester_->deliverMessage(&fileRead, "in");
 
     // Test that file system reads meta data
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->popOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSReadBlocksRequest*>(out1));
 
@@ -175,7 +175,7 @@ void NativeFileSystemTest::testFileRead()
         new spfsOSReadBlocksResponse(0, SPFS_OS_READ_BLOCKS_RESPONSE);
     readMetaResponse->setContextPointer(out1);
     moduleTester_->deliverMessage(readMetaResponse, "response");
-    CPPUNIT_ASSERT_EQUAL(2u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)2, moduleTester_->getNumOutputMessages());
 
     // Test that file system sends meta update and data read
     cMessage* out2 = moduleTester_->popOutputMessage();
@@ -188,7 +188,7 @@ void NativeFileSystemTest::testFileRead()
         new spfsOSWriteBlocksResponse(0, SPFS_OS_WRITE_BLOCKS_RESPONSE);
     writeMetaResponse->setContextPointer(out2);
     moduleTester_->deliverMessage(writeMetaResponse, "response");
-    CPPUNIT_ASSERT_EQUAL(0u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)0, moduleTester_->getNumOutputMessages());
     
     // Send the read data response
     spfsOSReadBlocksResponse* readDataResponse =
@@ -197,7 +197,7 @@ void NativeFileSystemTest::testFileRead()
     moduleTester_->deliverMessage(readDataResponse, "response");
 
     // Test that final response is sent
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out4 = moduleTester_->getOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSFileReadResponse*>(out4));    
 }
@@ -218,7 +218,7 @@ void NativeFileSystemTest::testFileWrite()
     moduleTester_->deliverMessage(&fileWrite, "in");
 
     // Test that file system reads meta data
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->popOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSReadBlocksRequest*>(out1));
 
@@ -227,7 +227,7 @@ void NativeFileSystemTest::testFileWrite()
         new spfsOSReadBlocksResponse(0, SPFS_OS_READ_BLOCKS_RESPONSE);
     readMetaResponse->setContextPointer(out1);
     moduleTester_->deliverMessage(readMetaResponse, "response");
-    CPPUNIT_ASSERT_EQUAL(2u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)2, moduleTester_->getNumOutputMessages());
 
     // Test that file system sends meta update and data read
     cMessage* out2 = moduleTester_->popOutputMessage(); // Metadata
@@ -240,7 +240,7 @@ void NativeFileSystemTest::testFileWrite()
         new spfsOSWriteBlocksResponse(0, SPFS_OS_WRITE_BLOCKS_RESPONSE);
     writeDataResponse->setContextPointer(out3);
     moduleTester_->deliverMessage(writeDataResponse, "response");
-    CPPUNIT_ASSERT_EQUAL(0u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)0, moduleTester_->getNumOutputMessages());
 
     // Send the write meta data response
     spfsOSWriteBlocksResponse* writeMetaResponse =
@@ -249,7 +249,7 @@ void NativeFileSystemTest::testFileWrite()
     moduleTester_->deliverMessage(writeMetaResponse, "response");
     
     // Test that final response is sent
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out4 = moduleTester_->getOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSFileWriteResponse*>(out4));    
 }

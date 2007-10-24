@@ -44,22 +44,22 @@ void FilenameTest::testStr()
 void FilenameTest::testGetNumPathSegments()
 {
     Filename f1("/");
-    CPPUNIT_ASSERT_EQUAL(1u, f1.getNumPathSegments());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, f1.getNumPathSegments());
 
     Filename f2("/foo");
-    CPPUNIT_ASSERT_EQUAL(2u, f2.getNumPathSegments());
+    CPPUNIT_ASSERT_EQUAL((size_t)2, f2.getNumPathSegments());
 
     Filename f3("/foo/bar");
-    CPPUNIT_ASSERT_EQUAL(3u, f3.getNumPathSegments());
+    CPPUNIT_ASSERT_EQUAL((size_t)3, f3.getNumPathSegments());
 
     Filename f4("/foo/bar/baz/");
-    CPPUNIT_ASSERT_EQUAL(4u, f4.getNumPathSegments());
+    CPPUNIT_ASSERT_EQUAL((size_t)4, f4.getNumPathSegments());
 
     Filename f5("/foo/////");
-    CPPUNIT_ASSERT_EQUAL(2u, f5.getNumPathSegments());
+    CPPUNIT_ASSERT_EQUAL((size_t)2, f5.getNumPathSegments());
 
     Filename f6("/foo/////bar");
-    CPPUNIT_ASSERT_EQUAL(3u, f6.getNumPathSegments());
+    CPPUNIT_ASSERT_EQUAL((size_t)3, f6.getNumPathSegments());
 }
 
 void FilenameTest::testGetSegment()

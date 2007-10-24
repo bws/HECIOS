@@ -94,7 +94,7 @@ void BMIDirectEndpointTest::testClientRequest()
     moduleTester_->deliverMessage(getAttrRequest, "appIn");
 
     // Test output
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->getOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsBMIUnexpectedMessage*>(out1));
 }
@@ -116,7 +116,7 @@ void BMIDirectEndpointTest::testClientResponse()
     moduleTester_->deliverMessage(bmiMsg, "netIn");
 
     // Test output
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->popOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsGetAttrResponse*>(out1));
     CPPUNIT_ASSERT_EQUAL((cMessage*)getAttrResponse, out1);
@@ -137,7 +137,7 @@ void BMIDirectEndpointTest::testServerRequest()
     moduleTester_->deliverMessage(bmiMsg, "netIn");
 
     // Test output
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->getOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsGetAttrRequest*>(out1));
 }
@@ -156,7 +156,7 @@ void BMIDirectEndpointTest::testServerResponse()
     moduleTester_->deliverMessage(getAttrResponse, "appIn");
 
     // Test output
-    CPPUNIT_ASSERT_EQUAL(1u, moduleTester_->getNumOutputMessages());
+    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->getOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsBMIExpectedMessage*>(out1));
 }

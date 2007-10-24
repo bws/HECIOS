@@ -25,8 +25,9 @@
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
 #include "data_type_processor.h"
-#include "simple_stripe_distribution.h"
 #include "basic_types.h"
+#include "data_type_layout.h"
+#include "simple_stripe_distribution.h"
 using namespace std;
 
 /** Unit test for DataTypeProcessor */
@@ -62,14 +63,15 @@ void DataTypeProcessorTest::tearDown()
 void DataTypeProcessorTest::testCreateFileLayoutForClient()
 {
     // Test with count 1, offset 0, data type 0
-    FileLayout layout;
+    DataTypeLayout layout;
     SimpleStripeDistribution dist(0, 4, 1000);
     DataTypeProcessor dtp;
     int bytesProcessed = dtp.createFileLayoutForClient(0, 0, 1, dist, 100,
                                                        layout);
     CPPUNIT_ASSERT_EQUAL(0, bytesProcessed);
-    CPPUNIT_ASSERT_EQUAL(0u, layout.offsets.size());
-    CPPUNIT_ASSERT_EQUAL(0u, layout.extents.size());
+    CPPUNIT_ASSERT_EQUAL((size_t)0, layout.getRegions().size());
+    //CPPUNIT_ASSERT_EQUAL(FSOffset(0), layout.getRegion(0).offset);
+    //CPPUNIT_ASSERT_EQUAL(FSSize(0), layout.getRegion(0).extent);
 }
 
 void DataTypeProcessorTest::testCreateFileLayoutForServer()
