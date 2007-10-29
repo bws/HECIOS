@@ -176,7 +176,8 @@ SIM_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_SRC)))
 #
 # Include dependency makefiles if building source target
 #
-ifeq ($(filter all_clean clean doc ned_clean tests_clean, $(MAKECMDGOALS)), )
+DEPFILTER_MAKECMDGOALS := $(filter-out %clean %doc, $(MAKECMDGOALS))
+ifneq ($(strip $(DEPFILTER_MAKECMDGOALS)),)
 -include $(SIM_DEPENDS)
 endif
 
@@ -202,6 +203,9 @@ clean:
 	$(RM) $(SIM_MSG_OUTPUT) $(SIM_MSG_OBJS)
 	$(RM) $(SIM_OBJS)
 	@echo "Derived files deleted.  Project is clean."
+
+depclean:
+	$(RM) $(SIM_DEPENDS)
 
 ned_clean:
 	@echo "Removing generated source files and objects."
@@ -244,4 +248,4 @@ test: tests_all
 #
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all all_clean clean default doc gui ned_clean test tests_clean
+.PHONY: all all_clean clean default depclean doc gui ned_clean test tests_clean

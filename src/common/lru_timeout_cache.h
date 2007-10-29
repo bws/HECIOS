@@ -80,7 +80,7 @@ public:
     /**
      * @return the number of entries in the cache
      */
-    int size() const;;
+    int size() const;
     
 private:
 

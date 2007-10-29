@@ -66,7 +66,7 @@ case "$comp_mode" in
     debug)
         dnl CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror -D_GLIBCXX_DEBUG"
 	dnl CONFIG_LDFLAGS="-g -D_GLIBCXX_DEBUG"
-        CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror"
+        CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror -ansi"
         CONFIG_UNSAFE_CXXFLAGS="-g" 
 	CONFIG_LDFLAGS="-g"
         ;;
@@ -74,6 +74,11 @@ case "$comp_mode" in
         CONFIG_CXXFLAGS="-O2 -DNDEBUG" 
         CONFIG_UNSAFE_CXXFLAGS="-O2 -DNDEBUG" 
 	CONFIG_LDFLAGS=""
+        ;;
+    strict)
+	CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror -ansi -pedantic"
+        CONFIG_UNSAFE_CXXFLAGS="-g"
+        CONFIG_LDFLAGS="-g"
         ;;
     *)
         AC_MSG_ERROR(Valid compilation modes are debug or release)
