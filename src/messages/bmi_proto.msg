@@ -22,16 +22,6 @@
 // BMI wrapper messages for transporting data from the client to server
 //
 
-enum spfsBMIMessageKinds
-{
-    SPFS_BMI_EXPECTED_MESSAGE = 401;
-    SPFS_BMI_UNEXPECTED_MESSAGE = 402;
-    SPFS_BMI_READ_DATA_REQUEST = 403;
-    SPFS_BMI_READ_DATA_RESPONSE = 404;
-    SPFS_BMI_WRITE_DATA_REQUEST = 405;
-    SPFS_BMI_WRITE_DATA_RESPONSE = 406;
-};
-
 // The abstract base class for all BMI Messages
 message spfsBMIMessage
 {
@@ -42,12 +32,51 @@ message spfsBMIMessage
 message spfsBMIExpectedMessage extends spfsBMIMessage
 {
     fields:
+        int connectionId;
 };
 
 // Message sent that establishes a BMI connection
 message spfsBMIUnexpectedMessage extends spfsBMIMessage
 {
     fields:
+        unsigned long handle;
+};
+
+// Message sent as part of a data flow
+message spfsBMIFlowMessage extends spfsBMIExpectedMessage
+{
+    fields:
+        int flowId;
+        unsigned long flowSize;
+};
+// Message that requests data over a connection
+message spfsBMIPullDataRequest extends spfsBMIFlowMessage
+{
+    fields:
+        int handle;
+        unsigned long requestSize;
+};
+
+// Message sent that establishes a BMI connection
+message spfsBMIPullDataResponse extends spfsBMIFlowMessage
+{
+    fields:
+        unsigned long dataSize;
+};
+
+// Message that sends data over a BMI connection
+message spfsBMIPushDataRequest extends spfsBMIFlowMessage
+{
+    fields:
+        int handle;
+        unsigned long dataSize;
+};
+
+// Message that acknowledges data sent over a BMI connection
+message spfsBMIPushDataResponse extends spfsBMIFlowMessage
+{
+    fields:
+        unsigned long receivedSize;
 };
 
 //

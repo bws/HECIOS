@@ -35,6 +35,21 @@ public:
     /** Number of bytes required as overhead to use the BMI direct network */
     static const unsigned int DIRECT_OVERHEAD_BYTES = 0;
     
+    /** @return a BMIExpected message encapsulating msg */
+    virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg);
+    
+    /** @return a BMIUnexpected message encapsulating msg */
+    virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
+        spfsRequest* request);
+    
+    /** @return a PullDataResponse for the request */
+    virtual spfsBMIPullDataResponse* createPullDataResponse(
+        spfsBMIPullDataRequest* pullRequest);
+        
+    /** @return a PushDataResponse for the request */
+    virtual spfsBMIPushDataResponse* createPushDataResponse(
+        spfsBMIPushDataRequest* pushRequest);
+        
 protected:
     /** Initialize this enpoint type */
     virtual void initializeEndpoint();
@@ -42,14 +57,11 @@ protected:
     /** Finalize this endpoint type */
     virtual void finalizeEndpoint();
 
-    /** Send a BMI message with an established recipient */
-    virtual void sendBMIExpectedMessage(cMessage* msg);
-
-    /** Send a BMI message to a recipient not expecting a message */
-    virtual void sendBMIUnexpectedMessage(spfsRequest* request);
+    /** Send a BMIExpected message over the network */
+    virtual void sendOverNetwork(spfsBMIExpectedMessage* expectedMsg);
     
-    /** Extract the domain message from a BMI message */
-    virtual cMessage* extractBMIPayload(spfsBMIMessage* bmiMsg);
+    /** Send a BMIExpected message over the network */
+    virtual void sendOverNetwork(spfsBMIUnexpectedMessage* unexpectedMsg);
 
 private:
     /** Gate id for netIn */
@@ -73,29 +85,57 @@ void BMIDirectEndpoint::finalizeEndpoint()
 {
 }
 
-void BMIDirectEndpoint::sendBMIExpectedMessage(cMessage* msg)
-{
-    assert(0 != msg);
-    spfsBMIExpectedMessage* pkt = new spfsBMIExpectedMessage();
-    pkt->setByteLength(DIRECT_OVERHEAD_BYTES);
-    pkt->encapsulate(msg);
-    send(pkt, netOutGateId_);
-}
-
-void BMIDirectEndpoint::sendBMIUnexpectedMessage(spfsRequest* request)
+spfsBMIUnexpectedMessage* BMIDirectEndpoint::createUnexpectedMessage(
+    spfsRequest* request)
 {
     assert(0 != request);
     spfsBMIUnexpectedMessage* pkt = new spfsBMIUnexpectedMessage();
-    pkt->setByteLength(DIRECT_OVERHEAD_BYTES);
+    pkt->setHandle(request->getHandle());
+    pkt->setByteLength(BMI_OVERHEAD_BYTES + DIRECT_OVERHEAD_BYTES);
     pkt->encapsulate(request);
-    send(pkt, netOutGateId_);
+    return pkt;
 }
 
-cMessage* BMIDirectEndpoint::extractBMIPayload(spfsBMIMessage* bmiMsg)
+spfsBMIExpectedMessage* BMIDirectEndpoint::createExpectedMessage(
+    cMessage* msg)
 {
-    assert(0 != bmiMsg);
-    cMessage* payload = bmiMsg->decapsulate();
-    return payload;
+    assert(0 != msg);
+
+    spfsBMIExpectedMessage* pkt = new spfsBMIExpectedMessage();
+    pkt->setByteLength(BMI_OVERHEAD_BYTES + DIRECT_OVERHEAD_BYTES);
+    pkt->encapsulate(msg);
+    return pkt;
+}
+
+spfsBMIPullDataResponse* BMIDirectEndpoint::createPullDataResponse(
+    spfsBMIPullDataRequest* pullRequest)
+{
+    assert(0 != pullRequest);
+    spfsBMIPullDataResponse* pullResp = new spfsBMIPullDataResponse();
+    pullResp->setContextPointer(pullRequest);
+    pullResp->setDataSize(0);
+    return pullResp;
+}
+
+spfsBMIPushDataResponse* BMIDirectEndpoint::createPushDataResponse(
+    spfsBMIPushDataRequest* pushRequest)
+{
+    assert(0 != pushRequest);
+    spfsBMIPushDataResponse* pushResp = new spfsBMIPushDataResponse();
+    pushResp->setContextPointer(pushRequest);
+    return pushResp;
+}
+
+void BMIDirectEndpoint::sendOverNetwork(spfsBMIExpectedMessage* msg)
+{
+    assert(0 != msg);
+    send(msg, netOutGateId_);
+}
+
+void BMIDirectEndpoint::sendOverNetwork(spfsBMIUnexpectedMessage* msg)
+{
+    assert(0 != msg);
+    send(msg, netOutGateId_);
 }
 
 /*

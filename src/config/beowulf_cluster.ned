@@ -33,7 +33,6 @@ module BeowulfCluster
         numIONodes: const;
 
     submodules:
-
         cpun: ComputeNode[numCPUNodes];
             display: "p=20,150,m,8;i=abstract/server,yellow";
 

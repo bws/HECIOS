@@ -49,12 +49,14 @@ void FSRead::handleMessage(cMessage* msg)
      *
      *  Note that the READ state is transient to facilitate correct
      *  response counting.  Responses are counted upon exit of the
-     *  COUNT_RESPONSES state rather than upon entry
+     *  COUNT_* state rather than upon entry
      */
     enum {
         INIT = 0,
         READ = FSM_Transient(1),
-        COUNT_RESPONSES = FSM_Steady(2),
+        COUNT = FSM_Steady(2),
+        COUNT_SERVER_RESPONSE = FSM_Transient(2),
+        COUNT_FLOW_FINISH = FSM_Transient(3),
         FINISH = FSM_Steady(3),
     };
 
@@ -75,42 +77,60 @@ void FSRead::handleMessage(cMessage* msg)
         case FSM_Exit(READ):
         {
             assert(0 != dynamic_cast<spfsMPIFileReadAtRequest*>(msg));
-            if (0 == readReq_->getResponses())
+            if (isReadComplete())
             {
                 FSM_Goto(currentState, FINISH);
             }
             else
             {
-                FSM_Goto(currentState, COUNT_RESPONSES);
+                FSM_Goto(currentState, COUNT);
             }
             break;
         }
-        case FSM_Exit(COUNT_RESPONSES):
+        case FSM_Exit(COUNT):
+        {
+            if (SPFS_READ_RESPONSE == msg->kind())
+            {
+                FSM_Goto(currentState, COUNT_SERVER_RESPONSE);
+            }
+            else
+            {
+                assert(SPFS_DATA_FLOW_FINISH == msg->kind());
+                FSM_Goto(currentState, COUNT_FLOW_FINISH);
+            }
+            break;
+        }
+        case FSM_Exit(COUNT_SERVER_RESPONSE):
         {
             assert(0 != dynamic_cast<spfsReadResponse*>(msg));
-            bool hasReceivedAllResponses = false;
-            exitCountResponses(hasReceivedAllResponses);
-            if (hasReceivedAllResponses)
+            countResponse();
+            if (isReadComplete())
             {
                 FSM_Goto(currentState, FINISH);
             }
             else
             {
-                FSM_Goto(currentState, COUNT_RESPONSES);
+                FSM_Goto(currentState, COUNT);
             }
-
-            // Delete originating request's distribution
-            spfsReadRequest* req = (spfsReadRequest*)msg->contextPointer();
-            delete req->getDist();
-                
-            // Cleanup responses
-            delete msg;
-            msg = 0;
+            break;
+        }
+        case FSM_Exit(COUNT_FLOW_FINISH):
+        {
+            assert(0 != dynamic_cast<spfsDataFlowFinish*>(msg));
+            countFlowFinish();
+            if (isReadComplete())
+            {
+                FSM_Goto(currentState, FINISH);
+            }
+            else
+            {
+                FSM_Goto(currentState, COUNT);
+            }
             break;
         }
         case FSM_Enter(FINISH):
         {
-            enterFinish();
+            finish();
             break;
         }
     }
@@ -163,25 +183,30 @@ void FSRead::enterRead()
         }
     }
 
-    // Set the number of outstanding responses
-    readReq_->setResponses(numRequests);
+    // Set the number of outstanding responses and flows
+    readReq_->setRemainingResponses(numRequests);
+    readReq_->setRemainingFlows(numRequests);
 }
 
-void FSRead::exitCountResponses(bool& outHasReceivedAllResponses)
+void FSRead::countResponse()
 {
-    int numOutstandingResponses = readReq_->getResponses();
-    readReq_->setResponses(--numOutstandingResponses);
-    if (0 == readReq_->getResponses())
-    {
-        outHasReceivedAllResponses = true;
-    }
-    else
-    {
-        outHasReceivedAllResponses = false;
-    }
+    int numRemainingResponses = readReq_->getRemainingResponses();
+    readReq_->setRemainingResponses(--numRemainingResponses);
 }
 
-void FSRead::enterFinish()
+void FSRead::countFlowFinish()
+{
+    int numRemainingFlows = readReq_->getRemainingFlows();
+    readReq_->setRemainingFlows(--numRemainingFlows);
+}
+
+bool FSRead::isReadComplete()
+{
+    return (0 == readReq_->getRemainingResponses())
+        && (0 == readReq_->getRemainingFlows());
+}
+
+void FSRead::finish()
 {
     spfsMPIFileReadAtResponse* mpiResp =
         new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
@@ -190,6 +215,7 @@ void FSRead::enterFinish()
     mpiResp->setBytesRead(0);  // FIXME
     client_->send(mpiResp, client_->getAppOutGate());
 }
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

@@ -18,10 +18,6 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-import
-    "bmi_tcp_server",
-    "fs_server";
-
 //
 // A UNIX Daemon process
 //
@@ -32,25 +28,34 @@ module DaemonProcess
         out: out, toDisk;
 
     submodules:
-        server: FSServer;
+        jobManager: JobManager;
             display: "p=80,80;i=block/process,light grey";
+
+        pfsServer: FSServer;
+            display: "p=80,180;i=block/process,light grey";
           
         storage: StorageLayer;
-            display: "p=80,180;i=block/buffer2,light sea green";
+            display: "p=80,280;i=block/buffer2,light sea green";
  
     connections nocheck:
-        server.netOut --> out;
-        server.netIn <-- in; 
+        // Messages inbound to the job manager
+        in --> jobManager.netIn;
+        pfsServer.out --> jobManager.pfsIn;
+        storage.out --> jobManager.storageIn;
 
-        server.storageOut --> storage.in;
-        server.storageIn <-- storage.out;
+        // Messages outbound from the job manager
+        jobManager.pfsOut --> pfsServer.in;
+        jobManager.storageOut --> storage.in;
+        jobManager.netOut --> out;
 
+        // Storage layer/Disk connections
         storage.toDisk --> toDisk;
         storage.fromDisk <-- fromDisk;
 endmodule
 
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:

@@ -168,13 +168,14 @@ void FSWrite::enterWrite()
     }
 
     // Set the number of responses
-    writeReq_->setResponses(numRequests);
+    writeReq_->setRemainingResponses(numRequests);
+    writeReq_->setRemainingFlows(numRequests);
 }
 
 void FSWrite::exitCountResponses(bool& outHasReceivedAllResponses)
 {
-    int numOutstandingResponses = writeReq_->getResponses();
-    writeReq_->setResponses(--numOutstandingResponses);
+    int numOutstandingResponses = writeReq_->getRemainingResponses();
+    writeReq_->setRemainingResponses(--numOutstandingResponses);
 
     if (0 == numOutstandingResponses)
     {

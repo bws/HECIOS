@@ -23,7 +23,7 @@
 #include <vector>
 #include "filename.h"
 #include "os_proto_m.h"
-#include "storage_layout.h"
+#include "fixed_inode_storage_layout.h"
 using namespace std;
 
 FileSystem::FileSystem()
@@ -89,8 +89,8 @@ void FileSystem::handleMessage(cMessage *msg)
 
 void FileSystem::processMessage(spfsOSFileRequest* request, cMessage* msg)
 {
-    if (spfsOSFileIORequest* ioReq =
-        dynamic_cast<spfsOSFileIORequest*>(request))
+    if (spfsOSFileLIORequest* ioReq =
+        dynamic_cast<spfsOSFileLIORequest*>(request))
     {
         processIOMessage(ioReq, msg);
     }
@@ -130,7 +130,7 @@ void FileSystem::processOpenMessage(spfsOSFileOpenRequest* request,
     }
 }
 
-void FileSystem::processIOMessage(spfsOSFileIORequest* request, cMessage* msg)
+void FileSystem::processIOMessage(spfsOSFileLIORequest* request, cMessage* msg)
 {
     // Restore the existing state for this request
     assert(0 != request);
@@ -151,13 +151,13 @@ void FileSystem::processIOMessage(spfsOSFileIORequest* request, cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            assert(0 != dynamic_cast<spfsOSFileIORequest*>(msg));
+            assert(0 != dynamic_cast<spfsOSFileLIORequest*>(msg));
             FSM_Goto(currentState, READ_META);
             break;
         }
         case FSM_Enter(READ_META):
         {
-            assert(0 != dynamic_cast<spfsOSFileIORequest*>(msg));
+            assert(0 != dynamic_cast<spfsOSFileLIORequest*>(msg));
             readMetaData(request);
             break;
         }
@@ -254,13 +254,10 @@ void FileSystem::writeMetaData(spfsOSFileRequest* request)
     send(writeBlock, requestGateId_);
 }
 
-void FileSystem::performIO(spfsOSFileIORequest* ioRequest)
+void FileSystem::performIO(spfsOSFileLIORequest* ioRequest)
 {
     // Convert the file system request into block requests
-    Filename filename(ioRequest->getFilename());
-    FSOffset offset = ioRequest->getOffset();
-    FSSize extent = ioRequest->getExtent();
-    vector<FSBlock> blocks = getDataBlocks(filename, offset, extent);
+    vector<FSBlock> blocks = getDataBlocks(ioRequest);
 
     // Fill out the appropriate read or write message
     if (0 != dynamic_cast<spfsOSFileReadRequest*>(ioRequest))
@@ -285,14 +282,23 @@ void FileSystem::performIO(spfsOSFileIORequest* ioRequest)
     }
 }
 
-void FileSystem::sendFileIOResponse(spfsOSFileIORequest* ioRequest)
+void FileSystem::sendFileIOResponse(spfsOSFileLIORequest* ioRequest)
 {
+    // Determine the IO size
+    FSSize ioSize = 0;
+    int numExtents = ioRequest->getExtentArraySize();
+    for (int i = 0; i < numExtents; i++)
+    {
+        ioSize += ioRequest->getExtent(i);
+    }
+    
     // Respond to the read or write request
     if (0 != dynamic_cast<spfsOSFileReadRequest*>(ioRequest))
     {
         spfsOSFileReadResponse* resp =
             new spfsOSFileReadResponse(0, SPFS_OS_FILE_READ_RESPONSE);
         resp->setContextPointer(ioRequest);
+        resp->setBytesRead(ioSize);
         send(resp, outGateId_);
     }
     else
@@ -300,6 +306,7 @@ void FileSystem::sendFileIOResponse(spfsOSFileIORequest* ioRequest)
         spfsOSFileWriteResponse* resp =
             new spfsOSFileWriteResponse(0, SPFS_OS_FILE_WRITE_RESPONSE);
         resp->setContextPointer(ioRequest);
+        resp->setBytesWritten(ioSize);
         send(resp, outGateId_);
     }
 }
@@ -313,7 +320,7 @@ void NativeFileSystem::initializeFileSystem()
     blockSize_ = par("blockSizeBytes").longValue();
     
     // Construct the storage layout for the file system
-    storageLayout_ = new StorageLayout(getBlockSize());
+    storageLayout_ = new FixedINodeStorageLayout(getBlockSize());
 }
 
 void NativeFileSystem::finishFileSystem()
@@ -344,6 +351,24 @@ vector<FSBlock> NativeFileSystem::getDataBlocks(
     const Filename& filename, FSOffset offset, FSSize extent) const
 {
     return storageLayout_->getFileDataBlocks(filename, offset, extent);
+}
+
+vector<FSBlock> NativeFileSystem::getDataBlocks(
+    spfsOSFileLIORequest* ioRequest) const
+{
+    assert(0 != ioRequest);
+    // Create the regions from the request
+    int numRegions = ioRequest->getOffsetArraySize();
+    vector<FileRegion> regions(numRegions);
+    for (int i = 0; i < numRegions; i++)
+    {
+        FileRegion fr = {ioRequest->getOffset(i), ioRequest->getExtent(i)};
+        regions.push_back(fr);
+    }
+
+    // Get the blocks from the storage layout
+    Filename f(ioRequest->getFilename());
+    return storageLayout_->getFileDataBlocks(f, regions);
 }
 
 /*

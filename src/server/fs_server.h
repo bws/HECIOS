@@ -20,10 +20,12 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <cstddef>
+#include <map>
 #include <string>
 #include <omnetpp.h>
 #include "pfs_types.h"
 class spfsRequest;
+class DataFlow;
 
 /**
  * Model of a parallel file system server process.
@@ -54,6 +56,9 @@ public:
 
     /** Set the server's unique handle range */
     void setHandleRange(const HandleRange& range) {range_ = range;};
+
+    /** Send the message out of the PFS server */
+    void send(cMessage*);
     
 protected:
     
@@ -61,13 +66,13 @@ protected:
     virtual void initialize();
 
     /** Implementation of finish */
-    virtual void finish() {};
+    virtual void finish();
 
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
 
     /** Process incoming message according to the parent request type */
-    void processMessage(spfsRequest* request, cMessage* msg);
+    void processRequest(spfsRequest* request, cMessage* msg);
     
 private:
 
@@ -84,16 +89,15 @@ private:
     HandleRange range_;
 
     /** Gate ids */
-    int netInGateId_;
-    int netOutGateId_;
-    int storageInGateId_;
-    int storageOutGateId_;
+    int inGateId_;
+    int outGateId_;
 };
 
 #endif
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

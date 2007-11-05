@@ -78,25 +78,40 @@ FSSize DataTypeLayout::getLength() const
 vector<FileRegion> DataTypeLayout::getSubRegions(const FSOffset& byteOffset,
                                                  const FSSize& byteLength) const
 {
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << byteOffset << " " << byteLength << " " << getLength() << endl;
+    //for(size_t i = 0; i < fileRegions_.size(); i++)
+    //{
+    //    cerr << "Off: " << fileRegions_[i].offset << " "
+    //         << "Ext: " << fileRegions_[i].extent << endl;
+    //}
     assert(0 < fileRegions_.size());
     assert(byteOffset < getLength());
-    assert((byteOffset + byteLength) < getLength());
-
+    assert((byteOffset + byteLength) <= getLength());
+    
     vector<FileRegion> subRegions;
     
     // Find the first region the sub region is contained in
     size_t regionIdx = 0;
-    FSSize processedBytes = 0;
-    for ( ; byteOffset > processedBytes; regionIdx++)
+    FSSize processedBytes = fileRegions_[0].extent;
+    while (byteOffset >= processedBytes)
     {
+        regionIdx++;
         processedBytes += fileRegions_[regionIdx].extent;
     }
 
-    // Extract the sub regions
-    FSSize assignedBytes = 0;
+    // Extract the first sub region
+    FSOffset firstOffset = fileRegions_[regionIdx].offset +
+        byteOffset - (processedBytes - fileRegions_[regionIdx].extent);
+    FSSize firstExtent = min(fileRegions_[regionIdx].extent, byteLength);
+    FileRegion firstRegion = {firstOffset, firstExtent};
+    subRegions.push_back(firstRegion);
+    
+    // Extract any remaining sub regions
+    regionIdx++;
+    FSSize assignedBytes = firstExtent;
     while (assignedBytes < byteLength)
     {
-        //cerr << "Adding region: " << regionIdx << endl;
         FSOffset offset = fileRegions_[regionIdx].offset;
         FSSize length = min(fileRegions_[regionIdx].extent,
                             byteLength - assignedBytes);

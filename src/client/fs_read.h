@@ -46,12 +46,18 @@ protected:
     /**  Construct server read requests */
     virtual void enterRead();
 
-    /** Accumulate server read responses */
-    virtual void exitCountResponses(bool& outHasReceivedAllResponses);
+    /** Count a finished flow */
+    void countFlowFinish();
+
+    /** Count a read response */
+    void countResponse();
+
+    /** @return true if all read responses and finished flows are received */
+    bool isReadComplete();
 
     /** Send final client response */
-    virtual void enterFinish();
-    
+    virtual void finish();
+
 private:
 
     /** The filesystem module */

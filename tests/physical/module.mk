@@ -1,5 +1,5 @@
 #
-# Module makefile for testing the physical package
+# Module makefile for testing the Physical subsystem
 #
 DIR := tests/physical
 

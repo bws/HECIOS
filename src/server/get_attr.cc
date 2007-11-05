@@ -82,12 +82,14 @@ void GetAttr::enterReadAttr()
     // Create the file write request
     spfsOSFileReadRequest* fileRead = new spfsOSFileReadRequest();
     fileRead->setFilename(filename.c_str());
-    fileRead->setOffset(0);
-    fileRead->setExtent(module_->getDefaultAttrSize());
+    fileRead->setOffsetArraySize(1);
+    fileRead->setExtentArraySize(1);
+    fileRead->setOffset(0, 0);
+    fileRead->setExtent(0, module_->getDefaultAttrSize());
     fileRead->setContextPointer(getAttrReq_);
     
     // Send the write request
-    module_->send(fileRead, "storageOut");
+    module_->send(fileRead);
 }
 
 void GetAttr::enterFinish()
@@ -97,11 +99,12 @@ void GetAttr::enterFinish()
         0, SPFS_GET_ATTR_RESPONSE);
     resp->setContextPointer(getAttrReq_);
     resp->setByteLength(FSServer::getDefaultAttrSize());
-    module_->send(resp, "netOut");
+    module_->send(resp);
 }
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

@@ -99,7 +99,7 @@ message spfsMPIRequest
 
         // internal fields
         cFSM state;
-        int responses = 0;
+        int remainingResponses = 0;
         int socketId;
 };
 
@@ -237,13 +237,15 @@ message spfsMPIFileReadRequest extends spfsMPIRequest
 	FileDescriptorPtr fileDes;
 	int count;
 	MPIDataType dataType;
+
+        // Internal fields used during processing
+        int remainingFlows;
 };
 
 // File read response
 message spfsMPIFileReadResponse extends spfsMPIResponse
 {
     fields:
-        char data[];
         unsigned long bytesRead;
 };
 
@@ -266,7 +268,10 @@ message spfsMPIFileWriteRequest extends spfsMPIRequest
         FileDescriptorPtr fileDes;
         int count;
         MPIDataType dataType;
-        char data[];
+
+        // Internal fields used during processing
+        int remainingFlows;
+
 };
 
 // File write response

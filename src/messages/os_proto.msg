@@ -73,7 +73,7 @@ message spfsOSFileResponse
         string filename;
 }
 
-// Abstract base class for all OS File Read and File Write Requests
+// Abstract base class for all OS UNIX File Read and File Write Requests
 message spfsOSFileIORequest extends spfsOSFileRequest
 {
     fields:
@@ -82,11 +82,28 @@ message spfsOSFileIORequest extends spfsOSFileRequest
 
         // State fields used internally
         bool hasMetaDataLoaded;
-        long numRemainingResponses;
+        unsigned long numRemainingResponses;
 };
 
-// Abstract base class for all OF File Read and File Write Responses
+// Abstract base class for all OS File Read and File Write Responses
 message spfsOSFileIOResponse extends spfsOSFileResponse
+{
+};
+
+// Abstract base class for all OS List I/O File Read and File Write Requests
+message spfsOSFileLIORequest extends spfsOSFileRequest
+{
+    fields:
+        FSOffset offset[];
+        FSSize extent[];
+
+        // State fields used internally
+        bool hasMetaDataLoaded;
+        unsigned long numRemainingResponses;
+};
+
+// Abstract base class for all OS List I/O File Read and File Write Responses
+message spfsOSFileLIOResponse extends spfsOSFileResponse
 {
 };
 
@@ -103,23 +120,27 @@ message spfsOSFileOpenResponse extends spfsOSFileResponse
 };
 
 // File read request to the OS' native file system
-message spfsOSFileReadRequest extends spfsOSFileIORequest
+message spfsOSFileReadRequest extends spfsOSFileLIORequest
 {
 };
 
 // File Read response from the OS' native file system
-message spfsOSFileReadResponse extends spfsOSFileIOResponse
+message spfsOSFileReadResponse extends spfsOSFileLIOResponse
 {
+    fields:
+        FSSize bytesRead;
 };
 
 // File write request to the OS' native file system
-message spfsOSFileWriteRequest extends spfsOSFileIORequest
+message spfsOSFileWriteRequest extends spfsOSFileLIORequest
 {
 };
 
 // File write response to the OS' native file system
-message spfsOSFileWriteResponse extends spfsOSFileIOResponse
+message spfsOSFileWriteResponse extends spfsOSFileLIOResponse
 {
+    fields:
+        FSSize bytesWritten;
 };
 
 // File sync request to the OS' native file system
@@ -206,6 +227,7 @@ message spfsOSSyncResponse
 
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:

@@ -27,7 +27,7 @@
 #include "basic_types.h"
 class Filename;
 class StorageLayout;
-class spfsOSFileIORequest;
+class spfsOSFileLIORequest;
 class spfsOSFileOpenRequest;
 class spfsOSFileRequest;
 
@@ -94,7 +94,7 @@ private:
     void processOpenMessage(spfsOSFileOpenRequest* request, cMessage* msg);
 
     /** Process the the multiple messages for a single File I/O request */
-    void processIOMessage(spfsOSFileIORequest* request, cMessage* msg);
+    void processIOMessage(spfsOSFileLIORequest* request, cMessage* msg);
 
     /** Send a request for the meta data blocks for a File I/O request */
     void readMetaData(spfsOSFileRequest* request);
@@ -103,10 +103,10 @@ private:
     void writeMetaData(spfsOSFileRequest* request);
 
     /** Send a request for the data blocks for a file I/O request */
-    void performIO(spfsOSFileIORequest* ioRequest);
+    void performIO(spfsOSFileLIORequest* ioRequest);
 
     /** Send the final read or write response */
-    void sendFileIOResponse(spfsOSFileIORequest* ioRequest);
+    void sendFileIOResponse(spfsOSFileLIORequest* ioRequest);
     
     /** @return the meta data blocks for a filename */
     virtual std::vector<FSBlock> getMetaDataBlocks(
@@ -114,7 +114,7 @@ private:
     
     /** @return the data blocks for a file region */
     virtual std::vector<FSBlock> getDataBlocks(
-        const Filename& filename, FSOffset offset, FSSize extent) const = 0;
+        spfsOSFileLIORequest* ioRequest) const = 0;
     
     /** in gate id */
     int inGateId_;
@@ -164,6 +164,10 @@ private:
     /** @return the data blocks for a file region */
     virtual std::vector<FSBlock> getDataBlocks(
         const Filename& filename, FSOffset offset, FSSize extent) const;
+
+    /** @return the data blocks for a list file region */
+    virtual std::vector<FSBlock> getDataBlocks(
+        spfsOSFileLIORequest* ioRequest) const;
 
     /** File system block size in bytes */
     std::size_t blockSize_;

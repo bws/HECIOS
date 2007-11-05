@@ -1,5 +1,5 @@
-#ifndef READ_H
-#define READ_H
+#ifndef BMI_LIST_IO_DATA_FLOW_TEST_H
+#define BMI_LIST_IO_DATA_FLOW_TEST_H
 //
 // This file is part of Hecios
 //
@@ -19,64 +19,49 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-class cMessage;
-class spfsReadRequest;
-class FSServer;
 
-/**
- * Perform server side read processing
- */
-class Read
+#include <cstddef>
+#include <iostream>
+#include <string>
+#include <cppunit/extensions/HelperMacros.h>
+#include "bmi_list_io_data_flow.h"
+using namespace std;
+
+/** Unit test for BMIListIODataFlow */
+class BMIListIODataFlowTest : public CppUnit::TestFixture
 {
+    // Create generic unit test and register test functions for automatic
+    // exercise
+    CPPUNIT_TEST_SUITE(BMIListIODataFlowTest);
+    CPPUNIT_TEST_SUITE_END();
+
 public:
 
-    /** Constructor */
-    Read(FSServer* module, spfsReadRequest* readReq);
+    /** Called before each test function */
+    virtual void setUp();
 
-    /**
-     * Perform server side read processing
-     */
-    void handleServerMessage(cMessage* msg);
+    /** Called after each test function */
+    virtual void tearDown();
 
-protected:
-
-    /**
-     * Create and send the disk requests
-     */
-    void readData();
-    
-    /**
-     * Create and send the data flow requests
-     */
-    void startDataFlow();
-    
-    /**
-     * Create and send the final read response
-     */
-    void sendFinalResponse();
-
-    /**
-     * No-op for now.
-     */
-    void finish();
-    
 private:
 
-    /** The parent module */
-    FSServer* module_;
-    
-    /** The originating read request */
-    spfsReadRequest* readReq_;
 };
+
+void BMIListIODataFlowTest::setUp()
+{
+}
+
+void BMIListIODataFlowTest::tearDown()
+{
+}
 
 #endif
 
 /*
  * Local variables:
- *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=8 sts=4 sw=4 expandtab
  */

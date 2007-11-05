@@ -21,96 +21,51 @@
 #include <cassert>
 using namespace std;
 
-StorageLayout::StorageLayout(size_t blockSize)
-    : fsBlockSize_(blockSize)
+StorageLayout::StorageLayout()
 {
-    assert(0 < fsBlockSize_);
-    
-    // Assume the IONodes are in blocks 0 - 999
-    nextMetaDataBlock_ = 0;
-    nextDataBlock_ = 1000;
+}
+
+StorageLayout::~StorageLayout()
+{
 }
 
 void StorageLayout::addDirectory(const Filename& dirName)
 {
-    // Assign a single block for storing directory metadata
-    metaDataBlocks_[dirName] = nextMetaDataBlock_++;
-
-    // Assign a fixed number of blocks for storing directory entries
-    dataBlocks_[dirName] = nextDataBlock_;
-    nextDataBlock_ += NUM_DIRECTORY_DATA_BLOCKS;
+    addDirectoryToLayout(dirName);
 }
 
 void StorageLayout::addFile(const Filename& filename, FSSize fileSize)
 {
-    // Assign a single block for storing the inodes
-    metaDataBlocks_[filename] = nextMetaDataBlock_++;
-
-    // Assign contiguous data blocks to the file
-    int64_t numBlocks = fileSize / fsBlockSize_;
-    dataBlocks_[filename] = nextDataBlock_;
-    nextDataBlock_ += numBlocks;
-    
+    addFileToLayout(filename, fileSize);
 }
 
 vector<FSBlock> StorageLayout::getFileMetaDataBlocks(
     const Filename& filename) const
 {
-    // Locate the file's inode block
-    std::map<Filename, FSBlock>::const_iterator iter =
-        metaDataBlocks_.find(filename);
-    assert(metaDataBlocks_.end() != iter);
-
-    // Return the inode block
-    vector<FSBlock> blocks(1);
-    blocks[0] = iter->second;
-    return blocks;
+    return getLayoutFileMetaDataBlocks(filename);
 }
 
 vector<FSBlock> StorageLayout::getFileDataBlocks(const Filename& filename,
                                                  FSOffset offset,
                                                  FSSize extent) const
 {
-    // Find the offset block
-    int64_t blocksOffset = offset / fsBlockSize_;
+    // Create a file region
+    FileRegion fr = {offset, extent};
+    vector<FileRegion> regions(1);
+    regions.push_back(fr);
 
-    // Calculate the number of full blocks to access
-    int64_t blocksToAccess = (extent/fsBlockSize_);
+    return getFileDataBlocks(filename, regions);
+}
 
-    // Add a block for any partial block access at beginning of request
-    int64_t firstBlockPortion =
-        min(extent, (blocksOffset * fsBlockSize_ - offset) % fsBlockSize_);
-    if (0 != firstBlockPortion)
-    {
-        //cerr << "Beginning portion: " << firstBlockPortion << endl;
-        blocksToAccess += 1;
-    }
-    
-    // Add a block for any partial block access at end of request
-    int64_t lastBlockPortion = (extent - firstBlockPortion) % fsBlockSize_;
-    if (0 != lastBlockPortion)
-    {
-        //cerr << "Last Portion: " << lastBlockPortion << endl;
-        blocksToAccess += 1;
-    }
-    
-    // Locate the file's first block
-    std::map<Filename, FSBlock>::const_iterator iter =
-        dataBlocks_.find(filename);
-    assert(dataBlocks_.end() != iter);
-
-    // Construct the list of blocks to access
-    FSBlock firstBlock = iter->second + blocksOffset; 
-    vector<FSBlock> blocks(blocksToAccess);
-    for (int64_t i = 0; i < blocksToAccess; i++)
-    {
-        blocks[i] = firstBlock + i;
-    }
-    return blocks;
+vector<FSBlock> StorageLayout::getFileDataBlocks(
+    const Filename& filename, vector<FileRegion> regions) const
+{
+    return getLayoutFileDataBlocks(filename, regions);
 }
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

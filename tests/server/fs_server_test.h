@@ -81,7 +81,7 @@ void FSServerTest::testGetAttr()
     spfsGetAttrRequest getAttrRequest(0, SPFS_GET_ATTR_REQUEST);
     getAttrRequest.setHandle(1);
     getAttrRequest.setContextPointer(&mpiRequest);
-    moduleTester_->deliverMessage(&getAttrRequest, "netIn");
+    moduleTester_->deliverMessage(&getAttrRequest, "in");
     CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->popOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSFileReadRequest*>(out1));
@@ -90,7 +90,7 @@ void FSServerTest::testGetAttr()
     spfsOSFileReadResponse* readResponse =
         new spfsOSFileReadResponse(0, SPFS_OS_FILE_READ_RESPONSE);
     readResponse->setContextPointer(out1);
-    moduleTester_->deliverMessage(readResponse, "storageIn");
+    moduleTester_->deliverMessage(readResponse, "in");
     cMessage* out2 = moduleTester_->getOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsGetAttrResponse*>(out2));
 }
@@ -103,7 +103,7 @@ void FSServerTest::testSetAttr()
     spfsSetAttrRequest setAttrRequest(0, SPFS_SET_ATTR_REQUEST);
     setAttrRequest.setHandle(1);
     setAttrRequest.setContextPointer(&mpiRequest);
-    moduleTester_->deliverMessage(&setAttrRequest, "netIn");
+    moduleTester_->deliverMessage(&setAttrRequest, "in");
     CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     cMessage* out1 = moduleTester_->popOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsOSFileWriteRequest*>(out1));
@@ -112,7 +112,7 @@ void FSServerTest::testSetAttr()
     spfsOSFileWriteResponse* writeResponse =
         new spfsOSFileWriteResponse(0, SPFS_OS_FILE_WRITE_RESPONSE);
     writeResponse->setContextPointer(out1);
-    moduleTester_->deliverMessage(writeResponse, "storageIn");
+    moduleTester_->deliverMessage(writeResponse, "in");
     cMessage* out2 = moduleTester_->getOutputMessage();
     CPPUNIT_ASSERT(0 != dynamic_cast<spfsSetAttrResponse*>(out2));
 

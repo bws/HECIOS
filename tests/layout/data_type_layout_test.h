@@ -121,6 +121,13 @@ void DataTypeLayoutTest::testGetSubRegions()
     CPPUNIT_ASSERT_EQUAL(FSSize(10), subRegions[0].extent);
     CPPUNIT_ASSERT_EQUAL(FSOffset(130), subRegions[1].offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(10), subRegions[1].extent);
+
+    // Test a bug exhbiting in some reads in the simulator
+    DataTypeLayout layout2(0, 65536);
+    subRegions = layout2.getSubRegions(4096, 4096);
+    CPPUNIT_ASSERT_EQUAL((size_t)1, subRegions.size());
+    CPPUNIT_ASSERT_EQUAL(FSOffset(4096), subRegions[0].offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(4096), subRegions[0].extent);
 }
 
 #endif

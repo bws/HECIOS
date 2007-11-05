@@ -1,5 +1,5 @@
-#ifndef BMI_TCP_ENDPOINT_TEST_H
-#define BMI_TCP_ENDPOINT_TEST_H
+#ifndef BMI_TCP_CLIENT_TEST_H
+#define BMI_TCP_CLIENT_TEST_H
 //
 // This file is part of Hecios
 //
@@ -19,7 +19,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 #include <cstddef>
 #include <iostream>
 #include <string>
@@ -30,20 +29,16 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
-/** Unit test for BMITcpEndpoint */
-class BMITcpEndpointTest : public CppUnit::TestFixture
+/** Unit test for BMITcpClient */
+class BMITcpClientTest : public CppUnit::TestFixture
 {
     // Create generic unit test and register test functions for automatic
     // exercise
-    CPPUNIT_TEST_SUITE(BMITcpEndpointTest);
+    CPPUNIT_TEST_SUITE(BMITcpClientTest);
     CPPUNIT_TEST(testCreateExpectedMessage);
     CPPUNIT_TEST(testCreateUnexpectedMessage);
     CPPUNIT_TEST(testCreatePullDataResponse);
     CPPUNIT_TEST(testCreatePushDataResponse);
-    //CPPUNIT_TEST(testClientRequest);
-    //CPPUNIT_TEST(testClientResponse);
-    //CPPUNIT_TEST(testServerRequest);
-    //CPPUNIT_TEST(testServerResponse);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -54,65 +49,48 @@ public:
     /** Called after each test function */
     virtual void tearDown();
 
-    /** Test components of a GetAttr request */
+    /** Test creation of an expected message */
     void testCreateExpectedMessage();
 
-    /** Test components of a GetAttr request */
+    /** Test creation of an unexpected message */
     void testCreateUnexpectedMessage();
 
-    /** Test components of a GetAttr request */
+    /** Test creation of a pull data response */
     void testCreatePullDataResponse();
 
-    /** Test components of a GetAttr request */
+    /** Test creation of a push data response */
     void testCreatePushDataResponse();
-
-    /** Test components of a GetAttr request */
-    void testClientRequest();
-
-    /** Test components of a SetAttr request */
-    void testClientResponse();
-
-    /** Test components of a GetAttr request */
-    void testServerRequest();
-
-    /** Test components of a SetAttr request */
-    void testServerResponse();
 
 private:
 
     cSimpleModuleTester* moduleTester_;
-    //BMITcpEndpoint* module_
+    //BMITcpServer* module_
 };
 
-void BMITcpEndpointTest::setUp()
+void BMITcpClientTest::setUp()
 {
     // Create the module for testing
     moduleTester_ = new cSimpleModuleTester(
-        "BMITcpEndpoint", "src/physical/bmi_tcp_endpoint.ned", false);
+        "BMITcpClient", "src/physical/bmi_tcp_client.ned", false);
     //module_ = dynamic_cast<BMITcpEndpoint*>(moduleTester_->getModule());
-
-    // Set the listen port
-    cModule* module = moduleTester_->getModule();
-    module->par("listenPort") = 8000;
-
     moduleTester_->callInitialize();
 }
 
-void BMITcpEndpointTest::tearDown()
+void BMITcpClientTest::tearDown()
 {
     delete moduleTester_;
     moduleTester_ = 0;
 }
 
-void BMITcpEndpointTest::testCreateExpectedMessage()
+void BMITcpClientTest::testCreateExpectedMessage()
 {
 }
 
-void BMITcpEndpointTest::testCreateUnexpectedMessage()
+void BMITcpClientTest::testCreateUnexpectedMessage()
 {
 }
 
-void BMITcpEndpointTest::testCreatePullDataResponse()
+void BMITcpClientTest::testCreatePullDataResponse()
 {
     /*
     spfsBMIPullDataRequest* pullRequest = new spfsBMIPullDataRequest();
@@ -124,7 +102,7 @@ void BMITcpEndpointTest::testCreatePullDataResponse()
     */
 }
 
-void BMITcpEndpointTest::testCreatePushDataResponse()
+void BMITcpClientTest::testCreatePushDataResponse()
 {
     /*
     spfsBMIPushDataRequest* pushRequest = new spfsBMIPushDataRequest();
@@ -134,39 +112,6 @@ void BMITcpEndpointTest::testCreatePushDataResponse()
     delete pushRequest;
     delete pushResponse;
     */
-}
-
-void BMITcpEndpointTest::testClientRequest()
-{
-    // Create the application request
-    spfsMPIFileReadRequest mpiRequest(0, SPFS_MPI_FILE_READ_REQUEST);
-    spfsGetAttrRequest* getAttrRequest =
-        new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
-    getAttrRequest->setHandle(1);
-    getAttrRequest->setContextPointer(&mpiRequest);
-
-    // Deliver the application request
-    moduleTester_->deliverMessage(getAttrRequest, "appIn");
-
-    // Test output
-    CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
-    cMessage* out1 = moduleTester_->getOutputMessage();
-    CPPUNIT_ASSERT(0 != dynamic_cast<spfsBMIUnexpectedMessage*>(out1));
-}
-
-void BMITcpEndpointTest::testClientResponse()
-{
-    CPPUNIT_FAIL("Test not yet implemented.");
-}
-
-void BMITcpEndpointTest::testServerRequest()
-{
-    CPPUNIT_FAIL("Test not yet implemented.");
-}
-
-void BMITcpEndpointTest::testServerResponse()
-{
-    CPPUNIT_FAIL("Test not yet implemented.");
 }
 
 #endif

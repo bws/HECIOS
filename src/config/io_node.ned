@@ -36,7 +36,7 @@ module IONode
         hca: BMIEnhancedHost;
             parameters:
                 numTcpApps = 1,
-                tcpAppType = "BMITcpEndpoint";
+                tcpAppType = "BMITcpServer";
             display: "p=100,80;i=block/rxtx,medium purple";
 
         daemon: DaemonProcess;
@@ -45,7 +45,7 @@ module IONode
         hardDisk: BasicModelDisk;
             display: "p=100,280;i=abstract/db,sienna";
 
-    connections nocheck:
+    connections:
 
         // Connect process to bmi transport
         daemon.out --> hca.bmiIn++;

@@ -23,7 +23,9 @@
 #include <cstring>
 #include <iostream>
 #include "create.h"
+#include "data_flow.h"
 #include "get_attr.h"
+#include "bmi_list_io_data_flow.h"
 #include "lookup.h"
 #include "read.h"
 #include "set_attr.h"
@@ -48,9 +50,6 @@ void FSServer::setDefaultAttrSize(size_t attrSize)
     defaultAttrSize_ = attrSize;
 }
 
-/**
- * Initialization - Set the name and handle range
- */
 void FSServer::initialize()
 {
     // Set the number, name, and range to invalid values
@@ -60,10 +59,12 @@ void FSServer::initialize()
     range_.last = UINT_MAX - 1;
 
     // Retrieve the gate ids
-    netInGateId_ = gate("netIn")->id();
-    netOutGateId_ = gate("netOut")->id();
-    storageInGateId_ = gate("storageIn")->id();
-    storageOutGateId_ = gate("storageOut")->id();
+    inGateId_ = gate("in")->id();
+    outGateId_ = gate("out")->id();
+}
+
+void FSServer::finish()
+{
 }
 
 void FSServer::setNumber(size_t number)
@@ -83,58 +84,59 @@ void FSServer::handleMessage(cMessage* msg)
     // If the message is a new client request, process it directly
     // Otherwise its a response, extract the originating request
     // and then process the response
-    if (msg->arrivalGateId() == netInGateId_)
+    if (spfsRequest* req = dynamic_cast<spfsRequest*>(msg))
     {
-        processMessage(dynamic_cast<spfsRequest*>(msg), msg);
+        processRequest(req, msg);
     }
     else
     {
         cMessage* parentReq = static_cast<cMessage*>(msg->contextPointer());
         spfsRequest* origRequest =
             static_cast<spfsRequest*>(parentReq->contextPointer());
-        processMessage(origRequest, msg);
+        processRequest(origRequest, msg);
         delete parentReq;
         delete msg;
     }
 }
 
-void FSServer::processMessage(spfsRequest* request, cMessage* msg)
+void FSServer::processRequest(spfsRequest* request, cMessage* msg)
 {
+    assert(0 != request);
     switch(request->kind())
     {
         case SPFS_CREATE_REQUEST:
         {
-            Create create(this, dynamic_cast<spfsCreateRequest*>(request));
+            Create create(this, static_cast<spfsCreateRequest*>(request));
             create.handleServerMessage(msg);
             break;
         }
         case SPFS_GET_ATTR_REQUEST:
         {
-            GetAttr getAttr(this, dynamic_cast<spfsGetAttrRequest*>(request));
+            GetAttr getAttr(this, static_cast<spfsGetAttrRequest*>(request));
             getAttr.handleServerMessage(msg);
             break;
         }
         case SPFS_LOOKUP_PATH_REQUEST:
         {
-            Lookup lookup(this, dynamic_cast<spfsLookupPathRequest*>(request));
+            Lookup lookup(this, static_cast<spfsLookupPathRequest*>(request));
             lookup.handleServerMessage(msg);
             break;
         }
         case SPFS_READ_REQUEST:
         {
-            Read read(this, dynamic_cast<spfsReadRequest*>(request));
+            Read read(this, static_cast<spfsReadRequest*>(request));
             read.handleServerMessage(msg);
             break;
         }
         case SPFS_SET_ATTR_REQUEST:
         {
-            SetAttr setAttr(this, dynamic_cast<spfsSetAttrRequest*>(request));
+            SetAttr setAttr(this, static_cast<spfsSetAttrRequest*>(request));
             setAttr.handleServerMessage(msg);
             break;
         }
         case SPFS_WRITE_REQUEST:
         {
-            Write write(this, dynamic_cast<spfsWriteRequest*>(request));
+            Write write(this, static_cast<spfsWriteRequest*>(request));
             write.handleServerMessage(msg);
             break;
         }
@@ -149,8 +151,13 @@ void FSServer::processMessage(spfsRequest* request, cMessage* msg)
     }    
 }
 
+void FSServer::send(cMessage* msg)
+{
+    cSimpleModule::send(msg, outGateId_);
+}
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

@@ -25,19 +25,16 @@
 #include "basic_types.h"
 #include "filename.h"
 
-/** Provides a contiguous disk layout */
+/** An abstract storage layout interface */
 class StorageLayout
 {
 public:
 
-    /** The number of data blocks to assign to a directory */
-    static const std::size_t NUM_DIRECTORY_DATA_BLOCKS = 10;
-    
     /** Constructor */
-    StorageLayout(std::size_t blockSize);
+    StorageLayout();
 
     /** Destructor */
-    ~StorageLayout() {};
+    virtual ~StorageLayout() = 0;
 
     /** Add layout information for a directory */
     void addDirectory(const Filename& filename);
@@ -47,41 +44,45 @@ public:
 
     /** @return vector of data blocks for a file's offset and extent */
     std::vector<FSBlock> getFileDataBlocks(const Filename& file,
-                                                 FSOffset offset,
-                                                 FSSize extent) const;
+                                           FSOffset offset,
+                                           FSSize extent) const;
+
+    /** @return vector of data blocks for a file and vector of file regions */
+    std::vector<FSBlock> getFileDataBlocks(
+        const Filename& file, std::vector<FileRegion> regions) const;
 
     /** @return the metadata blocks associated with a file */
     std::vector<FSBlock> getFileMetaDataBlocks(
         const Filename& file) const;
+
+protected:
+    /** Add layout information for a directory */
+    virtual void addDirectoryToLayout(const Filename& filename) = 0;
+
+    /** Add layout information for a file */
+    virtual void addFileToLayout(const Filename& filename, FSSize size) = 0;
+
+    /** @return vector of data blocks for a file and vector of file regions */
+    virtual std::vector<FSBlock> getLayoutFileDataBlocks(
+        const Filename& file, std::vector<FileRegion> regions) const = 0;
+
+    /** @return the metadata blocks associated with a file */
+    virtual std::vector<FSBlock> getLayoutFileMetaDataBlocks(
+        const Filename& file) const = 0;
     
 private:
-
     /** Copy constructor */
     StorageLayout( StorageLayout& other );
 
     /** Assignment */
     StorageLayout operator=(StorageLayout& other );
-
-    /** File system's block size */
-    std::size_t fsBlockSize_;
-    
-    /** Next block to use for meta data */
-    FSBlock nextMetaDataBlock_;
-    
-    /** Next block to use for file data */
-    FSBlock nextDataBlock_;
-    
-    /** Map to the first inode block for a file */
-    std::map<Filename, FSBlock> metaDataBlocks_;
-
-    /** Map to the first data block for a file */
-    std::map<Filename, FSBlock> dataBlocks_;
 };
 
 #endif
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

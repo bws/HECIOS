@@ -56,8 +56,12 @@ void FSClient::handleMessage(cMessage *msg)
             static_cast<cMessage*>(parentReq->contextPointer());
         processMessage(origRequest, msg);
 
-        // Cleanup the server request
-        delete parentReq;
+        // Request cleanup cannot be performed here because some requests
+        // have multiple responses, each individual state machine will
+        // have to handle deleting the messages at the appropriate time
+
+        // Cleanup the response
+        delete msg;
     }
 }
 

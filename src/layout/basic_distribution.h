@@ -30,15 +30,17 @@ class BasicDistribution : public FileDistribution
 public:
 
     /** The size of contguous blocks within the basic distribution */
-    static const int CONTGUOUS_SIZE = 65536;
+    static const int CONTIGUOUS_SIZE = 65536;
     
     /** Constructor */
-    BasicDistribution() : FileDistribution(1) {};
+    BasicDistribution() : FileDistribution(0, 1) {};
 
     /** Destructor */
     virtual ~BasicDistribution() {};
 
 private:
+    /** @return a pointer to a correctly copied derived FileDistribution */
+    virtual FileDistribution* doClone() const { return new BasicDistribution(); };
 
     /** @return the physical offset for a logical offset */
     virtual FSOffset convertLogicalToPhysicalOffset(size_t objectIdx,
@@ -52,13 +54,17 @@ private:
 
     /** @return the logical offset for a physical offset */
     virtual FSOffset convertPhysicalToLogicalOffset(
-        size_t objectIdx, physicalOffset) const
-        { return physicalOffset };
+        size_t objectIdx, FSOffset physicalOffset) const
+        { return physicalOffset; };
 
     /** @return the contiguous length forward from a physical offset */
-    virtual int getContiguousLength(size_t objectIdx,
+    virtual FSSize getContiguousLength(size_t objectIdx,
                                     FSOffset physicalOffset) const
-        { return CONTGUOUS_SIZE; };
+        { return CONTIGUOUS_SIZE; };
+
+    /** @return the logical file size */
+    virtual FSSize getLogicalFileSize() const { return 0; };
+
 };
 
 #endif

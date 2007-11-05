@@ -71,10 +71,8 @@ enum spfsMessageKind
     SPFS_STAT_RESPONSE = 431;
     SPFS_LIST_ATTR_REQUEST = 432;
     SPFS_LIST_ATTR_RESPONSE = 433;
-    SPFS_DATA_FLOW_PUSH_REQUEST = 434;
-    SPFS_DATA_FLOW_PUSH_RESPONSE = 435;
-    SPFS_DATA_FLOW_PULL_REQUEST = 436;
-    SPFS_DATA_FLOW_PULL_RESPONSE = 437;
+    SPFS_DATA_FLOW_START = 434;
+    SPFS_DATA_FLOW_FINISH = 435;
 };
 
 enum spfsLookupStatus {
@@ -93,7 +91,7 @@ message spfsRequest
 
         // internal fields
         cFSM state;
-        int socketId;
+        int bmiConnectionId;
 };
 
 // File system response abstract base class
@@ -346,35 +344,23 @@ message spfsListAttrResponse extends spfsResponse
         unsigned long numHandles;
 };
 
-// Push file data from sender to recipient
-message spfsDataFlowPushRequest extends spfsRequest
+// Begin the data flow
+message spfsDataFlowStart extends spfsRequest
 {
     fields:
-        unsigned long dataSize;
+        int flowId;
 };
 
-// Data push response
-message spfsDataFlowPushResponse extends spfsResponse
+// Indicate the data flow has finished
+message spfsDataFlowFinish extends spfsResponse
 {
     fields:
-};
-
-// Request data from the recipient
-message spfsDataFlowPullRequest extends spfsRequest
-{
-    fields:
-};
-
-// Respond with data requested
-message spfsDataFlowPullResponse extends spfsResponse
-{
-    fields:
-        unsigned long dataSize;
+        int flowId;
 };
 
 //
 // Local variables:
-//  indent-tab-mode: nil
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:

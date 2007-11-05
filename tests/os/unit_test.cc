@@ -22,10 +22,9 @@
  * Unit test driver for subsystem module
  */
 #include <cppunit/TextTestRunner.h>
+#include "fixed_inode_storage_layout_test.h"
 #include "native_file_system_test.h"
 #include "no_translation_test.h"
-#include "storage_layout_test.h"
-
 
 /** Main test driver */
 int main(int argc, char** argv)
@@ -33,9 +32,9 @@ int main(int argc, char** argv)
     CppUnit::TextTestRunner runner;
 
     // Add all of the requisite tests
+    runner.addTest( FixedINodeStorageLayoutTest::suite() );
     runner.addTest( NativeFileSystemTest::suite() );
     runner.addTest( NoTranslationTest::suite() );
-    runner.addTest( StorageLayoutTest::suite() );
 
     bool success = runner.run();
     return (success ? 0 : 1);

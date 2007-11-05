@@ -97,9 +97,18 @@ void Write::enterWriteData()
     Filename filename(writeReq_->getHandle());
     fileWrite->setContextPointer(writeReq_);
     fileWrite->setFilename(filename.c_str());
-    fileWrite->setOffset(fr.offset);
-    fileWrite->setExtent(fr.extent);
-    module_->send(fileWrite, "storageOut");
+
+    // Add the file regions to the request
+    vector<FileRegion> regions = layout.getRegions();
+    fileWrite->setOffsetArraySize(regions.size());
+    fileWrite->setExtentArraySize(regions.size());
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        fileWrite->setOffset(i, regions[i].offset);
+        fileWrite->setExtent(i, regions[i].extent);
+    }
+
+    module_->send(fileWrite);
 }
 
 void Write::enterFinish()
@@ -107,11 +116,12 @@ void Write::enterFinish()
     spfsWriteResponse* resp = new spfsWriteResponse(
         0, SPFS_WRITE_RESPONSE);
     resp->setContextPointer(writeReq_);
-    module_->send(resp, "netOut");
+    module_->send(resp);
 }
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

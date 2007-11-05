@@ -19,18 +19,21 @@
 //
 
 //
-// Implements the BMIEndpoint and TCPApp interfaces (gates)
+// Server job manager
 //
-simple BMITcpServer
+simple JobManager
 
     parameters:
-        listenPort: numeric const; // port to listen on
+        bufferSizeInBytes : const,
+        numBuffers : const;
 
     gates:
-        in: appIn;
-        out: appOut;
+        in: netIn;
+        out: netOut;
 
-        in: tcpIn;
-        out: tcpOut;
+        in: storageIn;
+        out: storageOut;
 
+        in: pfsIn;
+        out: pfsOut;
 endsimple

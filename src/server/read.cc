@@ -45,8 +45,9 @@ void Read::handleServerMessage(cMessage* msg)
     // Server lookup states
     enum {
         INIT = 0,
-        START_DATA_FLOW = FSM_Steady(1),
-        FINISH = FSM_Steady(2),
+        START_DATA_FLOW = FSM_Transient(1),
+        SEND_FINAL_RESPONSE = FSM_Steady(2),
+        FINISH = FSM_Steady(3),
     };
 
     FSM_Switch(currentState)
@@ -60,18 +61,29 @@ void Read::handleServerMessage(cMessage* msg)
         case FSM_Enter(START_DATA_FLOW):
         {
             assert(0 != dynamic_cast<spfsReadRequest*>(msg));
-            enterReadData();
+            startDataFlow();
             break;
         }
         case FSM_Exit(START_DATA_FLOW):
+        {
+            FSM_Goto(currentState, SEND_FINAL_RESPONSE);
+            break;
+        }
+        case FSM_Enter(SEND_FINAL_RESPONSE):
+        {
+            assert(0 != dynamic_cast<spfsReadRequest*>(msg));
+            sendFinalResponse();
+            break;
+        }
+        case FSM_Exit(SEND_FINAL_RESPONSE):
         {
             FSM_Goto(currentState, FINISH);
             break;
         }
         case FSM_Enter(FINISH):
         {
-            assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
-            enterFinish();
+            assert(0 != dynamic_cast<spfsDataFlowFinish*>(msg));
+            finish();
             break;
         }
     }
@@ -80,21 +92,17 @@ void Read::handleServerMessage(cMessage* msg)
     readReq_->setState(currentState);
 }
 
-/*
-void Read::enterStartDataFlow()
+void Read::startDataFlow()
 {
-    // Create the data flow
-    LIODataFlow* flow = new LIODataFlow(readReq_);
-    
-    // Register the data flow with the server
-    module_->registerDataFlow(flow);
-    
-    // Begin the data flow
-    flow->begin();
+    // Construct the data flow establish message
+    spfsDataFlowStart* dataFlowStart =
+        new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
+    dataFlowStart->setContextPointer(readReq_);
+    dataFlowStart->setHandle(readReq_->getHandle());
+    module_->send(dataFlowStart);
 }
-*/
 
-void Read::enterReadData()
+void Read::readData()
 {
     // Determine the local file layout
     DataTypeLayout layout;
@@ -106,38 +114,39 @@ void Read::enterReadData()
                                                  layout);
 
     // Construct the list i/o request
-    FileRegion fr = layout.getRegion(0);
     spfsOSFileReadRequest* fileRead =
         new spfsOSFileReadRequest(0, SPFS_OS_FILE_READ_REQUEST);
     Filename filename(readReq_->getHandle());
     fileRead->setContextPointer(readReq_);
     fileRead->setFilename(filename.c_str());
-    fileRead->setOffset(fr.offset);
-    fileRead->setExtent(fr.extent);
-    module_->send(fileRead, "storageOut");
+
+    // Add the file regions to the request
+    vector<FileRegion> regions = layout.getRegions();
+    fileRead->setOffsetArraySize(regions.size());
+    fileRead->setExtentArraySize(regions.size());
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        fileRead->setOffset(i, regions[i].offset);
+        fileRead->setExtent(i, regions[i].extent);
+    }
+
+    // Send the message
+    module_->send(fileRead);
 }
 
-void Read::enterFinish()
+void Read::sendFinalResponse()
 {
-    // Calculate the response size
-    DataTypeLayout layout;
-    DataTypeProcessor::createFileLayoutForServer(readReq_->getOffset(),
-                                                 readReq_->getDataType(),
-                                                 readReq_->getCount(),
-                                                 *(readReq_->getDist()),
-                                                 10000000,
-                                                 layout);
-
-    // Sum all the extents to determine total write size
-    FileRegion fr = layout.getRegion(0);
-    size_t reqBytes = fr.extent;
-    assert(0 != reqBytes);
-    
+    // Construct the final response
     spfsReadResponse* resp = new spfsReadResponse(
         0, SPFS_READ_RESPONSE);
     resp->setContextPointer(readReq_);
-    resp->setByteLength(reqBytes);
-    module_->send(resp, "netOut");
+    resp->setByteLength(4);
+    module_->send(resp);
+}
+
+void Read::finish()
+{
+    cerr << "Read flow completed.  Delete the read request?." << endl;
 }
 
 /*

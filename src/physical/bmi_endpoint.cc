@@ -53,32 +53,92 @@ void BMIEndpoint::finish()
 
 void BMIEndpoint::handleMessage(cMessage* msg)
 {
-    // cerr << "receiving message: " << msg->className() << endl;
     // If the request is from the application, send it over the network
     // else its from the network, send it to the application/server
     if (msg->arrivalGateId() == appInGateId_)
     {
-        // Handle requests and responses seperately
+        // Handle requests, responses, and data flows seperately
         if (spfsRequest* req = dynamic_cast<spfsRequest*>(msg))
         {
-            // cerr << "Sending as unexpected: " << req->className() << endl;
-            sendBMIUnexpectedMessage(req);        
+            spfsBMIUnexpectedMessage* bmiMsg = createUnexpectedMessage(req);
+            sendOverNetwork(bmiMsg);
         }
+        else if (spfsResponse* resp = dynamic_cast<spfsResponse*>(msg))
+        {
+            spfsBMIExpectedMessage* expectedMsg = createExpectedMessage(resp);
+            sendOverNetwork(expectedMsg);
+        }
+        else if (spfsBMIExpectedMessage* expected =
+                 dynamic_cast<spfsBMIExpectedMessage*>(msg))
+        {
+            sendOverNetwork(expected);
+        }        
         else
         {
-            //cerr << "Sending as expected: " << msg->className() << endl;
-            sendBMIExpectedMessage(msg);
+            spfsBMIUnexpectedMessage* unexpected =
+                dynamic_cast<spfsBMIUnexpectedMessage*>(msg);
+            assert(0 != msg);
+            sendOverNetwork(unexpected);
         }
+    }
+    else
+    {
+        handleMessageFromNetwork(msg);
+    }
+}
+
+void BMIEndpoint::handleMessageFromNetwork(cMessage* msg)
+{
+    assert(0 != msg);
+    
+    // If the message is a pull or push request, create a response
+    // Else if the message is a push or pull response, fwd to the app
+    // Otherwise, extract the PFS payload, and send that to the app
+    if (spfsBMIPullDataRequest* pullReq =
+        dynamic_cast<spfsBMIPullDataRequest*>(msg))
+    {
+        pullDataRequestReceived(pullReq);
+    }
+    else if (spfsBMIPushDataRequest* pushReq =
+             dynamic_cast<spfsBMIPushDataRequest*>(msg))
+    {
+        pushDataRequestReceived(pushReq);
+    }
+    else if (0 != dynamic_cast<spfsBMIPullDataResponse*>(msg) ||
+             0 != dynamic_cast<spfsBMIPushDataResponse*>(msg))
+    {
+        send(msg, appOutGateId_);
     }
     else
     {
         spfsBMIMessage* bmiMsg = dynamic_cast<spfsBMIMessage*>(msg);
         assert(0 != bmiMsg);
         cMessage* pfsMsg =  extractBMIPayload(bmiMsg);
-        //cerr << "Sending over appOut: " << pfsMsg->className() << endl;
         send(pfsMsg, appOutGateId_);
-        delete msg;
+        delete msg;        
     }
+}
+
+cMessage* BMIEndpoint::extractBMIPayload(spfsBMIMessage* bmiMsg)
+{
+    assert(0 != bmiMsg);
+    
+    // Decapsulate the payload
+    cMessage* payload = bmiMsg->decapsulate();
+    assert(0 != payload);
+    return payload;
+}
+
+void BMIEndpoint::pullDataRequestReceived(spfsBMIPullDataRequest* pullRequest)
+{
+    spfsBMIPullDataResponse* pullResp = createPullDataResponse(pullRequest);
+    sendOverNetwork(pullResp);
+}
+
+void BMIEndpoint::pushDataRequestReceived(spfsBMIPushDataRequest* pushRequest)
+{
+    spfsBMIPushDataResponse* pushResp = createPushDataResponse(pushRequest);
+    sendOverNetwork(pushResp);
 }
 
 bool BMIEndpoint::handleIsLocal(const FSHandle& handle)

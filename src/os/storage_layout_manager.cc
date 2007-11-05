@@ -74,7 +74,7 @@ FileSystem* StorageLayoutManager::getLocalFileSystem(size_t serverNumber) const
         cModule* daemonMod = ionMod->submodule("daemon");
         assert(0 != daemonMod);
 
-        cModule* serverMod = daemonMod->submodule("server");
+        cModule* serverMod = daemonMod->submodule("pfsServer");
         assert(0 != serverMod);
         FSServer* fsServer = dynamic_cast<FSServer*>(serverMod);
 

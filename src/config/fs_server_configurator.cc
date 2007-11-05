@@ -96,7 +96,7 @@ void FSServerConfigurator::initialize(int stage)
             cModule* daemon = ion->submodule("daemon");
             assert(0 != daemon);
             FSServer* server =
-                dynamic_cast<FSServer*>(daemon->submodule("server"));
+                dynamic_cast<FSServer*>(daemon->submodule("pfsServer"));
             assert(0 != server);
 
             // Set the server's handle range

@@ -63,11 +63,12 @@ void Lookup::enterFinish()
     resp->setHandlesArraySize(1);
     resp->setHandles(0, 1200);
     resp->setContextPointer(lookupReq_);
-    module_->send(resp, "netOut");
+    module_->send(resp);
 }
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

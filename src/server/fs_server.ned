@@ -27,10 +27,6 @@ simple FSServer
         //name: string const;
 
     gates:
-        in: netIn;
-        out: netOut;
-
-        in: storageIn;
-        out: storageOut;
-
+        in: in;
+        out: out;
 endsimple

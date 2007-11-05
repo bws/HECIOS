@@ -89,14 +89,14 @@ void Create::enterCreate()
     openRequest->setIsCreate(true);
     
     // Send the request to the storage layer
-    module_->send(openRequest, "storageOut");
+    module_->send(openRequest);
 }
 
 void Create::enterFinish()
 {
     spfsCreateResponse* resp = new spfsCreateResponse(0, SPFS_CREATE_RESPONSE);
     resp->setContextPointer(createReq_);
-    module_->send(resp, "netOut");
+    module_->send(resp);
 }
 
 /*

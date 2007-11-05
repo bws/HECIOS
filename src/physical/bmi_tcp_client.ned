@@ -18,15 +18,15 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-// Implements the TCPApp interface (gates)
+// Implements the TCPApp and BMIEndpoint interface (gates)
 simple BMITcpClient
 
     parameters:
         connectPort: numeric const; // port to connect to
 
     gates:
-        in: bmiIn;
-        out: bmiOut;
+        in: appIn;
+        out: appOut;
 
         in: tcpIn;
         out: tcpOut;
@@ -35,6 +35,7 @@ endsimple
 
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:

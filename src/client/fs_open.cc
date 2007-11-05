@@ -284,8 +284,6 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
             break;
         }
     }
-
-    delete lookupResponse;
 }
 
 void FSOpen::enterCreateMeta()
@@ -331,7 +329,7 @@ void FSOpen::enterCreateData()
 
     delete req;
     /* indicates how many responses we are waiting for */
-    openReq_->setResponses(numservers);
+    openReq_->setRemainingResponses(numservers);
 }
 
 void FSOpen::exitCreateData(spfsCreateResponse* createResp,
@@ -375,10 +373,6 @@ void FSOpen::enterWriteDirEnt()
 
 void FSOpen::exitWriteDirEnt(spfsCreateDirEntResponse* dirEntResp)
 {
-    // FIXME do anything ?? */
-    /* free create dirent response message */
-    delete dirEntResp;
-
 }
 
 void FSOpen::enterReadAttr()
@@ -393,9 +387,6 @@ void FSOpen::enterReadAttr()
 void FSOpen::exitReadAttr(spfsGetAttrResponse* gattrResp)
 {
     // FIXME install attributes into attribute cache
-
-    /* free get attr resp message */
-    delete gattrResp;
 }
 
 void FSOpen::enterFinish()

@@ -39,6 +39,21 @@ public:
     /** Number of bytes required as overhead to use the TCP protocol */
     static const unsigned int TCP_OVERHEAD_BYTES = 4;
     
+    /** @return a BMIExpected message encapsulating msg */
+    virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg);
+    
+    /** @return a BMIUnexpected message encapsulating msg */
+    virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
+        spfsRequest* request);
+    
+    /** @return a PullDataResponse for the request */
+    virtual spfsBMIPullDataResponse* createPullDataResponse(
+        spfsBMIPullDataRequest* pullRequest);
+        
+    /** @return a PushDataResponse for the request */
+    virtual spfsBMIPushDataResponse* createPushDataResponse(
+        spfsBMIPushDataRequest* pushRequest);
+        
 protected:
     /** Implementation of cSimpleModule::handleMessage */
     virtual void handleMessage(cMessage* msg);
@@ -49,15 +64,15 @@ protected:
     /** Finalize the BMI TCP Endpoint */
     virtual void finalizeEndpoint();
 
-    /** Send msg as a BMIExpectedMessage over TCP */
-    virtual void sendBMIExpectedMessage(cMessage* msg);
-
-    /** Send msg as a BMIUnexpectedMessage over TCP */
-    virtual void sendBMIUnexpectedMessage(spfsRequest* request);
-
-    /** Extract the spfs message from a BMIMessage sent via TCP */
-    virtual cMessage* extractBMIPayload(spfsBMIMessage* bmiMsg);
+    /** Send a BMIExpected message over the network */
+    virtual void sendOverNetwork(spfsBMIExpectedMessage* expectedMsg);
     
+    /** Send a BMIExpected message over the network */
+    virtual void sendOverNetwork(spfsBMIUnexpectedMessage* unexpectedMsg);
+    
+    /** Extract the domain message from a BMI message */
+    virtual cMessage* extractBMIPayload(spfsBMIMessage* bmiMsg);
+
     /** Implementation of TCPSocket::CallbackInterface::socketDataArrived */
     virtual void socketDataArrived(int connId, void* ptr, cMessage* msg,
                                    bool urgent);
@@ -155,42 +170,76 @@ void BMITcpEndpoint::handleMessage(cMessage* msg)
     }    
 }
 
-void BMITcpEndpoint::sendBMIExpectedMessage(cMessage* msg)
+spfsBMIUnexpectedMessage* BMITcpEndpoint::createUnexpectedMessage(
+    spfsRequest* request)
+{
+    assert(0 != request);
+    spfsBMIUnexpectedMessage* pkt = new spfsBMIUnexpectedMessage();
+    pkt->setHandle(request->getHandle());
+    pkt->setByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
+    pkt->encapsulate(request);
+    return pkt;
+}
+
+spfsBMIExpectedMessage* BMITcpEndpoint::createExpectedMessage(
+    cMessage* msg)
 {
     assert(0 != msg);
 
-    // Retrieve the socket used for the originating request
+    // Retrieve the connection id used for the originating request
     spfsRequest* req = static_cast<spfsRequest*>(msg->contextPointer());
+    
+    spfsBMIExpectedMessage* pkt = new spfsBMIExpectedMessage();
+    //pkt->setHandle(req->getHandle());
+    pkt->setConnectionId(req->getBmiConnectionId());
+    pkt->setByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
+    pkt->encapsulate(msg);
+    return pkt;
+}
+
+spfsBMIPullDataResponse* BMITcpEndpoint::createPullDataResponse(
+    spfsBMIPullDataRequest* pullRequest)
+{
+    // Server to server flows not yet supported
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Server to server flows not yet supported" << endl;
+    return 0;
+}
+
+spfsBMIPushDataResponse* BMITcpEndpoint::createPushDataResponse(
+    spfsBMIPushDataRequest* pushRequest)
+{
+    // Server to server flows not yet supported
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Server to server flows not yet supported" << endl;
+    return 0;
+}
+
+void BMITcpEndpoint::sendOverNetwork(spfsBMIExpectedMessage* msg)
+{
+    assert(0 !=msg);
+    
+    // Find the already open socket
     map<int,TCPSocket*>::iterator pos =
-        requestToSocketMap_.find(req->getSocketId());
+        requestToSocketMap_.find(msg->getConnectionId());
     assert(requestToSocketMap_.end() != pos);
         
     TCPSocket* responseSocket = pos->second;
     assert(0 != responseSocket);
 
     // Remove the entry for this socket
-    requestToSocketMap_.erase(req->getSocketId());
-
-    // Encapsulate the file system response and send to the client
-    spfsBMIMessage* pkt = new spfsBMIMessage();
-    pkt->setByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
-    pkt->encapsulate(msg);
-    responseSocket->send(pkt);
+    // TODO: how to do map cleanup here
+    //requestToSocketMap_.erase(req->getBmiConnectionId());
+    responseSocket->send(msg);
 }
 
-void BMITcpEndpoint::sendBMIUnexpectedMessage(spfsRequest* request)
+void BMITcpEndpoint::sendOverNetwork(spfsBMIUnexpectedMessage* msg)
 {
-    assert(0 != request);
+    assert(0 != msg);
     
     // Retrieve the socket for this handle
-    FSHandle handle = request->getHandle();
-    TCPSocket* sock = getConnectedSocket(handle);
-                
-    // Encapsulate the domain message and send via TCP
-    spfsBMIUnexpectedMessage* pkt = new spfsBMIUnexpectedMessage();
-    pkt->setByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
-    pkt->encapsulate(request);
-    sock->send(pkt);
+    TCPSocket* sock = getConnectedSocket(msg->getHandle());
+    sock->send(msg);
 }
 
 cMessage* BMITcpEndpoint::extractBMIPayload(spfsBMIMessage* bmiMsg)
@@ -208,8 +257,8 @@ cMessage* BMITcpEndpoint::extractBMIPayload(spfsBMIMessage* bmiMsg)
     if (spfsRequest* request = dynamic_cast<spfsRequest*>(payload))
     {
         static int nextSocketId = 0;
-        request->setSocketId(nextSocketId++);
-        requestToSocketMap_[request->getSocketId()] = responseSocket;
+        request->setBmiConnectionId(nextSocketId++);
+        requestToSocketMap_[request->getBmiConnectionId()] = responseSocket;
     }
     return payload;
 }

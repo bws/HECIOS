@@ -161,8 +161,10 @@ void NativeFileSystemTest::testFileRead()
     // Send the OSFileRead request
     spfsOSFileReadRequest fileRead(0, SPFS_OS_FILE_READ_REQUEST);
     fileRead.setFilename(testFile.c_str());
-    fileRead.setOffset(12);
-    fileRead.setExtent(24);
+    fileRead.setOffsetArraySize(1);
+    fileRead.setExtentArraySize(1);
+    fileRead.setOffset(0,12);
+    fileRead.setExtent(0,24);
     moduleTester_->deliverMessage(&fileRead, "in");
 
     // Test that file system reads meta data
@@ -213,8 +215,10 @@ void NativeFileSystemTest::testFileWrite()
     // Send the OSFileRead request
     spfsOSFileWriteRequest fileWrite(0, SPFS_OS_FILE_WRITE_REQUEST);
     fileWrite.setFilename(testFile.c_str());
-    fileWrite.setOffset(12);
-    fileWrite.setExtent(24);
+    fileWrite.setOffsetArraySize(1);
+    fileWrite.setExtentArraySize(1);
+    fileWrite.setOffset(0,12);
+    fileWrite.setExtent(0,24);
     moduleTester_->deliverMessage(&fileWrite, "in");
 
     // Test that file system reads meta data
