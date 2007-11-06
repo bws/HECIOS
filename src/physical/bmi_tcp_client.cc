@@ -299,6 +299,7 @@ void BMITcpClient::pullDataRequestReceived(spfsBMIPullDataRequest* pullRequest)
             static_cast<cMessage*>(pullRequest->contextPointer());
         finishMsg->setContextPointer(flowStart->contextPointer());
         finishMsg->setFlowId(flowId);
+        finishMsg->setFlowSize(flowProgress);
         send(finishMsg, "appOut");
     }
 }

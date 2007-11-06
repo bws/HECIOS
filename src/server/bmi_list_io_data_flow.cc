@@ -46,11 +46,9 @@ BMIListIODataFlow::~BMIListIODataFlow()
 
 void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
 {
-    // Variable to hold the next processing function and the buffer size
-    enum InteractionType {INVALID = 0, PUSH, PULL};
+    // Variables to hold the next processing function and buffer size
     void (BMIListIODataFlow::*nextProcessFunction)(FSSize) = 0;
     FSSize nextBufferSize = 0;
-    InteractionType nextInteractionType = INVALID;
     
     // Update the progress based on the results of the received message
     // and determine the next processing step
@@ -71,7 +69,6 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         // Indicate the next processing step
         nextProcessFunction = &BMIListIODataFlow::pushDataToStorage;
         nextBufferSize = dataSize;
-        nextInteractionType = PUSH;
     }
     else if (0 != dynamic_cast<spfsBMIPushDataResponse*>(msg))
     {
@@ -82,7 +79,6 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         // Indicate the next processing step
         nextProcessFunction = &BMIListIODataFlow::pullDataFromStorage;
         nextBufferSize = getBufferSize();
-        nextInteractionType = PULL;
     }
     else if (0 != dynamic_cast<spfsOSFileReadResponse*>(msg))
     {
@@ -94,7 +90,6 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         // Indicate the next processing step
         nextProcessFunction = &BMIListIODataFlow::pushDataToClient;
         nextBufferSize = bytesRead;
-        nextInteractionType = PUSH;
     }
     else if (0 != dynamic_cast<spfsOSFileWriteResponse*>(msg))
     {
@@ -105,7 +100,6 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         // Indicate the next processing step
         nextProcessFunction = &BMIListIODataFlow::pullDataFromClient;
         nextBufferSize = getBufferSize();
-        nextInteractionType = PULL;
     }
     
     assert(0 != nextProcessFunction);
@@ -121,8 +115,7 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         flowFinish->setFlowId(getUniqueId());
         module_->scheduleAt(module_->simTime(), flowFinish);
     }
-    else if ( (pullSubregionOffset_ < getSize())
-              || (PUSH == nextInteractionType))
+    else
     {
         // Call the next processing function with the correct buffer size
         //
@@ -138,23 +131,27 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
 
 void BMIListIODataFlow::pullDataFromClient(FSSize pullSize)
 {
-    // Extract the region size to request
-    FSSize bufferSize = min(getSize() - pullSubregionOffset_,
-                            pullSize);
-    pullSubregionOffset_ += bufferSize;
-
-    spfsBMIPullDataRequest* pullRequest = new spfsBMIPullDataRequest();
-    spfsDataFlowStart* startMsg = getOriginatingMessage();
-    pullRequest->setContextPointer(startMsg);
-    pullRequest->setFlowId(getUniqueId());
-    pullRequest->setFlowSize(getSize());
-    pullRequest->setHandle(startMsg->getHandle());
-    pullRequest->setConnectionId(connectionId_);
-    pullRequest->setRequestSize(bufferSize);
-    pullRequest->setByteLength(sizeof(bufferSize));
-    
-    // Send the pull request
-    module_->send(pullRequest, "netOut");    
+    // If more data is available, pull it
+    if (pullSubregionOffset_ < getSize())
+    {
+        // Extract the region size to request
+        FSSize bufferSize = min(getSize() - pullSubregionOffset_,
+                                pullSize);
+        pullSubregionOffset_ += bufferSize;
+        
+        spfsBMIPullDataRequest* pullRequest = new spfsBMIPullDataRequest();
+        spfsDataFlowStart* startMsg = getOriginatingMessage();
+        pullRequest->setContextPointer(startMsg);
+        pullRequest->setFlowId(getUniqueId());
+        pullRequest->setFlowSize(getSize());
+        pullRequest->setHandle(startMsg->getHandle());
+        pullRequest->setConnectionId(connectionId_);
+        pullRequest->setRequestSize(bufferSize);
+        pullRequest->setByteLength(sizeof(bufferSize));
+        
+        // Send the pull request
+        module_->send(pullRequest, "netOut");    
+    }
 }
 
 void BMIListIODataFlow::pushDataToClient(FSSize pushSize)
@@ -175,30 +172,34 @@ void BMIListIODataFlow::pushDataToClient(FSSize pushSize)
 
 void BMIListIODataFlow::pullDataFromStorage(FSSize pullSize)
 {
-    // Extract the regions to process
-    FSSize bufferSize = min(getSize() - pullSubregionOffset_,
-                            pullSize);
-    vector<FileRegion> regions = layout_.getSubRegions(pullSubregionOffset_,
-                                                       bufferSize);
-    pullSubregionOffset_ += bufferSize;
-
-    // Construct the list i/o request
-    spfsOSFileReadRequest* fileRead =
-        new spfsOSFileReadRequest(0, SPFS_OS_FILE_READ_REQUEST);
-    fileRead->setContextPointer(getOriginatingMessage());
-    fileRead->setFilename(filename_.c_str());
-
-    // Add the regions to the request
-    fileRead->setOffsetArraySize(regions.size());
-    fileRead->setExtentArraySize(regions.size());
-    for (size_t i = 0; i < regions.size(); i++)
+    // If more data is available, pull it
+    if (pullSubregionOffset_ < getSize())
     {
-        fileRead->setOffset(i, regions[i].offset);
-        fileRead->setExtent(i, regions[i].extent);
-    }
+        // Extract the regions to process
+        FSSize bufferSize = min(getSize() - pullSubregionOffset_,
+                                pullSize);
+        vector<FileRegion> regions = layout_.getSubRegions(pullSubregionOffset_,
+                                                           bufferSize);
+        pullSubregionOffset_ += bufferSize;
+        
+        // Construct the list i/o request
+        spfsOSFileReadRequest* fileRead =
+            new spfsOSFileReadRequest(0, SPFS_OS_FILE_READ_REQUEST);
+        fileRead->setContextPointer(getOriginatingMessage());
+        fileRead->setFilename(filename_.c_str());
 
-    // Send the request to the storage layer
-    module_->send(fileRead, "storageOut");
+        // Add the regions to the request
+        fileRead->setOffsetArraySize(regions.size());
+        fileRead->setExtentArraySize(regions.size());
+        for (size_t i = 0; i < regions.size(); i++)
+        {
+            fileRead->setOffset(i, regions[i].offset);
+            fileRead->setExtent(i, regions[i].extent);
+        }
+
+        // Send the request to the storage layer
+        module_->send(fileRead, "storageOut");
+    }
 }
 
 void BMIListIODataFlow::pushDataToStorage(FSSize pushSize)

@@ -19,11 +19,11 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include "basic_types.h"
 class cMessage;
 class FSClient;
+class spfsDataFlowFinish;
 class spfsMPIFileReadAtRequest;
-class spfsReadResponse;
 
 /**
  * Class responsible for performing client-side file reads
@@ -47,7 +47,7 @@ protected:
     virtual void enterRead();
 
     /** Count a finished flow */
-    void countFlowFinish();
+    void countFlowFinish(spfsDataFlowFinish* finishMsg);
 
     /** Count a read response */
     void countResponse();
@@ -65,15 +65,19 @@ private:
 
     /** The originating MPI read request */
     spfsMPIFileReadAtRequest* readReq_;
+
+    /** Total number of bytes read */
+    FSSize bytesRead_;
 };
 
 #endif
 
 /*
  * Local variables:
+ * indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

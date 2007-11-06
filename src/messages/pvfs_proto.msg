@@ -24,6 +24,7 @@
 //
 
 cplusplus {{
+#include "basic_types.h"
 #include "pfs_types.h"
 #include "file_distribution.h"
 typedef FileDistribution* FileDistributionPtr;
@@ -32,7 +33,10 @@ typedef FileDistribution* FileDistributionPtr;
 // Forward declarations
 class cFSM;
 class noncobject FSDataType;
+class noncobject FSHandle;
 class noncobject FSMetaData;
+class noncobject FSOffset;
+class noncobject FSSize;
 class noncobject FileDistributionPtr;
 
 // PVFS Protocol Message Kind values
@@ -87,7 +91,7 @@ message spfsRequest
 {
     fields:
         int fsId;
-        int handle;   // indicates server address and object
+        FSHandle handle;   // indicates server address and object
 
         // internal fields
         cFSM state;
@@ -112,7 +116,7 @@ message spfsCreateRequest extends spfsRequest
 message spfsCreateResponse extends spfsResponse
 {
     fields:
-        int handle;
+        FSHandle handle;
 };
 
 // Remove a file system object
@@ -132,9 +136,9 @@ message spfsReadRequest extends spfsRequest
     fields:
         int serverNo;
         int serverCnt;
-        unsigned long offset;
-        int count;
+        FSOffset offset;
         FSDataType dataType;
+        unsigned long count;
         FileDistributionPtr dist;
 };
 
@@ -142,7 +146,7 @@ message spfsReadRequest extends spfsRequest
 message spfsReadResponse extends spfsResponse
 {
     fields:
-        unsigned long bytesRead;
+        FSSize bytesRead;
 };
 
 // Write object data
@@ -161,12 +165,13 @@ message spfsWriteRequest extends spfsRequest
 message spfsWriteResponse extends spfsResponse
 {
     fields:
-        unsigned long bytesWritten;
 };
 
 // Write completion
 message spfsWriteCompletionResponse extends spfsResponse
 {
+    fields:
+        FSSize bytesWritten;
 };
 
 // Get file attributes
@@ -209,17 +214,17 @@ message spfsLookupPathResponse extends spfsResponse
 {
     fields:
         int status enum(spfsLookupStatus);
-        int handles[];
-        int handleCount;
-        int attrCount;
+        FSHandle handles[];
+        unsigned long handleCount;
+        unsigned long attrCount;
 };
 
 // Create a directory entry
 message spfsCreateDirEntRequest extends spfsRequest
 {
     fields:
-        int parentHandle;
-        int newHandle;
+        FSHandle parentHandle;
+        FSHandle newHandle;
         string entry;
 };
 
@@ -239,15 +244,15 @@ message spfsRemoveDirEntRequest extends spfsRequest
 message spfsRemoveDirEntResponse extends spfsResponse
 {
     fields:
-        int removedHandle;
+        FSHandle removedHandle;
 };
 
 // Resolve a filesystem path
 message spfsChangeDirEntRequest extends spfsRequest
 {
     fields:
-        int parentHandle;
-        int newHandle;
+        FSHandle parentHandle;
+        FSHandle newHandle;
         string entry;
 };
 
@@ -255,14 +260,14 @@ message spfsChangeDirEntRequest extends spfsRequest
 message spfsChangeDirEntResponse extends spfsResponse
 {
     fields:
-        int oldDirEntHandle;
+        FSHandle oldDirEntHandle;
 };
 
 // Resolve a filesystem path
 message spfsTruncateRequest extends spfsRequest
 {
     fields:
-        unsigned long newSize;
+        FSSize newSize;
         int flags;
 };
 
@@ -275,7 +280,7 @@ message spfsTruncateResponse extends spfsResponse
 message spfsMakeDirRequest extends spfsRequest
 {
     fields:
-        int handleExtents[];
+        FSSize handleExtents[];
 };
 
 // Create a directory
@@ -288,7 +293,7 @@ message spfsMakeDirResponse extends spfsResponse
 message spfsReadDirRequest extends spfsRequest
 {
     fields:
-        unsigned long dirOffset;
+        FSOffset dirOffset;
         unsigned long dirEntCount;
 };
 
@@ -296,9 +301,9 @@ message spfsReadDirRequest extends spfsRequest
 message spfsReadDirResponse extends spfsResponse
 {
     fields:
-        unsigned long dirOffset;
+        FSOffset dirOffset;
         string entries[];
-        int entryCount;
+        unsigned long entryCount;
         unsigned long directoryVersion;
 };
 
@@ -332,8 +337,8 @@ message spfsStatResponse extends spfsResponse
 message spfsListAttrRequest extends spfsRequest
 {
     fields:
-        int handles[];
-        int handleCount;
+        FSHandle handles[];
+        unsigned long handleCount;
         int attrMask;
 };
 
@@ -356,6 +361,7 @@ message spfsDataFlowFinish extends spfsResponse
 {
     fields:
         int flowId;
+        FSSize flowSize;
 };
 
 //

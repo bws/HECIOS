@@ -271,7 +271,7 @@ message spfsMPIFileWriteRequest extends spfsMPIRequest
 
         // Internal fields used during processing
         int remainingFlows;
-
+        int remainingCompletions;
 };
 
 // File write response

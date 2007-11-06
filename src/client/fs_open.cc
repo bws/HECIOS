@@ -97,6 +97,9 @@ void FSOpen::handleMessage(cMessage* msg)
             {
                 cerr << "ERROR: File does not exist during open!!!!" << endl;
             }
+
+            // Remove the lookup request
+            delete (cMessage*)msg->contextPointer();
             break;
         }
         case FSM_Enter(CREATE_META):
@@ -158,6 +161,9 @@ void FSOpen::handleMessage(cMessage* msg)
             assert(0 != dynamic_cast<spfsGetAttrResponse*>(msg));
             exitReadAttr(static_cast<spfsGetAttrResponse*>(msg));
             FSM_Goto(currentState, FINISH);
+
+            // Remove the getAttr request
+            delete (cMessage*)msg->contextPointer();
             break;
         }
         case FSM_Enter(FINISH):

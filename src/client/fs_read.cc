@@ -33,7 +33,8 @@ using namespace std;
 
 FSRead::FSRead(FSClient* client, spfsMPIFileReadAtRequest* readReq)
     : client_(client),
-      readReq_(readReq)
+      readReq_(readReq),
+      bytesRead_(0)
 {
     assert(0 != client_);
     assert(0 != readReq_);
@@ -116,8 +117,7 @@ void FSRead::handleMessage(cMessage* msg)
         }
         case FSM_Exit(COUNT_FLOW_FINISH):
         {
-            assert(0 != dynamic_cast<spfsDataFlowFinish*>(msg));
-            countFlowFinish();
+            countFlowFinish(dynamic_cast<spfsDataFlowFinish*>(msg));
             if (isReadComplete())
             {
                 FSM_Goto(currentState, FINISH);
@@ -194,8 +194,10 @@ void FSRead::countResponse()
     readReq_->setRemainingResponses(--numRemainingResponses);
 }
 
-void FSRead::countFlowFinish()
+void FSRead::countFlowFinish(spfsDataFlowFinish* finishMsg)
 {
+    assert(0 != finishMsg);
+    bytesRead_ += finishMsg->getFlowSize();
     int numRemainingFlows = readReq_->getRemainingFlows();
     readReq_->setRemainingFlows(--numRemainingFlows);
 }
@@ -212,8 +214,12 @@ void FSRead::finish()
         new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
     mpiResp->setContextPointer(readReq_);
     mpiResp->setIsSuccessful(true);
-    mpiResp->setBytesRead(0);  // FIXME
+    mpiResp->setBytesRead(bytesRead_);
     client_->send(mpiResp, client_->getAppOutGate());
+
+    // Note: The read request is NOT deleted here as one would expect.
+    // Because the server side flow completes after the client, the request
+    // is deleted on the server
 }
 
 /*

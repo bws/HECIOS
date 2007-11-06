@@ -44,8 +44,9 @@ void Write::handleServerMessage(cMessage* msg)
     // Server lookup states
     enum {
         INIT = 0,
-        WRITE_DATA = FSM_Steady(1),
-        FINISH = FSM_Steady(2),
+        START_DATA_FLOW = FSM_Transient(1),
+        SEND_RESPONSE = FSM_Steady(2),
+        SEND_COMPLETION_RESPONSE = FSM_Steady(3),
     };
 
     FSM_Switch(currentState)
@@ -53,24 +54,33 @@ void Write::handleServerMessage(cMessage* msg)
         case FSM_Exit(INIT):
         {
             assert(0 != dynamic_cast<spfsWriteRequest*>(msg));
-            FSM_Goto(currentState, WRITE_DATA);
+            FSM_Goto(currentState, START_DATA_FLOW);
             break;
         }
-        case FSM_Enter(WRITE_DATA):
+        case FSM_Enter(START_DATA_FLOW):
         {
             assert(0 != dynamic_cast<spfsWriteRequest*>(msg));
-            enterWriteData();
+            startDataFlow();
             break;
         }
-        case FSM_Exit(WRITE_DATA):
+        case FSM_Exit(START_DATA_FLOW):
         {
-            FSM_Goto(currentState, FINISH);
+            FSM_Goto(currentState, SEND_RESPONSE);
             break;
         }
-        case FSM_Enter(FINISH):
+        case FSM_Enter(SEND_RESPONSE):
         {
-            assert(0 != dynamic_cast<spfsOSFileWriteResponse*>(msg));
-            enterFinish();
+            sendResponse();
+            break;
+        }
+        case FSM_Exit(SEND_RESPONSE):
+        {
+            FSM_Goto(currentState, SEND_COMPLETION_RESPONSE);
+            break;
+        }
+        case FSM_Enter(SEND_COMPLETION_RESPONSE):
+        {
+            sendCompletionResponse();
             break;
         }
     }
@@ -79,42 +89,28 @@ void Write::handleServerMessage(cMessage* msg)
     writeReq_->setState(currentState);
 }
 
-void Write::enterWriteData()
+void Write::startDataFlow()
 {
-    // Determine the local file layout
-    DataTypeLayout layout;
-    DataTypeProcessor::createFileLayoutForServer(writeReq_->getOffset(),
-                                                 writeReq_->getDataType(),
-                                                 writeReq_->getCount(),
-                                                 *(writeReq_->getDist()),
-                                                 10000000,
-                                                 layout);
-
-    // Construct the list i/o request
-    FileRegion fr = layout.getRegion(0);
-    spfsOSFileWriteRequest* fileWrite =
-        new spfsOSFileWriteRequest(0, SPFS_OS_FILE_WRITE_REQUEST);
-    Filename filename(writeReq_->getHandle());
-    fileWrite->setContextPointer(writeReq_);
-    fileWrite->setFilename(filename.c_str());
-
-    // Add the file regions to the request
-    vector<FileRegion> regions = layout.getRegions();
-    fileWrite->setOffsetArraySize(regions.size());
-    fileWrite->setExtentArraySize(regions.size());
-    for (size_t i = 0; i < regions.size(); i++)
-    {
-        fileWrite->setOffset(i, regions[i].offset);
-        fileWrite->setExtent(i, regions[i].extent);
-    }
-
-    module_->send(fileWrite);
+    // Construct the data flow establish message
+    spfsDataFlowStart* dataFlowStart =
+        new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
+    dataFlowStart->setContextPointer(writeReq_);
+    dataFlowStart->setHandle(writeReq_->getHandle());
+    module_->send(dataFlowStart);
 }
 
-void Write::enterFinish()
+void Write::sendResponse()
 {
     spfsWriteResponse* resp = new spfsWriteResponse(
         0, SPFS_WRITE_RESPONSE);
+    resp->setContextPointer(writeReq_);
+    module_->send(resp);
+}
+
+void Write::sendCompletionResponse()
+{
+    spfsWriteCompletionResponse* resp = new spfsWriteCompletionResponse(
+        0, SPFS_WRITE_COMPLETION_RESPONSE);
     resp->setContextPointer(writeReq_);
     module_->send(resp);
 }

@@ -19,13 +19,12 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 class cMessage;
 class spfsWriteRequest;
 class FSServer;
 
 /**
- *
+ * State machine performing the server write process
  */
 class Write
 {
@@ -35,24 +34,20 @@ public:
     Write(FSServer* module, spfsWriteRequest* writeReq);
 
     /**
-     *
+     * Handle server message
      */
     void handleServerMessage(cMessage* msg);
 
 protected:
 
-    /** */
-    void enterWriteData();
+    /** Start the server side data flow processing for this write */
+    void startDataFlow();
 
-    /**
-     *
-     */
-    void enterFinish();
-    
-    /**
-     *
-     */
-    void exitFinish(spfsWriteRequest* writeReq);
+    /** Send the response indicating flow processing is ready */
+    void sendResponse();
+
+    /** Send response indicating the data has been commited to storage */
+    void sendCompletionResponse();
     
 private:
 
@@ -67,6 +62,7 @@ private:
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

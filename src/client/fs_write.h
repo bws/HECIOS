@@ -19,11 +19,12 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include "basic_types.h"
 class cMessage;
 class FSClient;
+class spfsDataFlowFinish;
 class spfsMPIFileWriteAtRequest;
-class spfsWriteResponse;
+class spfsWriteCompletionResponse;
 
 /**
  * Class responsible for performing client-side file writes
@@ -39,20 +40,23 @@ public:
     void handleMessage(cMessage* msg);
 
 protected:
+    /** Send messages establishing the write flows */
+    void beginWrite();
+    
+    /** Count write completions */
+    void countCompletion(spfsWriteCompletionResponse* completionResponse);
 
-    /**
-     * @return The next state transition, see implementation for details
-     */
-    void exitInit(spfsMPIFileWriteAtRequest* writeReq);
+    /** Count a finished flow */
+    void countFlowFinish(spfsDataFlowFinish* finishMsg);
 
-    /** Send server write requests */
-    void enterWrite();
+    /** Count a read response */
+    void countResponse();
 
-    /** Count server write initiation responses */
-    void exitCountResponses(bool& outHasReceivedAllResponses);
-        
-    /** Send the final response */
-    void enterFinish();
+    /** @return true if all write flows and response messages are received */
+    bool isWriteComplete();
+
+    /** Send final client response */
+    void finish();
     
 private:
 
@@ -61,6 +65,9 @@ private:
 
     /** The originating MPI write request */
     spfsMPIFileWriteAtRequest* writeReq_;
+
+    /** The number of bytes written */
+    FSSize bytesWritten_;
 };
 
 #endif

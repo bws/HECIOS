@@ -35,7 +35,8 @@ using namespace std;
 
 FSWrite::FSWrite(FSClient* client, spfsMPIFileWriteAtRequest* writeReq)
     : client_(client),
-      writeReq_(writeReq)
+      writeReq_(writeReq),
+      bytesWritten_(0)
 {
     assert(0 != client_);
     assert(0 != writeReq_);
@@ -51,13 +52,16 @@ void FSWrite::handleMessage(cMessage* msg)
      *
      *  Note that the WRITE state is transient to facilitate correct
      *  response counting.  Responses are counted upon exit of the
-     *  COUNT_RESPONSES state rather than upon entry
+     *  COUNT_* states rather than upon entry
      */
     enum {
         INIT = 0,
         WRITE = FSM_Transient(1),
-        COUNT_RESPONSES = FSM_Steady(2),
-        FINISH = FSM_Steady(3),
+        COUNT = FSM_Steady(2),
+        COUNT_RESPONSE = FSM_Transient(3),
+        COUNT_FLOW_FINISH = FSM_Transient(4),
+        COUNT_WRITE_COMPLETION = FSM_Transient(5),
+        FINISH = FSM_Steady(6),
     };
 
     FSM_Switch(currentState)
@@ -71,45 +75,85 @@ void FSWrite::handleMessage(cMessage* msg)
         case FSM_Enter(WRITE):
         {
             assert(0 != dynamic_cast<spfsMPIFileWriteAtRequest*>(msg));
-            enterWrite();
+            beginWrite();
             break;
         }
         case FSM_Exit(WRITE):
         {
             assert(0 != dynamic_cast<spfsMPIFileWriteAtRequest*>(msg));
-            FSM_Goto(currentState, COUNT_RESPONSES);
+            FSM_Goto(currentState, COUNT);
             break;
         }
-        case FSM_Enter(COUNT_RESPONSES):
+        case FSM_Exit(COUNT):
         {
+            if (0 != dynamic_cast<spfsWriteResponse*>(msg))
+            {
+                FSM_Goto(currentState, COUNT_RESPONSE);
+            }
+            else if (0 != dynamic_cast<spfsDataFlowFinish*>(msg))
+            {
+                FSM_Goto(currentState, COUNT_FLOW_FINISH);
+            }
+            else
+            {
+                assert(0 != dynamic_cast<spfsWriteCompletionResponse*>(msg));
+                FSM_Goto(currentState, COUNT_WRITE_COMPLETION);
+            }
             break;
         }
-        case FSM_Exit(COUNT_RESPONSES):
+        case FSM_Exit(COUNT_RESPONSE):
         {
             assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
-            bool hasReceivedAllResponses = false;
-            exitCountResponses(hasReceivedAllResponses);
-            if (hasReceivedAllResponses)
+            countResponse();
+            if (isWriteComplete())
             {
                 FSM_Goto(currentState, FINISH);
             }
             else
             {
-                FSM_Goto(currentState, COUNT_RESPONSES);
+                FSM_Goto(currentState, COUNT);
+            }            
+            break;
+        }
+        case FSM_Exit(COUNT_FLOW_FINISH):
+        {
+            countFlowFinish(dynamic_cast<spfsDataFlowFinish*>(msg));
+            if (isWriteComplete())
+            {
+                FSM_Goto(currentState, FINISH);
+            }
+            else
+            {
+                FSM_Goto(currentState, COUNT);
+            }
+            break;
+        }
+        case FSM_Exit(COUNT_WRITE_COMPLETION):
+        {
+            countCompletion(dynamic_cast<spfsWriteCompletionResponse*>(msg));
+            if (isWriteComplete())
+            {
+                FSM_Goto(currentState, FINISH);
+            }
+            else
+            {
+                FSM_Goto(currentState, COUNT);
             }
             
             // Delete originating request's distribution
-            spfsWriteRequest* req = (spfsWriteRequest*)msg->contextPointer();
-            delete req->getDist();
-                
-            // Cleanup responses
-            delete msg;
-            msg = 0;
+            //spfsWriteRequest* req = (spfsWriteRequest*)msg->contextPointer();
+            //delete req->getDist();
+            //delete req;
             break;
         }
         case FSM_Enter(FINISH):
         {
-            enterFinish();
+            finish();
+
+            // Cleanup the PFS request
+            spfsWriteRequest* pfsReq = (spfsWriteRequest*)msg->contextPointer();
+            delete pfsReq->getDist();
+            delete pfsReq;
             break;
         }
     }
@@ -118,10 +162,10 @@ void FSWrite::handleMessage(cMessage* msg)
     writeReq_->setState(currentState);
 }
 
-void FSWrite::enterWrite()
+void FSWrite::beginWrite()
 {
+    assert(0 != writeReq_->getFileDes());
     FSOpenFile* filedes = (FSOpenFile*)writeReq_->getFileDes();
-    assert(0 != filedes);
     
     // Construct the server write request
     spfsWriteRequest write(0, SPFS_WRITE_REQUEST);
@@ -151,15 +195,12 @@ void FSWrite::enterWrite()
         // Send write request if server hosts data
         if (0 != reqBytes)
         {
-            // Add message overhead
-            reqBytes += 4 + 8 + 8 + 8;
-
             // Set the message size in bytes
             spfsWriteRequest* req = static_cast<spfsWriteRequest*>(
                 write.dup());
             req->setHandle(filedes->metaData->dataHandles[i]);
             req->setDist(filedes->metaData->dist->clone());
-            req->setByteLength(reqBytes);
+            req->setByteLength(4 + 8 + 8 + 8);
             client_->send(req, client_->getNetOutGate());
 
             // Increment the number of outstanding requests
@@ -170,24 +211,37 @@ void FSWrite::enterWrite()
     // Set the number of responses
     writeReq_->setRemainingResponses(numRequests);
     writeReq_->setRemainingFlows(numRequests);
+    writeReq_->setRemainingCompletions(numRequests);
 }
 
-void FSWrite::exitCountResponses(bool& outHasReceivedAllResponses)
+void FSWrite::countResponse()
 {
-    int numOutstandingResponses = writeReq_->getRemainingResponses();
-    writeReq_->setRemainingResponses(--numOutstandingResponses);
-
-    if (0 == numOutstandingResponses)
-    {
-        outHasReceivedAllResponses = true;
-    }
-    else
-    {
-        outHasReceivedAllResponses = false;
-    }
+    int numRemainingResponses = writeReq_->getRemainingResponses();
+    writeReq_->setRemainingResponses(--numRemainingResponses);
 }
 
-void FSWrite::enterFinish()
+void FSWrite::countFlowFinish(spfsDataFlowFinish* finishMsg)
+{
+    assert(0 != finishMsg);
+    bytesWritten_ += finishMsg->getFlowSize();
+    int numRemainingFlows = writeReq_->getRemainingFlows();
+    writeReq_->setRemainingFlows(--numRemainingFlows);
+}
+
+void FSWrite::countCompletion(spfsWriteCompletionResponse* completionResponse)
+{
+    int numRemainingCompletions = writeReq_->getRemainingCompletions();
+    writeReq_->setRemainingCompletions(--numRemainingCompletions);
+}
+
+bool FSWrite::isWriteComplete()
+{
+    return (0 == writeReq_->getRemainingResponses())
+        && (0 == writeReq_->getRemainingFlows())
+        && (0 == writeReq_->getRemainingCompletions());
+}
+
+void FSWrite::finish()
 {
     spfsMPIFileWriteAtResponse* mpiResp =
         new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
@@ -195,8 +249,10 @@ void FSWrite::enterFinish()
     mpiResp->setIsSuccessful(true);
     client_->send(mpiResp, client_->getAppOutGate());
 }
+
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
