@@ -138,22 +138,12 @@ void FSWrite::handleMessage(cMessage* msg)
             else
             {
                 FSM_Goto(currentState, COUNT);
-            }
-            
-            // Delete originating request's distribution
-            //spfsWriteRequest* req = (spfsWriteRequest*)msg->contextPointer();
-            //delete req->getDist();
-            //delete req;
+            }            
             break;
         }
         case FSM_Enter(FINISH):
         {
             finish();
-
-            // Cleanup the PFS request
-            spfsWriteRequest* pfsReq = (spfsWriteRequest*)msg->contextPointer();
-            delete pfsReq->getDist();
-            delete pfsReq;
             break;
         }
     }
@@ -232,6 +222,12 @@ void FSWrite::countCompletion(spfsWriteCompletionResponse* completionResponse)
 {
     int numRemainingCompletions = writeReq_->getRemainingCompletions();
     writeReq_->setRemainingCompletions(--numRemainingCompletions);
+
+    // Cleanup the PFS request
+    spfsWriteRequest* pfsReq =
+        (spfsWriteRequest*)completionResponse->contextPointer();
+    delete pfsReq->getDist();
+    delete pfsReq;
 }
 
 bool FSWrite::isWriteComplete()
