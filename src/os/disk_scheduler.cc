@@ -217,14 +217,13 @@ SchedulerEntry* SSTFDiskScheduler::popNextEntry()
 {
     cQueueIterator iter(sstfQueue, false);
     SchedulerEntry* closestEntry = static_cast<SchedulerEntry*>(iter());
-    int smallestDelta = abs(currentAddress_ - closestEntry->lba);
+    int64_t smallestDelta = abs64(currentAddress_ - closestEntry->lba);
 
     // Bruteforce though the queue to find the closest request
     for ( ; !iter.end() ; iter++ )
     {
         SchedulerEntry* entry = static_cast<SchedulerEntry*>(iter());
-        LogicalBlockAddress delta =
-            abs(currentAddress_ - entry->lba);
+        int64_t delta = abs64(currentAddress_ - entry->lba);
         if (delta < smallestDelta)
         {
             closestEntry = entry;

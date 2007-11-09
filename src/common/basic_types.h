@@ -72,6 +72,14 @@ inline bool operator<(const HandleRange& lhs, const HandleRange& rhs)
     return (lhs.first < rhs.first && lhs.last < rhs.last);
 }
 
+/**
+ * Absolute value function for 64bit values
+ */
+inline int64_t abs64(int64_t val)
+{
+    return (val >= 0) ? val : -val;
+}
+
 #endif
 
 /*
