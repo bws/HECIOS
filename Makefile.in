@@ -177,7 +177,7 @@ SIM_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_SRC)))
 # Include dependency makefiles if building source target
 #
 DEPFILTER_MAKECMDGOALS := $(filter %clean %doc, $(MAKECMDGOALS))
-ifneq ($(strip $(DEPFILTER_MAKECMDGOALS)),)
+ifeq ($(strip $(DEPFILTER_MAKECMDGOALS)),)
 -include $(SIM_DEPENDS)
 endif
 
