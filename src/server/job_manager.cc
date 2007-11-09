@@ -32,7 +32,7 @@ Define_Module(JobManager);
 void JobManager::initialize()
 {
     // Read parameters
-    flowBufferSize_ = par("bufferSizeInBytes");
+    flowBufferSize_ = par("bufferSizeInBytes").longValue();
     flowBuffers_ = par("numBuffers");
 
     // Retrieve gate ids
