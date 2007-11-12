@@ -75,7 +75,7 @@ private:
     StorageLayout( StorageLayout& other );
 
     /** Assignment */
-    StorageLayout operator=(StorageLayout& other );
+    StorageLayout& operator=(StorageLayout& other );
 };
 
 #endif

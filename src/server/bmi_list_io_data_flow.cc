@@ -18,6 +18,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "bmi_list_io_data_flow.h"
+#include <cassert>
 #include <vector>
 #include "bmi_proto_m.h"
 #include "os_proto_m.h"
@@ -235,5 +236,5 @@ void BMIListIODataFlow::pushDataToStorage(FSSize pushSize)
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */
