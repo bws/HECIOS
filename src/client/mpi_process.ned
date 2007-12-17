@@ -30,9 +30,6 @@ import
 // Compound module describing and MPI job process
 //
 module MPIProcess
-    parameters:
-        middlewareCacheType : string;
-
     gates:
         in: ioIn, mpiClientIn, mpiServerIn;
         out: ioOut, mpiClientOut, mpiServerOut;
@@ -44,34 +41,20 @@ module MPIProcess
 	mpiMiddleware: MpiMiddleware;
 	    display: "p=180,180;i=block/classifier,red";
 
-        cache: middlewareCacheType like MiddlewareCache;
-            display: "p=80,180;i=block/buffer2,green";
-
-        fsClient: FSClient;
-            display: "p=80,280;i=block/classifier,yellow";
-
     connections:
         // Connect the MPI application to the MPI middleware
 	app.mpiOut --> mpiMiddleware.appIn;
 	app.mpiIn <-- mpiMiddleware.appOut;
+
+        // Connect the MPI application to the I/O middleware
+        app.ioOut --> ioOut;
+        app.ioIn <-- ioIn;
 
 	// Connect the MPI middleware to the MPI messaging network
         mpiMiddleware.netClientOut --> mpiClientOut;
         mpiMiddleware.netClientIn <-- mpiClientIn;
         mpiMiddleware.netServerOut --> mpiServerOut;
         mpiMiddleware.netServerIn <-- mpiServerIn;
-
-        // Connect the MPI application to the cache
-        app.ioOut --> cache.appIn;
-        app.ioIn <-- cache.appOut;
-
-        // Connect the file cache to the file system client
-        cache.fsOut --> fsClient.appIn;
-        cache.fsIn <-- fsClient.appOut;
-
-        // Connect the file system client to the I/O network
-        fsClient.netOut --> ioOut;
-        fsClient.netIn <-- ioIn;
 
     display: "o=white";
 endmodule

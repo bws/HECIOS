@@ -28,25 +28,25 @@ module DaemonProcess
         out: out, toDisk;
 
     submodules:
-        jobManager: JobManager;
-            display: "p=80,80;i=block/process,light grey";
+        serverJobManager: JobManager;
+            display: "p=120,80;i=block/classifier,light grey";
 
         pfsServer: FSServer;
-            display: "p=80,180;i=block/process,light grey";
+            display: "p=60,180;i=block/process,light grey";
           
         storage: StorageLayer;
-            display: "p=80,280;i=block/buffer2,light sea green";
+            display: "p=160,180;i=block/buffer2,light sea green";
  
     connections nocheck:
         // Messages inbound to the job manager
-        in --> jobManager.netIn;
-        pfsServer.out --> jobManager.pfsIn;
-        storage.out --> jobManager.storageIn;
+        in --> serverJobManager.netIn;
+        pfsServer.out --> serverJobManager.pfsIn;
+        storage.out --> serverJobManager.storageIn;
 
         // Messages outbound from the job manager
-        jobManager.pfsOut --> pfsServer.in;
-        jobManager.storageOut --> storage.in;
-        jobManager.netOut --> out;
+        serverJobManager.pfsOut --> pfsServer.in;
+        serverJobManager.storageOut --> storage.in;
+        serverJobManager.netOut --> out;
 
         // Storage layer/Disk connections
         storage.toDisk --> toDisk;

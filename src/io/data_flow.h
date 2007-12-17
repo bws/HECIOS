@@ -36,8 +36,10 @@ class DataFlow
 {
 public:
     /** Modes of operation (data read or write) */
-    enum Mode { INVALID = 0, READ, WRITE };
-    
+    enum Mode { INVALID = 0,
+                CLIENT_READ, CLIENT_WRITE,
+                SERVER_READ, SERVER_WRITE};
+
     /** Constructor for a read operation */
     DataFlow(const spfsDataFlowStart& flowStart,
              std::size_t numBuffers,
@@ -55,6 +57,9 @@ public:
     /** @return the originating request */
     spfsDataFlowStart* getOriginatingMessage() const;
 
+    /** @return the flow mode */
+    Mode getMode() const { return mode_; };
+    
     /** @return the unique id for this data flow */
     int getUniqueId() const { return uniqueId_; };
 
@@ -64,8 +69,8 @@ public:
     /** @return true when all flow data has been transferred */
     bool isComplete() const;
 
-    /** @return true when the flow client interaction is completed */
-    bool isClientComplete() const;
+    /** @return true when the flow network interaction is completed */
+    bool isNetworkComplete() const;
     
     /** @return true when the flow storage interaction is completed */
     bool isStorageComplete() const;
@@ -75,11 +80,20 @@ public:
     
 protected:
 
-    /** Add dataTransferred to the transfer to client total */
-    void addClientProgress(FSSize dataTransferred);
+    /** Add dataTransferred to the transfer to the network total */
+    void addNetworkProgress(FSSize dataTransferred);
 
     /** Add dataTransferred to the transfer to storage total */
     void addStorageProgress(FSSize dataTransferred);
+
+    /** @return the amount of data sent/received from the network */
+    FSSize getNetworkProgress() const { return networkTransferTotal_; };
+    
+    /** @return the amount of data committed/retrieved from storage */
+    FSSize getStorageProgress() const { return storageTransferTotal_; };
+
+    /** Start the flow of data */
+    virtual void startTransfer() = 0;
     
     /** Perform the processing for a data flow message */
     virtual void processDataFlowMessage(cMessage* msg) = 0;
@@ -90,11 +104,11 @@ protected:
     /** Pull data from the storage device */
     virtual void pullDataFromStorage(FSSize pullSize) = 0;
 
-    /** Push data to the file system client */
-    virtual void pushDataToClient(FSSize pushSize) = 0;
+    /** Push data to the network */
+    virtual void pushDataToNetwork(FSSize pushSize) = 0;
 
-    /** Pull data from the file system client */
-    virtual void pullDataFromClient(FSSize pullSize) = 0;
+    /** Pull data from the network */
+    virtual void pullDataFromNetwork(FSSize pullSize) = 0;
     
     /** Memory to disk layout of data being processed */
     DataTypeLayout layout_;
@@ -119,8 +133,8 @@ private:
     /** Size of the flow */
     FSSize flowSize_;
 
-    /** Amount of data transferred to/from the client */
-    FSSize clientTransferTotal_;
+    /** Amount of data transferred to/from the network */
+    FSSize networkTransferTotal_;
 
     /** Amount of data transferred to/from storage */
     FSSize storageTransferTotal_;

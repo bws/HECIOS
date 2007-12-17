@@ -23,13 +23,22 @@
 #include <omnetpp.h>
 #include "basic_types.h"
 class DataFlow;
+class spfsDataFlowStart;
 
 /**
- * Model of server job manager
+ * Model of server job manager - chiefly responsible for managing data flows
  */
 class JobManager : public cSimpleModule
 {
 public:
+    /**
+     * Create the correct data flow type based on the data flow start
+     * message
+     *
+     * @return the new data flow
+     */
+    DataFlow* createDataFlow(spfsDataFlowStart* flowStart);
+
     /**
      * Register the flow with the job manager
      *
@@ -42,6 +51,18 @@ public:
 
     /** @return the flow for flowId or null if no such flow exists */
     DataFlow* lookupDataFlow(int flowId) const;
+
+    /** Allow a data flow to subscribe to messages from other flows */ 
+    void subscribeDataFlowToTag(DataFlow* flow, int flowTag);
+
+    /** @return the data flow subscribed to the flow tag */
+    DataFlow* getSubscribedDataFlow(int flowTag) const;
+
+    /** Remove tag subscriptions for flow tag*/
+    void removeSubscriptionTag(int flowTag);
+    
+    /** Remove tag subscriptions for flow */
+    void unsubscribeDataFlow(DataFlow* flow);
     
 protected:
     
@@ -82,8 +103,11 @@ private:
     /** The size of flow buffers */
     FSSize flowBufferSize_;
     
-    /** Map of flows */
+    /** Map of flows by flow id */
     std::map<int, DataFlow*> dataFlowsById_;
+
+    /** Map of flows by subscribed BMI tags */
+    std::map<int, DataFlow*> dataFlowsByBMITag_;
 };
 
 #endif

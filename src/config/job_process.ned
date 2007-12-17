@@ -26,6 +26,8 @@ import
 // A UNIX process that requires 10us interrupts to access the network
 //
 module JobProcess
+    parameters:
+        middlewareCacheType : string;
 
     gates:
         in: in[];
@@ -33,18 +35,40 @@ module JobProcess
 
     submodules:
         mpi: MPIProcess;
+            display: "p=120,80;i=block/process,white";
            
-    connections:
+        cache: middlewareCacheType like MiddlewareCache;
+            display: "p=120,180;i=block/buffer2,green";
 
-        // Connect the MPI process I/O network to this Job's network
-        mpi.ioOut --> out++;
-        mpi.ioIn <-- in++;
+        clientJobManager: JobManager;
+            display: "p=60, 280;i=block/classifier,yellow";
 
-        // Connect the MPI process messaging network to this Job's network
+        fsClient: FSClient;
+            display: "p=160,280;i=block/process,red";
+
+    connections nocheck:
+        // Connect the MPI process I/O handling to the cache
+        mpi.ioOut --> cache.appIn;
+        mpi.ioIn <-- cache.appOut;
+
+        // Connect the cache to the file system client
+        cache.fsOut --> fsClient.appIn;
+        cache.fsIn <-- fsClient.appOut;
+
+        // Connect the file system network to job manager pfs ports
+        fsClient.netOut --> clientJobManager.pfsIn;
+        fsClient.netIn <-- clientJobManager.pfsOut;
+
+        // Connect the client job manager's network ports to the network
+        clientJobManager.netOut -->out++;
+        clientJobManager.netIn <-- in++;
+
+        // Connect the MPI process messaging network to the network
         // (The connection order here is important)
         mpi.mpiClientOut --> out++;
         mpi.mpiClientIn <-- in++;
         mpi.mpiServerOut --> out++;
         mpi.mpiServerIn <-- in++;
 
+    display: "o=white";
 endmodule

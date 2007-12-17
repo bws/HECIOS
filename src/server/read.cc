@@ -22,11 +22,10 @@
 #include <cassert>
 #include <numeric>
 #include <omnetpp.h>
-#include "data_type_layout.h"
-#include "data_type_processor.h"
-#include "fs_server.h"
+#include "data_flow.h"
 #include "file_distribution.h"
 #include "filename.h"
+#include "fs_server.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
@@ -97,44 +96,27 @@ void Read::handleServerMessage(cMessage* msg)
 
 void Read::startDataFlow()
 {
-    // Construct the data flow establish message
+    // Construct the data flow start message
     spfsDataFlowStart* dataFlowStart =
         new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
     dataFlowStart->setContextPointer(readReq_);
+
+    // Set the flow configuration
+    dataFlowStart->setFlowType(0);
+    dataFlowStart->setFlowMode(DataFlow::SERVER_READ);
+
+    // Set the BMI connection parameters
+    dataFlowStart->setBmiConnectionId(readReq_->getBmiConnectionId());
+    dataFlowStart->setBmiTag(readReq_->getFlowTag());
+
+    // Data transfer configuration
     dataFlowStart->setHandle(readReq_->getHandle());
+    dataFlowStart->setOffset(readReq_->getOffset());
+    dataFlowStart->setDataType(readReq_->getDataType());
+    dataFlowStart->setCount(readReq_->getCount());
+    dataFlowStart->setDist(readReq_->getDist());
+
     module_->send(dataFlowStart);
-}
-
-void Read::readData()
-{
-    // Determine the local file layout
-    DataTypeLayout layout;
-    DataTypeProcessor::createFileLayoutForServer(readReq_->getOffset(),
-                                                 readReq_->getDataType(),
-                                                 readReq_->getCount(),
-                                                 *(readReq_->getDist()),
-                                                 10000000,
-                                                 layout);
-
-    // Construct the list i/o request
-    spfsOSFileReadRequest* fileRead =
-        new spfsOSFileReadRequest(0, SPFS_OS_FILE_READ_REQUEST);
-    Filename filename(readReq_->getHandle());
-    fileRead->setContextPointer(readReq_);
-    fileRead->setFilename(filename.c_str());
-
-    // Add the file regions to the request
-    vector<FileRegion> regions = layout.getRegions();
-    fileRead->setOffsetArraySize(regions.size());
-    fileRead->setExtentArraySize(regions.size());
-    for (size_t i = 0; i < regions.size(); i++)
-    {
-        fileRead->setOffset(i, regions[i].offset);
-        fileRead->setExtent(i, regions[i].extent);
-    }
-
-    // Send the message
-    module_->send(fileRead);
 }
 
 void Read::sendFinalResponse()

@@ -21,6 +21,7 @@
 #include <cassert>
 #include "basic_types.h"
 #include "bmi_list_io_data_flow.h"
+#include "bmi_memory_data_flow.h"
 #include "bmi_proto_m.h"
 #include "data_flow.h"
 #include "pvfs_proto_m.h"
@@ -46,6 +47,28 @@ void JobManager::initialize()
 
 void JobManager::finish()
 {
+    dataFlowsById_.clear();
+    dataFlowsByBMITag_.clear();
+}
+
+DataFlow* JobManager::createDataFlow(spfsDataFlowStart* flowStart)
+{
+    DataFlow* flow = 0;
+    if (0 == flowStart->getFlowType())
+    {
+        flow = new BMIListIODataFlow(*flowStart,
+                                     flowBuffers_,
+                                     flowBufferSize_,
+                                     this);
+    }
+    else
+    {
+        flow = new BMIMemoryDataFlow(*flowStart,
+                                     flowBuffers_,
+                                     flowBufferSize_,
+                                     this);
+    }
+    return flow;
 }
 
 int JobManager::registerDataFlow(DataFlow* flow)
@@ -71,6 +94,41 @@ DataFlow* JobManager::lookupDataFlow(int flowId) const
         flow = pos->second;
     }
     return flow;
+}
+
+void JobManager::subscribeDataFlowToTag(DataFlow* flow, int flowTag)
+{
+    assert(0 != flow);
+    dataFlowsByBMITag_[flowTag] = flow;
+}
+
+DataFlow* JobManager::getSubscribedDataFlow(int flowTag) const
+{
+    DataFlow* flow = 0;
+    map<int, DataFlow*>::const_iterator pos = dataFlowsByBMITag_.find(flowTag);
+    if (dataFlowsByBMITag_.end() != pos)
+    {
+        flow = pos->second;
+    }
+    return flow;
+}
+
+void JobManager::removeSubscriptionTag(int flowTag)
+{
+    assert(0 != getSubscribedDataFlow(flowTag));
+    dataFlowsByBMITag_.erase(flowTag);
+}
+
+void JobManager::unsubscribeDataFlow(DataFlow* flow)
+{
+    map<int, DataFlow*>::iterator iter;
+    for (iter = dataFlowsByBMITag_.begin(); iter != dataFlowsByBMITag_.end(); ++iter)
+    {
+        if (iter->second == flow)
+        {
+            dataFlowsByBMITag_.erase(iter);
+        }
+    }
 }
 
 void JobManager::handleMessage(cMessage* msg)
@@ -103,6 +161,7 @@ void JobManager::handleSelfMessage(cMessage* msg)
     int flowId = flowFinish->getFlowId();
     DataFlow* flow = lookupDataFlow(flowId);
     assert(0 != flow);
+    //unsubscribeDataFlow(flow);
     deregisterDataFlow(flowId);
     delete flow;
 
@@ -117,8 +176,8 @@ void JobManager::handleNetworkMessage(cMessage* msg)
     // Route message to the pfs or a flow depending on its message type
     if (spfsBMIFlowMessage* flowMsg = dynamic_cast<spfsBMIFlowMessage*>(msg))
     {
-        int flowId = flowMsg->getFlowId();
-        DataFlow* flow = lookupDataFlow(flowId);
+        int bmiTag = flowMsg->getTag();
+        DataFlow* flow = getSubscribedDataFlow(bmiTag);
         assert(0 != flow);
         flow->handleServerMessage(flowMsg);
     }
@@ -134,17 +193,22 @@ void JobManager::handlePFSMessage(cMessage* msg)
     // either the storage or network subssytems
     if (spfsDataFlowStart* flowStart = dynamic_cast<spfsDataFlowStart*>(msg))
     {
-        DataFlow* flow = new BMIListIODataFlow(*flowStart,
-                                               flowBuffers_,
-                                               flowBufferSize_,
-                                               this);
+        // Create the flow
+        DataFlow* flow = createDataFlow(flowStart);
+        assert(0 != flow);
 
         // Register the flow
         int flowId = registerDataFlow(flow);
         flowStart->setFlowId(flowId);
+
+        // Subscribe the flow to a BMI tag
+        subscribeDataFlowToTag(flow, flowStart->getBmiTag());
+        
+        // Start the flow
         flow->initialize();
     }
-    else if (0 != dynamic_cast<spfsResponse*>(msg))
+    else if (0 != dynamic_cast<spfsResponse*>(msg) ||
+             0 != dynamic_cast<spfsRequest*>(msg))
     {
         send(msg, netOutGateId_);
     }

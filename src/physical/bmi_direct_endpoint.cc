@@ -42,14 +42,6 @@ public:
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
         spfsRequest* request);
     
-    /** @return a PullDataResponse for the request */
-    virtual spfsBMIPullDataResponse* createPullDataResponse(
-        spfsBMIPullDataRequest* pullRequest);
-        
-    /** @return a PushDataResponse for the request */
-    virtual spfsBMIPushDataResponse* createPushDataResponse(
-        spfsBMIPushDataRequest* pushRequest);
-        
 protected:
     /** Initialize this enpoint type */
     virtual void initializeEndpoint();
@@ -105,25 +97,6 @@ spfsBMIExpectedMessage* BMIDirectEndpoint::createExpectedMessage(
     pkt->setByteLength(BMI_OVERHEAD_BYTES + DIRECT_OVERHEAD_BYTES);
     pkt->encapsulate(msg);
     return pkt;
-}
-
-spfsBMIPullDataResponse* BMIDirectEndpoint::createPullDataResponse(
-    spfsBMIPullDataRequest* pullRequest)
-{
-    assert(0 != pullRequest);
-    spfsBMIPullDataResponse* pullResp = new spfsBMIPullDataResponse();
-    pullResp->setContextPointer(pullRequest);
-    pullResp->setDataSize(0);
-    return pullResp;
-}
-
-spfsBMIPushDataResponse* BMIDirectEndpoint::createPushDataResponse(
-    spfsBMIPushDataRequest* pushRequest)
-{
-    assert(0 != pushRequest);
-    spfsBMIPushDataResponse* pushResp = new spfsBMIPushDataResponse();
-    pushResp->setContextPointer(pushRequest);
-    return pushResp;
 }
 
 void BMIDirectEndpoint::sendOverNetwork(spfsBMIExpectedMessage* msg)

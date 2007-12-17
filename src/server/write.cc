@@ -21,10 +21,7 @@
 #include "write.h"
 #include <cassert>
 #include <omnetpp.h>
-#include "data_type_layout.h"
-#include "data_type_processor.h"
-#include "file_distribution.h"
-#include "filename.h"
+#include "data_flow.h"
 #include "fs_server.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
@@ -91,11 +88,26 @@ void Write::handleServerMessage(cMessage* msg)
 
 void Write::startDataFlow()
 {
-    // Construct the data flow establish message
+    // Construct the data flow start message
     spfsDataFlowStart* dataFlowStart =
         new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
     dataFlowStart->setContextPointer(writeReq_);
+
+    // Set the flow configuration
+    dataFlowStart->setFlowType(0);
+    dataFlowStart->setFlowMode(DataFlow::SERVER_WRITE);
+
+    // Set the BMI connection parameters
+    dataFlowStart->setBmiConnectionId(writeReq_->getBmiConnectionId());
+    dataFlowStart->setBmiTag(writeReq_->getFlowTag());
+
+    // Data transfer configuration
     dataFlowStart->setHandle(writeReq_->getHandle());
+    dataFlowStart->setOffset(writeReq_->getOffset());
+    dataFlowStart->setDataType(writeReq_->getDataType());
+    dataFlowStart->setCount(writeReq_->getCount());
+    dataFlowStart->setDist(writeReq_->getDist());
+
     module_->send(dataFlowStart);
 }
 

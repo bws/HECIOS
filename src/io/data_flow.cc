@@ -33,43 +33,39 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
     : originatingMessage_(&flowStart),
       numBuffers_(numBuffers),
       bufferSize_(bufferSize),
-      mode_(INVALID),
+      mode_(static_cast<Mode>(flowStart.getFlowMode())),
       uniqueId_(simulation.getUniqueNumber()),
       flowSize_(0),
-      clientTransferTotal_(0),
+      networkTransferTotal_(0),
       storageTransferTotal_(0)
 {
-    assert(0 != flowStart.contextPointer());
-    
-    FSOffset offset = 0;
-    FSSize dataType = 0;
-    FSSize count = 0;
-    FileDistribution* dist = 0;
-    cMessage* msg = static_cast<cMessage*>(flowStart.contextPointer());
-    if (msg->kind() == SPFS_READ_REQUEST)
-    {
-        mode_ = READ;
-        spfsReadRequest* read = static_cast<spfsReadRequest*>(msg);
-        offset = read->getOffset();
-        dataType = read->getDataType();
-        count = read->getCount();
-        dist = read->getDist();
-    }
-    else
-    {
-        assert(SPFS_WRITE_REQUEST == msg->kind());
-        mode_ = WRITE;
-        spfsWriteRequest* write = static_cast<spfsWriteRequest*>(msg);
-        offset = write->getOffset();
-        dataType = write->getDataType();
-        count = write->getCount();
-        dist = write->getDist();
-    }
-
     // Create the data type layout
-    DataTypeProcessor::createFileLayoutForServer(offset, dataType, count,
-                                                 *dist, 10000000, layout_);
+    cerr << __FILE__ << ":" << __LINE__ << ": "
+         << "Mode: " << mode_ << " "
+         << flowStart.getOffset() << " " << flowStart.getDataType() << " "
+         << flowStart.getDist() << " \n";
+    if (CLIENT_READ == mode_ || CLIENT_WRITE == mode_)
+    {
+        DataTypeProcessor::createFileLayoutForClient(flowStart.getOffset(),
+                                                     flowStart.getDataType(),
+                                                     flowStart.getCount(),
+                                                     *(flowStart.getDist()),
+                                                     10000000,
+                                                     layout_);
+    }
+    else if (SERVER_READ == mode_ || SERVER_WRITE == mode_) 
+    {
+        DataTypeProcessor::createFileLayoutForServer(flowStart.getOffset(),
+                                                     flowStart.getDataType(),
+                                                     flowStart.getCount(),
+                                                     *(flowStart.getDist()),
+                                                     10000000,
+                                                     layout_);
+    }
     flowSize_ = layout_.getLength();
+    assert(0 < flowSize_);
+    cerr << __FILE__ << ":" << __LINE__ << ": "
+         << "Length: " << flowSize_ << " \n";
 }
 
 DataFlow::~DataFlow()
@@ -86,29 +82,19 @@ void DataFlow::initialize()
     // Spawn the first operations
     for (size_t i = 0; i < numBuffers_; i++)
     {
-        assert(INVALID != mode_);
-        if (READ == mode_)
-        {
-            // Request the data from storage
-            pullDataFromStorage(bufferSize_);
-        }
-        else
-        {
-            // Request the data from the client
-            pullDataFromClient(bufferSize_);
-        }
+        startTransfer();
     }
 }
 
 bool DataFlow::isComplete() const
 {
-    return (flowSize_ == clientTransferTotal_) &&
+    return (flowSize_ == networkTransferTotal_) &&
         (flowSize_ == storageTransferTotal_);
 }
 
-bool DataFlow::isClientComplete() const
+bool DataFlow::isNetworkComplete() const
 {
-    return (flowSize_ == clientTransferTotal_);
+    return (flowSize_ == networkTransferTotal_);
 }
 
 bool DataFlow::isStorageComplete() const
@@ -122,9 +108,9 @@ void DataFlow::handleServerMessage(cMessage* msg)
     processDataFlowMessage(msg);
 }
 
-void DataFlow::addClientProgress(FSSize dataTransferred)
+void DataFlow::addNetworkProgress(FSSize dataTransferred)
 {
-    clientTransferTotal_ += dataTransferred;
+    networkTransferTotal_ += dataTransferred;
 }
 
 void DataFlow::addStorageProgress(FSSize dataTransferred)

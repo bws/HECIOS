@@ -46,14 +46,6 @@ public:
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
         spfsRequest* request);
     
-    /** @return a PullDataResponse for the request */
-    virtual spfsBMIPullDataResponse* createPullDataResponse(
-        spfsBMIPullDataRequest* pullRequest);
-        
-    /** @return a PushDataResponse for the request */
-    virtual spfsBMIPushDataResponse* createPushDataResponse(
-        spfsBMIPushDataRequest* pushRequest);
-        
 protected:
     /** Implementation of cSimpleModule::handleMessage */
     virtual void handleMessage(cMessage* msg);
@@ -190,29 +182,10 @@ spfsBMIExpectedMessage* BMITcpEndpoint::createExpectedMessage(
     spfsRequest* req = static_cast<spfsRequest*>(msg->contextPointer());
     
     spfsBMIExpectedMessage* pkt = new spfsBMIExpectedMessage();
-    //pkt->setHandle(req->getHandle());
     pkt->setConnectionId(req->getBmiConnectionId());
     pkt->setByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
     pkt->encapsulate(msg);
     return pkt;
-}
-
-spfsBMIPullDataResponse* BMITcpEndpoint::createPullDataResponse(
-    spfsBMIPullDataRequest* pullRequest)
-{
-    // Server to server flows not yet supported
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Server to server flows not yet supported" << endl;
-    return 0;
-}
-
-spfsBMIPushDataResponse* BMITcpEndpoint::createPushDataResponse(
-    spfsBMIPushDataRequest* pushRequest)
-{
-    // Server to server flows not yet supported
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Server to server flows not yet supported" << endl;
-    return 0;
 }
 
 void BMITcpEndpoint::sendOverNetwork(spfsBMIExpectedMessage* msg)

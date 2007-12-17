@@ -52,14 +52,6 @@ public:
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
         spfsRequest* request);
     
-    /** @return a PullDataResponse for the request */
-    virtual spfsBMIPullDataResponse* createPullDataResponse(
-        spfsBMIPullDataRequest* pullRequest);
-        
-    /** @return a PushDataResponse for the request */
-    virtual spfsBMIPushDataResponse* createPushDataResponse(
-        spfsBMIPushDataRequest* pushRequest);
-        
 protected:
     /** Implementation of initialize */
     virtual void initializeEndpoint();
@@ -76,22 +68,6 @@ protected:
     /** Send a BMIExpected message over the network */
     virtual void sendOverNetwork(spfsBMIUnexpectedMessage* unexpectedMsg);
     
-    /**
-     * Indicates the receipt of a data flow pull request
-     *
-     * Send a simple reply over the network and trigger flow completion
-     * if warranted
-     */
-    virtual void pullDataRequestReceived(spfsBMIPullDataRequest* pullRequest);
-    
-    /** 
-     * Indicates the receipt of a data flow pull request
-     *
-     * Send a simple reply over the network and trigger flow completion
-     * if warranted
-     */
-    virtual void pushDataRequestReceived(spfsBMIPushDataRequest* pushRequest);
-
     /** Extract the payload from a completed socket message */
     void socketDataArrived(int, void *, cMessage *msg, bool);
 
@@ -103,13 +79,6 @@ private:
     /** @return a socket with an open connection to the server */
     TCPSocket* getConnectedSocket(const FSHandle& handle);
 
-    /**
-     * Update the amount of flow data transferred for the flowId
-     *
-     * @return the total data transferred as part of the flow
-     */
-    FSSize updateFlowProgress(int flowId, FSSize transferSize);
-    
     /** Gate id for tcpIn */
     int tcpInGateId_;
 
@@ -193,49 +162,6 @@ spfsBMIExpectedMessage* BMITcpClient::createExpectedMessage(cMessage* msg)
     return 0;
 }
 
-spfsBMIPullDataResponse* BMITcpClient::createPullDataResponse(
-    spfsBMIPullDataRequest* pullRequest)
-{
-    assert(0 != pullRequest);
-
-    // Extract the relevant data from the request
-    //int connectionId = pullRequest->getConnectionId();
-    int flowId = pullRequest->getFlowId();
-    //FSSize flowSize = pullRequest->getFlowSize();
-    FSSize dataSize = pullRequest->getRequestSize();
-    FSHandle handle = pullRequest->getHandle();
-
-    // Create the response
-    spfsBMIPullDataResponse* pullResp = new spfsBMIPullDataResponse();
-    pullResp->setContextPointer(pullRequest);
-    pullResp->setConnectionId(handle);
-    pullResp->setFlowId(flowId);
-    pullResp->setDataSize(dataSize);
-    pullResp->setByteLength(dataSize);
-    return pullResp;
-}
-
-spfsBMIPushDataResponse* BMITcpClient::createPushDataResponse(
-    spfsBMIPushDataRequest* pushRequest)
-{
-    assert(0 != pushRequest);
-
-    // Extract the relevant data from the request
-    //int connectionId = pushRequest->getConnectionId();
-    int flowId = pushRequest->getFlowId();
-    //FSSize flowSize = pushRequest->getFlowSize();
-    FSSize dataSize = pushRequest->getDataSize();
-    FSHandle handle = pushRequest->getHandle();
-
-    spfsBMIPushDataResponse* pushResp = new spfsBMIPushDataResponse();
-    pushResp->setContextPointer(pushRequest);
-    pushResp->setConnectionId(handle);
-    pushResp->setFlowId(flowId);
-    pushResp->setReceivedSize(dataSize);
-    pushResp->setByteLength(sizeof(FSSize));
-    return pushResp;
-}
-
 void BMITcpClient::sendOverNetwork(spfsBMIExpectedMessage* msg)
 {
     assert(0 != msg);
@@ -277,71 +203,6 @@ TCPSocket* BMITcpClient::getConnectedSocket(const FSHandle& handle)
     }
 
     return sock;
-}
-
-void BMITcpClient::pullDataRequestReceived(spfsBMIPullDataRequest* pullRequest)
-{
-    // Send the response to the server
-    BMIEndpoint::pullDataRequestReceived(pullRequest);
-
-    // Update flow progress
-    int flowId = pullRequest->getFlowId();
-    FSSize dataSize = pullRequest->getRequestSize();
-    FSSize flowProgress = updateFlowProgress(flowId, dataSize);
-    assert(flowProgress <= pullRequest->getFlowSize());
-
-    // Check for flow completion
-    if (pullRequest->getFlowSize() == flowProgress)
-    {
-        spfsDataFlowFinish* finishMsg =
-            new spfsDataFlowFinish(0, SPFS_DATA_FLOW_FINISH);
-        cMessage* flowStart =
-            static_cast<cMessage*>(pullRequest->contextPointer());
-        finishMsg->setContextPointer(flowStart->contextPointer());
-        finishMsg->setFlowId(flowId);
-        finishMsg->setFlowSize(flowProgress);
-        send(finishMsg, "appOut");
-    }
-}
-
-void BMITcpClient::pushDataRequestReceived(spfsBMIPushDataRequest* pushRequest)
-{
-    // Send the response to the server
-    BMIEndpoint::pushDataRequestReceived(pushRequest);
-
-    // Update flow progress
-    int flowId = pushRequest->getFlowId();
-    FSSize dataSize = pushRequest->getDataSize();
-    FSSize flowProgress = updateFlowProgress(flowId, dataSize);
-    assert(flowProgress <= pushRequest->getFlowSize());
-
-    // Check for flow completion
-    if (pushRequest->getFlowSize() == flowProgress)
-    {
-        spfsDataFlowFinish* finishMsg =
-            new spfsDataFlowFinish(0, SPFS_DATA_FLOW_FINISH);
-        cMessage* flowStart =
-            static_cast<cMessage*>(pushRequest->contextPointer());
-        finishMsg->setContextPointer(flowStart->contextPointer());
-        finishMsg->setFlowId(flowId);
-        send(finishMsg, "appOut");
-    }    
-}
-
-FSSize BMITcpClient::updateFlowProgress(int flowId, FSSize transferSize)
-{
-    FSSize totalProgress = 0;
-    map<int, FSSize>::const_iterator pos = flowProgressById_.find(flowId);
-    if (flowProgressById_.end() == pos)
-    {
-        totalProgress = (flowProgressById_[flowId] = transferSize);
-    }
-    else
-    {
-        totalProgress = (flowProgressById_[flowId] += transferSize);
-    }
-    
-    return totalProgress;
 }
 
 //

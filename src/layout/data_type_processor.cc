@@ -39,7 +39,8 @@ int DataTypeProcessor::createFileLayoutForClient(
                                                  dist,
                                                  maxBytesToProcess,
                                                  layout);
-    assert(0 <= bytesProcessed && bytesProcessed <= maxBytesToProcess);
+    assert(0 <= bytesProcessed);
+    assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
     return bytesProcessed;
 }
 
@@ -57,7 +58,8 @@ int DataTypeProcessor::createFileLayoutForServer(
                                                  dist,
                                                  maxBytesToProcess,
                                                  layout);
-    assert(0 <= bytesProcessed && bytesProcessed <= maxBytesToProcess);
+    assert(0 <= bytesProcessed);
+    assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
     return bytesProcessed;    
 }
 
@@ -72,11 +74,11 @@ int DataTypeProcessor::processClientRequest(
     DataTypeLayout& layout)
 {
     int bytesProcessed = 0;
-    bytesProcessed = processContiguousServerRegion(offset,
-                                                   dataType*count,
-                                                   dist,
-                                                   maxBytesToProcess,
-                                                   layout);
+    bytesProcessed = processContiguousRegion(offset,
+                                             dataType*count,
+                                             dist,
+                                             maxBytesToProcess,
+                                             layout);
     return bytesProcessed;
 }
 
@@ -89,15 +91,15 @@ int DataTypeProcessor::processServerRequest(
     DataTypeLayout& layout)
 {
     int bytesProcessed = 0;
-    bytesProcessed = processContiguousServerRegion(offset,
-                                                   dataType*count,
-                                                   dist,
-                                                   maxBytesToProcess,
-                                                   layout);
+    bytesProcessed = processContiguousRegion(offset,
+                                             dataType*count,
+                                             dist,
+                                             maxBytesToProcess,
+                                             layout);
     return bytesProcessed;
 }
 
-int DataTypeProcessor::processContiguousClientRegion(
+int DataTypeProcessor::processContiguousRegion(
     const FSOffset& offset,
     const FSSize& extent,
     const FileDistribution& dist,
@@ -114,36 +116,15 @@ int DataTypeProcessor::processContiguousClientRegion(
         FSOffset physOffset = dist.logicalToPhysicalOffset(logServerOffset);
         FSSize serverExtent = dist.contiguousLength(physOffset);
 
-        // Add region to the client's layout
-        layout.addRegion(logServerOffset, serverExtent);
-
-        // Determine the next mapped offset for this server
-        logServerOffset = dist.nextMappedLogicalOffset(logServerOffset +
-                                                       serverExtent);
-    }
-
-    return extent;
-}
-
-int DataTypeProcessor::processContiguousServerRegion(
-    const FSOffset& offset,
-    const FSSize& extent,
-    const FileDistribution& dist,
-    const std::size_t& maxBytesToProcess,
-    DataTypeLayout& layout)
-{
-    // Determine the first mapped offset for this server
-    FSOffset logServerOffset = dist.nextMappedLogicalOffset(offset);
-
-    // Verify that offset is within requested region
-    while (logServerOffset < (offset + extent))
-    {
-        // Determine the contiguous length forward from the physical offset
-        FSOffset physOffset = dist.logicalToPhysicalOffset(logServerOffset);
-        FSSize serverExtent = dist.contiguousLength(physOffset);
-
-        // Add region to the server's file layout
-        layout.addRegion(physOffset, serverExtent);
+        // Determine how much of the extent to actually use
+        FSSize requestedExtent = min(serverExtent, extent);
+        if (0 != maxBytesToProcess)
+        {
+            requestedExtent = min(requestedExtent, maxBytesToProcess);
+        }
+        
+        // Add region to the layout
+        layout.addRegion(logServerOffset, requestedExtent);
 
         // Determine the next mapped offset for this server
         logServerOffset = dist.nextMappedLogicalOffset(logServerOffset +

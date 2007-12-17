@@ -23,6 +23,7 @@
 class cMessage;
 class FSClient;
 class spfsDataFlowFinish;
+class spfsReadResponse;
 class spfsMPIFileReadAtRequest;
 
 /**
@@ -55,7 +56,10 @@ protected:
     /** @return true if all read responses and finished flows are received */
     bool isReadComplete();
 
-    /** Send final client response */
+    /** Start a flow */
+    void startFlow(spfsReadResponse* readResponse);
+
+     /** Send final client response */
     virtual void finish();
 
 private:

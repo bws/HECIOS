@@ -41,11 +41,6 @@ public:
 protected:
 
     /**
-     * Create and send the disk requests
-     */
-    void readData();
-    
-    /**
      * Create and send the data flow requests
      */
     void startDataFlow();

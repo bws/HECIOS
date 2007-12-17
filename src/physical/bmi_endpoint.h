@@ -21,8 +21,6 @@
 #include "basic_types.h"
 class spfsBMIExpectedMessage;
 class spfsBMIMessage;
-class spfsBMIPullDataRequest;
-class spfsBMIPullDataResponse;
 class spfsBMIPushDataRequest;
 class spfsBMIPushDataResponse;
 class spfsBMIUnexpectedMessage;
@@ -51,14 +49,6 @@ public:
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
         spfsRequest* request) = 0;
 
-    /** @return a PullDataResponse for the request */
-    virtual spfsBMIPullDataResponse* createPullDataResponse(
-        spfsBMIPullDataRequest* pullRequest) = 0;
-        
-    /** @return a PushDataResponse for the request */
-    virtual spfsBMIPushDataResponse* createPushDataResponse(
-        spfsBMIPushDataRequest* pushRequest) = 0;
-        
 protected:
     /** Implementation of initialize */
     virtual void initialize();
@@ -83,18 +73,6 @@ protected:
     
     /** Send a BMIExpected message over the network */
     virtual void sendOverNetwork(spfsBMIUnexpectedMessage* unexpectedMsg) = 0;
-
-    /**
-     * Indicates the receipt of a data flow pull request
-     * Default behavior sends a simple reply
-     */
-    virtual void pullDataRequestReceived(spfsBMIPullDataRequest* pullRequest);
-    
-    /** 
-     * Indicates the receipt of a data flow push request
-     * Default behavior sends a simple reply
-     */
-    virtual void pushDataRequestReceived(spfsBMIPushDataRequest* pushRequest);
 
 private:
     /** handle messages received from the network */

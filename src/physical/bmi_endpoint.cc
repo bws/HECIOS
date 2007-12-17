@@ -75,10 +75,9 @@ void BMIEndpoint::handleMessage(cMessage* msg)
         }        
         else
         {
-            spfsBMIUnexpectedMessage* unexpected =
-                dynamic_cast<spfsBMIUnexpectedMessage*>(msg);
-            assert(0 != msg);
-            sendOverNetwork(unexpected);
+            cerr << __FILE__ << ":" << __LINE__ << ": "
+                 << "Unexpected messages should not be sent directly.\n";
+            assert(false);
         }
     }
     else
@@ -91,21 +90,10 @@ void BMIEndpoint::handleMessageFromNetwork(cMessage* msg)
 {
     assert(0 != msg);
     
-    // If the message is a pull or push request, create a response
-    // Else if the message is a push or pull response, fwd to the app
-    // Otherwise, extract the PFS payload, and send that to the app
-    if (spfsBMIPullDataRequest* pullReq =
-        dynamic_cast<spfsBMIPullDataRequest*>(msg))
-    {
-        pullDataRequestReceived(pullReq);
-    }
-    else if (spfsBMIPushDataRequest* pushReq =
-             dynamic_cast<spfsBMIPushDataRequest*>(msg))
-    {
-        pushDataRequestReceived(pushReq);
-    }
-    else if (0 != dynamic_cast<spfsBMIPullDataResponse*>(msg) ||
-             0 != dynamic_cast<spfsBMIPushDataResponse*>(msg))
+    // If the message is a flow message, send it directly
+    // Otherwise extract the payload and send it on
+    if (0 != dynamic_cast<spfsBMIPushDataRequest*>(msg) ||
+        0 != dynamic_cast<spfsBMIPushDataResponse*>(msg))
     {
         send(msg, appOutGateId_);
     }
@@ -127,18 +115,6 @@ cMessage* BMIEndpoint::extractBMIPayload(spfsBMIMessage* bmiMsg)
     cMessage* payload = bmiMsg->decapsulate();
     assert(0 != payload);
     return payload;
-}
-
-void BMIEndpoint::pullDataRequestReceived(spfsBMIPullDataRequest* pullRequest)
-{
-    spfsBMIPullDataResponse* pullResp = createPullDataResponse(pullRequest);
-    sendOverNetwork(pullResp);
-}
-
-void BMIEndpoint::pushDataRequestReceived(spfsBMIPushDataRequest* pushRequest)
-{
-    spfsBMIPushDataResponse* pushResp = createPushDataResponse(pushRequest);
-    sendOverNetwork(pushResp);
 }
 
 bool BMIEndpoint::handleIsLocal(const FSHandle& handle)

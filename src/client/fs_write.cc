@@ -24,13 +24,13 @@
 #include <iostream>
 #include <numeric>
 #include <omnetpp.h>
-#include "data_type_layout.h"
+#include "data_flow.h"
 #include "data_type_processor.h"
+#include "file_distribution.h"
 #include "fs_client.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "pvfs_proto_m.h"
-#include "file_distribution.h"
 using namespace std;
 
 FSWrite::FSWrite(FSClient* client, spfsMPIFileWriteAtRequest* writeReq)
@@ -101,18 +101,17 @@ void FSWrite::handleMessage(cMessage* msg)
             }
             break;
         }
+        case FSM_Enter(COUNT_RESPONSE):
+        {
+            assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
+            startFlow(dynamic_cast<spfsWriteResponse*>(msg));
+            break;
+        }
         case FSM_Exit(COUNT_RESPONSE):
         {
             assert(0 != dynamic_cast<spfsWriteResponse*>(msg));
             countResponse();
-            if (isWriteComplete())
-            {
-                FSM_Goto(currentState, FINISH);
-            }
-            else
-            {
-                FSM_Goto(currentState, COUNT);
-            }            
+            FSM_Goto(currentState, COUNT);            
             break;
         }
         case FSM_Exit(COUNT_FLOW_FINISH):
@@ -161,7 +160,7 @@ void FSWrite::beginWrite()
     spfsWriteRequest write(0, SPFS_WRITE_REQUEST);
     write.setContextPointer(writeReq_);
     write.setServerCnt(filedes->metaData->dataHandles.size());
-    write.setOffset(filedes->filePtr);
+    write.setOffset(writeReq_->getOffset());
     write.setCount(writeReq_->getCount());
     write.setDataType(writeReq_->getDataType());
 
@@ -190,6 +189,7 @@ void FSWrite::beginWrite()
                 write.dup());
             req->setHandle(filedes->metaData->dataHandles[i]);
             req->setDist(filedes->metaData->dist->clone());
+            req->setFlowTag(simulation.getUniqueNumber());
             req->setByteLength(4 + 8 + 8 + 8);
             client_->send(req, client_->getNetOutGate());
 
@@ -204,6 +204,34 @@ void FSWrite::beginWrite()
     writeReq_->setRemainingCompletions(numRequests);
 }
 
+void FSWrite::startFlow(spfsWriteResponse* writeResponse)
+{
+    // Create the flow start message
+    spfsDataFlowStart* flowStart =
+        new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
+    flowStart->setContextPointer(writeReq_);
+    
+    // Set the handle as the connection id (FIXME: This is hacky)
+    spfsWriteRequest* writeRequest =
+        static_cast<spfsWriteRequest*>(writeResponse->contextPointer());
+    flowStart->setBmiConnectionId(writeRequest->getHandle());
+    flowStart->setBmiTag(writeRequest->getFlowTag());
+
+    // Flow configuration
+    flowStart->setFlowType(1); // FIXME: Hacky way to say BMI-to-Memory flow
+    flowStart->setFlowMode(DataFlow::CLIENT_WRITE);
+
+    // Data transfer configuration
+    flowStart->setHandle(writeRequest->getHandle());
+    flowStart->setOffset(writeRequest->getOffset());
+    flowStart->setDataType(writeRequest->getDataType());
+    flowStart->setCount(writeRequest->getCount());
+    flowStart->setDist(writeRequest->getDist());
+
+    // Send the start message
+    client_->send(flowStart, client_->getNetOutGate());
+}
+
 void FSWrite::countResponse()
 {
     int numRemainingResponses = writeReq_->getRemainingResponses();
@@ -216,6 +244,9 @@ void FSWrite::countFlowFinish(spfsDataFlowFinish* finishMsg)
     bytesWritten_ += finishMsg->getFlowSize();
     int numRemainingFlows = writeReq_->getRemainingFlows();
     writeReq_->setRemainingFlows(--numRemainingFlows);
+
+    // Cleanup the originating message
+    delete static_cast<spfsDataFlowStart*>(finishMsg->contextPointer());
 }
 
 void FSWrite::countCompletion(spfsWriteCompletionResponse* completionResponse)

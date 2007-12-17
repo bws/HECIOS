@@ -26,6 +26,7 @@
 message spfsBMIMessage
 {
     fields:
+        int tag;
 };
 
 // Message sent over an established BMI connection 
@@ -48,20 +49,6 @@ message spfsBMIFlowMessage extends spfsBMIExpectedMessage
     fields:
         int flowId;
         unsigned long flowSize;
-};
-// Message that requests data over a connection
-message spfsBMIPullDataRequest extends spfsBMIFlowMessage
-{
-    fields:
-        int handle;
-        unsigned long requestSize;
-};
-
-// Message sent that establishes a BMI connection
-message spfsBMIPullDataResponse extends spfsBMIFlowMessage
-{
-    fields:
-        unsigned long dataSize;
 };
 
 // Message that sends data over a BMI connection

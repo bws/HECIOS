@@ -22,6 +22,7 @@
 #include <numeric>
 #define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
+#include "data_flow.h"
 #include "data_type_layout.h"
 #include "data_type_processor.h"
 #include "file_distribution.h"
@@ -58,7 +59,7 @@ void FSRead::handleMessage(cMessage* msg)
         COUNT = FSM_Steady(2),
         COUNT_SERVER_RESPONSE = FSM_Transient(2),
         COUNT_FLOW_FINISH = FSM_Transient(3),
-        FINISH = FSM_Steady(3),
+        FINISH = FSM_Steady(4),
     };
 
     FSM_Switch(currentState)
@@ -101,18 +102,17 @@ void FSRead::handleMessage(cMessage* msg)
             }
             break;
         }
+        case FSM_Enter(COUNT_SERVER_RESPONSE):
+        {
+            assert(0 != dynamic_cast<spfsReadResponse*>(msg));
+            startFlow(dynamic_cast<spfsReadResponse*>(msg));
+            break;
+        }
         case FSM_Exit(COUNT_SERVER_RESPONSE):
         {
             assert(0 != dynamic_cast<spfsReadResponse*>(msg));
             countResponse();
-            if (isReadComplete())
-            {
-                FSM_Goto(currentState, FINISH);
-            }
-            else
-            {
-                FSM_Goto(currentState, COUNT);
-            }
+            FSM_Goto(currentState, COUNT);
             break;
         }
         case FSM_Exit(COUNT_FLOW_FINISH):
@@ -175,6 +175,7 @@ void FSRead::enterRead()
             spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
             req->setHandle(filedes->metaData->dataHandles[i]);
             req->setDist(filedes->metaData->dist->clone());
+            req->setFlowTag(simulation.getUniqueNumber());
             req->setByteLength(4 + 8 + 8 + 8);
             client_->send(req, client_->getNetOutGate());
 
@@ -186,6 +187,34 @@ void FSRead::enterRead()
     // Set the number of outstanding responses and flows
     readReq_->setRemainingResponses(numRequests);
     readReq_->setRemainingFlows(numRequests);
+}
+
+void FSRead::startFlow(spfsReadResponse* readResponse)
+{
+    // Create the flow start message
+    spfsDataFlowStart* flowStart =
+        new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
+    flowStart->setContextPointer(readReq_);
+    
+    // Set the handle as the connection id (FIXME: This is hacky)
+    spfsReadRequest* readRequest =
+        static_cast<spfsReadRequest*>(readResponse->contextPointer());
+    flowStart->setBmiConnectionId(readRequest->getHandle());
+    flowStart->setBmiTag(readRequest->getFlowTag());
+
+    // Flow configuration
+    flowStart->setFlowType(1); // BMI-to-Memory flow
+    flowStart->setFlowMode(DataFlow::CLIENT_READ);
+
+    // Data transfer configuration
+    flowStart->setHandle(readRequest->getHandle());
+    flowStart->setOffset(readRequest->getOffset());
+    flowStart->setDataType(readRequest->getDataType());
+    flowStart->setCount(readRequest->getCount());
+    flowStart->setDist(readRequest->getDist());
+
+    // Send the start message
+    client_->send(flowStart, client_->getNetOutGate());
 }
 
 void FSRead::countResponse()
@@ -200,6 +229,9 @@ void FSRead::countFlowFinish(spfsDataFlowFinish* finishMsg)
     bytesRead_ += finishMsg->getFlowSize();
     int numRemainingFlows = readReq_->getRemainingFlows();
     readReq_->setRemainingFlows(--numRemainingFlows);
+
+    // Cleanup the originating message
+    delete static_cast<spfsDataFlowStart*>(finishMsg->contextPointer());
 }
 
 bool FSRead::isReadComplete()

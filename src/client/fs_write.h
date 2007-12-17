@@ -25,6 +25,7 @@ class FSClient;
 class spfsDataFlowFinish;
 class spfsMPIFileWriteAtRequest;
 class spfsWriteCompletionResponse;
+class spfsWriteResponse;
 
 /**
  * Class responsible for performing client-side file writes
@@ -42,6 +43,9 @@ public:
 protected:
     /** Send messages establishing the write flows */
     void beginWrite();
+
+    /** Start a flow */
+    void startFlow(spfsWriteResponse* writeResponse);
     
     /** Count write completions */
     void countCompletion(spfsWriteCompletionResponse* completionResponse);
@@ -49,7 +53,7 @@ protected:
     /** Count a finished flow */
     void countFlowFinish(spfsDataFlowFinish* finishMsg);
 
-    /** Count a read response */
+    /** Count a write response */
     void countResponse();
 
     /** @return true if all write flows and response messages are received */

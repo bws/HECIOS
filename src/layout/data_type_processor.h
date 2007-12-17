@@ -69,21 +69,11 @@ private:
                                     DataTypeLayout& layout);
 
     /** @return the number of bytes processed */
-    static int processContiguousClientRegion(
-        const FSOffset& offset,
-        const FSSize& extent,
-        const FileDistribution& dist,
-        const std::size_t& maxBytesToProcess,
-        DataTypeLayout& layout);
-    
-    /** @return the number of bytes processed */
-    static int processContiguousServerRegion(
-        const FSOffset& offset,
-        const FSSize& extent,
-        const FileDistribution& dist,
-        const std::size_t& maxBytesToProcess,
-        DataTypeLayout& layout);
-    
+    static int processContiguousRegion(const FSOffset& offset,
+                                       const FSSize& extent,
+                                       const FileDistribution& dist,
+                                       const std::size_t& maxBytesToProcess,
+                                       DataTypeLayout& layout);    
 };
 
 #endif

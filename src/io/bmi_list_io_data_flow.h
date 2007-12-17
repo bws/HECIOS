@@ -39,14 +39,17 @@ public:
     virtual ~BMIListIODataFlow();
 
 protected:
+    /** Start the flow of data */
+    virtual void startTransfer();
+    
     /** Process BMI and Storage request and responses */
     virtual void processDataFlowMessage(cMessage* msg);
     
     /** Use standard BMI calls to send data over the network */
-    virtual void pushDataToClient(FSSize pushSize);
+    virtual void pushDataToNetwork(FSSize pushSize);
 
     /** Use standard BMI calls to request data from the network */
-    virtual void pullDataFromClient(FSSize pullSize);
+    virtual void pullDataFromNetwork(FSSize pullSize);
 
     /** Use the ListIO interface to write data to disk */
     virtual void pushDataToStorage(FSSize pushSize);
@@ -60,7 +63,10 @@ private:
 
     /** Hidden assignment operator */
     BMIListIODataFlow& operator=(const BMIListIODataFlow& other);
-    
+
+    /** Send data receipt acknowledgement */
+    void sendPushAck(FSSize amountRecvd);
+
     /** File used for I/O */
     Filename filename_;
 
@@ -68,7 +74,10 @@ private:
     cSimpleModule* module_;
 
     /** The BMI connection id */
-    int connectionId_;    
+    int bmiConnectionId_;    
+
+    /** The BMI tag */
+    int bmiTag_;    
 
     /** The offset into the layout subregions for push operations */
     FSOffset pullSubregionOffset_;

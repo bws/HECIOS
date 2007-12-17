@@ -32,54 +32,52 @@ BMIListIODataFlow::BMIListIODataFlow(const spfsDataFlowStart& flowStart,
     : DataFlow(flowStart, numBuffers, bufferSize),
       filename_(flowStart.getHandle()),
       module_(module),
-      connectionId_(0),
+      bmiConnectionId_(flowStart.getBmiConnectionId()),
+      bmiTag_(flowStart.getBmiTag()),
       pullSubregionOffset_(0),
       pushSubregionOffset_(0)
 {
-    spfsRequest* request =
-        static_cast<spfsRequest*>(flowStart.contextPointer());
-    connectionId_ = request->getBmiConnectionId();
 }
 
 BMIListIODataFlow::~BMIListIODataFlow()
 {
+    cout << "Flow Completed Net: " << getNetworkProgress()
+         << " Store: " << getStorageProgress() << endl;
+}
+
+void BMIListIODataFlow::startTransfer()
+{
+    if (SERVER_READ == getMode())
+    {
+        // Request the data from storage
+        pullDataFromStorage(getBufferSize());
+    }
+    else if (SERVER_WRITE == getMode())
+    {
+        // No-op, just wait for data
+    }
 }
 
 void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
 {
-    // Variables to hold the next processing function and buffer size
-    void (BMIListIODataFlow::*nextProcessFunction)(FSSize) = 0;
-    FSSize nextBufferSize = 0;
-    
-    // Update the progress based on the results of the received message
-    // and determine the next processing step
-    //
-    // Note: the function pointer is accessing a member function, thus
-    // the slightly clunky syntax, the function is invoked further below
-    //
-    // Note that we cannot use message kinds here b/c the BMI messages
-    // have been over the network and have had their kind field modified
-    //
-    if (0 != dynamic_cast<spfsBMIPullDataResponse*>(msg))
+    if (0 != dynamic_cast<spfsBMIPushDataRequest*>(msg))
     {
-        spfsBMIPullDataResponse* pullResp =
-            static_cast<spfsBMIPullDataResponse*>(msg);
-        FSSize dataSize = pullResp->getDataSize();
-        addClientProgress(dataSize);
+        spfsBMIPushDataRequest* pushRequest =
+            static_cast<spfsBMIPushDataRequest*>(msg);
+        FSSize dataSize = pushRequest->getDataSize();
+        addNetworkProgress(dataSize);
 
-        // Indicate the next processing step
-        nextProcessFunction = &BMIListIODataFlow::pushDataToStorage;
-        nextBufferSize = dataSize;
+        // Perform the next processing step
+        pushDataToStorage(dataSize);
     }
     else if (0 != dynamic_cast<spfsBMIPushDataResponse*>(msg))
     {
         spfsBMIPushDataResponse* pushResp =
             static_cast<spfsBMIPushDataResponse*>(msg);
-        addClientProgress(pushResp->getReceivedSize());
+        addNetworkProgress(pushResp->getReceivedSize());
         
-        // Indicate the next processing step
-        nextProcessFunction = &BMIListIODataFlow::pullDataFromStorage;
-        nextBufferSize = getBufferSize();
+        // Perform the next processing step
+        pullDataFromStorage(getBufferSize());
     }
     else if (0 != dynamic_cast<spfsOSFileReadResponse*>(msg))
     {
@@ -88,9 +86,11 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         FSSize bytesRead = readResp->getBytesRead();
         addStorageProgress(bytesRead);
         
-        // Indicate the next processing step
-        nextProcessFunction = &BMIListIODataFlow::pushDataToClient;
-        nextBufferSize = bytesRead;
+        // Perform the next processing step
+        pushDataToNetwork(bytesRead);
+
+        // Cleanup the originating request
+        delete static_cast<cMessage*>(msg->contextPointer());
     }
     else if (0 != dynamic_cast<spfsOSFileWriteResponse*>(msg))
     {
@@ -98,15 +98,18 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
             static_cast<spfsOSFileWriteResponse*>(msg);
         addStorageProgress(writeResp->getBytesWritten());
 
-        // Indicate the next processing step
-        nextProcessFunction = &BMIListIODataFlow::pullDataFromClient;
-        nextBufferSize = getBufferSize();
+        // Send the data successfully committed acknowledgement
+        sendPushAck(writeResp->getBytesWritten());
+
+        // Cleanup the originating request
+        delete static_cast<cMessage*>(msg->contextPointer());
     }
     
-    assert(0 != nextProcessFunction);
-    assert(0 != nextBufferSize);
+    cerr << __FILE__ << ":" << __LINE__ << " "
+         << "Net: " << getNetworkProgress() << " "
+         << "Store: " << getStorageProgress() << endl;
+
     // If this is the last flow message response, send the final response
-    // Else process the response
     if (isComplete())
     {
         // Send the final response
@@ -115,55 +118,31 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         flowFinish->setContextPointer(getOriginatingMessage());
         flowFinish->setFlowId(getUniqueId());
         module_->scheduleAt(module_->simTime(), flowFinish);
-    }
-    else
-    {
-        // Call the next processing function with the correct buffer size
-        //
-        // Note: again, member function pointer syntax is a little odd
-        //
-        (this->*nextProcessFunction)(nextBufferSize);
+        cerr << "Finishing BMI-ListIO flow\n";
     }
 
-    // Cleanup the messages
-    delete (cMessage*)msg->contextPointer();
+    // Cleanup the received message
     delete msg;
 }
 
-void BMIListIODataFlow::pullDataFromClient(FSSize pullSize)
+void BMIListIODataFlow::pullDataFromNetwork(FSSize pullSize)
 {
-    // If more data is available, pull it
-    if (pullSubregionOffset_ < getSize())
-    {
-        // Extract the region size to request
-        FSSize bufferSize = min(getSize() - pullSubregionOffset_,
-                                pullSize);
-        pullSubregionOffset_ += bufferSize;
-        
-        spfsBMIPullDataRequest* pullRequest = new spfsBMIPullDataRequest();
-        spfsDataFlowStart* startMsg = getOriginatingMessage();
-        pullRequest->setContextPointer(startMsg);
-        pullRequest->setFlowId(getUniqueId());
-        pullRequest->setFlowSize(getSize());
-        pullRequest->setHandle(startMsg->getHandle());
-        pullRequest->setConnectionId(connectionId_);
-        pullRequest->setRequestSize(bufferSize);
-        pullRequest->setByteLength(sizeof(bufferSize));
-        
-        // Send the pull request
-        module_->send(pullRequest, "netOut");    
-    }
 }
 
-void BMIListIODataFlow::pushDataToClient(FSSize pushSize)
+void BMIListIODataFlow::pushDataToNetwork(FSSize pushSize)
 {
     spfsBMIPushDataRequest* pushRequest = new spfsBMIPushDataRequest();
     spfsDataFlowStart* startMsg = getOriginatingMessage();
     pushRequest->setContextPointer(startMsg);
+
+    // Set BMI network fields
+    pushRequest->setTag(bmiTag_);
+    pushRequest->setConnectionId(bmiConnectionId_);
+
+    // Set flow data
     pushRequest->setFlowId(getUniqueId());
     pushRequest->setFlowSize(getSize());
     pushRequest->setHandle(startMsg->getHandle());
-    pushRequest->setConnectionId(connectionId_);
     pushRequest->setDataSize(pushSize);
     pushRequest->setByteLength(pushSize);
     
@@ -227,6 +206,22 @@ void BMIListIODataFlow::pushDataToStorage(FSSize pushSize)
 
     // Send the request to the storage layer
     module_->send(fileWrite, "storageOut");
+}
+
+void BMIListIODataFlow::sendPushAck(FSSize amountRecvd)
+{
+    // Send the push acknowedgement, allowing the sender to continue
+    spfsBMIPushDataResponse* pushResponse = new spfsBMIPushDataResponse();
+    spfsDataFlowStart* startMsg = getOriginatingMessage();
+    pushResponse->setContextPointer(startMsg);
+    pushResponse->setConnectionId(bmiConnectionId_);
+    pushResponse->setFlowId(getUniqueId());
+    pushResponse->setTag(bmiTag_);
+    pushResponse->setReceivedSize(amountRecvd);
+    pushResponse->setByteLength(16);
+
+    // Send the push request
+    module_->send(pushResponse, "netOut");
 }
 
 /*

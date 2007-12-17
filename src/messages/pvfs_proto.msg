@@ -140,13 +140,13 @@ message spfsReadRequest extends spfsRequest
         FSDataType dataType;
         unsigned long count;
         FileDistributionPtr dist;
+        int flowTag;
 };
 
 // Read file data
 message spfsReadResponse extends spfsResponse
 {
     fields:
-        FSSize bytesRead;
 };
 
 // Write object data
@@ -159,6 +159,7 @@ message spfsWriteRequest extends spfsRequest
         int count;
         FSDataType dataType;
         FileDistributionPtr dist;
+        int flowTag;
 };
 
 // Write file data
@@ -353,7 +354,20 @@ message spfsListAttrResponse extends spfsResponse
 message spfsDataFlowStart extends spfsRequest
 {
     fields:
-        int flowId;
+        // Flow information
+        int flowType;
+        int flowMode;
+        int flowId; // Set by the job manager
+
+        // The bmi connection and tag to use for this flow
+        int bmiConnectionId;
+        int bmiTag;
+
+        // Data information
+        FSOffset offset;
+        FSDataType dataType;
+        unsigned long count;
+        FileDistributionPtr dist;
 };
 
 // Indicate the data flow has finished
