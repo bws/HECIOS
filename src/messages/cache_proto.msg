@@ -24,14 +24,14 @@
 
 // allow a pointer field in a message 
 cplusplus {{
-#include "pfs_types.h"
+#include "data_type.h"
 
 /** MPI Data type */
-typedef FSDataType MPIDataType;
+typedef DataType* MPIDataType;
 }}
 
 class cFSM;
-class noncobject MPIDataType;  // this is an int type
+class noncobject MPIDataType;
 class noncobject FileDescriptorPtr;
 
 enum spfsCacheMessageKind

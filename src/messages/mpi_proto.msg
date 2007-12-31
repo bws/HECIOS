@@ -24,12 +24,15 @@
 
 // allow a pointer field in a message 
 cplusplus {{
+#include <data_type.h>
+#include <file_descriptor.h>
 #include <pfs_types.h>
 
-typedef FSOpenFile* FileDescriptorPtr;
+typedef DataType* DataTypePtr;
+typedef FileDescriptor* FileDescriptorPtr;
 
 /** MPI Data type */
-typedef FSDataType MPIDataType;
+typedef DataTypePtr MPIDataType;
 }}
 
 class cFSM;

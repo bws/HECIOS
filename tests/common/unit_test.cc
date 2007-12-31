@@ -20,6 +20,8 @@
 #include <cppunit/TextTestRunner.h>
 #include "basic_data_type_test.h"
 #include "contiguous_data_type_test.h"
+#include "file_descriptor_test.h"
+#include "file_view_test.h"
 #include "filename_test.h"
 #include "ip_socket_map_test.h"
 #include "umd_io_trace_test.h"
@@ -40,6 +42,8 @@ int main(int argc, char** argv)
     // Add all of the requisite tests
     runner.addTest( BasicDataTypeTest::suite() );
     runner.addTest( ContiguousDataTypeTest::suite() );
+    runner.addTest( FileDescriptorTest::suite() );
+    runner.addTest( FileViewTest::suite() );
     runner.addTest( FilenameTest::suite() );
     runner.addTest( IPSocketMapTest::suite() );
     runner.addTest( LRUCacheTest::suite() );
@@ -54,6 +58,7 @@ int main(int argc, char** argv)
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

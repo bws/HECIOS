@@ -23,6 +23,7 @@
 #include <map>
 #include <vector>
 #include "pfs_types.h"
+class FileDescriptor;
 class Filename;
 class StorageLayoutManagerIFace;
 
@@ -59,7 +60,7 @@ public:
     FSMetaData* getMetaData(const Filename& fileName) const;
 
     /** @return Descriptor for a PFS file */
-    FSOpenFile* getDescriptor(const Filename& fileName) const;
+    FileDescriptor* getDescriptor(const Filename& fileName) const;
 
     /** @return the first handle for the server */
     FSHandle getFirstHandle(size_t serverNumber);

@@ -6,6 +6,8 @@ DIR := src/common
 SIM_SRC += $(DIR)/basic_data_type.cc \
 	$(DIR)/contiguous_data_type.cc \
 	$(DIR)/data_type.cc \
+	$(DIR)/file_descriptor.cc \
+	$(DIR)/file_view.cc \
 	$(DIR)/filename.cc \
 	$(DIR)/io_trace.cc \
 	$(DIR)/ip_socket_map.cc \

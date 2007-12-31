@@ -62,11 +62,7 @@ void DataTypeProcessorTest::tearDown()
 
 void DataTypeProcessorTest::testCreateFileLayoutForClient()
 {
-    
-}
-
-void DataTypeProcessorTest::testCreateFileLayoutForServer()
-{
+    /*
     // Use a simple stripe distribution for all these tests
     SimpleStripeDistribution dist(0, 4, 1000);
     const int MAX_SIZE = 0;
@@ -104,7 +100,14 @@ void DataTypeProcessorTest::testCreateFileLayoutForServer()
     CPPUNIT_ASSERT_EQUAL(2000, bytesProcessed);
     CPPUNIT_ASSERT_EQUAL((size_t)1, layout4.getRegions().size());
     CPPUNIT_ASSERT_EQUAL(FSOffset(0), layout4.getRegion(0).offset);
-    CPPUNIT_ASSERT_EQUAL(FSSize(2000), layout4.getRegion(0).extent);
+    CPPUNIT_ASSERT_EQUAL(FSSize(2000), layout4.getRegion(0).extent);    
+    */
+    CPPUNIT_FAIL("Test not yet implemented.");
+}
+
+void DataTypeProcessorTest::testCreateFileLayoutForServer()
+{
+    CPPUNIT_FAIL("Test not yet implemented.");
 }
 
 #endif

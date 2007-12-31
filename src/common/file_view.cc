@@ -17,47 +17,42 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "contiguous_data_type.h"
-#include <cassert>
+#include <algorithm>
+#include "file_view.h"
+#include "data_type.h"
 using namespace std;
 
-ContiguousDataType::ContiguousDataType(size_t count, const DataType& oldType)
-    : DataType(count * oldType.getExtent()),
-      count_(count),
-      oldType_(oldType.clone())
-{
-    assert(this != &oldType);
-}
-
-ContiguousDataType::ContiguousDataType(const ContiguousDataType& other)
-    : DataType(other),
-      count_(other.count_),
-      oldType_(other.oldType_)
+FileView::FileView(const FSSize& displacement, DataType* dataType)
+    : displacement_(displacement),
+      dataType_(dataType)
 {
 }
 
-ContiguousDataType::~ContiguousDataType()
+FileView::FileView( const FileView& other)
+    : displacement_(other.displacement_),
+      dataType_(other.dataType_->clone())
 {
-    delete oldType_;
 }
 
-ContiguousDataType* ContiguousDataType::clone() const
+FileView::~FileView()
 {
-    return new ContiguousDataType(*this);
+    delete dataType_;
 }
 
-size_t ContiguousDataType::getRepresentationByteLength() const
+FileView& FileView::operator=(const FileView& other)
 {
-    return 4 + oldType_->getRepresentationByteLength();
+    // Use swap idiom to assign values safely
+    FileView tmp(other);
+    swap(tmp);
+    return *this;
 }
 
-vector<FileRegion> ContiguousDataType::getRegions(const FSOffset& byteOffset,
-                                                  size_t count) const
+void FileView::swap(FileView& other)
 {
-    // Flatten the old type in order to construct count of the new type
-    return oldType_->getRegions(byteOffset, count * count_);
+    // Swap the contents of this and other piecemeal
+    std::swap(displacement_, other.displacement_);
+    std::swap(dataType_, other.dataType_);
 }
-
 /*
  * Local variables:
  *  indent-tabs-mode: nil

@@ -22,9 +22,11 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "basic_data_type.h"
 #include "cache_proto_m.h"
 #include "filename.h"
 #include "file_builder.h"
+#include "file_descriptor.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "storage_layout_manager.h"
@@ -77,7 +79,7 @@ void IOApplication::initialize()
 void IOApplication::finish()
 {
     // Delete open descriptors
-    map<int, FSOpenFile*>::iterator iter;
+    map<int, FileDescriptor*>::iterator iter;
     for (iter = descriptorById_.begin(); iter != descriptorById_.end(); ++iter)
     {
         delete iter->second;
@@ -198,9 +200,11 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
             open->setFileName(openFile.str().c_str());
 
             // Construct a file descriptor for use in simulaiton
-            FSOpenFile* descriptor = new FSOpenFile();
-            setDescriptor(rec->fileId(), descriptor);
-            open->setFileDes(descriptor);
+            FileDescriptor* fd =
+                FileBuilder::instance().getDescriptor(openFile);
+            setDescriptor(rec->fileId(), fd);
+
+            open->setFileDes(fd);
             mpiMsg = open;
             break;
         }
@@ -213,25 +217,29 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
         }
         case IOTrace::READ_AT:
         {
+            FileDescriptor* fd = getDescriptor(rec->fileId());
+            DataType* dataType =
+                new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
             spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
                 rec->source().c_str(), SPFS_MPI_FILE_READ_AT_REQUEST);
-            read->setCount(1);
-            read->setDataType(rec->length());
+            read->setCount(rec->length());
+            read->setDataType(dataType);
             read->setOffset(rec->offset());
-            FSOpenFile* descriptor = getDescriptor(rec->fileId());
-            read->setFileDes(descriptor);
+            read->setFileDes(fd);
             mpiMsg = read;
             break;
         }
         case IOTrace::WRITE_AT:
         {
+            FileDescriptor* fd = getDescriptor(rec->fileId());
+            DataType* dataType =
+                new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
             spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
                 0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
-            write->setCount(1);
-            write->setDataType(rec->length());
+            write->setCount(rec->length());
+            write->setDataType(dataType);
             write->setOffset(rec->offset());
-            FSOpenFile* descriptor = getDescriptor(rec->fileId());
-            write->setFileDes(descriptor);
+            write->setFileDes(fd);
             mpiMsg = write;
 
             // Generate corresponding cache invalidation messages
@@ -242,8 +250,8 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
         {
             // Retrieve the open file descriptor and adjust the file pointer
             // according to the seek parameters
-            FSOpenFile* descriptor = getDescriptor(rec->fileId());
-            descriptor->filePtr = rec->offset() + rec->length();
+            FileDescriptor* fd = getDescriptor(rec->fileId());
+            fd->setFilePointer(rec->offset() + rec->length());
             break;
         }
         default:
@@ -254,15 +262,16 @@ cMessage* IOApplication::createMessage(IOTraceRecord* rec)
     return mpiMsg;    
 }
 
-void IOApplication::setDescriptor(int fileId, FSOpenFile* descriptor)
+void IOApplication::setDescriptor(int fileId, FileDescriptor* descriptor)
 {
     descriptorById_[fileId] = descriptor;
 }
 
-FSOpenFile* IOApplication::getDescriptor(int fileId) const
+FileDescriptor* IOApplication::getDescriptor(int fileId) const
 {
-    FSOpenFile* descriptor = 0;
-    map<int, FSOpenFile*>::const_iterator iter = descriptorById_.find(fileId);
+    FileDescriptor* descriptor = 0;
+    map<int, FileDescriptor*>::const_iterator iter =
+        descriptorById_.find(fileId);
     if (iter != descriptorById_.end())
     {
         descriptor = iter->second;
@@ -287,7 +296,7 @@ spfsCacheInvalidateRequest* IOApplication::createCacheInvalidationMessage(
     spfsMPIFileWriteAtRequest* writeAt)
 {
     spfsCacheInvalidateRequest* invalidator = new spfsCacheInvalidateRequest();
-    FSHandle handle = writeAt->getFileDes()->metaData->handle;
+    FSHandle handle = writeAt->getFileDes()->getMetaData()->handle;
     invalidator->setHandle(handle);
     invalidator->setOffset(writeAt->getOffset());
     invalidator->setDataType(writeAt->getDataType());

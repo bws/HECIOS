@@ -25,19 +25,24 @@
 
 cplusplus {{
 #include "basic_types.h"
-#include "pfs_types.h"
+#include "data_type.h"
 #include "file_distribution.h"
+#include "file_view.h"
+#include "pfs_types.h"
 typedef FileDistribution* FileDistributionPtr;
+typedef FileView* FileViewPtr;
+typedef DataType* DataTypePtr;
 }}
 
 // Forward declarations
 class cFSM;
-class noncobject FSDataType;
+class noncobject DataTypePtr;
+class noncobject FileDistributionPtr;
+class noncobject FileViewPtr;
 class noncobject FSHandle;
 class noncobject FSMetaData;
 class noncobject FSOffset;
 class noncobject FSSize;
-class noncobject FileDistributionPtr;
 
 // PVFS Protocol Message Kind values
 enum spfsMessageKind 
@@ -137,9 +142,10 @@ message spfsReadRequest extends spfsRequest
         int serverNo;
         int serverCnt;
         FSOffset offset;
-        FSDataType dataType;
+        DataTypePtr dataType;
         unsigned long count;
         FileDistributionPtr dist;
+        FileViewPtr view;
         int flowTag;
 };
 
@@ -157,8 +163,9 @@ message spfsWriteRequest extends spfsRequest
         int serverCnt;
         unsigned long offset;
         int count;
-        FSDataType dataType;
+        DataTypePtr dataType;
         FileDistributionPtr dist;
+        FileViewPtr view;
         int flowTag;
 };
 
@@ -207,7 +214,8 @@ message spfsSetAttrResponse extends spfsResponse
 message spfsLookupPathRequest extends spfsRequest
 {
     fields:
-        string path;
+        string filename;
+        int numResolvedSegments;
 };
 
 // Lookup a path
@@ -358,16 +366,21 @@ message spfsDataFlowStart extends spfsRequest
         int flowType;
         int flowMode;
         int flowId; // Set by the job manager
+        FileDistributionPtr dist;
+        FileViewPtr view;
+
+        // Client Data information
+        FSOffset offset;
+        DataTypePtr dataType;
+        unsigned long count;
+
+        // Server Data information
+        FSSize dataSize;
+
 
         // The bmi connection and tag to use for this flow
         int bmiConnectionId;
         int bmiTag;
-
-        // Data information
-        FSOffset offset;
-        FSDataType dataType;
-        unsigned long count;
-        FileDistributionPtr dist;
 };
 
 // Indicate the data flow has finished

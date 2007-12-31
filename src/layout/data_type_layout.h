@@ -22,6 +22,7 @@
 #include <cstddef>
 #include <vector>
 #include "basic_types.h"
+#include "data_type.h"
 
 /**
  * File layout for an I/O request's data type, count, and extent
@@ -31,6 +32,9 @@ class DataTypeLayout
 public:
     /** Default constructor */
     DataTypeLayout();
+
+    /** Construct DataTypeLayout */
+    DataTypeLayout(DataType* dataType);
     
     /** Construct a layout for a single contiguous region */
     DataTypeLayout(const FSOffset& offset, const FSSize& extent);

@@ -193,27 +193,15 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
     outIsInDirCache = false;
     outIsInAttrCache = false;
 
-    // Retrieve the data from the simulator bookkeeper
+    // Lookup the file name in the cache
     Filename openFile(openReq->getFileName());
-    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq->getFileDes());
-    fd->metaData = FileBuilder::instance().getMetaData(openFile);
-    fd->path = openFile.str();
-    
-    /* look for dir in cache */
-    FSHandle* lookup = client_->fsState().lookupDir(fd->path);
-    if (0 == lookup)
-    {
-        /* dir entry not in cache go do lookup */
-        PFSUtils::instance().parsePath(fd);
-        //FIXME fd->handles[0] = fsModule_->fsState().root();
-        fd->curseg = 0;
-    }
-    else
+    FSHandle* lookup = client_->fsState().lookupDir(openFile.str());
+    if (0 != lookup)
     {
         // Found directory cache entry
         outIsInDirCache = true;
         
-        /* dir entry in cache look for metadata in cache */
+        // Determine if the metadata is cached
         FSMetaData* meta = client_->fsState().lookupAttr(*lookup);
         if (0 != meta)
         {
@@ -225,21 +213,24 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
 
 void FSOpen::enterLookup()
 {
-    // Create the new request
+    // retrieve the file descriptor
+    FileDescriptor* fd =  openReq_->getFileDes();
+
+    // Get the closest resolved parent handle
+    int numParentHandles = fd->getNumParentHandles();
+    FSHandle parentHandle = fd->getParentHandle(numParentHandles - 1);
+
+    // Create the lookup request
     spfsLookupPathRequest* req = new spfsLookupPathRequest(
         0, SPFS_LOOKUP_PATH_REQUEST);
     req->setContextPointer(openReq_);
     
-    /* copy path to look up */
-    FSOpenFile *filedes = (FSOpenFile *)openReq_->getFileDes();
-    req->setPath(
-        filedes->path.substr(filedes->segstart[filedes->curseg],
-                             filedes->seglen[filedes->curseg]).c_str());
-    
-    /* get handle for root dir */
-    Filename root("/");
-    FSMetaData* rootMeta = FileBuilder::instance().getMetaData(root);
-    req->setHandle(rootMeta->handle);
+    // Set the parent directory handle
+    req->setFilename(fd->getFilename().c_str());
+    req->setHandle(parentHandle);
+    req->setNumResolvedSegments(numParentHandles);
+
+    // Send the request
     client_->send(req, client_->getNetOutGate());
 }
 
@@ -262,13 +253,13 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
         case SPFS_FOUND:
         {
             /* enter handle in cache */
-            FSOpenFile* filedes = (FSOpenFile*)openReq_->getFileDes();
-            client_->fsState().insertDir(filedes->path,
-                                           filedes->metaData->handle);
+            FileDescriptor* filedes = openReq_->getFileDes();
+            const FSMetaData* meta = filedes->getMetaData();
+            client_->fsState().insertDir(filedes->getFilename().str(),
+                                         meta->handle);
+            
             /* look for metadata in cache */
-            FSMetaData* meta =
-                client_->fsState().lookupAttr(filedes->metaData->handle);
-            if (0 == meta)
+            if (0 == client_->fsState().lookupAttr(meta->handle))
             {
                 outIsMissingAttr = true;
             }
@@ -347,11 +338,11 @@ void FSOpen::exitCreateData(spfsCreateResponse* createResp,
 
 void FSOpen::enterWriteAttr()
 {
-    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFileDes());
+    FileDescriptor* fd = openReq_->getFileDes();
     spfsSetAttrRequest *req = new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
-    req->setHandle(fd->metaData->handle);
-    req->setMeta(*fd->metaData);
+    req->setHandle(fd->getMetaData()->handle);
+    //req->setMeta(*fd->getMetaData());
     client_->send(req, client_->getNetOutGate());   
 }
 
@@ -364,14 +355,18 @@ void FSOpen::enterWriteDirEnt()
     spfsCreateDirEntRequest *req;
     req = new spfsCreateDirEntRequest(0, SPFS_CREATE_DIR_ENT_REQUEST);
     req->setContextPointer(openReq_);
+    
     /* this addresses the server with the dir on it */
-    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFileDes());
-    req->setHandle(fd->handles[fd->curseg]);
+    //FileDescriptor* fd = openReq_->getFileDes();
+    //req->setHandle(fd->handles[fd->curseg]);
+    
     /* this is the same handle, the handle of the parent dir */
     /* can we get rid of this field?  WBL */
-    req->setParentHandle(fd->handles[fd->curseg]);
+    //req->setParentHandle(fd->handles[fd->curseg]);
+    
     /* this is the handle of the new file goes in dirent */
-    req->setNewHandle(fd->metaData->handle);
+    //req->setNewHandle(fd->metaData->handle);
+    
     /* this is the name of the file */
     req->setEntry(openReq_->getFileName());
     client_->send(req, client_->getNetOutGate());   
@@ -383,10 +378,10 @@ void FSOpen::exitWriteDirEnt(spfsCreateDirEntResponse* dirEntResp)
 
 void FSOpen::enterReadAttr()
 {
-    FSOpenFile* fd = static_cast<FSOpenFile*>(openReq_->getFileDes());
+    FileDescriptor* fd = openReq_->getFileDes();
     spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
-    req->setHandle(fd->metaData->handle);
+    req->setHandle(fd->getMetaData()->handle);
     client_->send(req, client_->getNetOutGate());
 }
 

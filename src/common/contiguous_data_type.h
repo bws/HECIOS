@@ -34,6 +34,9 @@ public:
     /** Destructor */
     virtual ~ContiguousDataType();
     
+    /** @return a cloned copy of this */
+    virtual ContiguousDataType* clone() const;
+    
     /** @return the number of bytes required to represent this data type */
     std::size_t getRepresentationByteLength() const;
     
@@ -42,10 +45,11 @@ public:
     std::vector<FileRegion> getRegions(const FSOffset& byteOffset,
                                        std::size_t count) const;
     
-private:
-    /** Hidden copy constructor */
+protected:
+    /** Copy constructor */
     ContiguousDataType(const ContiguousDataType& other);
 
+private:
     /** Hidden assignment operator */
     ContiguousDataType& operator=(const ContiguousDataType& other);
 
@@ -53,7 +57,7 @@ private:
     std::size_t count_;
 
     /** The old type to aggregate */
-    const DataType& oldType_;
+    DataType* oldType_;
 };
 
 #endif

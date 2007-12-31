@@ -4,7 +4,6 @@
 DIR := src/client
 
 SIM_SRC += $(DIR)/client_fs_state.cc \
-	$(DIR)/cache_module.cc \
 	$(DIR)/fs_client.cc \
 	$(DIR)/fs_close.cc \
 	$(DIR)/fs_open.cc \

@@ -40,30 +40,26 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
       storageTransferTotal_(0)
 {
     // Create the data type layout
-    cerr << __FILE__ << ":" << __LINE__ << ": "
-         << "Mode: " << mode_ << " "
-         << flowStart.getOffset() << " " << flowStart.getDataType() << " "
-         << flowStart.getDist() << " \n";
     if (CLIENT_READ == mode_ || CLIENT_WRITE == mode_)
     {
-        DataTypeProcessor::createFileLayoutForClient(flowStart.getOffset(),
-                                                     flowStart.getDataType(),
-                                                     flowStart.getCount(),
-                                                     *(flowStart.getDist()),
-                                                     10000000,
-                                                     layout_);
+        flowSize_ = DataTypeProcessor::createFileLayoutForClient(
+            flowStart.getOffset(),
+            *(flowStart.getDataType()),
+            flowStart.getCount(),
+            *(flowStart.getView()),
+            *(flowStart.getDist()),
+            layout_);
     }
     else if (SERVER_READ == mode_ || SERVER_WRITE == mode_) 
     {
-        DataTypeProcessor::createFileLayoutForServer(flowStart.getOffset(),
-                                                     flowStart.getDataType(),
-                                                     flowStart.getCount(),
-                                                     *(flowStart.getDist()),
-                                                     10000000,
-                                                     layout_);
+        flowSize_ = DataTypeProcessor::createFileLayoutForServer(
+            flowStart.getDataSize(),
+            *(flowStart.getView()),
+            *(flowStart.getDist()),
+            layout_);
     }
-    flowSize_ = layout_.getLength();
     assert(0 < flowSize_);
+
     cerr << __FILE__ << ":" << __LINE__ << ": "
          << "Length: " << flowSize_ << " \n";
 }

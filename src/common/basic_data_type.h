@@ -70,6 +70,9 @@ public:
 
     /** Destructor */
     virtual ~BasicDataType();
+
+    /** Clone this */
+    virtual BasicDataType* clone() const;
     
     /** @return the number of bytes required to represent this data type */
     virtual std::size_t getRepresentationByteLength() const;
@@ -78,11 +81,12 @@ public:
         [byteOffset, byteOffset + byteLength] */
     virtual std::vector<FileRegion> getRegions(const FSOffset& byteOffset,
                                                std::size_t count) const;
-    
-private:
+
+protected:
     /** Hidden copy constructor */
     BasicDataType(const BasicDataType& other);
-
+    
+private:
     /** Hidden assignment operator */
     BasicDataType& operator=(const BasicDataType& other);
 };

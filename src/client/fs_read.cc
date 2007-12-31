@@ -142,12 +142,13 @@ void FSRead::handleMessage(cMessage* msg)
 void FSRead::enterRead()
 {
     assert(0 != readReq_->getFileDes());
-    FSOpenFile* filedes = readReq_->getFileDes();
+    FileDescriptor* fd = readReq_->getFileDes();
+    const FSMetaData* metaData = fd->getMetaData();
     
     // Construct the template read request
     spfsReadRequest read("ReadStuff", SPFS_READ_REQUEST);
     read.setContextPointer(readReq_);
-    read.setServerCnt(filedes->metaData->dataHandles.size());
+    read.setServerCnt(metaData->dataHandles.size());
     read.setOffset(readReq_->getOffset());
     read.setCount(readReq_->getCount());
     read.setDataType(readReq_->getDataType());
@@ -158,23 +159,22 @@ void FSRead::enterRead()
     {
         // Process the data type to determine the read size
         DataTypeLayout layout;
-        filedes->metaData->dist->setObjectIdx(i);
-        DataTypeProcessor::createFileLayoutForClient(read.getOffset(),
-                                                     read.getDataType(),
-                                                     read.getCount(),
-                                                     *filedes->metaData->dist,
-                                                     10000000,
-                                                     layout);
-
-        // Sum all the extents to determine total read size
-        size_t reqBytes = layout.getLength();
+        metaData->dist->setObjectIdx(i);
+        size_t reqBytes = DataTypeProcessor::createFileLayoutForClient(
+            read.getOffset(),
+            *read.getDataType(),
+            read.getCount(),
+            fd->getFileView(),
+            *metaData->dist,
+            layout);
 
         if (0 != reqBytes)
         {
             // Set the message size in bytes
             spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
-            req->setHandle(filedes->metaData->dataHandles[i]);
-            req->setDist(filedes->metaData->dist->clone());
+            req->setHandle(metaData->dataHandles[i]);
+            req->setDist(metaData->dist->clone());
+            req->setView(new FileView(fd->getFileView()));
             req->setFlowTag(simulation.getUniqueNumber());
             req->setByteLength(4 + 8 + 8 + 8);
             client_->send(req, client_->getNetOutGate());
@@ -212,6 +212,7 @@ void FSRead::startFlow(spfsReadResponse* readResponse)
     flowStart->setDataType(readRequest->getDataType());
     flowStart->setCount(readRequest->getCount());
     flowStart->setDist(readRequest->getDist());
+    flowStart->setView(readRequest->getView());
 
     // Send the start message
     client_->send(flowStart, client_->getNetOutGate());

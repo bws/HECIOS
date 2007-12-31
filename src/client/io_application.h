@@ -21,7 +21,7 @@
 //
 
 #include <omnetpp.h>
-class FSDescriptor;
+class FileDescriptor;
 class IOTrace;
 class IOTraceRecord;
 class spfsCacheInvalidateRequest;
@@ -37,7 +37,7 @@ public:
     IOApplication() : cSimpleModule(), trace_(0), rank_(-1) {};
     
     /** @return the file descriptor for a file id */
-    FSDescriptor* getDescriptor(int fileId) const;
+    FileDescriptor* getDescriptor(int fileId) const;
 
     /** @return the MPI application's canonical process rank */
     int getRank() const {return rank_;};
@@ -59,7 +59,7 @@ protected:
     virtual cMessage* createMessage(IOTraceRecord* rec);
     
     /** Assiciate the fileId with a file descriptor */
-    void setDescriptor(int fileId, FSDescriptor* descriptor);
+    void setDescriptor(int fileId, FileDescriptor* descriptor);
 
     /** Send out the required cache invalidation messages */
     void invalidateCaches(spfsMPIFileWriteAtRequest* writeAt);
@@ -78,7 +78,7 @@ private:
     int mpiInGate_;
 
     /** */
-    std::map<int, FSDescriptor*> descriptorById_;
+    std::map<int, FileDescriptor*> descriptorById_;
 
 };
 

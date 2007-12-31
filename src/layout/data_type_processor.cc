@@ -22,44 +22,41 @@
 #include <cassert>
 #include "data_type_layout.h"
 #include "file_distribution.h"
+#include "file_view.h"
 using namespace std;
 
 
 int DataTypeProcessor::createFileLayoutForClient(
     const FSOffset& offset,
-    const FSDataType& dataType,
+    const DataType& dataType,
     const size_t& count,
+    const FileView& view,
     const FileDistribution& dist,
-    const size_t& maxBytesToProcess,
     DataTypeLayout& layout)
 {
     size_t bytesProcessed = processClientRequest(offset,
                                                  dataType,
                                                  count,
+                                                 view,
                                                  dist,
-                                                 maxBytesToProcess,
                                                  layout);
     assert(0 <= bytesProcessed);
-    assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
+    //assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
     return bytesProcessed;
 }
 
 int DataTypeProcessor::createFileLayoutForServer(
-    const FSOffset& offset,
-    const FSDataType& dataType,
-    const size_t& count,
+    const FSSize& dataSize,
+    const FileView& view,
     const FileDistribution& dist,
-    const size_t& maxBytesToProcess,
     DataTypeLayout& layout)
 {
-    size_t bytesProcessed = processServerRequest(offset,
-                                                 dataType,
-                                                 count,
+    size_t bytesProcessed = processServerRequest(dataSize,
+                                                 view,
                                                  dist,
-                                                 maxBytesToProcess,
                                                  layout);
     assert(0 <= bytesProcessed);
-    assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
+    //assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
     return bytesProcessed;    
 }
 
@@ -67,43 +64,49 @@ int DataTypeProcessor::createFileLayoutForServer(
 
 int DataTypeProcessor::processClientRequest(
     const FSOffset& offset,
-    const FSDataType& dataType,
+    const DataType& dataType,
     const std::size_t& count,
+    const FileView& view,
     const FileDistribution& dist,
-    const std::size_t& maxBytesToProcess,
     DataTypeLayout& layout)
 {
-    int bytesProcessed = 0;
-    bytesProcessed = processContiguousRegion(offset,
-                                             dataType*count,
-                                             dist,
-                                             maxBytesToProcess,
-                                             layout);
-    return bytesProcessed;
+    // It isn't neccesary to flatten the memory data type, simply figure out
+    // its magnitude
+    FSSize dataSize = dataType.getExtent() * count;
+
+    // Now, just use the server request processor to figure out the amount
+    // of data the client is mapping to this server
+    return processServerRequest(dataSize, view, dist, layout);
 }
 
 int DataTypeProcessor::processServerRequest(
-    const FSOffset& offset,
-    const FSDataType& dataType,
-    const std::size_t& count,
+    const FSSize& dataSize,
+    const FileView& view,
     const FileDistribution& dist,
-    const std::size_t& maxBytesToProcess,
     DataTypeLayout& layout)
 {
     int bytesProcessed = 0;
-    bytesProcessed = processContiguousRegion(offset,
-                                             dataType*count,
-                                             dist,
-                                             maxBytesToProcess,
-                                             layout);
+
+    // Map each contiguous file region to the server's file regions
+    FSSize disp = view.getDisplacement();
+    const DataType* fileDataType = view.getDataType();
+    vector<FileRegion> fileRegions = fileDataType->getRegions(disp, dataSize);
+    for (size_t i = 0; i < fileRegions.size(); i++)
+    {
+        // Construct the data layout for this server distribution
+        distributeContiguousRegion(disp + fileRegions[i].offset,
+                                   fileRegions[i].extent,
+                                   dist,
+                                   layout);
+        bytesProcessed += fileRegions[i].extent;
+    }
     return bytesProcessed;
 }
 
-int DataTypeProcessor::processContiguousRegion(
+void DataTypeProcessor::distributeContiguousRegion(
     const FSOffset& offset,
     const FSSize& extent,
     const FileDistribution& dist,
-    const std::size_t& maxBytesToProcess,
     DataTypeLayout& layout)
 {
     // Determine the first mapped offset for this server
@@ -118,10 +121,6 @@ int DataTypeProcessor::processContiguousRegion(
 
         // Determine how much of the extent to actually use
         FSSize requestedExtent = min(serverExtent, extent);
-        if (0 != maxBytesToProcess)
-        {
-            requestedExtent = min(requestedExtent, maxBytesToProcess);
-        }
         
         // Add region to the layout
         layout.addRegion(logServerOffset, requestedExtent);
@@ -130,8 +129,6 @@ int DataTypeProcessor::processContiguousRegion(
         logServerOffset = dist.nextMappedLogicalOffset(logServerOffset +
                                                        serverExtent);
     }
-
-    return extent;
 }
 
 /*

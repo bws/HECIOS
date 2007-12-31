@@ -154,12 +154,13 @@ void FSWrite::handleMessage(cMessage* msg)
 void FSWrite::beginWrite()
 {
     assert(0 != writeReq_->getFileDes());
-    FSOpenFile* filedes = (FSOpenFile*)writeReq_->getFileDes();
+    FileDescriptor* fd = writeReq_->getFileDes();
+    const FSMetaData* metaData = fd->getMetaData();
     
     // Construct the server write request
     spfsWriteRequest write(0, SPFS_WRITE_REQUEST);
     write.setContextPointer(writeReq_);
-    write.setServerCnt(filedes->metaData->dataHandles.size());
+    write.setServerCnt(metaData->dataHandles.size());
     write.setOffset(writeReq_->getOffset());
     write.setCount(writeReq_->getCount());
     write.setDataType(writeReq_->getDataType());
@@ -170,16 +171,14 @@ void FSWrite::beginWrite()
     {
         // Process the data type to determine the write size
         DataTypeLayout layout;
-        filedes->metaData->dist->setObjectIdx(i);
-        DataTypeProcessor::createFileLayoutForClient(write.getOffset(),
-                                                     write.getDataType(),
-                                                     write.getCount(),
-                                                     *filedes->metaData->dist,
-                                                     10000000,
-                                                     layout);
-
-        // Sum all the extents to determine total write size
-        size_t reqBytes = layout.getLength();
+        metaData->dist->setObjectIdx(i);
+        size_t reqBytes = DataTypeProcessor::createFileLayoutForClient(
+            write.getOffset(),
+            *write.getDataType(),
+            write.getCount(),
+            fd->getFileView(),
+            *metaData->dist,
+            layout);
 
         // Send write request if server hosts data
         if (0 != reqBytes)
@@ -187,8 +186,8 @@ void FSWrite::beginWrite()
             // Set the message size in bytes
             spfsWriteRequest* req = static_cast<spfsWriteRequest*>(
                 write.dup());
-            req->setHandle(filedes->metaData->dataHandles[i]);
-            req->setDist(filedes->metaData->dist->clone());
+            req->setHandle(metaData->dataHandles[i]);
+            req->setDist(metaData->dist->clone());
             req->setFlowTag(simulation.getUniqueNumber());
             req->setByteLength(4 + 8 + 8 + 8);
             client_->send(req, client_->getNetOutGate());

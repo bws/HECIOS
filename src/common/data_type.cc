@@ -50,6 +50,12 @@ DataType::DataType(size_t extent)
     assert(0 != trueExtent_);
 }
 
+DataType::DataType(const DataType& other)
+    : extent_(other.extent_),
+      trueExtent_(other.trueExtent_)
+{
+}
+
 DataType::~DataType()
 {
 }

@@ -26,6 +26,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "csimple_module_tester.h"
 #include "file_builder.h"
+#include "file_descriptor.h"
 #include "filename.h"
 #include "fs_client.h"
 #include "mock_storage_layout_manager.h"
@@ -88,7 +89,7 @@ void FSClientTest::testReadAtNoOffsetNoLength()
 {
     // Retrieve the test files handle
     Filename testFile("/testFile");
-    FSDescriptor* fd = FileBuilder::instance().getDescriptor(testFile);
+    FileDescriptor* fd = FileBuilder::instance().getDescriptor(testFile);
     spfsMPIFileReadAtRequest req(0, SPFS_MPI_FILE_READ_AT_REQUEST);
     req.setFileDes(fd);
     req.setCount(1);

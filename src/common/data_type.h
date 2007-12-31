@@ -40,6 +40,9 @@ public:
 
     /** Destructor */
     virtual ~DataType();
+
+    /** @return a copy of the correct concrete derived class */
+    virtual DataType* clone() const = 0;
     
     /** @return the size of a single element of this data type */
     std::size_t getExtent() const;
@@ -54,18 +57,18 @@ public:
     virtual std::size_t getRepresentationByteLength() const = 0;
 
     /**
-     * @return the file regions in the data type from
-     * [byteOffset, byteOffset + dataType*count] dataType is this,
+     * @return the data type regions in the data type from
+     * [byteOffset, byteOffset + numBytes] dataType is this,
      * possibly non-contiguous, data type
      */
     virtual std::vector<FileRegion> getRegions(
-        const FSOffset& byteOffset, const std::size_t count) const = 0;
+        const FSOffset& byteOffset, const std::size_t numBytes) const = 0;
 
+protected:
+    /** Copy constructor may be called by clone */
+    DataType(const DataType& other);
     
 private:
-    /** Hidden copy constructor */
-    DataType(const DataType& other);
-
     /** Hidden assignment operator */
     DataType& operator=(const DataType& other);
 

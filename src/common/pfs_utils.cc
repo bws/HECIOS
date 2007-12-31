@@ -112,6 +112,7 @@ std::vector<IPvXAddress*> PFSUtils::getAllRankIP() const
     return addrs;
 }
 
+/*
 void PFSUtils::parsePath(FSOpenFile* descriptor) const
 {
     int size, seg;
@@ -125,6 +126,7 @@ void PFSUtils::parsePath(FSOpenFile* descriptor) const
         descriptor->seglen[seg] = size - index;
     }
 }
+*/
 
 /*
  * Local variables:

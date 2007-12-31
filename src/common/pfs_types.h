@@ -28,9 +28,6 @@ class FileDistribution;
 /** Maximum number of entries in a path */
 #define MAXSEG 16
 
-/** File system data distribution */
-typedef int FSDataType;
-
 /** Metadata for a file */
 struct FSMetaData
 {
@@ -51,7 +48,7 @@ inline bool operator==(const FSMetaData& lhs, const FSMetaData& rhs)
 }
 
 /** Descriptor for an open file */
-struct FSDescriptor
+struct FSDescriptor1
 {
     FSMetaData* metaData; /* pointer to file unique metadata */
     std::string path;    /* the complete path to the file */
@@ -65,7 +62,7 @@ struct FSDescriptor
 };
 
 /** For backwards compatibility, alias FSDescriptor to FSOpenFile */
-typedef struct FSDescriptor FSOpenFile;
+typedef struct FSDescriptor FSOpenFile1;
 
 #endif
 

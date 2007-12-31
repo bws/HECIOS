@@ -23,6 +23,7 @@
 #include <cmath>
 #include <cstdlib>
 #include "IPvXAddress.h"
+#include "file_descriptor.h"
 #include "filename.h"
 #include "simple_stripe_distribution.h"
 #include "storage_layout_manager.h"
@@ -106,15 +107,13 @@ FSMetaData* FileBuilder::getMetaData(const Filename& fileName) const
     return md;
 }
 
-FSDescriptor* FileBuilder::getDescriptor(const Filename& fileName) const
+FileDescriptor* FileBuilder::getDescriptor(const Filename& fileName) const
 {
-    FSDescriptor* descriptor = 0;
+    FileDescriptor* descriptor = 0;
     if (fileExists(fileName))
     {
-        descriptor = new FSDescriptor();
-        descriptor->metaData = getMetaData(fileName);
-        descriptor->path = fileName.str();
-        descriptor->filePtr = 0;
+        FSMetaData* meta = getMetaData(fileName);
+        descriptor = new FileDescriptor(fileName, *meta);
     }
     return descriptor;
 }

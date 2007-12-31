@@ -23,8 +23,10 @@
 #include <cstddef>
 #include <vector>
 #include "pfs_types.h"
+class DataType;
 class DataTypeLayout;
 class FileDistribution;
+class FileView;
 
 /** Data type processor to determine which file portions are alloted
  *  to each I/O node for a give MPI data type and file distribution
@@ -36,44 +38,39 @@ public:
 
     /** @return the number of bytes processed */
     static int createFileLayoutForClient(const FSOffset& offset,
-                                         const FSDataType& dataType,
+                                         const DataType& dataType,
                                          const std::size_t& count,
+                                         const FileView& view,
                                          const FileDistribution& dist,
-                                         const std::size_t& maxBytesToProcess,
                                          DataTypeLayout& layout);
 
     /** @return the number of bytes processed */
-    static int createFileLayoutForServer(const FSOffset& offset,
-                                         const FSDataType& dataType,
-                                         const std::size_t& count,
+    static int createFileLayoutForServer(const FSSize& dataSize,
+                                         const FileView& view,
                                          const FileDistribution& dist,
-                                         const std::size_t& maxBytesToProcess,
                                          DataTypeLayout& layout);
 
 private:
 
     /** @return the number of bytes processed */
     static int processClientRequest(const FSOffset& offset,
-                                    const FSDataType& dataType,
+                                    const DataType& dataType,
                                     const std::size_t& count,
+                                    const FileView& view,
                                     const FileDistribution& dist,
-                                    const std::size_t& maxBytesToProcess,
                                     DataTypeLayout& layout);
     
     /** @return the number of bytes processed */
-    static int processServerRequest(const FSOffset& offset,
-                                    const FSDataType& dataType,
-                                    const std::size_t& count,
+    static int processServerRequest(const FSSize& dataSize,
+                                    const FileView& view,
                                     const FileDistribution& dist,
-                                    const std::size_t& maxBytesToProcess,
                                     DataTypeLayout& layout);
 
-    /** @return the number of bytes processed */
-    static int processContiguousRegion(const FSOffset& offset,
-                                       const FSSize& extent,
-                                       const FileDistribution& dist,
-                                       const std::size_t& maxBytesToProcess,
-                                       DataTypeLayout& layout);    
+    /** Construct the server local offset extent pairs */
+    static void distributeContiguousRegion(const FSOffset& offset,
+                                           const FSSize& extent,
+                                           const FileDistribution& dist,
+                                           DataTypeLayout& layout);    
 };
 
 #endif

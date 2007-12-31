@@ -1,3 +1,5 @@
+#ifndef FILE_VIEW_H
+#define FILE_VIEW_H
 //
 // This file is part of Hecios
 //
@@ -17,41 +19,48 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "basic_data_type.h"
-using namespace std;
+#include "basic_types.h"
+class DataType;
 
-BasicDataType::BasicDataType(size_t basicTypeBytes)
-    : DataType(basicTypeBytes)
+/**
+ * A file view
+ */
+class FileView
 {
-}
+public:
+    /**
+     * Constructor
+     *
+     * displacement - arbitrary offset from beginning of file in bytes
+     * dataType - description of file regions to access (takes ownership)
+     */
+    FileView(const FSSize& displacement, DataType* dataType);
 
-BasicDataType::BasicDataType(const BasicDataType& other)
-    : DataType(other)
-{
-}
+    /** Copy constructor */
+    FileView(const FileView& other);
 
-BasicDataType::~BasicDataType()
-{
-}
+    /** Destructor */
+    ~FileView();
+    
+    /** Assignment operator */
+    FileView& operator=(const FileView& other);
 
-BasicDataType* BasicDataType::clone() const
-{
-    return new BasicDataType(*this);
-}
+    /** @return the displacment in bytes */
+    FSSize getDisplacement() const { return displacement_; };
 
-size_t BasicDataType::getRepresentationByteLength() const
-{
-    // 4 bytes should be enough
-    return 4;
-}
+    /** @return this views data type */
+    const DataType* getDataType() const { return dataType_; };
 
-vector<FileRegion> BasicDataType::getRegions(const FSOffset& byteOffset,
-                                             const std::size_t count) const
-{
-    FileRegion fr = {byteOffset, count * getExtent()};
-    vector<FileRegion> v(1, fr);
-    return v;
-}
+private:
+    /** Swap the contents of this and other */
+    void swap(FileView& other);
+    
+    FSSize displacement_;
+
+    DataType* dataType_;
+};
+
+#endif
 
 /*
  * Local variables:

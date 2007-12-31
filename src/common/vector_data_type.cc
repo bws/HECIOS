@@ -34,8 +34,22 @@ VectorDataType::VectorDataType(size_t count, size_t blockLength,
     assert(this != &oldType);
 }
 
+VectorDataType::VectorDataType(const VectorDataType& other)
+    : DataType(other),
+      count_(other.count_),
+      blockLength_(other.blockLength_),
+      stride_(other.stride_),
+      oldType_(other.oldType_)
+{
+}
+
 VectorDataType::~VectorDataType()
 {
+}
+
+VectorDataType* VectorDataType::clone() const
+{
+    return new VectorDataType(*this);
 }
 
 size_t VectorDataType::getRepresentationByteLength() const
