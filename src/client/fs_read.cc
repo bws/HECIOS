@@ -148,38 +148,39 @@ void FSRead::enterRead()
     // Construct the template read request
     spfsReadRequest read("ReadStuff", SPFS_READ_REQUEST);
     read.setContextPointer(readReq_);
-    read.setServerCnt(metaData->dataHandles.size());
     read.setOffset(readReq_->getOffset());
-    read.setCount(readReq_->getCount());
-    read.setDataType(readReq_->getDataType());
+    read.setView(new FileView(fd->getFileView()));
 
     // Send request to each server
-    size_t numRequests = 0;
-    for (int i = 0; i < read.getServerCnt(); i++)
+    int numRequests = 0;
+    int numServers = metaData->dataHandles.size();
+    for (int i = 0; i < numServers; i++)
     {
         // Process the data type to determine the read size
         DataTypeLayout layout;
         metaData->dist->setObjectIdx(i);
         size_t reqBytes = DataTypeProcessor::createFileLayoutForClient(
-            read.getOffset(),
-            *read.getDataType(),
-            read.getCount(),
-            fd->getFileView(),
+            readReq_->getOffset(),
+            *readReq_->getDataType(),
+            readReq_->getCount(),
+            *read.getView(),
             *metaData->dist,
             layout);
 
         if (0 != reqBytes)
         {
-            // Set the message size in bytes
+            // Set the server specific request data
             spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
             req->setHandle(metaData->dataHandles[i]);
             req->setDist(metaData->dist->clone());
-            req->setView(new FileView(fd->getFileView()));
+            req->setDataSize(reqBytes);
             req->setFlowTag(simulation.getUniqueNumber());
+            
+            // Set the message size in bytes
             req->setByteLength(4 + 8 + 8 + 8);
             client_->send(req, client_->getNetOutGate());
 
-            // Increment the number of outstanding requests
+            // Add to the number of requests sent
             numRequests++;
         }
     }
@@ -191,28 +192,34 @@ void FSRead::enterRead()
 
 void FSRead::startFlow(spfsReadResponse* readResponse)
 {
+    // Extract the file descriptor
+    assert(0 != readReq_->getFileDes());
+    FileDescriptor* fd = readReq_->getFileDes();
+
+    // Extract the server request
+    spfsReadRequest* serverRequest =
+        static_cast<spfsReadRequest*>(readResponse->contextPointer());
+
     // Create the flow start message
     spfsDataFlowStart* flowStart =
         new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
     flowStart->setContextPointer(readReq_);
     
     // Set the handle as the connection id (FIXME: This is hacky)
-    spfsReadRequest* readRequest =
-        static_cast<spfsReadRequest*>(readResponse->contextPointer());
-    flowStart->setBmiConnectionId(readRequest->getHandle());
-    flowStart->setBmiTag(readRequest->getFlowTag());
+    flowStart->setBmiConnectionId(fd->getHandle());
+    flowStart->setBmiTag(serverRequest->getFlowTag());
 
     // Flow configuration
     flowStart->setFlowType(1); // BMI-to-Memory flow
     flowStart->setFlowMode(DataFlow::CLIENT_READ);
 
     // Data transfer configuration
-    flowStart->setHandle(readRequest->getHandle());
-    flowStart->setOffset(readRequest->getOffset());
-    flowStart->setDataType(readRequest->getDataType());
-    flowStart->setCount(readRequest->getCount());
-    flowStart->setDist(readRequest->getDist());
-    flowStart->setView(readRequest->getView());
+    flowStart->setHandle(fd->getHandle());
+    flowStart->setOffset(readReq_->getOffset());
+    flowStart->setDataType(readReq_->getDataType());
+    flowStart->setCount(readReq_->getCount());
+    flowStart->setView(serverRequest->getView());
+    flowStart->setDist(serverRequest->getDist());
 
     // Send the start message
     client_->send(flowStart, client_->getNetOutGate());

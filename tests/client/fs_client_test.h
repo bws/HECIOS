@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
+#include "basic_data_type.h"
 #include "csimple_module_tester.h"
 #include "file_builder.h"
 #include "file_descriptor.h"
@@ -88,13 +89,14 @@ void FSClientTest::tearDown()
 void FSClientTest::testReadAtNoOffsetNoLength()
 {
     // Retrieve the test files handle
+    BasicDataType dt1(4);
     Filename testFile("/testFile");
     FileDescriptor* fd = FileBuilder::instance().getDescriptor(testFile);
     spfsMPIFileReadAtRequest req(0, SPFS_MPI_FILE_READ_AT_REQUEST);
     req.setFileDes(fd);
-    req.setCount(1);
+    req.setCount(0);
     req.setOffset(0);
-    req.setDataType(0);
+    req.setDataType(&dt1);
 
     // Ensure the output message is a ReadAtResponse
     moduleTester_->deliverMessage(&req, "appIn");

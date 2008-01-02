@@ -45,12 +45,18 @@ size_t BasicDataType::getRepresentationByteLength() const
     return 4;
 }
 
-vector<FileRegion> BasicDataType::getRegions(const FSOffset& byteOffset,
-                                             const std::size_t count) const
+vector<FileRegion> BasicDataType::getRegionsByBytes(const FSOffset& byteOffset,
+                                                    size_t numBytes) const
 {
-    FileRegion fr = {byteOffset, count * getExtent()};
+    FileRegion fr = {byteOffset, numBytes};
     vector<FileRegion> v(1, fr);
     return v;
+}
+
+vector<FileRegion> BasicDataType::getRegionsByCount(const FSOffset& byteOffset,
+                                                    size_t count) const
+{
+    return getRegionsByBytes(byteOffset, count * getExtent());
 }
 
 /*

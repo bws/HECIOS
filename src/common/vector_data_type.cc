@@ -57,30 +57,60 @@ size_t VectorDataType::getRepresentationByteLength() const
     return 4 + 4 + 4 + oldType_.getRepresentationByteLength();
 }
 
-vector<FileRegion> VectorDataType::getRegions(const FSOffset& byteOffset,
-                                              size_t count) const
+vector<FileRegion> VectorDataType::getRegionsByBytes(const FSOffset& byteOffset,
+                                                     size_t numBytes) const
+{
+    // The total regions produced
+    vector<FileRegion> vectorRegions;
+/*
+    // Construct the regions required to map numBytes of data to data regions
+    size_t bytesProcessed = 0;
+    int currentRegion = 0;
+    while (bytesProcessed < numBytes)
+    {
+        FSOffset typeOffset = currentRegion * getExtent();
+        FSOffset dataOffset = byteOffset + typeOffset +
+            currentRegion * stride_ * oldType_.getExtent();
+        FSSize dataLength = min(blockLength_, numBytes - bytesProcessed);
+        vector<FileRegion> elementRegions = oldType_.getRegions(Offset,
+                                                                dataLength);
+
+        // Add regions to the total regions vector
+        vectorIter = copy(elementRegions.begin(),
+                          elementRegions.end(),
+                          back_inserter(vectorIter));
+            
+        // Update bookkeeping
+        bytesProcessed += dataLength;
+    }
+*/
+    return vectorRegions;
+}
+
+vector<FileRegion> VectorDataType::getRegionsByCount(const FSOffset& byteOffset,
+                                                     size_t count) const
 {
     // The total regions produced for count vectors
     vector<FileRegion> vectorRegions(count * count_);
     vector<FileRegion>::iterator vectorIter = vectorRegions.begin();
 
-    // Flatten the types in order to construct count of the new type
-    for (size_t i = 0; i < count; i++)
-    {
-        FSOffset countOffset = i * getExtent();
-        for (size_t j = 0; j < count_; j++)
-        {
-            FSOffset nextOffset = byteOffset + countOffset +
-                j * stride_ * oldType_.getExtent();
-            vector<FileRegion> elementRegions = oldType_.getRegions(
-                nextOffset, blockLength_);
-            vectorIter = copy(elementRegions.begin(),
-                              elementRegions.end(),
-                              vectorIter);
-        }
-    }
-
-    return vectorRegions;
+     // Flatten the types in order to construct count of the new type
+     for (size_t i = 0; i < count; i++)
+     {
+         FSOffset countOffset = i * getExtent();
+         for (size_t j = 0; j < count_; j++)
+         {
+             FSOffset nextOffset = byteOffset + countOffset +
+                 j * stride_ * oldType_.getExtent();
+             vector<FileRegion> elementRegions = oldType_.getRegionsByCount(
+                 nextOffset, blockLength_);
+             vectorIter = copy(elementRegions.begin(),
+                               elementRegions.end(),
+                               vectorIter);
+         }
+     }
+     
+     return vectorRegions;
 }
 
 /*

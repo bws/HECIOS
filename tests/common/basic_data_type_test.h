@@ -35,7 +35,8 @@ class BasicDataTypeTest : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(BasicDataTypeTest);
     CPPUNIT_TEST(testConstructor);
     CPPUNIT_TEST(testGetRepresentationByteLength);
-    CPPUNIT_TEST(testGetRegions);
+    CPPUNIT_TEST(testGetRegionsByBytes);
+    CPPUNIT_TEST(testGetRegionsByCount);
     CPPUNIT_TEST_SUITE_END();
     
 public:
@@ -50,7 +51,9 @@ public:
 
     void testGetRepresentationByteLength();
 
-    void testGetRegions();
+    void testGetRegionsByBytes();
+    
+    void testGetRegionsByCount();
     
 private:
 };
@@ -80,10 +83,21 @@ void BasicDataTypeTest::testGetRepresentationByteLength()
     CPPUNIT_ASSERT_EQUAL((size_t)4, dt3.getRepresentationByteLength());
 }
 
-void BasicDataTypeTest::testGetRegions()
+void BasicDataTypeTest::testGetRegionsByBytes()
 {
     BasicDataType dt1(BasicDataType::MPI_DOUBLE_WIDTH);
-    vector<FileRegion> regions = dt1.getRegions(4, 4);
+    vector<FileRegion> regions = dt1.getRegionsByBytes(3, 8);
+    CPPUNIT_ASSERT_EQUAL((size_t)1, regions.size());
+    FileRegion fr1 = regions[0];
+    CPPUNIT_ASSERT_EQUAL((FSOffset)3, fr1.offset);
+    CPPUNIT_ASSERT_EQUAL((FSSize)1 * BasicDataType::MPI_DOUBLE_WIDTH,
+                         fr1.extent);
+}
+
+void BasicDataTypeTest::testGetRegionsByCount()
+{
+    BasicDataType dt1(BasicDataType::MPI_DOUBLE_WIDTH);
+    vector<FileRegion> regions = dt1.getRegionsByCount(4, 4);
     CPPUNIT_ASSERT_EQUAL((size_t)1, regions.size());
     FileRegion fr1 = regions[0];
     CPPUNIT_ASSERT_EQUAL((FSOffset)4, fr1.offset);
@@ -95,6 +109,7 @@ void BasicDataTypeTest::testGetRegions()
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

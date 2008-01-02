@@ -104,8 +104,8 @@ void Write::startDataFlow()
     // Data transfer configuration
     dataFlowStart->setHandle(writeReq_->getHandle());
     dataFlowStart->setOffset(writeReq_->getOffset());
-    dataFlowStart->setDataType(writeReq_->getDataType());
-    dataFlowStart->setCount(writeReq_->getCount());
+    dataFlowStart->setDataSize(writeReq_->getDataSize());
+    dataFlowStart->setView(writeReq_->getView());
     dataFlowStart->setDist(writeReq_->getDist());
 
     module_->send(dataFlowStart);

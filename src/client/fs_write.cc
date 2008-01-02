@@ -160,39 +160,40 @@ void FSWrite::beginWrite()
     // Construct the server write request
     spfsWriteRequest write(0, SPFS_WRITE_REQUEST);
     write.setContextPointer(writeReq_);
-    write.setServerCnt(metaData->dataHandles.size());
     write.setOffset(writeReq_->getOffset());
-    write.setCount(writeReq_->getCount());
-    write.setDataType(writeReq_->getDataType());
+    write.setView(new FileView(fd->getFileView()));
 
     // Send request to each server
     int numRequests = 0;
-    for (int i = 0; i < write.getServerCnt(); i++)
+    int numServers = metaData->dataHandles.size();
+    for (int i = 0; i < numServers; i++)
     {
         // Process the data type to determine the write size
         DataTypeLayout layout;
         metaData->dist->setObjectIdx(i);
         size_t reqBytes = DataTypeProcessor::createFileLayoutForClient(
-            write.getOffset(),
-            *write.getDataType(),
-            write.getCount(),
-            fd->getFileView(),
+            writeReq_->getOffset(),
+            *writeReq_->getDataType(),
+            writeReq_->getCount(),
+            *write.getView(),
             *metaData->dist,
             layout);
 
         // Send write request if server hosts data
         if (0 != reqBytes)
         {
-            // Set the message size in bytes
             spfsWriteRequest* req = static_cast<spfsWriteRequest*>(
                 write.dup());
             req->setHandle(metaData->dataHandles[i]);
+            req->setDataSize(reqBytes);
             req->setDist(metaData->dist->clone());
             req->setFlowTag(simulation.getUniqueNumber());
+
+            // Set the message size in bytes
             req->setByteLength(4 + 8 + 8 + 8);
             client_->send(req, client_->getNetOutGate());
 
-            // Increment the number of outstanding requests
+            // Add to the number of requests sent
             numRequests++;
         }
     }
@@ -205,27 +206,34 @@ void FSWrite::beginWrite()
 
 void FSWrite::startFlow(spfsWriteResponse* writeResponse)
 {
+    // Extract the file descriptor
+    assert(0 != writeReq_->getFileDes());
+    FileDescriptor* fd = writeReq_->getFileDes();
+
+    // Extract the server request
+    spfsWriteRequest* serverRequest =
+        static_cast<spfsWriteRequest*>(writeResponse->contextPointer());
+
     // Create the flow start message
     spfsDataFlowStart* flowStart =
         new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
     flowStart->setContextPointer(writeReq_);
     
     // Set the handle as the connection id (FIXME: This is hacky)
-    spfsWriteRequest* writeRequest =
-        static_cast<spfsWriteRequest*>(writeResponse->contextPointer());
-    flowStart->setBmiConnectionId(writeRequest->getHandle());
-    flowStart->setBmiTag(writeRequest->getFlowTag());
+    flowStart->setBmiConnectionId(fd->getHandle());
+    flowStart->setBmiTag(serverRequest->getFlowTag());
 
     // Flow configuration
     flowStart->setFlowType(1); // FIXME: Hacky way to say BMI-to-Memory flow
     flowStart->setFlowMode(DataFlow::CLIENT_WRITE);
 
     // Data transfer configuration
-    flowStart->setHandle(writeRequest->getHandle());
-    flowStart->setOffset(writeRequest->getOffset());
-    flowStart->setDataType(writeRequest->getDataType());
-    flowStart->setCount(writeRequest->getCount());
-    flowStart->setDist(writeRequest->getDist());
+    flowStart->setHandle(fd->getHandle());
+    flowStart->setOffset(writeReq_->getOffset());
+    flowStart->setDataType(writeReq_->getDataType());
+    flowStart->setCount(writeReq_->getCount());
+    flowStart->setView(serverRequest->getView());
+    flowStart->setDist(serverRequest->getDist());
 
     // Send the start message
     client_->send(flowStart, client_->getNetOutGate());

@@ -45,7 +45,8 @@ public:
                                          DataTypeLayout& layout);
 
     /** @return the number of bytes processed */
-    static int createFileLayoutForServer(const FSSize& dataSize,
+    static int createFileLayoutForServer(const FSOffset& offset,
+                                         const FSSize& dataSize,
                                          const FileView& view,
                                          const FileDistribution& dist,
                                          DataTypeLayout& layout);
@@ -61,7 +62,8 @@ private:
                                     DataTypeLayout& layout);
     
     /** @return the number of bytes processed */
-    static int processServerRequest(const FSSize& dataSize,
+    static int processServerRequest(const FSOffset& offset,
+                                    const FSSize& dataSize,
                                     const FileView& view,
                                     const FileDistribution& dist,
                                     DataTypeLayout& layout);

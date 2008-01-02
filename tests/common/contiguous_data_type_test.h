@@ -36,7 +36,8 @@ class ContiguousDataTypeTest : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(ContiguousDataTypeTest);
     CPPUNIT_TEST(testConstructor);
     CPPUNIT_TEST(testGetRepresentationByteLength);
-    CPPUNIT_TEST(testGetRegions);
+    CPPUNIT_TEST(testGetRegionsByBytes);
+    CPPUNIT_TEST(testGetRegionsByCount);
     CPPUNIT_TEST_SUITE_END();
     
 public:
@@ -51,7 +52,9 @@ public:
 
     void testGetRepresentationByteLength();
 
-    void testGetRegions();
+    void testGetRegionsByBytes();
+    
+    void testGetRegionsByCount();
     
 private:
 };
@@ -78,11 +81,24 @@ void ContiguousDataTypeTest::testGetRepresentationByteLength()
                          cdt1.getRepresentationByteLength());
 }
 
-void ContiguousDataTypeTest::testGetRegions()
+void ContiguousDataTypeTest::testGetRegionsByBytes()
 {
     BasicDataType bdt1(BasicDataType::MPI_DOUBLE_WIDTH);
     ContiguousDataType cdt1(7, bdt1);
-    vector<FileRegion> regions = cdt1.getRegions(4, 4);
+    vector<FileRegion> regions = cdt1.getRegionsByBytes(3, 8);
+    CPPUNIT_ASSERT_EQUAL((size_t)1, regions.size());
+    
+    FileRegion fr1 = regions[0];
+    CPPUNIT_ASSERT_EQUAL((FSOffset)3, fr1.offset);
+    CPPUNIT_ASSERT_EQUAL((FSSize) BasicDataType::MPI_DOUBLE_WIDTH,
+                         fr1.extent);
+}
+
+void ContiguousDataTypeTest::testGetRegionsByCount()
+{
+    BasicDataType bdt1(BasicDataType::MPI_DOUBLE_WIDTH);
+    ContiguousDataType cdt1(7, bdt1);
+    vector<FileRegion> regions = cdt1.getRegionsByCount(4, 4);
     CPPUNIT_ASSERT_EQUAL((size_t)1, regions.size());
     
     FileRegion fr1 = regions[0];
@@ -95,6 +111,7 @@ void ContiguousDataTypeTest::testGetRegions()
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

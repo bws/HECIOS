@@ -45,13 +45,14 @@ int DataTypeProcessor::createFileLayoutForClient(
     return bytesProcessed;
 }
 
-int DataTypeProcessor::createFileLayoutForServer(
-    const FSSize& dataSize,
-    const FileView& view,
-    const FileDistribution& dist,
-    DataTypeLayout& layout)
+int DataTypeProcessor::createFileLayoutForServer(const FSOffset& offset,
+                                                 const FSSize& dataSize,
+                                                 const FileView& view,
+                                                 const FileDistribution& dist,
+                                                 DataTypeLayout& layout)
 {
-    size_t bytesProcessed = processServerRequest(dataSize,
+    size_t bytesProcessed = processServerRequest(offset,
+                                                 dataSize,
                                                  view,
                                                  dist,
                                                  layout);
@@ -74,23 +75,25 @@ int DataTypeProcessor::processClientRequest(
     // its magnitude
     FSSize dataSize = dataType.getExtent() * count;
 
-    // Now, just use the server request processor to figure out the amount
-    // of data the client is mapping to this server
-    return processServerRequest(dataSize, view, dist, layout);
+    // Determine the amount of contiguous file regions that correspond to
+    // this server distribution's physical file locations
+    return processServerRequest(offset, dataSize, view, dist, layout);
 }
 
-int DataTypeProcessor::processServerRequest(
-    const FSSize& dataSize,
-    const FileView& view,
-    const FileDistribution& dist,
-    DataTypeLayout& layout)
+int DataTypeProcessor::processServerRequest(const FSOffset& offset,
+                                            const FSSize& dataSize,
+                                            const FileView& view,
+                                            const FileDistribution& dist,
+                                            DataTypeLayout& layout)
 {
     int bytesProcessed = 0;
 
-    // Map each contiguous file region to the server's file regions
+    // Determine the amount of contiguous file regions that correspond to
+    // this server's physical file locations
     FSSize disp = view.getDisplacement();
     const DataType* fileDataType = view.getDataType();
-    vector<FileRegion> fileRegions = fileDataType->getRegions(disp, dataSize);
+    vector<FileRegion> fileRegions = fileDataType->getRegionsByBytes(offset,
+                                                                     dataSize);
     for (size_t i = 0; i < fileRegions.size(); i++)
     {
         // Construct the data layout for this server distribution

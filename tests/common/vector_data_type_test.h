@@ -36,7 +36,8 @@ class VectorDataTypeTest : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(VectorDataTypeTest);
     CPPUNIT_TEST(testConstructor);
     CPPUNIT_TEST(testGetRepresentationByteLength);
-    CPPUNIT_TEST(testGetRegions);
+    CPPUNIT_TEST(testGetRegionsByBytes);
+    CPPUNIT_TEST(testGetRegionsByCount);
     CPPUNIT_TEST_SUITE_END();
     
 public:
@@ -51,7 +52,9 @@ public:
 
     void testGetRepresentationByteLength();
 
-    void testGetRegions();
+    void testGetRegionsByBytes();
+    
+    void testGetRegionsByCount();
     
 private:
 };
@@ -80,12 +83,16 @@ void VectorDataTypeTest::testGetRepresentationByteLength()
                          vdt1.getRepresentationByteLength());
 }
 
-void VectorDataTypeTest::testGetRegions()
+void VectorDataTypeTest::testGetRegionsByBytes()
+{
+}
+
+void VectorDataTypeTest::testGetRegionsByCount()
 {
     // Test a simple scenario
     BasicDataType bdt1(BasicDataType::MPI_DOUBLE_WIDTH);
     VectorDataType vdt1(3,2,3, bdt1);
-    vector<FileRegion> regions = vdt1.getRegions(0, 1);
+    vector<FileRegion> regions = vdt1.getRegionsByCount(0, 1);
     CPPUNIT_ASSERT_EQUAL((size_t)3, regions.size());
 
     for (size_t i = 0; i < regions.size(); i++)
@@ -115,6 +122,7 @@ void VectorDataTypeTest::testGetRegions()
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

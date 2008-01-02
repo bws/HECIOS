@@ -51,11 +51,18 @@ size_t ContiguousDataType::getRepresentationByteLength() const
     return 4 + oldType_->getRepresentationByteLength();
 }
 
-vector<FileRegion> ContiguousDataType::getRegions(const FSOffset& byteOffset,
-                                                  size_t count) const
+vector<FileRegion> ContiguousDataType::getRegionsByBytes(
+    const FSOffset& byteOffset,
+    size_t numBytes) const
 {
-    // Flatten the old type in order to construct count of the new type
-    return oldType_->getRegions(byteOffset, count * count_);
+    return oldType_->getRegionsByBytes(byteOffset, numBytes);
+}
+
+vector<FileRegion> ContiguousDataType::getRegionsByCount(
+    const FSOffset& byteOffset,
+    size_t count) const
+{
+    return oldType_->getRegionsByCount(byteOffset, count * count_);
 }
 
 /*

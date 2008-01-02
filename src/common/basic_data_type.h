@@ -77,10 +77,19 @@ public:
     /** @return the number of bytes required to represent this data type */
     virtual std::size_t getRepresentationByteLength() const;
     
-    /** @return the file regions in the data typefrom
-        [byteOffset, byteOffset + byteLength] */
-    virtual std::vector<FileRegion> getRegions(const FSOffset& byteOffset,
-                                               std::size_t count) const;
+    /**
+     * @return the *data* regions for numBytes of data in this DataType.
+     * Note that the DataType may contain empty holes, thus leading to
+     * numBytes of data corresponding to a much larger DataType extent.
+     */
+    virtual std::vector<FileRegion> getRegionsByBytes(
+        const FSOffset& byteOffset, std::size_t numBytes) const;
+
+    /**
+     * @return the data regions for count of this DataType.
+     */
+    virtual std::vector<FileRegion> getRegionsByCount(
+        const FSOffset& byteOffset, std::size_t count) const;
 
 protected:
     /** Hidden copy constructor */

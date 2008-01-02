@@ -112,8 +112,8 @@ void Read::startDataFlow()
     // Data transfer configuration
     dataFlowStart->setHandle(readReq_->getHandle());
     dataFlowStart->setOffset(readReq_->getOffset());
-    dataFlowStart->setDataType(readReq_->getDataType());
-    dataFlowStart->setCount(readReq_->getCount());
+    dataFlowStart->setDataSize(readReq_->getDataSize());
+    dataFlowStart->setView(readReq_->getView());
     dataFlowStart->setDist(readReq_->getDist());
 
     module_->send(dataFlowStart);

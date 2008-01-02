@@ -139,13 +139,10 @@ message spfsRemoveResponse extends spfsResponse
 message spfsReadRequest extends spfsRequest
 {
     fields:
-        int serverNo;
-        int serverCnt;
         FSOffset offset;
-        DataTypePtr dataType;
-        unsigned long count;
-        FileDistributionPtr dist;
+        FSSize dataSize;
         FileViewPtr view;
+        FileDistributionPtr dist;
         int flowTag;
 };
 
@@ -159,13 +156,10 @@ message spfsReadResponse extends spfsResponse
 message spfsWriteRequest extends spfsRequest
 {
     fields:
-        int serverNo;
-        int serverCnt;
-        unsigned long offset;
-        int count;
-        DataTypePtr dataType;
-        FileDistributionPtr dist;
+        FSOffset offset;
+        FSSize dataSize;
         FileViewPtr view;
+        FileDistributionPtr dist;
         int flowTag;
 };
 
@@ -368,15 +362,14 @@ message spfsDataFlowStart extends spfsRequest
         int flowId; // Set by the job manager
         FileDistributionPtr dist;
         FileViewPtr view;
+        FSOffset offset;
 
         // Client Data information
-        FSOffset offset;
         DataTypePtr dataType;
         unsigned long count;
 
         // Server Data information
         FSSize dataSize;
-
 
         // The bmi connection and tag to use for this flow
         int bmiConnectionId;

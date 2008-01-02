@@ -53,6 +53,7 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
     else if (SERVER_READ == mode_ || SERVER_WRITE == mode_) 
     {
         flowSize_ = DataTypeProcessor::createFileLayoutForServer(
+            flowStart.getOffset(),
             flowStart.getDataSize(),
             *(flowStart.getView()),
             *(flowStart.getDist()),

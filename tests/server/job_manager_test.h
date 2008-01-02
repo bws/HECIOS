@@ -76,7 +76,7 @@ void JobManagerTest::setUp()
 {
     // Create the module for testing
     moduleTester_ = new cSimpleModuleTester("JobManager",
-                                            "src/server/job_manager.ned");
+                                            "src/io/job_manager.ned");
     module_ = dynamic_cast<JobManager*>(moduleTester_->getModule());
     CPPUNIT_ASSERT(0 != module_);
 
@@ -86,13 +86,17 @@ void JobManagerTest::setUp()
     // Create the read request
     readRequest_ = new spfsReadRequest(0, SPFS_READ_REQUEST);
     readRequest_->setOffset(0);
-    readRequest_->setDataType(0);
-    readRequest_->setCount(0);
+    readRequest_->setView(0);
     readRequest_->setDist(distribution_);
 
     // Create the begin flow request
     flowStart_ = new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
     flowStart_->setContextPointer(readRequest_);
+    flowStart_->setOffset(0);
+    flowStart_->setDataType(0);
+    flowStart_->setCount(1);
+    flowStart_->setDataSize(4);
+    flowStart_->setDist(distribution_);
 }
 
 void JobManagerTest::tearDown()
