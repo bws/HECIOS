@@ -6,6 +6,7 @@
 #include "data_type_layout_test.h"
 #include "data_type_processor_test.h"
 #include "file_builder_test.h"
+#include "simple_stripe_distribution_test.h"
 
 /** Main test driver */
 int main(int argc, char** argv)
@@ -16,6 +17,7 @@ int main(int argc, char** argv)
     runner.addTest( DataTypeLayoutTest::suite() );
     runner.addTest( DataTypeProcessorTest::suite() );
     runner.addTest( FileBuilderTest::suite() );
+    runner.addTest( SimpleStripeDistributionTest::suite() );
 
     bool success = runner.run();
     return (success ? 0 : 1);

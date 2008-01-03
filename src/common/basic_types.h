@@ -31,7 +31,7 @@ typedef int64_t FSBlock;
 typedef uint64_t FSHandle;
 
 /** File system file offset data type */
-typedef uint64_t FSOffset;
+typedef int64_t FSOffset;
 
 /** File system file region length data type */
 typedef uint64_t FSSize;

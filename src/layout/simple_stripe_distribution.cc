@@ -46,16 +46,16 @@ FSOffset SimpleStripeDistribution::convertLogicalToPhysicalOffset(
     size_t objectIdx, FSOffset logicalOffset) const
 {
     // Determine the number of complete stripes
-    int completeStripes = logicalOffset / (stripSize_ * numObjects_);
-    FSOffset physicalOffset = completeStripes * stripSize_;
+    int64_t completeStripes = logicalOffset / (stripSize_ * numObjects_);
+    int64_t physicalOffset = completeStripes * stripSize_;
 
     // Adjust physical offset if we are not at beginning of the current strip
-    FSSize leftOver =
-        logicalOffset - (completeStripes * stripSize_ * numObjects_);
-
-    if (leftOver >= (objectIdx * stripSize_))
+    int64_t leftOver = logicalOffset - (completeStripes * stripSize_ * numObjects_);
+    int64_t stripBegin = objectIdx * stripSize_;
+    if (leftOver >= stripBegin)
     {
-        if (leftOver < ((objectIdx + 1) * stripSize_))
+        int64_t stripEnd = (objectIdx + 1) * stripSize_;
+        if (leftOver < stripEnd)
         {
             physicalOffset += leftOver - (objectIdx * stripSize_);
         }
@@ -70,15 +70,15 @@ FSOffset SimpleStripeDistribution::convertLogicalToPhysicalOffset(
 FSOffset SimpleStripeDistribution::getNextMappedLogicalOffset(
     size_t objectIdx, FSOffset logicalOffset) const
 {
-    FSOffset serverStartingOffset = objectIdx * stripSize_;
-    FSSize stripeSize = numObjects_ * stripSize_;
-    FSOffset diff = (logicalOffset - serverStartingOffset) % stripeSize;
+    int64_t serverStartingOffset = objectIdx * stripSize_;
+    int64_t stripeSize = numObjects_ * stripSize_;
+    int64_t diff = (logicalOffset - serverStartingOffset) % stripeSize;
 
     if (diff < 0)
     {
         return serverStartingOffset;
     }
-    else if (diff >= stripSize_)
+    else if (FSSize(diff) >= stripSize_)
     {
         return logicalOffset + (stripeSize - diff);
     }
@@ -91,10 +91,10 @@ FSOffset SimpleStripeDistribution::getNextMappedLogicalOffset(
 FSOffset SimpleStripeDistribution::convertPhysicalToLogicalOffset(
     size_t objectIdx, FSOffset physicalOffset) const
 {
-    FSSize stripsDiv = physicalOffset / stripSize_;
-    FSSize stripsMod = physicalOffset % stripSize_;
+    int64_t stripsDiv = physicalOffset / stripSize_;
+    int64_t stripsMod = physicalOffset % stripSize_;
 
-    FSOffset acc = (stripsDiv - 1) * stripSize_ * objectIdx;
+    int64_t acc = (stripsDiv - 1) * stripSize_ * objectIdx;
     if (0 != stripsMod)
     {
         acc += stripSize_ * numObjects_;

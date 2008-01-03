@@ -169,6 +169,7 @@ void FSRead::enterRead()
 
         if (0 != reqBytes)
         {
+            cerr << "Sending " << reqBytes << " to server " << i << endl;
             // Set the server specific request data
             spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
             req->setHandle(metaData->dataHandles[i]);

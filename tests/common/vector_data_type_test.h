@@ -106,13 +106,13 @@ void VectorDataTypeTest::testGetRegionsByCount()
                          fr0.extent);
 
     FileRegion fr1 = regions[1];
-    CPPUNIT_ASSERT_EQUAL((FSOffset)3 * BasicDataType::MPI_DOUBLE_WIDTH,
+    CPPUNIT_ASSERT_EQUAL((FSOffset)(3 * BasicDataType::MPI_DOUBLE_WIDTH),
                          fr1.offset);
     CPPUNIT_ASSERT_EQUAL((FSSize)2 * BasicDataType::MPI_DOUBLE_WIDTH,
                          fr1.extent);
     
     FileRegion fr2 = regions[2];
-    CPPUNIT_ASSERT_EQUAL((FSOffset)6 * BasicDataType::MPI_DOUBLE_WIDTH,
+    CPPUNIT_ASSERT_EQUAL((FSOffset)(6 * BasicDataType::MPI_DOUBLE_WIDTH),
                          fr2.offset);
     CPPUNIT_ASSERT_EQUAL((FSSize)2 * BasicDataType::MPI_DOUBLE_WIDTH,
                          fr2.extent);

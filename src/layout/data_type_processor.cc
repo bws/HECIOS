@@ -86,8 +86,6 @@ int DataTypeProcessor::processServerRequest(const FSOffset& offset,
                                             const FileDistribution& dist,
                                             DataTypeLayout& layout)
 {
-    int bytesProcessed = 0;
-
     // Determine the amount of contiguous file regions that correspond to
     // this server's physical file locations
     FSSize disp = view.getDisplacement();
@@ -96,14 +94,18 @@ int DataTypeProcessor::processServerRequest(const FSOffset& offset,
                                                                      dataSize);
     for (size_t i = 0; i < fileRegions.size(); i++)
     {
+        cerr << "Layout off: " << fileRegions[i].offset
+             << " ext: " << fileRegions[i].extent << endl;
         // Construct the data layout for this server distribution
         distributeContiguousRegion(disp + fileRegions[i].offset,
                                    fileRegions[i].extent,
                                    dist,
                                    layout);
-        bytesProcessed += fileRegions[i].extent;
     }
-    return bytesProcessed;
+
+    cerr << "Offset: " << offset << " dsize: " << dataSize
+         << " Layout: " << layout.getLength() << endl;
+    return layout.getLength();
 }
 
 void DataTypeProcessor::distributeContiguousRegion(
@@ -116,7 +118,7 @@ void DataTypeProcessor::distributeContiguousRegion(
     FSOffset logServerOffset = dist.nextMappedLogicalOffset(offset);
 
     // Verify that offset is within requested region
-    while (logServerOffset < (offset + extent))
+    while (FSSize(logServerOffset) < (offset + extent))
     {
         // Determine the contiguous length forward from the physical offset
         FSOffset physOffset = dist.logicalToPhysicalOffset(logServerOffset);
@@ -128,6 +130,9 @@ void DataTypeProcessor::distributeContiguousRegion(
         // Add region to the layout
         layout.addRegion(logServerOffset, requestedExtent);
 
+        cerr << "Log server: " << logServerOffset
+             << " physOff: " << physOffset << " serverExt: "
+             << serverExtent << " ext: " << extent << endl;
         // Determine the next mapped offset for this server
         logServerOffset = dist.nextMappedLogicalOffset(logServerOffset +
                                                        serverExtent);

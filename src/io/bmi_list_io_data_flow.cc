@@ -153,7 +153,7 @@ void BMIListIODataFlow::pushDataToNetwork(FSSize pushSize)
 void BMIListIODataFlow::pullDataFromStorage(FSSize pullSize)
 {
     // If more data is available, pull it
-    if (pullSubregionOffset_ < getSize())
+    if (FSSize(pullSubregionOffset_) < getSize())
     {
         // Extract the regions to process
         FSSize bufferSize = min(getSize() - pullSubregionOffset_,

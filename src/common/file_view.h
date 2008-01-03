@@ -34,7 +34,7 @@ public:
      * displacement - arbitrary offset from beginning of file in bytes
      * dataType - description of file regions to access (takes ownership)
      */
-    FileView(const FSSize& displacement, DataType* dataType);
+    FileView(const FSOffset& displacement, DataType* dataType);
 
     /** Copy constructor */
     FileView(const FileView& other);
@@ -46,7 +46,7 @@ public:
     FileView& operator=(const FileView& other);
 
     /** @return the displacment in bytes */
-    FSSize getDisplacement() const { return displacement_; };
+    FSOffset getDisplacement() const { return displacement_; };
 
     /** @return this views data type */
     const DataType* getDataType() const { return dataType_; };
@@ -55,7 +55,7 @@ private:
     /** Swap the contents of this and other */
     void swap(FileView& other);
     
-    FSSize displacement_;
+    FSOffset displacement_;
 
     DataType* dataType_;
 };

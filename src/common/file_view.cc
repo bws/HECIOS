@@ -22,7 +22,7 @@
 #include "data_type.h"
 using namespace std;
 
-FileView::FileView(const FSSize& displacement, DataType* dataType)
+FileView::FileView(const FSOffset& displacement, DataType* dataType)
     : displacement_(displacement),
       dataType_(dataType)
 {

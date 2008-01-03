@@ -86,7 +86,7 @@ vector<FileRegion> DataTypeLayout::getSubRegions(const FSOffset& byteOffset,
     //         << "Ext: " << fileRegions_[i].extent << endl;
     //}
     assert(0 < fileRegions_.size());
-    assert(byteOffset < getLength());
+    assert(FSSize(byteOffset) < getLength());
     assert((byteOffset + byteLength) <= getLength());
     
     vector<FileRegion> subRegions;
@@ -94,7 +94,7 @@ vector<FileRegion> DataTypeLayout::getSubRegions(const FSOffset& byteOffset,
     // Find the first region the sub region is contained in
     size_t regionIdx = 0;
     FSSize processedBytes = fileRegions_[0].extent;
-    while (byteOffset >= processedBytes)
+    while (FSSize(byteOffset) >= processedBytes)
     {
         regionIdx++;
         processedBytes += fileRegions_[regionIdx].extent;
