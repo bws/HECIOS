@@ -26,15 +26,15 @@
 using namespace std;
 
 
-int DataTypeProcessor::createFileLayoutForClient(
+FSSize DataTypeProcessor::createFileLayoutForClient(
     const FSOffset& offset,
     const DataType& dataType,
     const size_t& count,
     const FileView& view,
-    const FileDistribution& dist,
-    DataTypeLayout& layout)
+    const FileDistribution& dist)
 {
-    size_t bytesProcessed = processClientRequest(offset,
+    DataTypeLayout layout;
+    FSSize bytesProcessed = processClientRequest(offset,
                                                  dataType,
                                                  count,
                                                  view,
@@ -45,13 +45,14 @@ int DataTypeProcessor::createFileLayoutForClient(
     return bytesProcessed;
 }
 
-int DataTypeProcessor::createFileLayoutForServer(const FSOffset& offset,
-                                                 const FSSize& dataSize,
-                                                 const FileView& view,
-                                                 const FileDistribution& dist,
-                                                 DataTypeLayout& layout)
+FSSize DataTypeProcessor::createFileLayoutForServer(
+    const FSOffset& offset,
+    const FSSize& dataSize,
+    const FileView& view,
+    const FileDistribution& dist,
+    DataTypeLayout& layout)
 {
-    size_t bytesProcessed = processServerRequest(offset,
+    FSSize bytesProcessed = processServerRequest(offset,
                                                  dataSize,
                                                  view,
                                                  dist,
@@ -63,7 +64,7 @@ int DataTypeProcessor::createFileLayoutForServer(const FSOffset& offset,
 
 
 
-int DataTypeProcessor::processClientRequest(
+FSSize DataTypeProcessor::processClientRequest(
     const FSOffset& offset,
     const DataType& dataType,
     const std::size_t& count,
@@ -75,16 +76,20 @@ int DataTypeProcessor::processClientRequest(
     // its magnitude
     FSSize dataSize = dataType.getExtent() * count;
 
-    // Determine the amount of contiguous file regions that correspond to
-    // this server distribution's physical file locations
+    // Determine the offsets and extents into the memory buffer to send to
+    // the server described in the distribution
+    //
+    // For the simulator it isn't neccesary to get the actual offsets, so
+    // use the server's results to construct the size of each server's
+    // data receipt
     return processServerRequest(offset, dataSize, view, dist, layout);
 }
 
-int DataTypeProcessor::processServerRequest(const FSOffset& offset,
-                                            const FSSize& dataSize,
-                                            const FileView& view,
-                                            const FileDistribution& dist,
-                                            DataTypeLayout& layout)
+FSSize DataTypeProcessor::processServerRequest(const FSOffset& offset,
+                                               const FSSize& dataSize,
+                                               const FileView& view,
+                                               const FileDistribution& dist,
+                                               DataTypeLayout& layout)
 {
     // Determine the amount of contiguous file regions that correspond to
     // this server's physical file locations
@@ -94,8 +99,6 @@ int DataTypeProcessor::processServerRequest(const FSOffset& offset,
                                                                      dataSize);
     for (size_t i = 0; i < fileRegions.size(); i++)
     {
-        cerr << "Layout off: " << fileRegions[i].offset
-             << " ext: " << fileRegions[i].extent << endl;
         // Construct the data layout for this server distribution
         distributeContiguousRegion(disp + fileRegions[i].offset,
                                    fileRegions[i].extent,
@@ -103,8 +106,6 @@ int DataTypeProcessor::processServerRequest(const FSOffset& offset,
                                    layout);
     }
 
-    cerr << "Offset: " << offset << " dsize: " << dataSize
-         << " Layout: " << layout.getLength() << endl;
     return layout.getLength();
 }
 
@@ -128,11 +129,8 @@ void DataTypeProcessor::distributeContiguousRegion(
         FSSize requestedExtent = min(serverExtent, extent);
         
         // Add region to the layout
-        layout.addRegion(logServerOffset, requestedExtent);
+        layout.addRegion(physOffset, requestedExtent);
 
-        cerr << "Log server: " << logServerOffset
-             << " physOff: " << physOffset << " serverExt: "
-             << serverExtent << " ext: " << extent << endl;
         // Determine the next mapped offset for this server
         logServerOffset = dist.nextMappedLogicalOffset(logServerOffset +
                                                        serverExtent);

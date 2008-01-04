@@ -47,8 +47,8 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
             *(flowStart.getDataType()),
             flowStart.getCount(),
             *(flowStart.getView()),
-            *(flowStart.getDist()),
-            layout_);
+            *(flowStart.getDist()));
+        layout_.addRegion(0, flowSize_);
     }
     else if (SERVER_READ == mode_ || SERVER_WRITE == mode_) 
     {

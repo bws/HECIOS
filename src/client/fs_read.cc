@@ -141,8 +141,8 @@ void FSRead::handleMessage(cMessage* msg)
 
 void FSRead::enterRead()
 {
-    assert(0 != readReq_->getFileDes());
     FileDescriptor* fd = readReq_->getFileDes();
+    assert(0 != fd);
     const FSMetaData* metaData = fd->getMetaData();
     
     // Construct the template read request
@@ -157,20 +157,17 @@ void FSRead::enterRead()
     for (int i = 0; i < numServers; i++)
     {
         // Process the data type to determine the read size
-        DataTypeLayout layout;
         metaData->dist->setObjectIdx(i);
-        size_t reqBytes = DataTypeProcessor::createFileLayoutForClient(
+        FSSize reqBytes = DataTypeProcessor::createFileLayoutForClient(
             readReq_->getOffset(),
             *readReq_->getDataType(),
             readReq_->getCount(),
             *read.getView(),
-            *metaData->dist,
-            layout);
+            *metaData->dist);
 
         if (0 != reqBytes)
         {
-            cerr << "Sending " << reqBytes << " to server " << i << endl;
-            // Set the server specific request data
+             // Set the server specific request data
             spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
             req->setHandle(metaData->dataHandles[i]);
             req->setDist(metaData->dist->clone());
@@ -194,9 +191,9 @@ void FSRead::enterRead()
 void FSRead::startFlow(spfsReadResponse* readResponse)
 {
     // Extract the file descriptor
-    assert(0 != readReq_->getFileDes());
     FileDescriptor* fd = readReq_->getFileDes();
-
+    assert(0 != fd);
+    
     // Extract the server request
     spfsReadRequest* serverRequest =
         static_cast<spfsReadRequest*>(readResponse->contextPointer());
@@ -207,7 +204,7 @@ void FSRead::startFlow(spfsReadResponse* readResponse)
     flowStart->setContextPointer(readReq_);
     
     // Set the handle as the connection id (FIXME: This is hacky)
-    flowStart->setBmiConnectionId(fd->getHandle());
+    flowStart->setBmiConnectionId(serverRequest->getHandle());
     flowStart->setBmiTag(serverRequest->getFlowTag());
 
     // Flow configuration
@@ -215,12 +212,12 @@ void FSRead::startFlow(spfsReadResponse* readResponse)
     flowStart->setFlowMode(DataFlow::CLIENT_READ);
 
     // Data transfer configuration
-    flowStart->setHandle(fd->getHandle());
+    flowStart->setHandle(serverRequest->getHandle());
+    flowStart->setView(serverRequest->getView());
+    flowStart->setDist(serverRequest->getDist());
     flowStart->setOffset(readReq_->getOffset());
     flowStart->setDataType(readReq_->getDataType());
     flowStart->setCount(readReq_->getCount());
-    flowStart->setView(serverRequest->getView());
-    flowStart->setDist(serverRequest->getDist());
 
     // Send the start message
     client_->send(flowStart, client_->getNetOutGate());

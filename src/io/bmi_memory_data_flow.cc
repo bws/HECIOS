@@ -93,7 +93,7 @@ void BMIMemoryDataFlow::processDataFlowMessage(cMessage* msg)
         flowFinish->setContextPointer(getOriginatingMessage());
         flowFinish->setFlowId(getUniqueId());
         module_->scheduleAt(module_->simTime(), flowFinish);
-        cerr << "Finishing BMI-Memory flow\n";
+        //cerr << "Finishing BMI-Memory flow\n";
     }
 
     // Cleanup the message

@@ -98,12 +98,14 @@ DataFlow* JobManager::lookupDataFlow(int flowId) const
 
 void JobManager::subscribeDataFlowToTag(DataFlow* flow, int flowTag)
 {
+    //cerr << name() << ": Subscribing flow for tag: " << flowTag << endl;
     assert(0 != flow);
     dataFlowsByBMITag_[flowTag] = flow;
 }
 
 DataFlow* JobManager::getSubscribedDataFlow(int flowTag) const
 {
+    //cerr << name() << ": Looking up tag: " << flowTag << endl;
     DataFlow* flow = 0;
     map<int, DataFlow*>::const_iterator pos = dataFlowsByBMITag_.find(flowTag);
     if (dataFlowsByBMITag_.end() != pos)

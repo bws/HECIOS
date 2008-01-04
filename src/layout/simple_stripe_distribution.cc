@@ -94,19 +94,8 @@ FSOffset SimpleStripeDistribution::convertPhysicalToLogicalOffset(
     int64_t stripsDiv = physicalOffset / stripSize_;
     int64_t stripsMod = physicalOffset % stripSize_;
 
-    int64_t acc = (stripsDiv - 1) * stripSize_ * objectIdx;
-    if (0 != stripsMod)
-    {
-        acc += stripSize_ * numObjects_;
-        acc += stripSize_ * objectIdx_;
-        acc += stripsMod;
-    }
-    else
-    {
-        acc += stripSize_ * (objectIdx + 1);
-    }
-    
-    return acc;
+    return (stripsDiv * stripSize_ * numObjects_) +
+        (stripSize_ * objectIdx) + stripsMod;
 }
 
 FSSize SimpleStripeDistribution::getContiguousLength(
@@ -117,5 +106,6 @@ FSSize SimpleStripeDistribution::getContiguousLength(
 
 FSSize SimpleStripeDistribution::getLogicalFileSize() const
 {
+    assert(0 == 1);
     return 1;
 }

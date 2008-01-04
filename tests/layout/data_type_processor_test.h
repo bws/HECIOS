@@ -70,19 +70,51 @@ void DataTypeProcessorTest::testCreateFileLayoutForClient()
     DataTypeProcessor dtp;
 
     // TEST 1: with count 1, offset 0, data type 1, server0
-    DataTypeLayout layout1;
     FileView view1(0, new BasicDataType(BasicDataType::MPI_BYTE_WIDTH));
     int bytesProcessed = dtp.createFileLayoutForClient(0, byteType, 1,
+                                                       view1, dist0);
+    CPPUNIT_ASSERT_EQUAL(1, bytesProcessed);
+
+    // TEST 2: with count 1, offset 0, data type 1, server1
+    FileView view2(0, new BasicDataType(BasicDataType::MPI_BYTE_WIDTH));
+    bytesProcessed = dtp.createFileLayoutForClient(0, byteType, 1,
+                                                   view2, dist1);
+    CPPUNIT_ASSERT_EQUAL(0, bytesProcessed);
+    
+    // TEST 3: with count 8000, offset 0, data type 1, server0
+    FileView view3(0, new BasicDataType(BasicDataType::MPI_BYTE_WIDTH));
+    bytesProcessed = dtp.createFileLayoutForClient(0, byteType, 8000,
+                                                   view3, dist0);
+    CPPUNIT_ASSERT_EQUAL(2000, bytesProcessed);
+    
+    // TEST 4: with count 8000, offset 0, data type 1, server1
+    FileView view4(0, new BasicDataType(BasicDataType::MPI_BYTE_WIDTH));
+    bytesProcessed = dtp.createFileLayoutForClient(0, byteType, 8000,
+                                                   view4, dist1);
+    CPPUNIT_ASSERT_EQUAL(2000, bytesProcessed);
+}
+
+void DataTypeProcessorTest::testCreateFileLayoutForServer()
+{
+    // Use a simple stripe distribution for all these tests
+    SimpleStripeDistribution dist0(0, 4, 1000);
+    SimpleStripeDistribution dist1(1, 4, 1000);
+    DataTypeProcessor dtp;
+
+    // TEST 1: with offset 0, dataSize 1, server0
+    DataTypeLayout layout1;
+    FileView view1(0, new BasicDataType(BasicDataType::MPI_BYTE_WIDTH));
+    int bytesProcessed = dtp.createFileLayoutForServer(0, 1,
                                                        view1, dist0, layout1);
     CPPUNIT_ASSERT_EQUAL(1, bytesProcessed);
     CPPUNIT_ASSERT_EQUAL((size_t)1, layout1.getRegions().size());
     CPPUNIT_ASSERT_EQUAL(FSOffset(0), layout1.getRegion(0).offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(1), layout1.getRegion(0).extent);
 
-    // TEST 2: with count 1, offset 0, data type 1, server1
+    // TEST 2: with offset 0, dataSize 1, server1
     DataTypeLayout layout2;
     FileView view2(0, new BasicDataType(BasicDataType::MPI_BYTE_WIDTH));
-    bytesProcessed = dtp.createFileLayoutForClient(0, byteType, 1,
+    bytesProcessed = dtp.createFileLayoutForServer(0, 1,
                                                    view2, dist1, layout2);
     CPPUNIT_ASSERT_EQUAL(0, bytesProcessed);
     CPPUNIT_ASSERT_EQUAL((size_t)0, layout2.getRegions().size());
@@ -90,31 +122,26 @@ void DataTypeProcessorTest::testCreateFileLayoutForClient()
     // TEST 3: with count 8000, offset 0, data type 1, server0
     DataTypeLayout layout3;
     FileView view3(0, new BasicDataType(BasicDataType::MPI_BYTE_WIDTH));
-    bytesProcessed = dtp.createFileLayoutForClient(0, byteType, 8000,
+    bytesProcessed = dtp.createFileLayoutForServer(0, 8000,
                                                    view3, dist0, layout3);
     CPPUNIT_ASSERT_EQUAL(2000, bytesProcessed);
     CPPUNIT_ASSERT_EQUAL((size_t)2, layout3.getRegions().size());
     CPPUNIT_ASSERT_EQUAL(FSOffset(0), layout3.getRegion(0).offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(1000), layout3.getRegion(0).extent);
-    CPPUNIT_ASSERT_EQUAL(FSOffset(4000), layout3.getRegion(1).offset);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(1000), layout3.getRegion(1).offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(1000), layout3.getRegion(1).extent);
     
     // TEST 4: with count 8000, offset 0, data type 1, server1
     DataTypeLayout layout4;
     FileView view4(0, new BasicDataType(BasicDataType::MPI_BYTE_WIDTH));
-    bytesProcessed = dtp.createFileLayoutForClient(0, byteType, 8000,
+    bytesProcessed = dtp.createFileLayoutForServer(0, 8000,
                                                    view4, dist1, layout4);
     CPPUNIT_ASSERT_EQUAL(2000, bytesProcessed);
     CPPUNIT_ASSERT_EQUAL((size_t)2, layout4.getRegions().size());
-    CPPUNIT_ASSERT_EQUAL(FSOffset(0), layout4.getRegion(0).offset);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(0000), layout4.getRegion(0).offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(1000), layout4.getRegion(0).extent);
-    CPPUNIT_ASSERT_EQUAL(FSOffset(5000), layout4.getRegion(1).offset);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(1000), layout4.getRegion(1).offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(1000), layout4.getRegion(1).extent);    
-}
-
-void DataTypeProcessorTest::testCreateFileLayoutForServer()
-{
-    CPPUNIT_FAIL("Test not yet implemented.");
 }
 
 #endif

@@ -105,10 +105,6 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         delete static_cast<cMessage*>(msg->contextPointer());
     }
     
-    cerr << __FILE__ << ":" << __LINE__ << " "
-         << "Net: " << getNetworkProgress() << " "
-         << "Store: " << getStorageProgress() << endl;
-
     // If this is the last flow message response, send the final response
     if (isComplete())
     {
@@ -118,7 +114,7 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         flowFinish->setContextPointer(getOriginatingMessage());
         flowFinish->setFlowId(getUniqueId());
         module_->scheduleAt(module_->simTime(), flowFinish);
-        cerr << "Finishing BMI-ListIO flow\n";
+        //cerr << "Finishing BMI-ListIO flow\n";
     }
 
     // Cleanup the received message
@@ -127,6 +123,7 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
 
 void BMIListIODataFlow::pullDataFromNetwork(FSSize pullSize)
 {
+    assert(false);
 }
 
 void BMIListIODataFlow::pushDataToNetwork(FSSize pushSize)
@@ -148,6 +145,7 @@ void BMIListIODataFlow::pushDataToNetwork(FSSize pushSize)
     
     // Send the push request
     module_->send(pushRequest, "netOut");
+    cerr << "Pushing data to network" << endl;
 }
 
 void BMIListIODataFlow::pullDataFromStorage(FSSize pullSize)

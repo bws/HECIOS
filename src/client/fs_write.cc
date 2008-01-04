@@ -169,15 +169,13 @@ void FSWrite::beginWrite()
     for (int i = 0; i < numServers; i++)
     {
         // Process the data type to determine the write size
-        DataTypeLayout layout;
         metaData->dist->setObjectIdx(i);
-        size_t reqBytes = DataTypeProcessor::createFileLayoutForClient(
+        FSSize reqBytes = DataTypeProcessor::createFileLayoutForClient(
             writeReq_->getOffset(),
             *writeReq_->getDataType(),
             writeReq_->getCount(),
             *write.getView(),
-            *metaData->dist,
-            layout);
+            *metaData->dist);
 
         // Send write request if server hosts data
         if (0 != reqBytes)
@@ -206,10 +204,6 @@ void FSWrite::beginWrite()
 
 void FSWrite::startFlow(spfsWriteResponse* writeResponse)
 {
-    // Extract the file descriptor
-    assert(0 != writeReq_->getFileDes());
-    FileDescriptor* fd = writeReq_->getFileDes();
-
     // Extract the server request
     spfsWriteRequest* serverRequest =
         static_cast<spfsWriteRequest*>(writeResponse->contextPointer());
@@ -220,7 +214,7 @@ void FSWrite::startFlow(spfsWriteResponse* writeResponse)
     flowStart->setContextPointer(writeReq_);
     
     // Set the handle as the connection id (FIXME: This is hacky)
-    flowStart->setBmiConnectionId(fd->getHandle());
+    flowStart->setBmiConnectionId(serverRequest->getHandle());
     flowStart->setBmiTag(serverRequest->getFlowTag());
 
     // Flow configuration
@@ -228,7 +222,7 @@ void FSWrite::startFlow(spfsWriteResponse* writeResponse)
     flowStart->setFlowMode(DataFlow::CLIENT_WRITE);
 
     // Data transfer configuration
-    flowStart->setHandle(fd->getHandle());
+    flowStart->setHandle(serverRequest->getHandle());
     flowStart->setOffset(writeReq_->getOffset());
     flowStart->setDataType(writeReq_->getDataType());
     flowStart->setCount(writeReq_->getCount());

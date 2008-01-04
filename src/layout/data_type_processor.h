@@ -37,36 +37,39 @@ class DataTypeProcessor
 public:
 
     /** @return the number of bytes processed */
-    static int createFileLayoutForClient(const FSOffset& offset,
-                                         const DataType& dataType,
-                                         const std::size_t& count,
-                                         const FileView& view,
-                                         const FileDistribution& dist,
-                                         DataTypeLayout& layout);
+    static FSSize createFileLayoutForClient(const FSOffset& offset,
+                                            const DataType& dataType,
+                                            const std::size_t& count,
+                                            const FileView& view,
+                                            const FileDistribution& dist);
 
-    /** @return the number of bytes processed */
-    static int createFileLayoutForServer(const FSOffset& offset,
-                                         const FSSize& dataSize,
-                                         const FileView& view,
-                                         const FileDistribution& dist,
-                                         DataTypeLayout& layout);
+    /**
+     * @return the number of bytes processed
+     * @side Fills the layout object with physical offsets and extents for
+     * this server's I/O
+     */
+    static FSSize createFileLayoutForServer(const FSOffset& offset,
+                                            const FSSize& dataSize,
+                                            const FileView& view,
+                                            const FileDistribution& dist,
+                                            DataTypeLayout& layout);
 
 private:
 
     /** @return the number of bytes processed */
-    static int processClientRequest(const FSOffset& offset,
-                                    const DataType& dataType,
-                                    const std::size_t& count,
-                                    const FileView& view,
-                                    const FileDistribution& dist,
-                                    DataTypeLayout& layout);
+    static FSSize processClientRequest(const FSOffset& offset,
+                                       const DataType& dataType,
+                                       const std::size_t& count,
+                                       const FileView& view,
+                                       const FileDistribution& dist,
+                                       DataTypeLayout& layout);
     
     /** @return the number of bytes processed */
-    static int processServerRequest(const FSOffset& offset,
-                                    const FSSize& dataSize,
-                                    const FileView& view,
-                                    const FileDistribution& dist,
-                                    DataTypeLayout& layout);
+    static FSSize processServerRequest(const FSOffset& offset,
+                                       const FSSize& dataSize,
+                                       const FileView& view,
+                                       const FileDistribution& dist,
+                                       DataTypeLayout& layout);
 
     /** Construct the server local offset extent pairs */
     static void distributeContiguousRegion(const FSOffset& offset,
