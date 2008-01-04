@@ -60,9 +60,6 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
             layout_);
     }
     assert(0 < flowSize_);
-
-    cerr << __FILE__ << ":" << __LINE__ << ": "
-         << "Length: " << flowSize_ << " \n";
 }
 
 DataFlow::~DataFlow()

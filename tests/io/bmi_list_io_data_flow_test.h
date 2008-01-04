@@ -33,6 +33,7 @@ class BMIListIODataFlowTest : public CppUnit::TestFixture
     // Create generic unit test and register test functions for automatic
     // exercise
     CPPUNIT_TEST_SUITE(BMIListIODataFlowTest);
+    CPPUNIT_TEST(testConstructor);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -43,6 +44,8 @@ public:
     /** Called after each test function */
     virtual void tearDown();
 
+    void testConstructor();
+    
 private:
 
 };
@@ -55,10 +58,16 @@ void BMIListIODataFlowTest::tearDown()
 {
 }
 
+void BMIListIODataFlowTest::testConstructor()
+{
+    CPPUNIT_FAIL("Test not yet implemented.");
+}
+
 #endif
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

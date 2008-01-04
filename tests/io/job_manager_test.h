@@ -24,8 +24,10 @@
 #include <iostream>
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
+#include "basic_data_type.h"
 #include "basic_distribution.h"
 #include "bmi_list_io_data_flow.h"
+#include "file_view.h"
 #include "csimple_module_tester.h"
 #include "job_manager.h"
 #include "pvfs_proto_m.h"
@@ -66,6 +68,8 @@ private:
     JobManager* module_;
 
     FileDistribution* distribution_;
+
+    FileView* view_;
     
     spfsReadRequest* readRequest_;
     
@@ -83,20 +87,24 @@ void JobManagerTest::setUp()
     // Create the distribution
     distribution_ = new BasicDistribution();
 
+    // Create the file view
+    view_ = new FileView(0, new BasicDataType(4));
+    
     // Create the read request
     readRequest_ = new spfsReadRequest(0, SPFS_READ_REQUEST);
     readRequest_->setOffset(0);
-    readRequest_->setView(0);
+    readRequest_->setView(view_);
     readRequest_->setDist(distribution_);
 
     // Create the begin flow request
     flowStart_ = new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
+    flowStart_->setFlowType(1);
+    flowStart_->setFlowMode(DataFlow::SERVER_READ);
     flowStart_->setContextPointer(readRequest_);
     flowStart_->setOffset(0);
-    flowStart_->setDataType(0);
-    flowStart_->setCount(1);
     flowStart_->setDataSize(4);
     flowStart_->setDist(distribution_);
+    flowStart_->setView(view_);
 }
 
 void JobManagerTest::tearDown()

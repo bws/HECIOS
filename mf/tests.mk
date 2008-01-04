@@ -28,6 +28,7 @@ TEST_DIR := tests
 #
 TEST_CLIENT_DIR := $(TEST_DIR)/client
 TEST_COMMON_DIR := $(TEST_DIR)/common
+TEST_IO_DIR := $(TEST_DIR)/io
 TEST_LAYOUT_DIR := $(TEST_DIR)/layout
 TEST_OS_DIR := $(TEST_DIR)/os
 TEST_PHYSICAL_DIR := $(TEST_DIR)/physical
@@ -49,6 +50,7 @@ TEST_INCLUDES = $(TEST_SUPPORT_DIR)
 SIM_TEST_SRC :=
 include $(TEST_CLIENT_DIR)/module.mk
 include $(TEST_COMMON_DIR)/module.mk
+include $(TEST_IO_DIR)/module.mk
 include $(TEST_LAYOUT_DIR)/module.mk
 include $(TEST_OS_DIR)/module.mk
 include $(TEST_PHYSICAL_DIR)/module.mk
@@ -78,6 +80,7 @@ SIM_TEST_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_TEST_SRC)))
 #
 TEST_EXES = $(BIN_DIR)/common_test \
 	$(BIN_DIR)/client_test \
+	$(BIN_DIR)/io_test \
 	$(BIN_DIR)/layout_test \
 	$(BIN_DIR)/os_test \
 	$(BIN_DIR)/physical_test \
@@ -88,7 +91,7 @@ tests_all: $(TEST_EXES)
 #
 # Cleanup test subsystem
 #
-tests_clean:
+testsclean:
 	@echo "Removing test subsytem derived objects."
 	$(RM) $(SIM_TEST_OBJS)
 	$(RM) $(SIM_TEST_DEPENDS)
@@ -112,6 +115,17 @@ COMMON_TEST_OBJS = $(TEST_COMMON_DIR)/unit_test.o \
 	$(TEST_SUPPORT_DIR)/test_cenvir.o
 
 $(BIN_DIR)/common_test: $(COMMON_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
+	@mkdir -p $(BIN_DIR)
+	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
+
+#
+# io package unit tests
+#
+IO_TEST_OBJS = $(TEST_IO_DIR)/unit_test.o \
+	$(TEST_SUPPORT_DIR)/csimple_module_tester.o \
+	$(TEST_SUPPORT_DIR)/test_cenvir.o
+
+$(BIN_DIR)/io_test: $(IO_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
 	@mkdir -p $(BIN_DIR)
 	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
 

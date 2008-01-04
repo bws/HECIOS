@@ -9,6 +9,9 @@ bin/client_test
 echo "Running Common subsystem tests:"
 bin/common_test
 
+echo "Running IO subsystem tests:"
+bin/io_test
+
 echo "Running Layout subsystem tests:"
 bin/layout_test
 
