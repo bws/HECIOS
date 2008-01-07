@@ -51,6 +51,9 @@ public:
     /** @return the range of handles assigned to this server */
     HandleRange getHandleRange() const { return range_; };
 
+    /** @return true if handle is on this server */
+    bool handleIsLocal(const FSHandle& handle) const;
+    
     /** Set the server's unique number */
     void setNumber(std::size_t number);
 

@@ -25,7 +25,7 @@ class spfsLookupPathRequest;
 class FSServer;
 
 /**
- *
+ * Perform server name lookups
  */
 class Lookup
 {
@@ -34,22 +34,22 @@ public:
     /** Constructor */
     Lookup(FSServer* module, spfsLookupPathRequest* lookupReq);
 
-    /**
-     *
-     */
+    /** Handle server lookup request */
     void handleServerMessage(cMessage* msg);
 
 protected:
 
-    /**
-     *
-     */
-    void enterFinish();
+    /** Lookup the handle in the directory entries on disk */
+    void lookupName();
+
+    /** @return true if the name is fully resolved */
+    bool lookupIsComplete();
+
+    /** @return true if no more local segments exist */
+    bool localLookupIsComplete();
     
-    /**
-     *
-     */
-    void exitFinish(spfsLookupPathRequest* lookupReq);
+    /** Send the final response */
+    void finish(int lookupStatus);
     
 private:
 
@@ -64,6 +64,7 @@ private:
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

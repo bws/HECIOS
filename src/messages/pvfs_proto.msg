@@ -210,6 +210,7 @@ message spfsLookupPathRequest extends spfsRequest
     fields:
         string filename;
         int numResolvedSegments;
+        bool isCreate;
 };
 
 // Lookup a path
@@ -217,9 +218,7 @@ message spfsLookupPathResponse extends spfsResponse
 {
     fields:
         int status enum(spfsLookupStatus);
-        FSHandle handles[];
-        unsigned long handleCount;
-        unsigned long attrCount;
+        int numResolvedSegments;
 };
 
 // Create a directory entry

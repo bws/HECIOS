@@ -150,7 +150,7 @@ void FileBuilder::createDirectory(const Filename& dirName,
         meta->owner = 0;
         meta->group = 0;
         meta->nlinks = 0;
-        meta->size = 0;
+        meta->size = DEFAULT_DIRECTORY_SIZE;
         meta->handle = getNextHandle(metaServer);
         meta->dist = 0;
 
@@ -160,6 +160,16 @@ void FileBuilder::createDirectory(const Filename& dirName,
                               storageName,
                               defaultMetaDataSize_);
 
+        // Construct the data handle for storing directory entries
+        int directoryDataHandle = getNextHandle(metaServer);
+        vector<FSHandle> dataHandles;
+        dataHandles.push_back(directoryDataHandle);
+        meta->dataHandles = dataHandles;
+
+        // Construct the storage layout for the PFS file
+        Filename direntName(directoryDataHandle);
+        layoutManager.addFile(metaServer, direntName, meta->size);
+        
         // Record bookkeeping information
         nameToHandleMap_[dirName.str()] = meta->handle;
         handleToMetaMap_[meta->handle] = meta;

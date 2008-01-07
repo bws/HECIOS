@@ -239,7 +239,7 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
                         bool& outIsMissingAttr, bool& outIsPartialLookup)
 {
     // Preconditions
-    assert(0 < lookupResponse->getHandleCount());
+    assert(0 < lookupResponse->getNumResolvedSegments());
     
     // Initialize outbound data
     outIsCreate = false;

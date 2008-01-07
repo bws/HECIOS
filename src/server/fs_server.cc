@@ -45,6 +45,11 @@ size_t FSServer::getDefaultAttrSize()
     return defaultAttrSize_;
 }
 
+bool FSServer::handleIsLocal(const FSHandle& handle) const
+{
+    return ((handle >= range_.first) && (handle <= range_.last));
+}
+
 void FSServer::setDefaultAttrSize(size_t attrSize)
 {
     defaultAttrSize_ = attrSize;
