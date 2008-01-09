@@ -23,6 +23,7 @@
 #include <cstring>
 #include <iostream>
 #include "create.h"
+#include "create_dir_ent.h"
 #include "data_flow.h"
 #include "get_attr.h"
 #include "bmi_list_io_data_flow.h"
@@ -43,6 +44,11 @@ size_t FSServer::defaultAttrSize_ = 0;
 size_t FSServer::getDefaultAttrSize()
 {
     return defaultAttrSize_;
+}
+
+size_t FSServer::getDirectoryEntrySize()
+{
+    return 128;
 }
 
 bool FSServer::handleIsLocal(const FSHandle& handle) const
@@ -113,6 +119,13 @@ void FSServer::processRequest(spfsRequest* request, cMessage* msg)
         {
             Create create(this, static_cast<spfsCreateRequest*>(request));
             create.handleServerMessage(msg);
+            break;
+        }
+        case SPFS_CREATE_DIR_ENT_REQUEST:
+        {
+            CreateDirEnt createDirEnt(
+                this, static_cast<spfsCreateDirEntRequest*>(request));
+            createDirEnt.handleServerMessage(msg);
             break;
         }
         case SPFS_GET_ATTR_REQUEST:

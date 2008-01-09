@@ -4,6 +4,7 @@
 DIR := src/server
 
 SIM_SRC += $(DIR)/create.cc \
+	$(DIR)/create_dir_ent.cc \
 	$(DIR)/fs_server.cc \
 	$(DIR)/get_attr.cc \
 	$(DIR)/lookup.cc \

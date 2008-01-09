@@ -1,5 +1,5 @@
-#ifndef CREATE_H
-#define CREATE_H
+#ifndef CREATE_DIR_ENT_H
+#define CREATE_DIR_ENT_H
 //
 // This file is part of Hecios
 //
@@ -21,18 +21,18 @@
 //
 
 class cMessage;
-class spfsCreateRequest;
+class spfsCreateDirEntRequest;
 class FSServer;
 
 /**
- * State machine for performing data object creation processing
+ * State machine for performing directory entry creation processing
  */
-class Create
+class CreateDirEnt
 {
 public:
 
     /** Constructor */
-    Create(FSServer* module, spfsCreateRequest* createReq);
+    CreateDirEnt(FSServer* module, spfsCreateDirEntRequest* createDirEntReq);
 
     /**
      * Handle message as part of the creation process
@@ -44,20 +44,20 @@ protected:
     /**
      * Send the file creation message to the OS
      */
-    void enterCreate();
+    void writeDirEnt();
     
     /**
      * Send the final response to the client
      */
-    void enterFinish();
+    void finish();
     
 private:
 
     /** The parent module */
     FSServer* module_;
     
-    /** The originating create request */
-    spfsCreateRequest* createReq_;
+    /** The originating create directory entry request */
+    spfsCreateDirEntRequest* createDirEntReq_;
 };
 
 #endif
@@ -69,5 +69,5 @@ private:
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

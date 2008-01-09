@@ -33,8 +33,11 @@ class DataFlow;
 class FSServer : public cSimpleModule
 {
 public:
-    /** Get the default size of metadata/attributes */
+    /** @return the default size of metadata/attributes */
     static std::size_t getDefaultAttrSize();
+
+    /** @return the size of a directory entry */
+    static std::size_t getDirectoryEntrySize();
     
     /** Set the default size of metadata/attributes */
     static void setDefaultAttrSize(std::size_t attrSize);
