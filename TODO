@@ -1,0 +1,27 @@
+The following are a list o fthings that I haven't done because they require
+writing some amount of glue code I don't currently need to do.  As tasks are
+completed, please remove them from the file.  This list may eventually be
+replaced by a bugzilla or scarab bug database.
+--
+
+Items to do:
+
+-  Add random offset selection to the CreateDirEnt server state machine
+  
+-  Fix the client side Open to perform create
+
+-  Fix the VectorDataType to work correctly
+
+-  Add unit tests for DataTypes
+
+-  The BMI junk needs improvement
+
+-  Server to server messaging
+
+-  Seperate File Builder and File Management into two discrete units
+
+-  Add file sync support to file system
+
+-  Add file system sync to the file system
+
+-  Add directory creation support to the file system
