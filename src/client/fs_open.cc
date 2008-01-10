@@ -49,13 +49,12 @@ void FSOpen::handleMessage(cMessage* msg)
         INIT = 0,
         LOOKUP = FSM_Steady(1),
         CREATE_META = FSM_Steady(2),
-        CREATE_DATA = FSM_Steady(3),
-        WRITE_ATTR = FSM_Steady(4),
-        WRITE_DIRENT = FSM_Steady(5),
-        READ_ATTR = FSM_Steady(6),
-        FINISH = FSM_Steady(7),
-        ERRNF = FSM_Steady(8),
-        ERREXCL = FSM_Steady(9),        
+        CREATE_DATA = FSM_Transient(3),
+        COUNT_DATA_RESPONSES = FSM_Steady(4),
+        WRITE_ATTR = FSM_Steady(5),
+        WRITE_DIRENT = FSM_Steady(6),
+        READ_ATTR = FSM_Steady(7),
+        FINISH = FSM_Steady(8)
     };
 
     FSM_Switch(currentState)
@@ -76,7 +75,7 @@ void FSOpen::handleMessage(cMessage* msg)
         }
         case FSM_Enter(LOOKUP):
         {
-            enterLookup();
+            lookupOnServer();
             break;
         }
         case FSM_Exit(LOOKUP):
@@ -104,76 +103,79 @@ void FSOpen::handleMessage(cMessage* msg)
         }
         case FSM_Enter(CREATE_META):
         {    
-            enterCreateMeta();
+            assert(0 != dynamic_cast<spfsLookupPathResponse*>(msg));
+            createMeta();
             break;
         }
         case FSM_Exit(CREATE_META):
         {
             assert(0 != dynamic_cast<spfsCreateResponse*>(msg));
-            exitCreateMeta(static_cast<spfsCreateResponse*>(msg));
             FSM_Goto(currentState, CREATE_DATA);
             break;
         }
         case FSM_Enter(CREATE_DATA):
         {
-            enterCreateData();
+            createDataObjects();
             break;
         }
         case FSM_Exit(CREATE_DATA):
-            assert(0 != dynamic_cast<spfsCreateResponse*>(msg));
-            bool isDoneCreatingDataObjects;
-            exitCreateData(static_cast<spfsCreateResponse*>(msg),
-                           isDoneCreatingDataObjects);
-            if (isDoneCreatingDataObjects)
-                FSM_Goto(currentState, WRITE_ATTR);
+        {
+            FSM_Goto(currentState, COUNT_DATA_RESPONSES);
             break;
+        }
+        case FSM_Exit(COUNT_DATA_RESPONSES):
+        {
+            assert(0 != dynamic_cast<spfsCreateResponse*>(msg));
+            countDataCreationResponse();
+            if (isDataCreationComplete())
+            {
+                FSM_Goto(currentState, WRITE_ATTR);
+            }
+            else
+            {
+                FSM_Goto(currentState, COUNT_DATA_RESPONSES);
+            }
+            break;
+        }
         case FSM_Enter(WRITE_ATTR):
         {
-            enterWriteAttr();
+            writeAttributes();
             break;
         }
         case FSM_Exit(WRITE_ATTR):
         {
             assert(0 != dynamic_cast<spfsSetAttrResponse*>(msg));
-            exitWriteAttr(static_cast<spfsSetAttrResponse*>(msg));
             FSM_Goto(currentState, WRITE_DIRENT);
             break;
         }
         case FSM_Enter(WRITE_DIRENT):
         {
-            enterWriteDirEnt();
+            createDirEnt();
             break;
         }
         case FSM_Exit(WRITE_DIRENT):
         {
             assert(0 != dynamic_cast<spfsCreateDirEntResponse*>(msg));
-            exitWriteDirEnt(static_cast<spfsCreateDirEntResponse*>(msg));
             FSM_Goto(currentState, FINISH);
             break;
         }
         case FSM_Enter(READ_ATTR):
         {    
-            enterReadAttr();
+            readAttributes();
             break;
         }
         case FSM_Exit(READ_ATTR):
         {
             assert(0 != dynamic_cast<spfsGetAttrResponse*>(msg));
-            exitReadAttr(static_cast<spfsGetAttrResponse*>(msg));
+            addAttributesToCache();
             FSM_Goto(currentState, FINISH);
-
-            // Remove the getAttr request
-            delete (cMessage*)msg->contextPointer();
             break;
         }
         case FSM_Enter(FINISH):
         {
-            enterFinish();
+            finish();
             break;
         }
-        default:
-            cerr << "Error: Illegal open state entered: " << currentState
-                 << endl;
     }
 
     // Store state
@@ -195,7 +197,7 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
 
     // Lookup the file name in the cache
     Filename openFile(openReq->getFileName());
-    FSHandle* lookup = client_->fsState().lookupDir(openFile.str());
+    FSHandle* lookup = client_->fsState().lookupName(openFile.str());
     if (0 != lookup)
     {
         // Found directory cache entry
@@ -211,7 +213,7 @@ void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
     }
 }
 
-void FSOpen::enterLookup()
+void FSOpen::lookupOnServer()
 {
     // retrieve the file descriptor
     FileDescriptor* fd =  openReq_->getFileDes();
@@ -255,8 +257,8 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
             /* enter handle in cache */
             FileDescriptor* filedes = openReq_->getFileDes();
             const FSMetaData* meta = filedes->getMetaData();
-            client_->fsState().insertDir(filedes->getFilename().str(),
-                                         meta->handle);
+            client_->fsState().insertName(filedes->getFilename().str(),
+                                          meta->handle);
             
             /* look for metadata in cache */
             if (0 == client_->fsState().lookupAttr(meta->handle))
@@ -283,9 +285,9 @@ void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
     }
 }
 
-void FSOpen::enterCreateMeta()
+void FSOpen::createMeta()
 {
-    /* build a request message */
+    // Build message to create metadata
     spfsCreateRequest* req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
     req->setContextPointer(openReq_);
 
@@ -296,87 +298,74 @@ void FSOpen::enterCreateMeta()
     client_->send(req, client_->getNetOutGate());
 }
 
-void FSOpen::exitCreateMeta(spfsCreateResponse* createResp)
+void FSOpen::createDataObjects()
 {
-    // Don't need to do anything, data already exists in simulation
-}
+    // Retrieve the bookkeeping information for this file
+    FileDescriptor* fd = openReq_->getFileDes();
+    const FSMetaData* metaData = fd->getMetaData();
 
-void FSOpen::enterCreateData()
-{
-    spfsCreateRequest *req;
-    int numservers;
-    int snum;
-    /* build a request message */
-    req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
-    req->setContextPointer(openReq_);
-    numservers = client_->fsState().defaultNumServers();
-    /* send request to each server */
-    for (snum = 0; snum < numservers; snum++)
+    // Construct the create requests for this file's data handles
+    for (size_t i = 0; i < metaData->dataHandles.size(); i++)
     {
-        spfsCreateRequest* newReq = (spfsCreateRequest*)req->dup();
-
-        // Set the message size in bytes
-        //newReq->setByteLength(8);
-            
-        // use first handle of range to address server
-        int dataServer = client_->fsState().selectServer();
-        newReq->setHandle(FileBuilder::instance().getFirstHandle(dataServer));
-        client_->send(newReq, client_->getNetOutGate());
+        spfsCreateRequest* create = new spfsCreateRequest(0,
+                                                          SPFS_CREATE_REQUEST);
+        create->setContextPointer(openReq_);
+        create->setHandle(metaData->dataHandles[i]);
+        create->setByteLength(8);
+        client_->send(create, client_->getNetOutGate());
     }
 
-    delete req;
-    /* indicates how many responses we are waiting for */
-    openReq_->setRemainingResponses(numservers);
+    // Set the number of create responses to expect
+    openReq_->setRemainingResponses(metaData->dataHandles.size());
 }
 
-void FSOpen::exitCreateData(spfsCreateResponse* createResp,
-                            bool& outIsDoneCreatingDataObjects)
+void FSOpen::countDataCreationResponse()
 {
-    // Initialize outbound data
-    outIsDoneCreatingDataObjects = false;
+    // Decrement the number of create responses to expect
+    int numResponses = openReq_->getRemainingResponses();
+    openReq_->setRemainingResponses(--numResponses);
 }
 
-void FSOpen::enterWriteAttr()
+bool FSOpen::isDataCreationComplete()
+{
+    int numResponses = openReq_->getRemainingResponses();
+    if (0 == numResponses)
+        return true;
+    return false;
+}
+
+void FSOpen::writeAttributes()
 {
     FileDescriptor* fd = openReq_->getFileDes();
     spfsSetAttrRequest *req = new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
     req->setHandle(fd->getMetaData()->handle);
-    //req->setMeta(*fd->getMetaData());
-    client_->send(req, client_->getNetOutGate());   
+    req->setByteLength(8 + 8 + 64);
+    client_->send(req, client_->getNetOutGate());
+
+    // Add the attributes to the cache
+    addAttributesToCache();
 }
 
-void FSOpen::exitWriteAttr(spfsSetAttrResponse* sattrResp)
+void FSOpen::createDirEnt()
 {
-}
+    // Get the parent handle
+    FileDescriptor* fd = openReq_->getFileDes();
+    size_t numPathSegments = fd->getFilename().getNumPathSegments();
+    Filename parentName = fd->getFilename().getSegment(numPathSegments - 2);
+    FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parentName);
 
-void FSOpen::enterWriteDirEnt()
-{
+    // Construct the directory entry creation request
     spfsCreateDirEntRequest *req;
     req = new spfsCreateDirEntRequest(0, SPFS_CREATE_DIR_ENT_REQUEST);
     req->setContextPointer(openReq_);
-    
-    /* this addresses the server with the dir on it */
-    //FileDescriptor* fd = openReq_->getFileDes();
-    //req->setHandle(fd->handles[fd->curseg]);
-    
-    /* this is the same handle, the handle of the parent dir */
-    /* can we get rid of this field?  WBL */
-    //req->setParentHandle(fd->handles[fd->curseg]);
-    
-    /* this is the handle of the new file goes in dirent */
-    //req->setNewHandle(fd->metaData->handle);
-    
-    /* this is the name of the file */
-    req->setEntry(openReq_->getFileName());
+    req->setHandle(parentMeta->handle);
+    req->setEntry(fd->getFilename().c_str());
+    req->setByteLength(8 + 8 + fd->getFilename().str().length());
     client_->send(req, client_->getNetOutGate());   
 }
 
-void FSOpen::exitWriteDirEnt(spfsCreateDirEntResponse* dirEntResp)
-{
-}
-
-void FSOpen::enterReadAttr()
+void FSOpen::readAttributes()
 {
     FileDescriptor* fd = openReq_->getFileDes();
     spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
@@ -385,12 +374,14 @@ void FSOpen::enterReadAttr()
     client_->send(req, client_->getNetOutGate());
 }
 
-void FSOpen::exitReadAttr(spfsGetAttrResponse* gattrResp)
+void FSOpen::addAttributesToCache()
 {
-    // FIXME install attributes into attribute cache
+    FileDescriptor* fd = openReq_->getFileDes();
+    const FSMetaData* metaData = fd->getMetaData();
+    client_->fsState().insertAttr(metaData->handle, *metaData);
 }
 
-void FSOpen::enterFinish()
+void FSOpen::finish()
 {
     spfsMPIFileOpenResponse *resp = new spfsMPIFileOpenResponse(
         0, SPFS_MPI_FILE_OPEN_RESPONSE);
@@ -401,9 +392,10 @@ void FSOpen::enterFinish()
             
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

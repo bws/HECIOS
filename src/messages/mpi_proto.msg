@@ -87,8 +87,8 @@ enum mpiMessageKind
     SPFS_MPI_FILE_WRITE_RESPONSE = 123;
 
     // MPI Extensions for our simulator
-    SPFS_MPI_DIR_CREATE_REQUEST = 200;
-    SPFS_MPI_DIR_CREATE_RESPONSE = 201;
+    SPFS_MPI_DIRECTORY_CREATE_REQUEST = 200;
+    SPFS_MPI_DIRECTORY_CREATE_RESPONSE = 201;
 };
 
 // The abstract base class for all MPI message requests
@@ -131,6 +131,7 @@ message spfsMPIFileOpenRequest extends spfsMPIRequest
 
         // internal fields
         FileDescriptorPtr fileDes;
+        unsigned int numResolvedSegments = 1;
 };
 
 // Open file response
@@ -295,15 +296,18 @@ message spfsMPIFileWriteAtResponse extends spfsMPIFileWriteResponse
 {
 };
 
-// Request to delete a file
-message spfsMPIDirCreateRequest extends spfsMPIRequest
+// Request to create a directory
+message spfsMPIDirectoryCreateRequest extends spfsMPIRequest
 {
     fields:
-        string fileName;
+        string dirName;
+
+        // internal fields
+        unsigned int numResolvedSegments = 1;
 };
 
-// Delete file response
-message spfsMPIDirCreateResponse extends spfsMPIResponse
+// Directory creation response
+message spfsMPIDirectoryCreateResponse extends spfsMPIResponse
 {
 };
 

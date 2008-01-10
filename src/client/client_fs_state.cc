@@ -25,7 +25,7 @@ using namespace std;
 
 ClientFSState::ClientFSState()
     : attrCache_(MAX_ATTR_ENTRIES, MAX_ATTR_TIME),
-      dirCache_(MAX_ATTR_ENTRIES, MAX_ATTR_TIME),
+      nameCache_(MAX_NAME_ENTRIES, MAX_NAME_TIME),
       totalNumServers_(2),
       defaultNumServers_(2),
       root_(0)
@@ -54,20 +54,20 @@ FSMetaData* ClientFSState::lookupAttr(FSHandle metaHandle)
     return metaData;
 }
 
-void ClientFSState::insertDir(const string& path, FSHandle metaHandle)
+void ClientFSState::insertName(const string& path, FSHandle metaHandle)
 {
-    dirCache_.insert(path, metaHandle);
+    nameCache_.insert(path, metaHandle);
 }
 
-void ClientFSState::removeDir(const string& path)
+void ClientFSState::removeName(const string& path)
 {
-    dirCache_.remove(path);
+    nameCache_.remove(path);
 }
 
-FSHandle* ClientFSState::lookupDir(const string& path)
+FSHandle* ClientFSState::lookupName(const string& path)
 {
     FSHandle* metaHandle = 0;
-    DirectoryEntry* entry = dirCache_.lookup(path);
+    NameEntry* entry = nameCache_.lookup(path);
     if (0 != entry)
     {
         // Need to check expiration
@@ -120,6 +120,7 @@ int ClientFSState::defaultNumServers()
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

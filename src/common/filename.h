@@ -55,7 +55,13 @@ public:
      * @return a filename containing the absolute path up to segment segNum
      */
     Filename getSegment(std::size_t segNum) const;
-    
+
+    /**
+     * @return the filename of the parent directory.  Signal an error if this
+     *  is the root directory (/)
+     */
+    Filename getParent() const;
+        
 private:
 
     /** Perform initialization tasks */

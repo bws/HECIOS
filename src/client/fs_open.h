@@ -53,44 +53,38 @@ protected:
                   bool& outIsInAttrCache);
 
     /** Lookup */
-    void enterLookup();
+    void lookupOnServer();
 
     void exitLookup(spfsLookupPathResponse* lookupResponse,
                     bool& outIsCreate, bool& outIsFullLookup,
                     bool& outIsMissingAttr, bool& outIsPartialLookup);
 
-    /** Create meta objects */
-    void enterCreateMeta();
-
-    void exitCreateMeta(spfsCreateResponse* createResp);
+    /** Create metadata object */
+    void createMeta();
 
     /** Create data objects */
-    void enterCreateData();
+    void createDataObjects();
 
-    void exitCreateData(spfsCreateResponse* createResp,
-                        bool& outIsDoneCreatingDataObjects);
+    /** Count the incoming data object creation responses */
+    void countDataCreationResponse();
 
-    /** Set attributes */
-    void enterWriteAttr();
+    /** @return true when all the data objects have been created */
+    bool isDataCreationComplete();
 
-    void exitWriteAttr(spfsSetAttrResponse* sattrResp);
+    /** Send message to meta server to write attributes */
+    void writeAttributes();
 
-    /** Write directory entry */
-    void enterWriteDirEnt();
-
-    void exitWriteDirEnt(spfsCreateDirEntResponse* wdirentResp);
+    /** Create directory entry */
+    void createDirEnt();
 
     /** Read attributes */
-    void enterReadAttr();
+    void readAttributes();
 
-    void exitReadAttr(spfsGetAttrResponse* gattrResp);
+    /** Add the lookup file's attributes to cache */
+    void addAttributesToCache();
 
     /** Finalize operation */
-    void enterFinish();
-    
-    void errorNF(spfsMPIFileOpenRequest* openReq);
-
-    void errorExcl(spfsMPIFileOpenRequest* openReq);
+    void finish();
     
 private:
 
@@ -105,9 +99,10 @@ private:
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

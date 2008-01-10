@@ -20,6 +20,7 @@
 #include "fs_client.h"
 #include <iostream>
 #include "fs_close.h"
+#include "fs_create_directory.h"
 #include "fs_open.h"
 #include "fs_read.h"
 #include "fs_write.h"
@@ -69,6 +70,13 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
 {
     switch(request->kind())
     {
+        case SPFS_MPI_DIRECTORY_CREATE_REQUEST:
+        {
+            FSCreateDirectory dirCreate(
+                this, static_cast<spfsMPIDirectoryCreateRequest*>(request));
+            dirCreate.handleMessage(msg);
+            break;
+        }
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
             FSOpen open(this,
@@ -128,6 +136,7 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

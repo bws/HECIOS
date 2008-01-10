@@ -85,6 +85,7 @@ enum spfsMessageKind
 };
 
 enum spfsLookupStatus {
+    SPFS_INVALID_LOOKUP_STATUS = 0; 
     SPFS_FOUND = 1;
     SPFS_PARTIAL = 2;
     SPFS_NOTFOUND = 3;

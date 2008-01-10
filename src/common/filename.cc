@@ -100,6 +100,13 @@ Filename Filename::getSegment(size_t segIdx) const
     return Filename(segment);
 }
 
+Filename Filename::getParent() const
+{
+    size_t numSegments = getNumPathSegments();
+    assert(1 < numSegments);
+    return getSegment(numSegments - 2);
+}
+
 void Filename::initialize(const string& absolutePath)
 {
     // Remove extra slashes from the path (incl. trailing slashes)
