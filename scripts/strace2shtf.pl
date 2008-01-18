@@ -174,25 +174,39 @@ sub parseCloseCall
     my $rc = $line;
     $rc =~ s/.* = //;
 
-    # If the descriptor is not ignored, emit the trace record
-    # Else remove the closed descriptor from the ignore list
     my $descriptor = $args[0];
-    if (!isDescriptorIgnored($descriptor))
-    {
-        print $recordFile "CLOSE $descriptor $rc\n";
-    }
-    else
-    {
-        removeIgnoredDescriptor($descriptor);
-        #print "Ignoring descriptor: $line\n";
-    }
+
+    return "CLOSE $descriptor $rc";
 }
 
+#
+# parse a chmod system call and return a trace record
+#
 sub parseChmodCall
 {
     my $line = shift;
+    print "Error: not parsing $line";
+    return "Unparsed line: $line\n";
+}
+
+#
+# Parse an fcntl or ioctl call and construct a trace record
+#
+sub parseFcntlCall
+{
+    my $line = shift;
     my $recordFile = shift;
-    print "Unparsed line: $line\n";
+
+    # Parse the read record
+    my @stuff = split(/\(/, $line);
+    my @args = split(/, /, $stuff[1]);
+    my $rc = $line;
+    $rc =~ s/.* = //;
+
+    my $cmd = uc($stuff[0]);
+    my $descriptor = $args[0];
+
+    return "$cmd $descriptor $rc";
 }
 
 #
@@ -212,15 +226,7 @@ sub parseFstatCall
     my $cmd = uc($stuff[0]);
     my $descriptor = $args[0];
 
-    # If the descriptor is not ignored, emit the trace record
-    if (!isDescriptorIgnored($descriptor))
-    {
-        print $recordFile "$cmd $descriptor $rc\n";
-    }
-    else
-    {
-        #print "Ignoring descriptor: $line\n";
-    }
+    return "$cmd $descriptor $rc";
 }
 
 #
@@ -243,21 +249,13 @@ sub parseIOCall
     my $extent = $rc;
 
     # Update the global trace metadata
-    print "Desc: $descriptor Off: $offset  Ext: $extent\n";
+    #print "Desc: $descriptor Off: $offset  Ext: $extent\n";
     updateFileSize($descriptor, $offset, $extent);
 
     # Update the file pointer
     updateFilePointer($descriptor, $extent);
 
-    # If the descriptor is not ignored, emit the trace record
-    if (!isDescriptorIgnored($descriptor))
-    {
-        print $recordFile "$ioType $descriptor $offset $extent\n";
-    }
-    else
-    {
-        #print "Ignoring descriptor: $line\n";
-    }
+    return "$ioType $descriptor $offset $extent";
 }
 
 sub parseMkdirCall
@@ -276,17 +274,7 @@ sub parseMkdirCall
     chop($filename);
     my $perms = $args[1];
 
-    # If the file is a PFS file, record it
-    # Otherwise make sure it is ignored
-    if (isFileInPFS($mountDir, $filename))
-    {
-        # Emit the trace record
-        print $recordFile "MKDIR $filename $perms\n";
-    }
-    else
-    {
-        #print "Ignoring file: $line\n";
-    }
+    return "MKDIR $filename $perms"
 }
 
 #
@@ -296,7 +284,26 @@ sub parsePIOCall
 {
     my $line = shift;
     my $recordFile = shift;
-    print "Unparsed record: $line\n";
+
+    # Parse the read record
+    my @stuff = split(/\(/, $line);
+    my @args = split(/, /, $stuff[1]);
+
+    my $ioType = uc($stuff[0]);
+    my $descriptor = $args[0];
+
+    $line =~ /(\d+)\)/;
+    my $offset = $1; 
+
+    my $rc = $line;
+    $rc =~ s/.*\".*\".* = //;
+    my $extent = $rc;
+
+    # Update the global trace metadata
+    #print "Desc: $descriptor Off: $offset  Ext: $extent\n";
+    updateFileSize($descriptor, $offset, $extent);
+
+    return "$ioType $descriptor $offset $extent";
 }
 
 #
@@ -321,21 +328,10 @@ sub parseOpenCall
     my $openFlags = $args[2];
     my $descriptor = $rc;
 
-    # Update the global trace metadata
+    # Associate the filename and descriptor
     addFilenameAndDescriptor($filename, $descriptor);
 
-    # If the file is a PFS file, record it
-    # Otherwise make sure it is ignored
-    if (isFileInPFS($mountDir, $filename))
-    {
-        # Emit the trace record
-        print $recordFile "OPEN $filename $openFlags $descriptor\n";
-    }
-    else
-    {
-        ignoreDescriptor($descriptor);
-        #print "Ignoring descriptor: $line\n";
-    }
+    return "OPEN $filename $openFlags $descriptor";
 }
 
 #
@@ -348,10 +344,13 @@ sub parseSocketCall
     # Determine the socket descriptor
     my $rc = $line;
     $rc =~ s/.* = //;
+    my $socketDescriptor = $rc;
+    my $socketName = "/tmp/$socketDescriptor";
 
-    ignoreDescriptor($rc);
-    #print "Ignoring descriptor: $line\n";
-    
+    # Associate the filename and descriptor
+    addFilenameAndDescriptor($socketName, $socketDescriptor);
+
+    return "SOCKET $socketName NULL $socketDescriptor";
 }
 
 #
@@ -373,26 +372,23 @@ sub parseUtimeCall
     chop($filename);
     my $time = qq("$toks[2]");
 
-    # If the file is a PFS file, record it
-    # Otherwise make sure it is ignored
-    if (isFileInPFS($mountDir, $filename))
-    {
-        # Emit the trace record
-        print $recordFile "UTIME $filename $time\n";
-    }
-    else
-    {
-        #print "Ignoring file: $line\n";
-    }
+    return "UTIME $filename $time";
 }
 
+#
+# Parse an unlink system call and construct a trace record
+#
 sub parseUnlinkCall
 {
     my $line = shift;
     my $recordFile = shift;
-    print "$line\n";
+    print "ERROR: Don't handle: $line";
+    return "$line";
 }
 
+#
+# Parse a file stat system call and construct a trace record
+#
 sub parseStatCall
 {
     my $line = shift;
@@ -410,17 +406,82 @@ sub parseStatCall
     my $filename = substr($args[0], 1);
     chop($filename);
 
-    # If the file is a PFS file, record it
-    # Otherwise make sure it is ignored
-    if (isFileInPFS($mountDir, $filename))
+    return "STAT $filename $rc";
+}
+
+#
+# Process the trace record and only return it if it is interesting
+#
+sub processTraceRecord
+{
+    my $traceRecord = shift;
+    my $mountDir = shift;
+
+    my $output;
+    my @fields = split(/ /, $traceRecord);
+    my $cmd = $fields[0];
+
+    my $processedRecord;
+    if ($cmd =~ /OPEN|SOCKET/)
     {
-        # Emit the trace record
-        print $recordFile "STAT $filename $rc\n";
+        my $filename = $fields[1];
+        my $fd = $fields[3];
+        if (isFileInPFS($mountDir, $filename))
+        {
+            $processedRecord = $traceRecord;
+        }
+        else
+        {
+            ignoreDescriptor($fd);
+        }
+    }
+    elsif ("CLOSE" eq $cmd)
+    {
+        my $fd = $fields[1];
+        if (isDescriptorIgnored($fd))
+        {
+            removeIgnoredDescriptor($fd);
+        }
+        else
+        {
+            $processedRecord = $traceRecord;
+        }
+    }
+    elsif ($cmd =~ /STAT|UTIME|MKDIR/)
+    {
+        my $filename = $fields[1];
+        if (isFileInPFS($mountDir, $filename))
+        {
+            $processedRecord = $traceRecord;
+        }
+    }
+    elsif ($cmd =~ /READ|WRITE|FCNTL|IOCTL/)
+    {
+        my $fd = $fields[1];
+        if (!isDescriptorIgnored($fd))
+        {
+            $processedRecord = $traceRecord;
+        }
     }
     else
     {
-        #print "Ignoring file: $line\n";
+        print "ERROR: Unable to process: $traceRecord\n";
     }
+    
+    return $processedRecord;
+}
+
+#
+# Emit record data
+#
+sub emitTraceRecord
+{
+    my $recordFile = shift;
+    my $traceRecord = shift;
+    my $startTime = shift;
+    my $duration = shift;
+
+    print $recordFile "$traceRecord $startTime $duration\n";
 }
 
 #
@@ -433,83 +494,94 @@ sub processStraceLine
     my $metaDataFile = shift;
     my $recordDataFile = shift;
 
-    # Set whether the line was successfully parsed or not
-    my $isParsed = 1;
-
     # Extract the relative time from the record beginning
     my $relativeTime = substr($line, 0, 13);
     $g_traceTimeStamp += $relativeTime;
 
-    # Remove the call length field from the end of the system call
+    # Extract the system call from the line
     my $syscall = substr($line, 14);
     $syscall =~ s/ <\d+\.\d+>//;
 
     # Possible interesting operations of open, read, write, close, and utime
     my @cmd = split(/\(/, $syscall);
     my $token = $cmd[0];
+    my $traceRecord;
     if ("chmod" eq $token)
     {
-        parseChmodCall($syscall, $recordDataFile);
+        $traceRecord = parseChmodCall($syscall);
     }
     elsif ("close" eq $token)
     {
-        parseCloseCall($syscall, $recordDataFile);
+        $traceRecord = parseCloseCall($syscall);
     }
     elsif ("fcntl" eq $token || "ioctl" eq $token)
     {
-        print "Do ioctl son\n";
+        $traceRecord = parseFcntlCall($syscall);
     }
     elsif ("fstat" eq $token)
     {
-        parseFstatCall($syscall, $recordDataFile);
+        $traceRecord = parseFstatCall($syscall);
     }
     elsif ("mkdir" eq $token)
     {
-        parseMkdirCall($syscall, $recordDataFile);
+        $traceRecord = parseMkdirCall($syscall);
     }
     elsif ("open" eq $token)
     {
-        parseOpenCall($syscall, $recordDataFile);
+        $traceRecord = parseOpenCall($syscall);
     }
     elsif ("pread" eq $token || "pwrite" eq $token)
     {
-        parsePIOCall($syscall, $recordDataFile);
+        $traceRecord = parsePIOCall($syscall);
     }
     elsif ("read" eq $token || "write" eq $token)
     {
-        parseIOCall($syscall, $recordDataFile);
+        $traceRecord = parseIOCall($syscall);
     }
     elsif ("socket" eq $token)
     {
-        parseSocketCall($syscall);
+        $traceRecord = parseSocketCall($syscall);
     }
     elsif ("stat" eq $token)
     {
-        parseStatCall($line, $recordDataFile);
+        $traceRecord = parseStatCall($syscall);
     }
     elsif ("unlink" eq $token)
     {
-        parseUnlinkCall($syscall, $recordDataFile);
+        $traceRecord = parseUnlinkCall($syscall);
     }
     elsif ("utime" eq $token)
     {
-        parseUtimeCall($syscall, $recordDataFile);
+        $traceRecord = parseUtimeCall($syscall);
     }
-    else
+
+    # Emit the trace record if necessary
+    my $ignoredCommands = "access|arch_prctl|bind|brk|connect|execve" .
+        "|exit_group|geteuid|getpid|mmap|mprot|munmap|poll|recvfrom" .
+        "|rt_sigaction|sendto|setsockopt|umask|uname";
+    my $returnCode = !1;
+    if ($traceRecord)
+    {
+        # Extract the call time field from the end of the line
+        $line =~ m/<(\d+\.\d+)>/;
+        my $callTime = $1;
+        if (processTraceRecord($traceRecord))
+        {
+            emitTraceRecord($recordDataFile, 
+                            $traceRecord, 
+                            $g_traceTimeStamp, 
+                            $callTime);
+        }
+        $returnCode = 1;
+    }
+    elsif ($token =~ /$ignoredCommands/)
     {
         # The following commands are ignored and should be considered
         # successfully parsed
-        my $ignoredCommands = "access|arch_prctl|bind|brk|connect|execve" .
-            "|exit_group|geteuid|getpid|mmap|mprot|munmap|poll|recvfrom" .
-            "|rt_sigaction|sendto|setsockopt|umask|uname";
-
-        if (!($token =~ /$ignoredCommands/))
-        {
-            $isParsed = !1;
-        }
+        $returnCode = 1;
     }
 
-    return $isParsed;
+    return $returnCode;
 }
 
 #
