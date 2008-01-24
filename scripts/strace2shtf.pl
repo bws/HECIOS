@@ -18,6 +18,7 @@ use strict;
 # Global data
 #
 my $g_traceTimeStamp = 0.0;
+my $g_recordCount = 0;
 
 #
 # Global metadata structures
@@ -258,6 +259,9 @@ sub parseIOCall
     return "$ioType $descriptor $offset $extent";
 }
 
+#
+# Parse a mkdir call and construct a trace record
+#
 sub parseMkdirCall
 {
     my $line = shift;
@@ -272,7 +276,7 @@ sub parseMkdirCall
     # Remove the surrounding "" from the filename
     my $filename = substr($args[0], 1);
     chop($filename);
-    my $perms = $args[1];
+    my $perms = $args[2];
 
     return "MKDIR $filename $perms"
 }
@@ -447,7 +451,7 @@ sub processTraceRecord
             $processedRecord = $traceRecord;
         }
     }
-    elsif ($cmd =~ /STAT|UTIME|MKDIR/)
+    elsif ($cmd =~ /MKDIR|STAT|UTIME/)
     {
         my $filename = $fields[1];
         if (isFileInPFS($mountDir, $filename))
@@ -455,7 +459,7 @@ sub processTraceRecord
             $processedRecord = $traceRecord;
         }
     }
-    elsif ($cmd =~ /READ|WRITE|FCNTL|IOCTL/)
+    elsif ($cmd =~ /FCNTL|IOCTL|READ|SEEK|WRITE/)
     {
         my $fd = $fields[1];
         if (!isDescriptorIgnored($fd))
@@ -567,6 +571,7 @@ sub processStraceLine
         my $callTime = $1;
         if (processTraceRecord($traceRecord))
         {
+            $g_recordCount++;
             emitTraceRecord($recordDataFile, 
                             $traceRecord, 
                             $g_traceTimeStamp, 
@@ -580,6 +585,10 @@ sub processStraceLine
         # successfully parsed
         $returnCode = 1;
     }
+    else
+    {
+        print "ERROR: Could not identify: $token\n";
+    }
 
     return $returnCode;
 }
@@ -591,12 +600,20 @@ sub emitTraceMetaData
 {
     my $outFile = shift;
 
+    # Write out the format metadata
+    print $outFile "# Serial HECIOS Trace Format Version 0.0.0.0\n";
+    
+    # Write out the number of files and records
+    my $numFiles = scalar(keys %g_filenameToSize);
+    print $outFile "$numFiles $g_recordCount\n";
+
+    # Write out the file names and their sizes
     my $i = 0;
     my $filename;
     foreach $filename (keys %g_filenameToSize)
     {
         my $fileSize = $g_filenameToSize{$filename};
-	print $outFile "$i $filename $fileSize\n";
+	print $outFile "$filename $fileSize\n";
         $i++;
     }    
 }
