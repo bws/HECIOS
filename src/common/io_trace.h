@@ -32,6 +32,9 @@ class IOTrace
 {
 public:
 
+    /** Type to represent file system state trace meta data */
+    typedef std::map<std::string, std::size_t> FileSystemMap;
+    
     /**
      * Operation Types
      */
@@ -104,7 +107,7 @@ public:
     IOTrace(int numProcs) : numProcs_(numProcs) {};
 
     /** Destructor */
-    virtual ~IOTrace() {};
+    virtual ~IOTrace();
 
     /** @return the number of processes for this IO trace */
     int getNumProcs() const {return numProcs_;}
@@ -115,6 +118,12 @@ public:
     /** @return the next IOTraceRecord */
     virtual Record* nextRecord() = 0;
 
+    /** Register a file and its size that exists in this traces file system */
+    void registerFile(const std::string& filename, std::size_t fileSize);
+
+    /** @return an iterator to all files in this traces file system */
+    FileSystemMap::const_iterator getFiles() const;
+    
     /** Register a filename by file id */
     void addFilename(int fileId, std::string filename);
     
@@ -128,6 +137,9 @@ private:
 
     /** Map unique file ids to a filename */
     std::map<int, std::string> filenamesById_;
+
+    /** Map of all file system files to their sizes */
+    FileSystemMap fileSizesByName_;
 };
 
 #endif

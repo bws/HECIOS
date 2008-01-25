@@ -51,6 +51,20 @@ IOTrace::Record::Record(IOTrace::Operation opType,
 {
 }
 
+IOTrace::~IOTrace()
+{
+}
+
+void IOTrace::registerFile(const string& filename, size_t fileSize)
+{
+    fileSizesByName_[filename] = fileSize;
+}
+
+IOTrace::FileSystemMap::const_iterator IOTrace::getFiles() const
+{
+    return fileSizesByName_.begin();
+}
+
 void IOTrace::addFilename(int fileId, std::string filename)
 {
     filenamesById_[fileId] = filename;
