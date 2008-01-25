@@ -18,9 +18,9 @@ class ClientFSStateTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testInsertAttr);
     CPPUNIT_TEST(testRemoveAttr);
     CPPUNIT_TEST(testLookupAttr);
-    CPPUNIT_TEST(testInsertDir);
-    CPPUNIT_TEST(testRemoveDir);
-    CPPUNIT_TEST(testLookupDir);
+    CPPUNIT_TEST(testInsertName);
+    CPPUNIT_TEST(testRemoveName);
+    CPPUNIT_TEST(testLookupName);
     CPPUNIT_TEST(testServerNotUsed);
     CPPUNIT_TEST(testSelectServer);
     CPPUNIT_TEST(testHashPath);
@@ -43,11 +43,11 @@ public:
     
     void testLookupAttr();
 
-    void testInsertDir();
+    void testInsertName();
 
-    void testRemoveDir();
+    void testRemoveName();
     
-    void testLookupDir();
+    void testLookupName();
 
     void testServerNotUsed();
 
@@ -109,40 +109,40 @@ void ClientFSStateTest::testLookupAttr()
     CPPUNIT_ASSERT(*(state.lookupAttr(handle1)) == attr1);
 }
 
-void ClientFSStateTest::testInsertDir()
+void ClientFSStateTest::testInsertName()
 {
     ClientFSState state;
     string dir1 = "/dir1";
     FSHandle handle1 = 1;
 
-    state.insertDir(dir1, handle1);
-    CPPUNIT_ASSERT_EQUAL(*(state.lookupDir(dir1)), handle1);
+    state.insertName(dir1, handle1);
+    CPPUNIT_ASSERT_EQUAL(*(state.lookupName(dir1)), handle1);
 }
 
-void ClientFSStateTest::testRemoveDir()
+void ClientFSStateTest::testRemoveName()
 {
     ClientFSState state;
     string dir1 = "/dir1";
     FSHandle handle1 = 1;
 
     // Ensure directory removal works
-    state.insertDir(dir1, handle1);
-    state.removeDir(dir1);
-    CPPUNIT_ASSERT(0 == state.lookupDir(dir1));
+    state.insertName(dir1, handle1);
+    state.removeName(dir1);
+    CPPUNIT_ASSERT(0 == state.lookupName(dir1));
 }
 
-void ClientFSStateTest::testLookupDir()
+void ClientFSStateTest::testLookupName()
 {
     ClientFSState state;
 
     // Attempt to lookup non-existant entry
-    CPPUNIT_ASSERT(0 == state.lookupDir(string("non-entry")));
+    CPPUNIT_ASSERT(0 == state.lookupName(string("non-entry")));
 
     // Lookup an entry that exists
     string dir1 = "/dir1";
     FSHandle handle1 = 1;
-    state.insertDir(dir1, handle1);
-    CPPUNIT_ASSERT_EQUAL(*(state.lookupDir(dir1)), handle1);
+    state.insertName(dir1, handle1);
+    CPPUNIT_ASSERT_EQUAL(*(state.lookupName(dir1)), handle1);
 }
 
 void ClientFSStateTest::testServerNotUsed()

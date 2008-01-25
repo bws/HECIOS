@@ -25,9 +25,6 @@
 #include <string>
 #include <omnetpp.h>
 
-/** Forward declarations */
-class IOTraceRecord;
-
 /**
  * Abstract I/O trace class.
  */
@@ -38,11 +35,70 @@ public:
     /**
      * Operation Types
      */
-    enum operation {NOOP = 0,
-                    OPEN, CLOSE,
-                    DELETE, SEEK,
-                    READ_AT, READ,
-                    WRITE, WRITE_AT};
+    enum Operation {INVALID = 0,
+                    OPEN, DELETE, MKDIR, UTIME, STAT,
+                    CLOSE, SEEK, READ_AT, READ, WRITE, WRITE_AT};
+
+    /** I/O trace record.  A single entry from the tracefile. */
+    class Record
+    {
+    public:
+        /** Constructor without timing info */
+        Record(IOTrace::Operation opType, int fileId,
+               std::size_t offset, std::size_t length);
+
+        /** Constructor with timing info */
+        Record(IOTrace::Operation opType, double timeStamp, double duration);
+
+        /** @return the operation type */
+        IOTrace::Operation opType() const {return opType_;};
+
+        /** @return the operation time stamp */
+        double timeStamp() const { return timeStamp_; };
+
+        /** @return the operation's duration in seconds */
+        double duration() const { return duration_; };
+        
+        /** @return the file id */
+        std::string filename() const { return filename_; };
+
+        /** Set the filename */
+        void filename(const std::string& filename) { filename_ = filename; };
+        
+        /** @return the File id */
+        int fileId() const { return fileId_; };
+    
+        /** Set the file id */
+        void fileId(int fileId) { fileId_ = fileId; };
+    
+        /** @return file access offset */
+        std::size_t offset() const { return offset_; };
+
+        /** Set the file access offset */
+        void offset(std::size_t offset) { offset_ = offset; };
+        
+        /** @return file access length */
+        std::size_t length() const { return length_; };
+
+        /** Set the file access length */
+        void length(std::size_t length) { length_ = length; };
+
+        /** Set the parsed string for debugging purposes */
+        void setSource(const std::string& source) { source_ = source; };
+
+        /** @return the source for this trace record */
+        std::string source() const { return source_; };
+    
+    public:
+        Operation opType_;
+        double timeStamp_;
+        double duration_;
+        std::string filename_;
+        int fileId_;
+        std::size_t offset_;
+        std::size_t length_;
+        std::string source_;
+    };
 
     /** Constructor */
     IOTrace(int numProcs) : numProcs_(numProcs) {};
@@ -57,7 +113,7 @@ public:
     virtual bool hasMoreRecords() const = 0;
     
     /** @return the next IOTraceRecord */
-    virtual IOTraceRecord* nextRecord() = 0;
+    virtual Record* nextRecord() = 0;
 
     /** Register a filename by file id */
     void addFilename(int fileId, std::string filename);
@@ -70,56 +126,15 @@ private:
     /** The number of processes for this trace */
     const int numProcs_;
 
-    /** */
+    /** Map unique file ids to a filename */
     std::map<int, std::string> filenamesById_;
-};
-
-/**
- * I/O trace record.  A single entry from the tracefile.
- */
-class IOTraceRecord
-{
-public:
-
-    /** Constructor */
-    IOTraceRecord(IOTrace::operation opType, int fileId,
-                  std::size_t offset, std::size_t length) :
-        opType_(opType), fileId_(fileId), offset_(offset), length_(length) {};
-
-    /** Destructor */
-    virtual ~IOTraceRecord() {};
-
-    /** Operation type getter */
-    IOTrace::operation opType() const {return opType_;};
-
-    /** File id getter */
-    int fileId() const {return fileId_;};
-    
-    /** File offset getter */
-    std::size_t offset() const {return offset_;};
-
-    /** Length getter */
-    std::size_t length() const {return length_;};
-
-    /** Set the parsed string for debugging purposes */
-    void setSource(const std::string& source) {source_ = source;};
-
-    /** @return the source for this trace record */
-    std::string source() const {return source_;};
-    
-private:
-
-    IOTrace::operation opType_;
-    int fileId_;
-    std::size_t offset_;
-    std::size_t length_;
-    std::string source_;
 };
 
 #endif
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

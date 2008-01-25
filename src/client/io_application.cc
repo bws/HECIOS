@@ -162,7 +162,7 @@ cMessage* IOApplication::getNextMessage()
 {
     cMessage* msg = 0;
     do {
-        IOTraceRecord* traceRec = trace_->nextRecord();
+        IOTrace::Record* traceRec = trace_->nextRecord();
         if (traceRec)
         {
             msg = createMessage(traceRec);
@@ -174,7 +174,7 @@ cMessage* IOApplication::getNextMessage()
     return msg;
 }
 
-cMessage* IOApplication::createMessage(IOTraceRecord* rec)
+cMessage* IOApplication::createMessage(IOTrace::Record* rec)
 {
     cMessage* mpiMsg = 0;
 
@@ -307,6 +307,7 @@ spfsCacheInvalidateRequest* IOApplication::createCacheInvalidationMessage(
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

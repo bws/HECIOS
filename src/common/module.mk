@@ -12,5 +12,6 @@ SIM_SRC += $(DIR)/basic_data_type.cc \
 	$(DIR)/io_trace.cc \
 	$(DIR)/ip_socket_map.cc \
 	$(DIR)/pfs_utils.cc \
+	$(DIR)/shtf_io_trace.cc \
 	$(DIR)/umd_io_trace.cc \
 	$(DIR)/vector_data_type.cc

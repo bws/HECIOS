@@ -1,5 +1,5 @@
-#ifndef UMD_IO_TRACE_TEST_H
-#define UMD_IO_TRACE_TEST_H
+#ifndef SHTF_IO_TRACE_TEST_H
+#define SHTF_IO_TRACE_TEST_H
 //
 // This file is part of Hecios
 //
@@ -24,15 +24,15 @@
 #include <omnetpp.h>
 #include "file_builder.h"
 #include "pfs_utils.h"
-#include "umd_io_trace.h"
+#include "shtf_io_trace.h"
 using namespace std;
 
-/** Unit test for UMDIOTrace */
-class UMDIOTraceTest : public CppUnit::TestFixture
+/** Unit test for SHTFTrace */
+class SHTFIOTraceTest : public CppUnit::TestFixture
 {
     // Create generic unit test and register test functions for automatic
     // exercise
-    CPPUNIT_TEST_SUITE(UMDIOTraceTest);
+    CPPUNIT_TEST_SUITE(SHTFIOTraceTest);
     CPPUNIT_TEST(testConstructor);
     CPPUNIT_TEST(testIsValid);
     CPPUNIT_TEST(testHasMoreRecords);
@@ -58,7 +58,7 @@ public:
     void testNextRecordAsMessage();
 };
 
-void UMDIOTraceTest::setUp()
+void SHTFIOTraceTest::setUp()
 {
     // Register servers for use during testing
     HandleRange range1 = {100, 200};
@@ -67,39 +67,39 @@ void UMDIOTraceTest::setUp()
     FileBuilder::instance().registerFSServer(range2, false);
 }
 
-void UMDIOTraceTest::tearDown()
+void SHTFIOTraceTest::tearDown()
 {
     // Clear the singleton state between tests
     PFSUtils::clearState();
 }
 
-void UMDIOTraceTest::testConstructor()
+void SHTFIOTraceTest::testConstructor()
 {
     // Test with an invalid file
-    UMDIOTrace test1(1, "dummy_file_name");
+    SHTFIOTrace test1("shtf_dummy_name");
     CPPUNIT_ASSERT(false == test1.isValid());
 
     //Test with a valid trace file
-    UMDIOTrace test2(1, "tests/support/umd_io_trace.tra");
+    SHTFIOTrace test2("tests/support/test_trace.shtf");
     CPPUNIT_ASSERT(true == test2.isValid());
 }
 
-void UMDIOTraceTest::testIsValid()
+void SHTFIOTraceTest::testIsValid()
 {
     // Test with an invalid file
-    UMDIOTrace test1(1, "dummy_file_name");
+    SHTFIOTrace test1("shtf_dummy_name");
     CPPUNIT_ASSERT(false == test1.isValid());
 
     //Test with a valid trace file
-    UMDIOTrace test2(1, "tests/support/umd_io_trace.tra");
+    SHTFIOTrace test2("tests/support/test_trace.shtf");
     CPPUNIT_ASSERT(true == test2.isValid());
 }
 
-void UMDIOTraceTest::testHasMoreRecords()
+void SHTFIOTraceTest::testHasMoreRecords()
 {
     // Test with a valid trace
-    UMDIOTrace test(1, "tests/support/umd_io_trace.tra");
-    for (int i = 0; i < 10; i++)
+    SHTFIOTrace test("tests/support/test_trace.shtf");
+    for (size_t i = 0; i < test.getNumRecords(); i++)
     {
         CPPUNIT_ASSERT(true == test.hasMoreRecords());
         IOTrace::Record* rec = test.nextRecord();
@@ -109,16 +109,16 @@ void UMDIOTraceTest::testHasMoreRecords()
     CPPUNIT_ASSERT(false == test.hasMoreRecords());
 }
 
-void UMDIOTraceTest::testNextRecord()
+void SHTFIOTraceTest::testNextRecord()
 {
-    UMDIOTrace test1(1, "tests/support/umd_io_trace.tra");
+    SHTFIOTrace test1("tests/support/test_trace.shtf");
 
     //
     // 1st record
     //
     IOTrace::Record* rec1 = test1.nextRecord();
     CPPUNIT_ASSERT(0 != rec1);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::OPEN, rec1->opType());
+    CPPUNIT_ASSERT_EQUAL(IOTrace::MKDIR, rec1->opType());
     delete rec1;
 
     //
@@ -126,7 +126,7 @@ void UMDIOTraceTest::testNextRecord()
     //
     IOTrace::Record* rec2 = test1.nextRecord();
     CPPUNIT_ASSERT(0 != rec2);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::CLOSE, rec2->opType());
+    CPPUNIT_ASSERT_EQUAL(IOTrace::OPEN, rec2->opType());
     delete rec2;
 
     //
@@ -134,7 +134,7 @@ void UMDIOTraceTest::testNextRecord()
     //
     IOTrace::Record* rec3 = test1.nextRecord();
     CPPUNIT_ASSERT(0 != rec3);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::READ_AT, rec3->opType());
+    CPPUNIT_ASSERT_EQUAL(IOTrace::WRITE, rec3->opType());
     delete rec3;
 
     //
@@ -142,23 +142,15 @@ void UMDIOTraceTest::testNextRecord()
     //
     IOTrace::Record* rec4 = test1.nextRecord();
     CPPUNIT_ASSERT(0 != rec4);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::WRITE_AT, rec4->opType());
+    CPPUNIT_ASSERT_EQUAL(IOTrace::WRITE, rec4->opType());
     delete rec4;
-
-    //
-    // 5th record
-    //
-    IOTrace::Record* rec5 = test1.nextRecord();
-    CPPUNIT_ASSERT(0 != rec5);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::SEEK, rec5->opType());
-    delete rec5;
 
     //
     // 6th record
     //
     IOTrace::Record* rec6 = test1.nextRecord();
-    CPPUNIT_ASSERT(0 == rec6);
-    //CPPUNIT_ASSERT_EQUAL(IOTrace::OPEN, rec6->opType());
+    CPPUNIT_ASSERT(0 != rec6);
+    CPPUNIT_ASSERT_EQUAL(IOTrace::READ, rec6->opType());
     delete rec6;
 
     //
@@ -166,33 +158,8 @@ void UMDIOTraceTest::testNextRecord()
     //
     IOTrace::Record* rec7 = test1.nextRecord();
     CPPUNIT_ASSERT(0 != rec7);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::OPEN, rec7->opType());
+    CPPUNIT_ASSERT_EQUAL(IOTrace::CLOSE, rec7->opType());
     delete rec7;
-
-    //
-    // 8th record
-    //
-    IOTrace::Record* rec8 = test1.nextRecord();
-    CPPUNIT_ASSERT(0 != rec8);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::CLOSE, rec8->opType());
-    delete rec8;
-
-    //
-    // 9th record
-    //
-    IOTrace::Record* rec9 = test1.nextRecord();
-    CPPUNIT_ASSERT(0 != rec9);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::READ_AT, rec9->opType());
-    delete rec9;
-
-    //
-    // 10th record
-    //
-    IOTrace::Record* rec10 = test1.nextRecord();
-    CPPUNIT_ASSERT(0 != rec10);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::WRITE_AT, rec10->opType());
-    delete rec10;
-
 }
 
 #endif

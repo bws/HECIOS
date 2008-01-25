@@ -45,7 +45,7 @@ public:
     bool hasMoreRecords() const { return (curRecord_ < numRecords_); };
     
     /** @return the next IOTraceRecord */
-    virtual IOTraceRecord* nextRecord();
+    virtual IOTrace::Record* nextRecord();
 
 private:
 
@@ -53,8 +53,8 @@ private:
                  WRITE = 3, SEEK = 4, LISTIO_HEADER = 5};
 
     /** @return the next IOTraceRecord */
-    IOTraceRecord* createIOTraceRecord(OpType opType, int fileId,
-                                  long offset, long length);
+    IOTrace::Record* createIOTraceRecord(OpType opType, int fileId,
+                                         long offset, long length);
     
     std::string traceFileName_;
     mutable std::ifstream traceFile_;
@@ -72,6 +72,7 @@ private:
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

@@ -22,6 +22,35 @@
 #include <cassert>
 using namespace std;
 
+IOTrace::Record::Record(IOTrace::Operation opType,
+                        int fileId,
+                        std::size_t offset,
+                        std::size_t length) :
+    opType_(opType),
+    timeStamp_(0.0),
+    duration_(0.0),
+    filename_(),
+    fileId_(fileId),
+    offset_(offset),
+    length_(length),
+    source_("<UNDEFINED>")
+{
+}
+
+IOTrace::Record::Record(IOTrace::Operation opType,
+                        double timeStamp,
+                        double duration) :
+    opType_(opType),
+    timeStamp_(timeStamp),
+    duration_(duration),
+    filename_("<UNDEFINED>"),
+    fileId_(-1),
+    offset_(0),
+    length_(0),
+    source_("<UNDEFINED>")
+{
+}
+
 void IOTrace::addFilename(int fileId, std::string filename)
 {
     filenamesById_[fileId] = filename;
@@ -35,6 +64,7 @@ std::string IOTrace::getFilename(int fileId) const
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

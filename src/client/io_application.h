@@ -21,9 +21,8 @@
 //
 
 #include <omnetpp.h>
+#include "io_trace.h"
 class FileDescriptor;
-class IOTrace;
-class IOTraceRecord;
 class spfsCacheInvalidateRequest;
 class spfsMPIFileWriteAtRequest;
 
@@ -55,8 +54,8 @@ protected:
     /** Get the next message to send */
     virtual cMessage* getNextMessage();
 
-    /** Create a cMessage from an IOTraceRecord */
-    virtual cMessage* createMessage(IOTraceRecord* rec);
+    /** Create a cMessage from an IOTrace::Record */
+    virtual cMessage* createMessage(IOTrace::Record* rec);
     
     /** Assiciate the fileId with a file descriptor */
     void setDescriptor(int fileId, FileDescriptor* descriptor);
@@ -86,6 +85,7 @@ private:
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

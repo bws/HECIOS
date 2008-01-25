@@ -77,9 +77,9 @@ UMDIOTrace::~UMDIOTrace()
 /**
  * Construct the next record from the trace and return a pointer to it
  */
-IOTraceRecord* UMDIOTrace::nextRecord()
+IOTrace::Record* UMDIOTrace::nextRecord()
 {
-    IOTraceRecord* rec = 0;
+    IOTrace::Record* rec = 0;
     if (curRecord_ < numRecords_)
     {
         int opType;
@@ -123,36 +123,37 @@ IOTraceRecord* UMDIOTrace::nextRecord()
     return rec;
 }
 
-IOTraceRecord* UMDIOTrace::createIOTraceRecord(OpType opType, int fileId,
-                                              long offset, long length)
+IOTrace::Record* UMDIOTrace::createIOTraceRecord(OpType opType, int fileId,
+                                                 long offset, long length)
 {
-    IOTraceRecord* rec = 0;
+    IOTrace::Record* rec = 0;
 
     // Create the correct messages for each operation type
     switch(opType) {
         case UMDIOTrace::OPEN:
         {
-            rec = new IOTraceRecord(IOTrace::OPEN, fileId, 0, 0);
+            rec = new IOTrace::Record(IOTrace::OPEN, fileId, 0, 0);
             break;
         }
         case UMDIOTrace::CLOSE:
         {
-            rec = new IOTraceRecord(IOTrace::CLOSE, fileId, 0, 0);
+            rec = new IOTrace::Record(IOTrace::CLOSE, fileId, 0, 0);
             break;
         }
         case UMDIOTrace::SEEK:
         {
-            rec = new IOTraceRecord(IOTrace::SEEK, fileId, offset, length);
+            rec = new IOTrace::Record(IOTrace::SEEK, fileId, offset, length);
             break;
         }
         case UMDIOTrace::READ:
         {
-            rec = new IOTraceRecord(IOTrace::READ_AT, fileId, offset, length);
+            rec = new IOTrace::Record(IOTrace::READ_AT, fileId, offset, length);
             break;
         }
         case UMDIOTrace::WRITE:
         {
-            rec = new IOTraceRecord(IOTrace::WRITE_AT, fileId, offset, length);
+            rec = new IOTrace::Record(
+                IOTrace::WRITE_AT, fileId, offset, length);
             break;
         }
         case UMDIOTrace::LISTIO_HEADER:
@@ -165,6 +166,7 @@ IOTraceRecord* UMDIOTrace::createIOTraceRecord(OpType opType, int fileId,
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
