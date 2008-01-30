@@ -130,7 +130,7 @@ void FileBuilderTest::testFileExists()
     Filename file2("/test2");
     Filename dir1("/dir1");
     MockStorageLayoutManager layoutManager;
-    FileBuilder::instance().createFile(file1, 0, 1, layoutManager);
+    FileBuilder::instance().createFile(file1, 1000, 0, 1, layoutManager);
     FileBuilder::instance().createDirectory(dir1, 0, layoutManager);
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(file1));
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(dir1));
@@ -141,7 +141,7 @@ void FileBuilderTest::testGetMetaData()
 {
     Filename file1("/test1");
     MockStorageLayoutManager layoutManager;
-    FileBuilder::instance().createFile(file1, 0, 1, layoutManager);
+    FileBuilder::instance().createFile(file1, 2000, 0, 1, layoutManager);
     FSMetaData* file1MD = FileBuilder::instance().getMetaData(file1);
     CPPUNIT_ASSERT(0 != file1MD);
     
@@ -178,8 +178,8 @@ void FileBuilderTest::testCreateFile()
     Filename file1("/file1");
     Filename file2("/foo/bar/baz");
     MockStorageLayoutManager layoutManager;
-    FileBuilder::instance().createFile(file1, 0, 1, layoutManager);
-    FileBuilder::instance().createFile(file2, 0, 1, layoutManager);
+    FileBuilder::instance().createFile(file1, 3000, 0, 1, layoutManager);
+    FileBuilder::instance().createFile(file2, 4000, 0, 1, layoutManager);
 
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(file1));
     CPPUNIT_ASSERT(FileBuilder::instance().fileExists(Filename("/")));
@@ -192,6 +192,7 @@ void FileBuilderTest::testCreateFile()
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

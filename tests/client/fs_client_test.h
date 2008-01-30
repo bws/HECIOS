@@ -72,8 +72,9 @@ void FSClientTest::setUp()
 
     // Create the test file
     Filename testFile("/testFile");
+    FSSize size = 9168;
     MockStorageLayoutManager layout;
-    FileBuilder::instance().createFile(testFile, metaServerId, 2, layout);
+    FileBuilder::instance().createFile(testFile, size, metaServerId, 2, layout);
     
 }
 
@@ -112,6 +113,7 @@ void FSClientTest::testReadAtNoOffsetNoLength()
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

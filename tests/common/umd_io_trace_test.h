@@ -76,29 +76,29 @@ void UMDIOTraceTest::tearDown()
 void UMDIOTraceTest::testConstructor()
 {
     // Test with an invalid file
-    UMDIOTrace test1(1, "dummy_file_name");
+    UMDIOTrace test1(1, "umdtf_dummy_name");
     CPPUNIT_ASSERT(false == test1.isValid());
 
     //Test with a valid trace file
-    UMDIOTrace test2(1, "tests/support/umd_io_trace.tra");
+    UMDIOTrace test2(1, "tests/traces/umd_io_trace.trace");
     CPPUNIT_ASSERT(true == test2.isValid());
 }
 
 void UMDIOTraceTest::testIsValid()
 {
     // Test with an invalid file
-    UMDIOTrace test1(1, "dummy_file_name");
+    UMDIOTrace test1(1, "umdtf_dummy_name");
     CPPUNIT_ASSERT(false == test1.isValid());
 
     //Test with a valid trace file
-    UMDIOTrace test2(1, "tests/support/umd_io_trace.tra");
+    UMDIOTrace test2(1, "tests/traces/umd_io_trace.trace");
     CPPUNIT_ASSERT(true == test2.isValid());
 }
 
 void UMDIOTraceTest::testHasMoreRecords()
 {
     // Test with a valid trace
-    UMDIOTrace test(1, "tests/support/umd_io_trace.tra");
+    UMDIOTrace test(1, "tests/traces/umd_io_trace.trace");
     for (int i = 0; i < 10; i++)
     {
         CPPUNIT_ASSERT(true == test.hasMoreRecords());
@@ -111,7 +111,7 @@ void UMDIOTraceTest::testHasMoreRecords()
 
 void UMDIOTraceTest::testNextRecord()
 {
-    UMDIOTrace test1(1, "tests/support/umd_io_trace.tra");
+    UMDIOTrace test1(1, "tests/traces/umd_io_trace.trace");
 
     //
     // 1st record

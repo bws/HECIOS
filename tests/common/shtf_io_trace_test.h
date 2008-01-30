@@ -80,7 +80,7 @@ void SHTFIOTraceTest::testConstructor()
     CPPUNIT_ASSERT(false == test1.isValid());
 
     //Test with a valid trace file
-    SHTFIOTrace test2("tests/support/test_trace.shtf");
+    SHTFIOTrace test2("tests/traces/test_trace.shtf");
     CPPUNIT_ASSERT(true == test2.isValid());
 }
 
@@ -91,14 +91,14 @@ void SHTFIOTraceTest::testIsValid()
     CPPUNIT_ASSERT(false == test1.isValid());
 
     //Test with a valid trace file
-    SHTFIOTrace test2("tests/support/test_trace.shtf");
+    SHTFIOTrace test2("tests/traces/test_trace.shtf");
     CPPUNIT_ASSERT(true == test2.isValid());
 }
 
 void SHTFIOTraceTest::testHasMoreRecords()
 {
     // Test with a valid trace
-    SHTFIOTrace test("tests/support/test_trace.shtf");
+    SHTFIOTrace test("tests/traces/test_trace.shtf");
     for (size_t i = 0; i < test.getNumRecords(); i++)
     {
         CPPUNIT_ASSERT(true == test.hasMoreRecords());
@@ -111,7 +111,7 @@ void SHTFIOTraceTest::testHasMoreRecords()
 
 void SHTFIOTraceTest::testNextRecord()
 {
-    SHTFIOTrace test1("tests/support/test_trace.shtf");
+    SHTFIOTrace test1("tests/traces/test_trace.shtf");
 
     //
     // 1st record
