@@ -19,6 +19,8 @@ use strict;
 #
 my $g_traceTimeStamp = 0.0;
 my $g_recordCount = 0;
+my $g_currentDir = "/mnt/pvfs2";
+my $g_mountDir = "/mnt/pvfs2";
 
 #
 # Global metadata structures
@@ -69,6 +71,20 @@ sub openOutputFile
 }
 
 #
+# Add the filename to the global data
+#
+sub addFilename
+{
+    my $filename = shift;
+
+    # If the filename hasn't already been opened, set it's size to 0
+    if (!$g_filenameToSize{$filename})
+    {
+        $g_filenameToSize{$filename} = 0;
+    }    
+}
+
+#
 # Add the filename and descriptor to the data structures
 #
 sub addFilenameAndDescriptor
@@ -76,14 +92,9 @@ sub addFilenameAndDescriptor
     my $filename = shift;
     my $fd = shift;
 
+    addFilename($filename);
     $g_descriptorToFilename{$fd} = $filename;
     $g_descriptorToFilePointer{$fd} = 0;
-
-    # If the filename hasn't already been opened, set it's size to 0
-    if (!$g_filenameToSize{$filename})
-    {
-        $g_filenameToSize{$filename} = 0;
-    }
 }
 
 #
@@ -150,8 +161,9 @@ sub isFileInPFS
     my $filename = shift;
 
     # For now, we only need to handle the local directory
-    my $match = substr($filename, 0, 5);
-    if ($match eq "linux")
+    $mountDir = $mountDir . "/";
+    my $match = substr($filename, 0, 11);
+    if ($mountDir eq $match)
     {
         return 1;
     }
@@ -159,6 +171,20 @@ sub isFileInPFS
     {
         return !1;
     }
+}
+
+#
+# If the file is a relative path, prepend the trace's current working dir
+#
+sub fixFilename
+{
+    my $filename = shift;
+
+    if ("/" ne substr($filename, 0, 1))
+    {
+        $filename = $g_currentDir . "/" . $filename;
+    }
+    return $filename;
 }
 
 #
@@ -276,7 +302,11 @@ sub parseMkdirCall
     # Remove the surrounding "" from the filename
     my $filename = substr($args[0], 1);
     chop($filename);
+    $filename = fixFilename($filename);
     my $perms = $args[2];
+
+    # Update meta data
+    addFilename($filename);
 
     return "MKDIR $filename $perms"
 }
@@ -329,6 +359,8 @@ sub parseOpenCall
     # Remove the surrounding "" from the filename
     my $filename = substr($args[0], 1);
     chop($filename);
+    $filename = fixFilename($filename);
+
     my $openFlags = $args[2];
     my $descriptor = $rc;
 
@@ -374,7 +406,11 @@ sub parseUtimeCall
     # Remove the surrounding "" from the filename
     my $filename = substr($args[0], 1);
     chop($filename);
+    $filename = fixFilename($filename);
     my $time = qq("$toks[2]");
+
+    # Update meta data
+    addFilename($filename);
 
     return "UTIME $filename $time";
 }
@@ -409,6 +445,10 @@ sub parseStatCall
     # Remove the surrounding "" from the filename
     my $filename = substr($args[0], 1);
     chop($filename);
+    $filename = fixFilename($filename);
+
+    # Update meta data
+    addFilename($filename);
 
     return "STAT $filename $rc";
 }
@@ -430,7 +470,7 @@ sub processTraceRecord
     {
         my $filename = $fields[1];
         my $fd = $fields[3];
-        if (isFileInPFS($mountDir, $filename))
+        if (isFileInPFS($g_mountDir, $filename))
         {
             $processedRecord = $traceRecord;
         }
@@ -454,7 +494,7 @@ sub processTraceRecord
     elsif ($cmd =~ /MKDIR|STAT|UTIME/)
     {
         my $filename = $fields[1];
-        if (isFileInPFS($mountDir, $filename))
+        if (isFileInPFS($g_mountDir, $filename))
         {
             $processedRecord = $traceRecord;
         }
@@ -485,7 +525,7 @@ sub emitTraceRecord
     my $startTime = shift;
     my $duration = shift;
 
-    print $recordFile "$traceRecord $startTime $duration\n";
+    print $recordFile "$startTime $duration $traceRecord\n";
 }
 
 #
@@ -594,6 +634,23 @@ sub processStraceLine
 }
 
 #
+# process the trace meta data to cull files not in the PFS volume
+#
+sub processTraceMetaData
+{
+    # Purge files that are not in the PFS volume
+    my $filename;
+    foreach $filename (keys %g_filenameToSize)
+    {
+        if (! isFileInPFS($g_mountDir, $filename))
+        {
+            print "Ignoring file: $filename \n";
+            delete $g_filenameToSize{$filename};
+        }
+    }    
+}
+
+#
 # Write the trace metadata to $outFile
 #
 sub emitTraceMetaData
@@ -638,19 +695,27 @@ sub main
     my $outputFilename = basename($inputFilename);
     $outputFilename =~ s/\..*/\.shtf/;
 
-    # Determine the parallel file system mount point
+    # Parse command line arguments
     my %options = ();
-    getopts("d:", \%options);
-    my $mountDir = $options{"d"};
-    if (!$mountDir)
+    getopts("C:d:", \%options);
+
+    # Determine the trace's current working directory
+    if ($options{"C"})
     {
-        $mountDir = "./";
+        $g_currentDir = $options{"C"};
+    }
+
+    # Determine the parallel file system mount point
+    if ($options{"d"})
+    {
+        $g_mountDir = $options{"d"};
     }
 
     # Print out the settings for this invocation
     print "Input File: $inputFilename\n"
         . "Output File: $outputFilename\n"
-        . "PFS Mountpoint: $mountDir\n";
+        . "Trace Relative Path: $g_currentDir\n"
+        . "PFS Mountpoint: $g_mountDir\n";
     
     # Open the input file
     my $inputFile = openInputFile($ARGV[0]);
@@ -675,6 +740,7 @@ sub main
     }
 
     # Add all of the trace metadata to the output file
+    processTraceMetaData();
     emitTraceMetaData($outputFile);
 
     # Move the file pointer to the beginning of the temp file, and append it
