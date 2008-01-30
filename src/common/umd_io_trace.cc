@@ -58,7 +58,10 @@ UMDIOTrace::UMDIOTrace(int numProcs, string traceFileName)
 
             string filename;
             traceFile_ >> filename;
+
+            // Add the file to the filesystem with an arbitrary size
             addFilename(i, filename);
+            registerFile(filename, 100000);
         }
         curRecord_ = 0;
     }

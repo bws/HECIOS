@@ -36,10 +36,9 @@ simple BasicModelDisk
         trackSwitchTimeSecs: const,
         averageReadSeekSecs: const,
         averageWriteSeekSecs: const,
-        capacity: const,
         numCylinders: const,
         numHeads: const,
-        tracksPerCylinder: const,
+        numSectors: const,
         sectorsPerTrack: const,
         rpm: const;
 
@@ -50,6 +49,7 @@ endsimple
 
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:

@@ -27,8 +27,10 @@
 #include "filename.h"
 #include "file_builder.h"
 #include "file_descriptor.h"
+#include "io_trace.h"
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
+#include "shtf_io_trace.h"
 #include "storage_layout_manager.h"
 #include "umd_io_trace.h"
 
@@ -54,20 +56,9 @@ void IOApplication::initialize()
 
     // Get the trace file name and perform the rank substitution
     string traceName = par("traceFile").stringValue();
-    string::size_type replaceIdx = traceName.find("%r");
-    if (string::npos != replaceIdx)
-    {
-        long numTraceProcs = par("numTraceProcs").longValue();
-        long fileRank = rank_ % numTraceProcs;
-        stringstream rankStr;
-        rankStr << fileRank;
-        traceName.replace(replaceIdx, 2, rankStr.str());
-    }
+    trace_ = createIOTrace(traceName);
+    assert(0 != trace_);
     
-    // Construct a trace and begin sending events
-    long size = par("numTraceProcs").longValue();
-    trace_ = new UMDIOTrace(size, traceName);
-
     // Send the kick start message
     cMessage* kickStart = new cMessage();
     scheduleAt(1.0, kickStart);
@@ -100,7 +91,11 @@ void IOApplication::handleMessage(cMessage* msg)
 {
     if (msg->isSelfMessage())
     {
-        // On a self message kick start, get the first message
+        // On a self message, perform kick start
+        // Create file system files
+        populateFileSystem();
+        
+        // Schedule the first trace message
         delete msg;
         cMessage* firstMessage = getNextMessage();
         send(firstMessage, ioOutGate_);
@@ -180,70 +175,34 @@ cMessage* IOApplication::createMessage(IOTrace::Record* rec)
 
     // Create the correct messages for each operation type
     switch(rec->opType()) {
-        case IOTrace::OPEN:
-        {
-            // If the file does not exist, create it
-            Filename openFile(trace_->getFilename(rec->fileId()));
-            if (!FileBuilder::instance().fileExists(openFile))
-            {
-                // Create trace files as needed
-                StorageLayoutManager layoutManager;
-                int numServers = FileBuilder::instance().getNumDataServers();
-                FileBuilder::instance().createFile(openFile,
-                                                   0,
-                                                   numServers,
-                                                   layoutManager);
-            }
-            
-            spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
-                0, SPFS_MPI_FILE_OPEN_REQUEST);
-            open->setFileName(openFile.str().c_str());
-
-            // Construct a file descriptor for use in simulaiton
-            FileDescriptor* fd =
-                FileBuilder::instance().getDescriptor(openFile);
-            setDescriptor(rec->fileId(), fd);
-
-            open->setFileDes(fd);
-            mpiMsg = open;
-            break;
-        }
         case IOTrace::CLOSE:
         {
-            spfsMPIFileCloseRequest* close = new spfsMPIFileCloseRequest(
-                0, SPFS_MPI_FILE_CLOSE_REQUEST);
-            mpiMsg = close;
+            mpiMsg = createCloseMessage(rec);
+            break;
+        }
+        case IOTrace::MKDIR:
+        {
+            mpiMsg = createDirectoryCreateMessage(rec);
+            break;
+        }
+        case IOTrace::OPEN:
+        {
+            mpiMsg = createOpenMessage(rec);
             break;
         }
         case IOTrace::READ_AT:
         {
-            FileDescriptor* fd = getDescriptor(rec->fileId());
-            DataType* dataType =
-                new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
-            spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
-                rec->source().c_str(), SPFS_MPI_FILE_READ_AT_REQUEST);
-            read->setCount(rec->length());
-            read->setDataType(dataType);
-            read->setOffset(rec->offset());
-            read->setFileDes(fd);
-            mpiMsg = read;
+            mpiMsg = createReadAtMessage(rec);
+            break;
+        }
+        case IOTrace::UTIME:
+        {
+            mpiMsg = createUpdateTimeMessage(rec);
             break;
         }
         case IOTrace::WRITE_AT:
         {
-            FileDescriptor* fd = getDescriptor(rec->fileId());
-            DataType* dataType =
-                new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
-            spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
-                0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
-            write->setCount(rec->length());
-            write->setDataType(dataType);
-            write->setOffset(rec->offset());
-            write->setFileDes(fd);
-            mpiMsg = write;
-
-            // Generate corresponding cache invalidation messages
-            //invalidateCaches(write);
+            mpiMsg = createWriteAtMessage(rec);
             break;
         }
         case IOTrace::SEEK:
@@ -260,6 +219,96 @@ cMessage* IOApplication::createMessage(IOTrace::Record* rec)
             break;
     }
     return mpiMsg;    
+}
+
+void IOApplication::populateFileSystem()
+{
+    assert(0 != trace_);
+    cerr << "Populating file system . . . ";
+    const FileSystemMap* traceFS = trace_->getFiles();
+    FileBuilder::instance().populateFileSystem(*traceFS);
+    cerr << "Done." << endl;
+}
+
+spfsMPIDirectoryCreateRequest* IOApplication::createDirectoryCreateMessage(
+    const IOTrace::Record* mkdirRecord)
+{
+    assert(IOTrace::MKDIR == mkdirRecord->opType());
+    return 0;
+}
+
+spfsMPIFileCloseRequest* IOApplication::createCloseMessage(
+    const IOTrace::Record* closeRecord)
+{
+    assert(IOTrace::CLOSE == closeRecord->opType());
+    spfsMPIFileCloseRequest* close = new spfsMPIFileCloseRequest(
+        0, SPFS_MPI_FILE_CLOSE_REQUEST);
+    return close;
+}
+
+spfsMPIFileOpenRequest* IOApplication::createOpenMessage(
+    const IOTrace::Record* openRecord)
+{
+    assert(IOTrace::OPEN == openRecord->opType());
+
+    // If the file does not exist, create it
+    Filename openFile(openRecord->filename());
+    
+    // Construct a file descriptor for use in simulaiton
+    FileDescriptor* fd = FileBuilder::instance().getDescriptor(openFile);
+
+    // Associate the file id with a file descriptor
+    setDescriptor(openRecord->fileId(), fd);
+    
+    spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
+        0, SPFS_MPI_FILE_OPEN_REQUEST);
+    open->setFileName(openFile.str().c_str());
+    open->setFileDes(fd);
+    return open;
+}
+
+spfsMPIFileReadAtRequest* IOApplication::createReadAtMessage(
+    const IOTrace::Record* readAtRecord)
+{
+    assert(IOTrace::READ_AT == readAtRecord->opType());
+
+    FileDescriptor* fd = getDescriptor(readAtRecord->fileId());
+    DataType* dataType = new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
+
+    spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
+        0, SPFS_MPI_FILE_READ_AT_REQUEST);
+    read->setCount(readAtRecord->length());
+    read->setDataType(dataType);
+    read->setOffset(readAtRecord->offset());
+    read->setFileDes(fd);
+    return read;
+}
+
+spfsMPIFileUpdateTimeRequest* IOApplication::createUpdateTimeMessage(
+    const IOTrace::Record* utimeRecord)
+{
+    assert(IOTrace::UTIME == utimeRecord->opType());
+    return 0;
+}
+
+spfsMPIFileWriteAtRequest* IOApplication::createWriteAtMessage(
+    const IOTrace::Record* writeAtRecord)
+{
+    assert(IOTrace::WRITE_AT == writeAtRecord->opType());
+
+    DataType* dataType = new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
+    FileDescriptor* fd = getDescriptor(writeAtRecord->fileId());
+
+    spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
+        0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
+    write->setCount(writeAtRecord->length());
+    write->setDataType(dataType);
+    write->setOffset(writeAtRecord->offset());
+    write->setFileDes(fd);
+
+    // Generate corresponding cache invalidation messages
+    //invalidateCaches(write);
+    return write;
 }
 
 void IOApplication::setDescriptor(int fileId, FileDescriptor* descriptor)
@@ -304,6 +353,49 @@ spfsCacheInvalidateRequest* IOApplication::createCacheInvalidationMessage(
 
     return invalidator;
 }
+
+IOTrace* IOApplication::createIOTrace(const string& traceFilename)
+{
+    IOTrace* trace = 0;
+    string::size_type pos = traceFilename.find_last_of('.');
+    string extension = traceFilename.substr(pos + 1);
+    if ("shtf" == extension)
+    {
+        trace = createSHTFIOTrace(traceFilename);
+    }
+    else if ("trace" == extension)
+    {
+        trace = createUMDIOTrace(traceFilename);
+    }
+    else
+    {
+        cerr << "Tracefile extension not recognized: " << extension << endl
+             << "Valid extensions are: shtf or trace" << endl;;
+    }
+    return trace;
+}
+
+UMDIOTrace* IOApplication::createUMDIOTrace(string traceFilename)
+{
+    // Perform %r subsititution if neccesary
+    long numTraceProcs = par("numTraceProcs").longValue();
+    string::size_type replaceIdx = traceFilename.find("%r");
+    if (string::npos != replaceIdx)
+    {
+        long fileRank = rank_ % numTraceProcs;
+        stringstream rankStr;
+        rankStr << fileRank;
+        traceFilename.replace(replaceIdx, 2, rankStr.str());
+    }
+
+    return new UMDIOTrace(numTraceProcs, traceFilename);
+}
+
+SHTFIOTrace* IOApplication::createSHTFIOTrace(const string& traceFilename)
+{
+    return new SHTFIOTrace(traceFilename);
+}
+
 
 /*
  * Local variables:

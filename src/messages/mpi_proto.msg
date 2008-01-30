@@ -315,6 +315,21 @@ message spfsMPIDirectoryCreateResponse extends spfsMPIResponse
 {
 };
 
+// Request to update a file's atime
+message spfsMPIFileUpdateTimeRequest extends spfsMPIRequest
+{
+    fields:
+        string filename;
+
+        // internal fields
+        unsigned int numResolvedSegments = 1;
+};
+
+// Response to atime update
+message spfsMPIFileUpdateTimeResponse extends spfsMPIResponse
+{
+};
+
 // Broadcast request
 message spfsMPIBcastRequest extends spfsMPIRequest
 {

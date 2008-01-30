@@ -19,9 +19,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
-#include <vector>
+#include <map>
 #include <string>
+#include <vector>
 #include "basic_types.h"
 class FileDistribution;
 
@@ -61,13 +61,15 @@ struct FSDescriptor1
     int segcnt;
 };
 
-/** For backwards compatibility, alias FSDescriptor to FSOpenFile */
-typedef struct FSDescriptor FSOpenFile1;
+/** Map for holding file system data for construction */
+typedef std::map<std::string, FSSize> FileSystemMap;
+
 
 #endif
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

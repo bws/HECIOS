@@ -22,6 +22,7 @@
 
 #include <map>
 #include <vector>
+#include "io_trace.h"
 #include "pfs_types.h"
 class FileDescriptor;
 class Filename;
@@ -31,7 +32,6 @@ class StorageLayoutManagerIFace;
 class FileBuilder
 {
 public:
-
     /** Default size for a PFS directory */
     static const std::size_t DEFAULT_DIRECTORY_SIZE = 8192;
     
@@ -75,12 +75,16 @@ public:
     
     /** Create the named file in the file system */
     void createFile(const Filename& fileName,
+                    FSSize fileSize,
                     int metaServer,
                     int numDataServers,
                     StorageLayoutManagerIFace& layoutManager);
 
     /** @return the list of blocks for a file handle */
     std::vector<int> getDiskBlocks(const FSHandle& handle) const;
+
+    /** Populate the file system with the files described in the IOTrace */
+    void populateFileSystem(const FileSystemMap& traceFS);
     
 private:
 
@@ -117,6 +121,7 @@ private:
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

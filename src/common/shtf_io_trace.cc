@@ -56,6 +56,7 @@ SHTFIOTrace::SHTFIOTrace(const string& traceFileName)
             string filename;
             size_t length;
             traceFile_ >> filename >> length;
+            registerFile(filename, length);
 
             // Discard the trailing \n
             string tmp;
@@ -105,69 +106,61 @@ IOTrace::Record* SHTFIOTrace::nextRecord()
 IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
 {
     IOTrace::Record* rec = 0;
+
+    // Peel off the start time and duration
+    double startTime, duration;
+    recordStream >> startTime >> duration;
+
+    // Get the command name to build trace records with
     string token;
     recordStream >> token;
 
     if ("CLOSE" == token)
     {
         int descriptor, status;
-        double startTime, duration;
         recordStream >> descriptor >> status;
-        recordStream >> startTime >> duration;
         rec = createCloseRecord(descriptor, status, startTime, duration);
     }
     else if ("DELETE" == token)
     {
         string filename;
-        double startTime, duration;
         recordStream >> filename;
-        recordStream >> startTime >> duration;
         rec = createDeleteRecord(filename, startTime, duration);
     }
     else if ("MKDIR" == token)
     {
         string filename, perms;
-        double startTime, duration;
         recordStream >> filename >> perms;
-        recordStream >> startTime >> duration;
         rec = createMkdirRecord(filename, perms, startTime, duration);
     }
     else if ("OPEN" == token)
     {
         string filename, mode;
         int descriptor;
-        double startTime, duration;
         recordStream >> filename >> mode >> descriptor;
-        recordStream >> startTime >> duration;
         rec = createOpenRecord(filename, mode, descriptor, startTime, duration);
     }
     else if ("READ" == token)
     {
         int descriptor;
         size_t offset, extent;
-        double startTime, duration;
         recordStream >> descriptor >> offset >> extent;
-        recordStream >> startTime >> duration;
         rec = createReadRecord(descriptor, offset, extent,
                                startTime, duration);
     }
     else if ("UTIME" == token)
     {
         string filename, utime, tmp;
-        double startTime, duration;
         recordStream >> filename;
         getline(recordStream, tmp, '\"');
         getline(recordStream, utime, '\"');
-        recordStream >> startTime >> duration;
         rec = createUtimeRecord(filename, utime, startTime, duration);
     }
     else if ("WRITE" == token)
     {
         int descriptor;
         size_t offset, extent;
-        double startTime, duration;
         recordStream >> descriptor >> offset >> extent;
-        recordStream >> startTime >> duration;
         rec = createWriteRecord(descriptor, offset, extent,
                                 startTime, duration);
     }
@@ -182,6 +175,8 @@ IOTrace::Record* SHTFIOTrace::createCloseRecord(int descriptor,
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::CLOSE,
                                                startTime, duration);
+    rec->fileId(descriptor);
+    rec->filename(getFilename(descriptor));
     return rec;
 }
 
@@ -191,6 +186,7 @@ IOTrace::Record* SHTFIOTrace::createDeleteRecord(const string& filename,
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::DELETE,
                                                startTime, duration);
+    rec->filename(filename);
     return rec;
 }
 
@@ -210,8 +206,12 @@ IOTrace::Record* SHTFIOTrace::createOpenRecord(const string& filename,
                                                double startTime,
                                                double duration)
 {
+    // Update bookkeeping information
+    addFilename(descriptor, filename);
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::OPEN,
                                                startTime, duration);
+    rec->fileId(descriptor);
+    rec->filename(filename);
     return rec;
 }
 
@@ -223,6 +223,10 @@ IOTrace::Record* SHTFIOTrace::createReadAtRecord(int descriptor,
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::READ_AT,
                                                startTime, duration);
+    rec->fileId(descriptor);
+    rec->filename(getFilename(descriptor));
+    rec->offset(offset);
+    rec->length(extent);
     return rec;
 }
 
@@ -234,6 +238,10 @@ IOTrace::Record* SHTFIOTrace::createReadRecord(int descriptor,
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::READ,
                                                startTime, duration);
+    rec->fileId(descriptor);
+    rec->filename(getFilename(descriptor));
+    rec->offset(offset);
+    rec->length(extent);
     return rec;
 }
 
@@ -252,6 +260,7 @@ IOTrace::Record* SHTFIOTrace::createUtimeRecord(const string& filename,
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::UTIME,
                                                startTime, duration);
+    rec->filename(filename);
     return rec;
 }
 
@@ -263,6 +272,10 @@ IOTrace::Record* SHTFIOTrace::createWriteAtRecord(int descriptor,
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::WRITE_AT,
                                                startTime, duration);
+    rec->fileId(descriptor);
+    rec->filename(getFilename(descriptor));
+    rec->offset(offset);
+    rec->length(extent);
     return rec;
 }
 
@@ -274,6 +287,10 @@ IOTrace::Record* SHTFIOTrace::createWriteRecord(int descriptor,
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::WRITE,
                                                startTime, duration);
+    rec->fileId(descriptor);
+    rec->filename(getFilename(descriptor));
+    rec->offset(offset);
+    rec->length(extent);
     return rec;
 }
 

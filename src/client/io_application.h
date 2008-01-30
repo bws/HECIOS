@@ -23,7 +23,15 @@
 #include <omnetpp.h>
 #include "io_trace.h"
 class FileDescriptor;
+class IOTrace;
+class SHTFIOTrace;
+class UMDIOTrace;
 class spfsCacheInvalidateRequest;
+class spfsMPIDirectoryCreateRequest;
+class spfsMPIFileCloseRequest;
+class spfsMPIFileOpenRequest;
+class spfsMPIFileReadAtRequest;
+class spfsMPIFileUpdateTimeRequest;
 class spfsMPIFileWriteAtRequest;
 
 /**
@@ -68,7 +76,43 @@ protected:
         spfsMPIFileWriteAtRequest* writeAt);
     
 private:
+    /** Create the file system files for this trace */
+    void populateFileSystem();
+    
+    /** @return create the IOTrace for traceFilename */
+    IOTrace* createIOTrace(const std::string& traceFilename);
 
+    /** @return a UMDIOTrace for traceFilename */
+    UMDIOTrace* createUMDIOTrace(std::string traceFilename);
+
+    /** @return a SHTFIOTrace for traceFilename */
+    SHTFIOTrace* createSHTFIOTrace(const std::string& traceFilename);
+
+    /** @return an MPI DirectoryCreate request */
+    spfsMPIDirectoryCreateRequest* createDirectoryCreateMessage(
+        const IOTrace::Record* mkdirRecord);
+    
+    /** @return an MPI File Close request */
+    spfsMPIFileCloseRequest* createCloseMessage(
+        const IOTrace::Record* closeRecord);
+    
+    /** @return an MPI File Open request */
+    spfsMPIFileOpenRequest* createOpenMessage(
+        const IOTrace::Record* openRecord);
+    
+    /** @return an MPI File Read At request */
+    spfsMPIFileReadAtRequest* createReadAtMessage(
+        const IOTrace::Record* readAtRecord);
+    
+    /** @return an MPI File Update Time request */
+    spfsMPIFileUpdateTimeRequest* createUpdateTimeMessage(
+        const IOTrace::Record* utimeRecord);
+    
+    /** @return an MPI File Write At request */
+    spfsMPIFileWriteAtRequest* createWriteAtMessage(
+        const IOTrace::Record* writeAtRecord);
+    
+    
     IOTrace* trace_;
     int rank_;
     int ioInGate_;

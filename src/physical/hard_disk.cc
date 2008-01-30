@@ -103,18 +103,12 @@ void BasicModelDisk::initialize()
     // Drive layout parameters
     numCylinders_ = par("numCylinders").longValue();
     numHeads_ = par("numHeads").longValue();
-    tracksPerCylinder_ = par("tracksPerCylinder").longValue();
+    numSectors_ = par("numSectors").longValue();
     sectorsPerTrack_ = par("sectorsPerTrack").longValue();
     rpms_ = par("rpm").longValue();
 
-    // FIXME: Need workaround to get 64 bits of integer precisison
-    // could use strings here, but double reinterpret won't work :(
-    capacity_ = static_cast<uint64_t>(par("capacity").doubleValue());
-
     // Derived layout parameters
     headsPerCylinder_ = numCylinders_ / numHeads_;
-    sectorsPerCylinder_ = sectorsPerTrack_ * tracksPerCylinder_;
-    numSectors_ = sectorsPerCylinder_ * numCylinders_;
 
     // Drive performance parameters
     fixedControllerReadOverheadSecs_ =
@@ -127,7 +121,11 @@ void BasicModelDisk::initialize()
 
     // Derived performance parameters
     timePerRevolution_ = 1.0 / rpms_;
-    timePerSector_ = timePerRevolution_ / sectorsPerCylinder_;
+    timePerSector_ = timePerRevolution_ / sectorsPerTrack_;
+
+    // FIXME: Need workaround to get 64 bits of integer precisison
+    // could use strings here, but double reinterpret won't work :(
+    capacity_ = 512 * numSectors_;
 
     // Park the head at cylinder 0 to begin with
     lastCylinder_ = 0;
@@ -138,12 +136,12 @@ double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
     // Service delay
     double totalDelay = 0.0;
 
-    // Determine physical destination (from page 80 of Hitachi Deskstar
-    // documentation t7k500_sp.book)
+    // Determine physical location, better would be to use zoned sector per
+    // track counts
     int temp = blockNumber % (headsPerCylinder_ * sectorsPerTrack_);
     int destCylinder = blockNumber / (headsPerCylinder_ * sectorsPerTrack_);
     int destHead = temp / sectorsPerTrack_;
-    int destSector = temp % sectorsPerCylinder_ + 1;
+    int destSector = temp % sectorsPerTrack_ + 1;
 
     // Account for cylinder switch/arm movement
     int cylindersToMove = abs(int(destCylinder - lastCylinder_));
@@ -182,7 +180,7 @@ double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
         else
         {
             // Must wrap around to sector 0
-            sectorsToMove  = sectorsPerCylinder_ - currentSector;
+            sectorsToMove  = sectorsPerTrack_ - currentSector;
             sectorsToMove += destSector;
         }
         totalDelay += sectorsToMove * timePerSector_;
@@ -206,6 +204,7 @@ uint32_t BasicModelDisk::basicBlockSize() const
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

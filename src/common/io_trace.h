@@ -24,6 +24,7 @@
 #include <map>
 #include <string>
 #include <omnetpp.h>
+#include "pfs_types.h"
 
 /**
  * Abstract I/O trace class.
@@ -31,10 +32,6 @@
 class IOTrace
 {
 public:
-
-    /** Type to represent file system state trace meta data */
-    typedef std::map<std::string, std::size_t> FileSystemMap;
-    
     /**
      * Operation Types
      */
@@ -121,8 +118,8 @@ public:
     /** Register a file and its size that exists in this traces file system */
     void registerFile(const std::string& filename, std::size_t fileSize);
 
-    /** @return an iterator to all files in this traces file system */
-    FileSystemMap::const_iterator getFiles() const;
+    /** @return a pointer to files in this trace's file system */
+    const FileSystemMap* getFiles() const;
     
     /** Register a filename by file id */
     void addFilename(int fileId, std::string filename);

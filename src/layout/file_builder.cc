@@ -177,6 +177,7 @@ void FileBuilder::createDirectory(const Filename& dirName,
 }
 
 void FileBuilder::createFile(const Filename& fileName,
+                             FSSize fileSize,
                              int metaServer,
                              int numServers,
                              StorageLayoutManagerIFace& layoutManager)
@@ -198,7 +199,7 @@ void FileBuilder::createFile(const Filename& fileName,
         meta->owner = 0;
         meta->group = 0;
         meta->nlinks = 0;
-        meta->size = 0;
+        meta->size = fileSize;
         meta->handle = getNextHandle(metaServer);
         meta->dist = new SimpleStripeDistribution(0, numServers);
 
@@ -208,7 +209,7 @@ void FileBuilder::createFile(const Filename& fileName,
                               defaultMetaDataSize_);
         
         // Construct the data handles
-        cerr << "Creating file on " << numServers << endl;
+        cerr << "Creating file on " << numServers << " data servers" << endl;
         int firstServer = rand() % nextServerNumber_;
         vector<FSHandle> dataHandles;
         for (size_t i = 0; i < nextServerNumber_; i++)
@@ -218,7 +219,7 @@ void FileBuilder::createFile(const Filename& fileName,
 
             // Construct the storage layout for the PFS file
             Filename storageName(dataHandles[i]);
-            FSSize localFileSize = (FSSize)pow(2.0, 20.0);
+            FSSize localFileSize = meta->size / numServers;
             layoutManager.addFile((size_t)serverNum, storageName, localFileSize);
         }
         meta->dataHandles = dataHandles;
@@ -233,8 +234,30 @@ void FileBuilder::createFile(const Filename& fileName,
     }
 }
 
+void FileBuilder::populateFileSystem(const FileSystemMap& traceFS)
+{
+    StorageLayoutManager layoutManager;
+
+    FileSystemMap::const_iterator iter = traceFS.begin();
+    for (size_t i = 0; i < traceFS.size(); i++)
+    {
+        // Determine the meta server using a round robin scheme
+        size_t metaIdx = i % metaServers_.size();
+
+        // Create the file using all of the data servers
+        Filename filename(iter->first);
+        FSSize fileSize(iter->second);
+        createFile(filename, fileSize,
+                   metaServers_[metaIdx], getNumDataServers(), layoutManager);
+
+        // Increment to next file
+        ++iter;
+    }
+}
+
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

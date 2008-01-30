@@ -104,14 +104,12 @@ private:
     uint64_t capacity_;
     uint32_t numCylinders_;
     uint32_t numHeads_;
-    uint32_t headsPerCylinder_;
-    uint32_t tracksPerCylinder_;
+    uint32_t numSectors_;
     uint32_t sectorsPerTrack_;
     uint32_t rpms_;
 
     // Data derived from disk characteristics
-    uint32_t sectorsPerCylinder_;
-    uint32_t numSectors_;
+    uint32_t headsPerCylinder_;
     double timePerRevolution_;
     double timePerSector_;
 
