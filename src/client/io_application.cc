@@ -104,14 +104,15 @@ void IOApplication::handleMessage(cMessage* msg)
     {
         switch(msg->kind())
         {
-            case SPFS_MPI_FILE_OPEN_RESPONSE:
+            case SPFS_MPI_DIRECTORY_CREATE_RESPONSE:
             case SPFS_MPI_FILE_CLOSE_RESPONSE:
             case SPFS_MPI_FILE_DELETE_RESPONSE:
-            case SPFS_MPI_FILE_SET_SIZE_RESPONSE:
-            case SPFS_MPI_FILE_PREALLOCATE_RESPONSE:
             case SPFS_MPI_FILE_GET_SIZE_RESPONSE:
             case SPFS_MPI_FILE_GET_INFO_RESPONSE:
+            case SPFS_MPI_FILE_OPEN_RESPONSE:
+            case SPFS_MPI_FILE_PREALLOCATE_RESPONSE:
             case SPFS_MPI_FILE_SET_INFO_RESPONSE:
+            case SPFS_MPI_FILE_SET_SIZE_RESPONSE:
             case SPFS_MPI_FILE_READ_AT_RESPONSE:
             case SPFS_MPI_FILE_READ_RESPONSE:
             case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
@@ -234,7 +235,11 @@ spfsMPIDirectoryCreateRequest* IOApplication::createDirectoryCreateMessage(
     const IOTrace::Record* mkdirRecord)
 {
     assert(IOTrace::MKDIR == mkdirRecord->opType());
-    return 0;
+    spfsMPIDirectoryCreateRequest* createDir =
+        new spfsMPIDirectoryCreateRequest(0, SPFS_MPI_DIRECTORY_CREATE_REQUEST);
+    createDir->setDirName(mkdirRecord->filename().c_str());
+    cerr << "creating directory: " << mkdirRecord->filename() << endl;
+    return createDir;
 }
 
 spfsMPIFileCloseRequest* IOApplication::createCloseMessage(

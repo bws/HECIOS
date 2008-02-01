@@ -98,6 +98,7 @@ message spfsRequest
     fields:
         int fsId;
         FSHandle handle;   // indicates server address and object
+        bool autoCleanup = false;
 
         // internal fields
         cFSM state;
@@ -226,8 +227,7 @@ message spfsLookupPathResponse extends spfsResponse
 message spfsCreateDirEntRequest extends spfsRequest
 {
     fields:
-        FSHandle parentHandle;
-        FSHandle newHandle;
+        FSHandle newEntryHandle;
         string entry;
 };
 

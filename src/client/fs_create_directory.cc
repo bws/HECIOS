@@ -90,7 +90,8 @@ void FSCreateDirectory::handleMessage(cMessage* msg)
             else if (SPFS_PARTIAL == status)
                 FSM_Goto(currentState, LOOKUP_PARENT_HANDLE);
             else
-                cerr << "ERROR: Dir does not exist during creation." << endl;
+                cerr << __FILE__ << ":" << __LINE__ << ":"
+                     << "ERROR: Dir does not exist during creation." << endl;
             break;
         }
         case FSM_Enter(GET_PARENT_ATTRIBUTES):
@@ -101,11 +102,11 @@ void FSCreateDirectory::handleMessage(cMessage* msg)
         case FSM_Exit(GET_PARENT_ATTRIBUTES):
         {
             cacheParentAttributes();
+            FSM_Goto(currentState, CREATE_META);
             break;
         }
         case FSM_Enter(CREATE_META):
         {    
-            assert(0 != dynamic_cast<spfsLookupPathResponse*>(msg));
             createMeta();
             break;
         }
@@ -153,6 +154,12 @@ bool FSCreateDirectory::isParentNameCached()
     // Lookup the parent directory in the name cache
     Filename createDir(createReq_->getDirName());
     Filename parentDir = createDir.getParent();
+
+    // If the parent directory is the root, it is well known
+    if (1 == parentDir.getNumPathSegments())
+    {
+        return true;
+    }
     
     FSHandle* lookup = client_->fsState().lookupName(parentDir.str());
     if (0 != lookup)
@@ -194,6 +201,7 @@ void FSCreateDirectory::lookupParentOnServer()
     spfsLookupPathRequest* req = new spfsLookupPathRequest(
         0, SPFS_LOOKUP_PATH_REQUEST);
     req->setContextPointer(createReq_);
+    req->setAutoCleanup(true);
     req->setFilename(parent.c_str());
     req->setHandle(resolvedHandle);
     req->setNumResolvedSegments(numResolvedSegments);
@@ -235,6 +243,7 @@ void FSCreateDirectory::getParentAttributes()
     // Construct the request
     spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
     req->setContextPointer(createReq_);
+    req->setAutoCleanup(true);
     req->setHandle(parentMeta->handle);
     client_->send(req, client_->getNetOutGate());
 }
@@ -249,13 +258,13 @@ void FSCreateDirectory::cacheParentAttributes()
 
 void FSCreateDirectory::createMeta()
 {
-    // Build message to create metadata
-    spfsCreateRequest* req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
-    req->setContextPointer(createReq_);
-
     // hash path to meta server number
     int metaServer = FileBuilder::instance().getMetaServers()[0];
 
+    // Build message to create metadata
+    spfsCreateRequest* req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
+    req->setContextPointer(createReq_);
+    req->setAutoCleanup(true);
     req->setHandle(FileBuilder::instance().getFirstHandle(metaServer));
     client_->send(req, client_->getNetOutGate());
 }
@@ -270,6 +279,7 @@ void FSCreateDirectory::createDataObject()
     assert(1 == metaData->dataHandles.size());
     spfsCreateRequest* create = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
     create->setContextPointer(createReq_);
+    create->setAutoCleanup(true);
     create->setHandle(metaData->dataHandles[0]);
     create->setByteLength(8);
     client_->send(create, client_->getNetOutGate());
@@ -286,6 +296,7 @@ void FSCreateDirectory::createDirEnt()
     spfsCreateDirEntRequest *req;
     req = new spfsCreateDirEntRequest(0, SPFS_CREATE_DIR_ENT_REQUEST);
     req->setContextPointer(createReq_);
+    req->setAutoCleanup(true);
     req->setHandle(parentMeta->handle);
     req->setEntry(dirName.c_str());
     req->setByteLength(8 + 8 + dirName.str().length());

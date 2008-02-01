@@ -176,15 +176,25 @@ sub isFileInPFS
 #
 # If the file is a relative path, prepend the trace's current working dir
 #
-sub fixFilename
+sub fixRelativePath
 {
     my $filename = shift;
 
+    # If the path is relative, prepend the current directory
     if ("/" ne substr($filename, 0, 1))
     {
         $filename = $g_currentDir . "/" . $filename;
     }
     return $filename;
+}
+
+sub fixPFSPath
+{
+    my $filename = shift;
+
+    # Replace the PFS mount volume with a simple root directory
+    my $pfsFilename = "/" . substr($filename, length($g_mountDir) + 1); 
+    return $pfsFilename;
 }
 
 #
@@ -302,7 +312,7 @@ sub parseMkdirCall
     # Remove the surrounding "" from the filename
     my $filename = substr($args[0], 1);
     chop($filename);
-    $filename = fixFilename($filename);
+    $filename = fixRelativePath($filename);
     my $perms = $args[2];
 
     # Update meta data
@@ -359,7 +369,7 @@ sub parseOpenCall
     # Remove the surrounding "" from the filename
     my $filename = substr($args[0], 1);
     chop($filename);
-    $filename = fixFilename($filename);
+    $filename = fixRelativePath($filename);
 
     my $openFlags = $args[2];
     my $descriptor = $rc;
@@ -406,7 +416,7 @@ sub parseUtimeCall
     # Remove the surrounding "" from the filename
     my $filename = substr($args[0], 1);
     chop($filename);
-    $filename = fixFilename($filename);
+    $filename = fixRelativePath($filename);
     my $time = qq("$toks[2]");
 
     # Update meta data
@@ -445,7 +455,7 @@ sub parseStatCall
     # Remove the surrounding "" from the filename
     my $filename = substr($args[0], 1);
     chop($filename);
-    $filename = fixFilename($filename);
+    $filename = fixRelativePath($filename);
 
     # Update meta data
     addFilename($filename);
@@ -472,7 +482,10 @@ sub processTraceRecord
         my $fd = $fields[3];
         if (isFileInPFS($g_mountDir, $filename))
         {
-            $processedRecord = $traceRecord;
+            # Rewrite the trace record for our purposes
+            my $pfsFilename = fixPFSPath($filename);
+            my $newRecord = "$fields[0] $pfsFilename $fields[2] $fields[3]";
+            $processedRecord = $newRecord;
         }
         else
         {
@@ -496,7 +509,10 @@ sub processTraceRecord
         my $filename = $fields[1];
         if (isFileInPFS($g_mountDir, $filename))
         {
-            $processedRecord = $traceRecord;
+            # Rewrite the trace record for our purposes
+            my $pfsFilename = fixPFSPath($filename);
+            my $newRecord = "$fields[0] $pfsFilename $fields[2]";
+            $processedRecord = $newRecord;
         }
     }
     elsif ($cmd =~ /FCNTL|IOCTL|READ|SEEK|WRITE/)
@@ -609,11 +625,12 @@ sub processStraceLine
         # Extract the call time field from the end of the line
         $line =~ m/<(\d+\.\d+)>/;
         my $callTime = $1;
-        if (processTraceRecord($traceRecord))
+        my $processedRecord = processTraceRecord($traceRecord);
+        if ($processedRecord)
         {
             $g_recordCount++;
             emitTraceRecord($recordDataFile, 
-                            $traceRecord, 
+                            $processedRecord, 
                             $g_traceTimeStamp, 
                             $callTime);
         }
@@ -660,6 +677,9 @@ sub emitTraceMetaData
     # Write out the format metadata
     print $outFile "# Serial HECIOS Trace Format Version 0.0.0.0\n";
     
+    ## Write out the mount point
+    #print $outFile "Mount: $g_mountDir\n";
+
     # Write out the number of files and records
     my $numFiles = scalar(keys %g_filenameToSize);
     print $outFile "$numFiles $g_recordCount\n";
@@ -670,7 +690,8 @@ sub emitTraceMetaData
     foreach $filename (keys %g_filenameToSize)
     {
         my $fileSize = $g_filenameToSize{$filename};
-	print $outFile "$filename $fileSize\n";
+        my $pfsFilename = fixPFSPath($filename);
+	print $outFile "$pfsFilename $fileSize\n";
         $i++;
     }    
 }

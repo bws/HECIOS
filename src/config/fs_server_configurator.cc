@@ -32,7 +32,7 @@
 using namespace std;
 
 /**
- * Model of a file system client library.
+ * Configuration data for the file system servers
  */
 class FSServerConfigurator : public cSimpleModule
 {
@@ -49,7 +49,7 @@ protected:
     virtual void initialize(int stage);
 
     /** Implementation of finish */
-    virtual void finish() {};
+    virtual void finish();
 
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
@@ -128,6 +128,11 @@ void FSServerConfigurator::initialize(int stage)
 
         }
     }
+}
+
+void FSServerConfigurator::finish()
+{
+    FileBuilder::clearState();
 }
 
 IPvXAddress* FSServerConfigurator::getServerIP(cModule* ioNode)

@@ -121,6 +121,9 @@ void Lookup::lookupName()
 
     // Increment the number of resolved segments
     lookupReq_->setNumResolvedSegments(nextSegment + 1);
+
+    cerr << "Looking up: " << fullName << endl
+         << "  Parent: " << parentName << " " << parentHandle << endl; 
 }
 
 bool Lookup::lookupIsComplete()

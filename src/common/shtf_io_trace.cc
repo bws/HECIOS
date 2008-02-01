@@ -190,13 +190,14 @@ IOTrace::Record* SHTFIOTrace::createDeleteRecord(const string& filename,
     return rec;
 }
 
-IOTrace::Record* SHTFIOTrace::createMkdirRecord(const string& filename,
+IOTrace::Record* SHTFIOTrace::createMkdirRecord(const string& dirName,
                                                 const string& perms,
                                                 double startTime,
                                                 double duration)
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::MKDIR,
                                                startTime, duration);
+    rec->filename(dirName);
     return rec;
 }
 

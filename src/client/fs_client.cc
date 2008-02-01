@@ -57,10 +57,17 @@ void FSClient::handleMessage(cMessage *msg)
             static_cast<cMessage*>(parentReq->contextPointer());
         processMessage(origRequest, msg);
 
-        // Request cleanup cannot be performed here because some requests
-        // have multiple responses, each individual state machine will
-        // have to handle deleting the messages at the appropriate time
-
+        // Only cleanup the originating server request if the autoCleanup
+        // flag is set.  This is necessary because some requests have
+        // multiple responses, and the individual state machine will
+        // have to handle deleting the request at the appropriate time
+        spfsRequest* serverReq = dynamic_cast<spfsRequest*>(parentReq);
+        assert(0 != serverReq);
+        if (true == serverReq->getAutoCleanup())
+        {
+            delete serverReq;
+        }
+        
         // Cleanup the response
         delete msg;
     }

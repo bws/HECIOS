@@ -79,7 +79,7 @@ void CreateDirEnt::handleServerMessage(cMessage* msg)
 void CreateDirEnt::writeDirEnt()
 {
     // Convert the handle into a local file name
-    Filename filename(createDirEntReq_->getParentHandle());
+    Filename filename(createDirEntReq_->getHandle());
 
     // Create the file write request
     spfsOSFileWriteRequest* fileWrite = new spfsOSFileWriteRequest();
