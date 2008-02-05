@@ -18,6 +18,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "fixed_inode_storage_layout.h"
+#include <algorithm>
 #include <cassert>
 using namespace std;
 
@@ -90,11 +91,12 @@ vector<FSBlock> FixedINodeStorageLayout::getLayoutFileDataBlocks(
         int64_t blocksOffset = offset / fsBlockSize_;
 
         // Calculate the number of full blocks to access
-        int64_t blocksToAccess = (extent/fsBlockSize_);
+        uint64_t blocksToAccess = (extent/fsBlockSize_);
 
         // Add a block for any partial block access at beginning of request
-        int64_t firstBlockPortion =
-            min(extent, (blocksOffset * fsBlockSize_ - offset) % fsBlockSize_);
+        FSSize partialBlock =
+            (blocksOffset * fsBlockSize_ - offset) % fsBlockSize_;
+        FSSize firstBlockPortion = min(extent, partialBlock);
         if (0 != firstBlockPortion)
         {
             blocksToAccess += 1;
@@ -109,7 +111,7 @@ vector<FSBlock> FixedINodeStorageLayout::getLayoutFileDataBlocks(
     
         // Add region's blocks the list of blocks to access
         FSBlock firstBlock = firstFileBlock + blocksOffset;
-        for (int64_t i = 0; i < blocksToAccess; i++)
+        for (uint64_t i = 0; i < blocksToAccess; i++)
         {
             blocks.push_back(firstBlock + i);
         }

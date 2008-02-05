@@ -31,9 +31,10 @@ class DataType
 {
 public:
     /** Static helper fuction for computing the extent of strided data types */
-    static std::size_t DataType::calculateStridedExtent(
-        std::size_t count, std::size_t blockLength,
-        int32_t stride, std::size_t elementExtent);
+    static std::size_t calculateStridedExtent(std::size_t count,
+                                              std::size_t blockLength,
+                                              int32_t stride,
+                                              std::size_t elementExtent);
 
     /** Construct a data type with extent extent */
     DataType(std::size_t extent);
