@@ -27,7 +27,17 @@
 class FSClient : public cSimpleModule
 {
 public:
-    
+    /** Attributes contains the following fields:
+     *  UID(4), GID(4), Perms(4), ATime(8), MTime(8), CTime(8), (4), (4),
+     *  (16)
+     */
+    static const unsigned int OBJECT_ATTRIBUTES_SIZE = 60;
+
+    /** Credentials contains the following fields:
+     *  UID(4), GID(4)
+     */
+    static const unsigned int CREDENTIALS_SIZE = 8;
+
     /** @return a reference to the client filesystem state */
     ClientFSState& fsState() { return clientState_; };
 

@@ -266,6 +266,8 @@ void FSCreateDirectory::createMeta()
     req->setContextPointer(createReq_);
     req->setAutoCleanup(true);
     req->setHandle(FileBuilder::instance().getFirstHandle(metaServer));
+    req->setByteLength(4 + FSClient::OBJECT_ATTRIBUTES_SIZE +
+                       FSClient::CREDENTIALS_SIZE + 8 + 8 + 4 + 4);
     client_->send(req, client_->getNetOutGate());
 }
 
@@ -281,7 +283,8 @@ void FSCreateDirectory::createDataObject()
     create->setContextPointer(createReq_);
     create->setAutoCleanup(true);
     create->setHandle(metaData->dataHandles[0]);
-    create->setByteLength(8);
+    create->setByteLength(4 + FSClient::OBJECT_ATTRIBUTES_SIZE +
+                          FSClient::CREDENTIALS_SIZE + 8 + 8 + 4 + 4);
     client_->send(create, client_->getNetOutGate());
 }
 
@@ -299,7 +302,8 @@ void FSCreateDirectory::createDirEnt()
     req->setAutoCleanup(true);
     req->setHandle(parentMeta->handle);
     req->setEntry(dirName.c_str());
-    req->setByteLength(8 + 8 + dirName.str().length());
+    req->setByteLength(4 + dirName.str().length() + 8 + 8 + 8 + 8 +
+                       FSClient::CREDENTIALS_SIZE);
     client_->send(req, client_->getNetOutGate());   
 }
 
