@@ -1,58 +1,69 @@
-HowTo install OmNet++ under Linux (using Fedora)
+HowTo install OmNet++ under Fedora Linux, RedHat Enterprise Linux 4, and
+Ubuntu Linux (as of 2-4-2008)
 --
 
 PREQUISITES
 --
-Before installing OmNet++t is neccesary to install several packages.
-The package names are listed followed by instructions on how to install
-the package using Fedora and Red Hat Enterprise Linux 4
+Before installing OmNet++t is neccesary to obtain several packages.  Some
+distributions provide some of these packages by default.  Individual
+instructions for each platform follow below.  The required packages are:
 
-TCL/TK
+    Bison, TCL, TK, GraphViz, BLT, and GifTrans
+
+DIRECTIONS for Ubuntu ONLY:
 --
-Fedora:
-yum install tk.i386 tk-devel.i386
-yum install tcl.i386 tcl-devel.i386
+    apt-get install bison
+    apt-get install tcl
+    apt-get install tcl-devel
+    apt-get install tk
+    apt-get install tk-devel
+    apt-get install graphviz
+    apt-get install blt
+    apt-get install blt-devel
+    apt-get install giftrans
 
-RHEL4:
-up2date -i tcl-devel tk-devel
 
-GraphViz
+DIRECTIONS for Fedora ONLY:
 --
-Fedora:
-yum install graphviz.i386
+    yum install tk.i386 tk-devel.i386
+    yum install tcl.i386 tcl-devel.i386
+    yum install graphviz.i386
 
-RHEL4:
+
+DIRECTIONS for RHEL4 ONLY:
+--
+    up2date -i tcl-devel tk-devel
+
 Acquire RPMs from /parl/bradles/omnet_packages.tgz
-rpm -Uhv graphviz-*
+    rpm -Uhv graphviz-*
 
-BLT
+DIRECTIONS applying to both Fedora AND RedHat EL4:
 --
-tar -xvfz BLT2.4z.tar.gz
-cd blt2.4z
-./configure
-make
-make install
+To install BLT:
+   tar -xvfz BLT2.4z.tar.gz
+   cd blt2.4z
 
 On 64 bit platforms, the code will need to be edited.  Please see:
 http://www.omnetpp.org/pmwiki/index.php?n=Main.TclTkRelatedProblems
 
-Additionally, on RHEL 4 (and maybe fedora if BLT is not installed):
-ln -s /usr/lib/blt2.4 /usr/share
+   ./configure
+   make
+   make install
+   ln -s /usr/lib/blt2.4 /usr/share
+
+To install GIFTrans:
+   rpm -i giftrans-1.12.2-20.src.rpm
+   cd /usr/src/redhat/SOURCES
+   tar -xvfz giftrans-1.12.2.tar.gz
+   patch -p0 < giftrans-1.12.2-operator.patch
+   cd giftrans-1.12.2
+   gcc giftrans.c -o giftrans
+   cp giftrans /usr/bin
+   gzip giftrans.1
+   cp giftrans.1.gz /usr/share/man/man1/
 
 
-GIFTrans
---
-rpm -i giftrans-1.12.2-20.src.rpm
-cd /usr/src/redhat/SOURCES
-tar -xvfz giftrans-1.12.2.tar.gz
-patch -p0 < giftrans-1.12.2-operator.patch
-cd giftrans-1.12.2
-gcc giftrans.c -o giftrans
-cp giftrans /usr/bin
-gzip giftrans.1
-cp giftrans.1.gz /usr/share/man/man1/
-
-INSTALLATION
+INSTALLATION of OmNet++ on ALL Linux Platforms
 --
 1.  Download OmNet++
 	http://www.omnetpp.org/filemgmt/viewcat.php?cid=2
