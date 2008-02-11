@@ -41,9 +41,12 @@ public:
     
     /** Set the default size of metadata/attributes */
     static void setDefaultAttrSize(std::size_t attrSize);
-    
+
+    /** */
+    cOutVector getAttrDiskTime_;
+
     /** Constructor */
-    FSServer() : cSimpleModule() {};
+    FSServer();
 
     /** @return the server's unique name */
     std::string getName() const { return serverName_; };
@@ -97,6 +100,8 @@ private:
     /** Gate ids */
     int inGateId_;
     int outGateId_;
+
+    
 };
 
 #endif

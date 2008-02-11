@@ -38,6 +38,9 @@ public:
      */
     static const unsigned int CREDENTIALS_SIZE = 8;
 
+    /** Constructor */
+    FSClient();
+    
     /** @return a reference to the client filesystem state */
     ClientFSState& fsState() { return clientState_; };
 
@@ -66,22 +69,32 @@ private:
      * @param the message to process
      */
     void processMessage(cMessage* request, cMessage* msg);
+
+    /** Collect statistics on server responses */
+    void collectServerResponseData(cMessage* serverResponse);
     
     int appInGateId_;
     int appOutGateId_;
     int netInGateId_;
     int netOutGateId_;
 
+    /** Client file system state */
     ClientFSState clientState_;
+
+    /** Data collection */
+    cOutVector createDirEntDelay;
+    cOutVector createObjectDelay;
+    cOutVector getAttrDelay;
 };
 
 #endif
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

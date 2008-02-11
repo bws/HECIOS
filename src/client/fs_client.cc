@@ -32,6 +32,13 @@ using namespace std;
 // Define FSClient module for this class
 Define_Module(FSClient);
 
+FSClient::FSClient()
+    : createDirEntDelay("Client CrDirEnt Roundtrip Delay"),
+      createObjectDelay("Client CreateObject Roundtrip Delay"),
+      getAttrDelay("Client GetAttr Roundtrip Delay")
+{
+}
+
 void FSClient::initialize()
 {
     appInGateId_ = findGate("appIn");
@@ -52,12 +59,16 @@ void FSClient::handleMessage(cMessage *msg)
     }
     else
     {
-        cMessage* parentReq = static_cast<cMessage*>(msg->contextPointer());
-        cMessage* origRequest =
-            static_cast<cMessage*>(parentReq->contextPointer());
-        processMessage(origRequest, msg);
+        // Collect data about the response
+        collectServerResponseData(msg);
 
-        // Only cleanup the originating server request if the autoCleanup
+        // Extract the originating client request
+        cMessage* parentReq = static_cast<cMessage*>(msg->contextPointer());
+        cMessage* originalClientRequest =
+            static_cast<cMessage*>(parentReq->contextPointer());
+        processMessage(originalClientRequest, msg);
+
+        // Only cleanup the server request if the autoCleanup
         // flag is set.  This is necessary because some requests have
         // multiple responses, and the individual state machine will
         // have to handle deleting the request at the appropriate time
@@ -67,7 +78,7 @@ void FSClient::handleMessage(cMessage *msg)
         {
             delete serverReq;
         }
-        
+
         // Cleanup the response
         delete msg;
     }
@@ -141,6 +152,40 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
     }
 }
 
+void FSClient::collectServerResponseData(cMessage* serverResponse)
+{
+    cMessage* parentRequest =
+        static_cast<cMessage*>(serverResponse->contextPointer());
+
+    // Determine the request response roundtrip time
+    simtime_t reqSendTime = parentRequest->creationTime();
+    simtime_t respArriveTime = simTime();
+    simtime_t delay = respArriveTime - reqSendTime;
+    
+    switch(serverResponse->kind())
+    {
+        case SPFS_CREATE_DIR_ENT_RESPONSE:
+        {
+            createDirEntDelay.record(delay);
+            break;
+        }
+        case SPFS_CREATE_RESPONSE:
+        {
+            createObjectDelay.record(delay);
+            break;
+        }
+        case SPFS_GET_ATTR_RESPONSE:
+        {
+            getAttrDelay.record(delay);
+            break;
+        }
+        default:
+        {
+            cerr << "Unable to collect data for message: "
+                 << serverResponse->kind() << endl;
+        }
+    }
+}
 /*
  * Local variables:
  *  indent-tabs-mode: nil
@@ -148,5 +193,5 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

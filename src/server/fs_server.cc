@@ -51,6 +51,12 @@ size_t FSServer::getDirectoryEntrySize()
     return 128;
 }
 
+FSServer::FSServer()
+    : cSimpleModule(),
+      getAttrDiskTime_("Server GetAttr Disk Time")
+{
+}
+
 bool FSServer::handleIsLocal(const FSHandle& handle) const
 {
     return ((handle >= range_.first) && (handle <= range_.last));

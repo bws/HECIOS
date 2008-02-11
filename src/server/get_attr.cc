@@ -19,7 +19,6 @@
 //
 #include "get_attr.h"
 #include <cassert>
-#include <omnetpp.h>
 #include "filename.h"
 #include "fs_server.h"
 #include "os_proto_m.h"
@@ -65,6 +64,7 @@ void GetAttr::handleServerMessage(cMessage* msg)
         case FSM_Enter(FINISH):
         {
             assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
+            collectDiskTimeData(msg);
             enterFinish();
             break;
         }
@@ -100,6 +100,19 @@ void GetAttr::enterFinish()
     resp->setContextPointer(getAttrReq_);
     resp->setByteLength(FSServer::getDefaultAttrSize());
     module_->send(resp);
+}
+
+void GetAttr::collectDiskTimeData(cMessage* osReadResponse)
+{
+    cMessage* osReadRequest =
+        static_cast<cMessage*>(osReadResponse->contextPointer());
+
+    // Determine the request response roundtrip time
+    simtime_t reqSendTime = osReadRequest->creationTime();
+    simtime_t respArriveTime = module_->simTime();
+    simtime_t delay = respArriveTime - reqSendTime;
+    
+    module_->getAttrDiskTime_.record(delay);
 }
 
 /*

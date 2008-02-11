@@ -20,7 +20,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-class cMessage;
+#include <omnetpp.h>
 class spfsGetAttrRequest;
 class FSServer;
 
@@ -52,7 +52,9 @@ protected:
     void enterFinish();
     
 private:
-
+    /** Collect data spent accessing disk */
+    void collectDiskTimeData(cMessage* osReadResponse);
+    
     /** The parent module */
     FSServer* module_;
     
@@ -64,9 +66,10 @@ private:
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */
