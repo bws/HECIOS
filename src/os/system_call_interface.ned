@@ -26,6 +26,9 @@
 // -  PassThroughSystemCallInterface
 //
 simple SystemCallInterface
+  parameters:
+      overheadSecs: const;
+
   gates:
     in: in, response;
     out: out, request;

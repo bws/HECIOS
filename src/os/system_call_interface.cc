@@ -18,9 +18,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 #include "system_call_interface.h"
-
+#include <cassert>
+using namespace std;
 
 SystemCallInterface::SystemCallInterface()
 {
@@ -31,13 +31,20 @@ void SystemCallInterface::initialize()
     inGateId_ = gate("in")->id();
     requestGateId_ = gate("request")->id();
     outGateId_ = gate("out")->id();
+
+    overheadSecs_ = par("overheadSecs").doubleValue();
+    assert(0.0 <= overheadSecs_);
 }
 
 void SystemCallInterface::handleMessage(cMessage *msg)
 {
-    if (msg->arrivalGateId() == inGateId_)
+    if (msg->isSelfMessage())
     {
         send(msg, requestGateId_);
+    }
+    else if (msg->arrivalGateId() == inGateId_)
+    {
+        scheduleAt(simTime() + overheadSecs_, msg);
     }
     else
     {
@@ -52,3 +59,13 @@ Define_Module_Like( PassThroughSystemCallInterface, SystemCallInterface );
 PassThroughSystemCallInterface::PassThroughSystemCallInterface()
 {
 }
+
+/*
+ * Local variables:
+ *  indent-tabs-mode: nil
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=8 sts=4 sw=4 expandtab
+ */

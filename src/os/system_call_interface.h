@@ -52,6 +52,9 @@ private:
     int outGateId_;
 
     int requestGateId_;
+
+    /** System call overhead */
+    double overheadSecs_;
 };
 
 /**
@@ -72,3 +75,12 @@ class PassThroughSystemCallInterface : public SystemCallInterface
 
 #endif
 
+/*
+ * Local variables:
+ *  indent-tabs-mode: nil
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=8 sts=4 sw=4 expandtab
+ */
