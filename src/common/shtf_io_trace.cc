@@ -213,6 +213,38 @@ IOTrace::Record* SHTFIOTrace::createOpenRecord(const string& filename,
                                                startTime, duration);
     rec->fileId(descriptor);
     rec->filename(filename);
+
+    // Set the open mode flags
+    if (string::npos != mode.find("O_CREAT"))
+    {
+        rec->isCreate(true);
+    }
+
+    if (string::npos != mode.find("O_EXCL"))
+    {
+        rec->isExclusive(true);
+    }
+    
+    if (string::npos != mode.find("O_RDONLY"))
+    {
+        rec->isReadOnly(true);
+    }
+    
+    if (string::npos != mode.find("O_RDWR"))
+    {
+        rec->isReadWrite(true);
+    }
+    
+    if (string::npos != mode.find("O_WRONLY"))
+    {
+        rec->isWriteOnly(true);
+    }
+    
+    if (string::npos != mode.find("O_APPEND"))
+    {
+        rec->isAppend(true);
+    }
+    
     return rec;
 }
 

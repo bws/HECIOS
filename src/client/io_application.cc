@@ -196,6 +196,11 @@ cMessage* IOApplication::createMessage(IOTrace::Record* rec)
             mpiMsg = createReadAtMessage(rec);
             break;
         }
+        case IOTrace::READ:
+        {
+            mpiMsg = createReadMessage(rec);
+            break;
+        }
         case IOTrace::UTIME:
         {
             mpiMsg = createUpdateTimeMessage(rec);
@@ -204,6 +209,11 @@ cMessage* IOApplication::createMessage(IOTrace::Record* rec)
         case IOTrace::WRITE_AT:
         {
             mpiMsg = createWriteAtMessage(rec);
+            break;
+        }
+        case IOTrace::WRITE:
+        {
+            mpiMsg = createWriteMessage(rec);
             break;
         }
         case IOTrace::SEEK:
@@ -269,6 +279,32 @@ spfsMPIFileOpenRequest* IOApplication::createOpenMessage(
         0, SPFS_MPI_FILE_OPEN_REQUEST);
     open->setFileName(openFile.str().c_str());
     open->setFileDes(fd);
+
+    // Create the open access mode
+    int accessMode = 0;
+    if (openRecord->isCreate())
+        accessMode |= MPI_MODE_CREATE;
+    
+    if (openRecord->isReadOnly())
+        accessMode |= MPI_MODE_RDONLY;
+    
+    if (openRecord->isWriteOnly())
+        accessMode |= MPI_MODE_WRONLY;
+
+    if (openRecord->isReadWrite())
+        accessMode |= MPI_MODE_RDWR;
+
+    if (openRecord->isDeleteOnClose())
+        accessMode |= MPI_MODE_DELETE_ON_CLOSE;
+
+    if (openRecord->isExclusive())
+        accessMode |= MPI_MODE_EXCL;
+
+    if (openRecord->isAppend())
+        accessMode |= MPI_MODE_APPEND;
+
+    open->setMode(accessMode);
+    
     return open;
 }
 
@@ -285,6 +321,23 @@ spfsMPIFileReadAtRequest* IOApplication::createReadAtMessage(
     read->setCount(readAtRecord->length());
     read->setDataType(dataType);
     read->setOffset(readAtRecord->offset());
+    read->setFileDes(fd);
+    return read;
+}
+
+spfsMPIFileReadAtRequest* IOApplication::createReadMessage(
+    const IOTrace::Record* readRecord)
+{
+    assert(IOTrace::READ == readRecord->opType());
+
+    FileDescriptor* fd = getDescriptor(readRecord->fileId());
+    DataType* dataType = new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
+
+    spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
+        0, SPFS_MPI_FILE_READ_AT_REQUEST);
+    read->setCount(readRecord->length());
+    read->setDataType(dataType);
+    read->setOffset(readRecord->offset());
     read->setFileDes(fd);
     return read;
 }
@@ -311,8 +364,24 @@ spfsMPIFileWriteAtRequest* IOApplication::createWriteAtMessage(
     write->setOffset(writeAtRecord->offset());
     write->setFileDes(fd);
 
-    // Generate corresponding cache invalidation messages
-    //invalidateCaches(write);
+    return write;
+}
+
+spfsMPIFileWriteAtRequest* IOApplication::createWriteMessage(
+    const IOTrace::Record* writeRecord)
+{
+    assert(IOTrace::WRITE == writeRecord->opType());
+
+    DataType* dataType = new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
+    FileDescriptor* fd = getDescriptor(writeRecord->fileId());
+
+    spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
+        0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
+    write->setCount(writeRecord->length());
+    write->setDataType(dataType);
+    write->setOffset(writeRecord->offset());
+    write->setFileDes(fd);
+
     return write;
 }
 

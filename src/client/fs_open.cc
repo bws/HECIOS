@@ -47,14 +47,15 @@ void FSOpen::handleMessage(cMessage* msg)
     /** File system open state machine states */
     enum {
         INIT = 0,
-        LOOKUP = FSM_Steady(1),
-        CREATE_META = FSM_Steady(2),
-        CREATE_DATA = FSM_Transient(3),
-        COUNT_DATA_RESPONSES = FSM_Steady(4),
-        WRITE_ATTR = FSM_Steady(5),
-        WRITE_DIRENT = FSM_Steady(6),
-        READ_ATTR = FSM_Steady(7),
-        FINISH = FSM_Steady(8)
+        LOOKUP_PARENT_HANDLE = FSM_Steady(1),
+        GET_PARENT_ATTRIBUTES = FSM_Steady(2),
+        LOOKUP_NAME = FSM_Steady(4),
+        CREATE_META = FSM_Steady(5),
+        CREATE_DATA = FSM_Transient(6),
+        COUNT_DATA_RESPONSES = FSM_Steady(7),
+        WRITE_ATTR = FSM_Steady(8),
+        WRITE_DIRENT = FSM_Steady(9),
+        FINISH = FSM_Steady(10)
     };
 
     FSM_Switch(currentState)
@@ -62,43 +63,69 @@ void FSOpen::handleMessage(cMessage* msg)
         case FSM_Exit(INIT):
         {
             assert(0 != dynamic_cast<spfsMPIFileOpenRequest*>(msg));
-            bool isInDirCache, isInAttrCache;
-            exitInit(static_cast<spfsMPIFileOpenRequest*>(msg),
-                     isInDirCache, isInAttrCache);
-            if (isInDirCache && isInAttrCache)
-                FSM_Goto(currentState, FINISH);
-            else if (isInDirCache)
-                FSM_Goto(currentState, READ_ATTR);
-            else
-                FSM_Goto(currentState, LOOKUP);
-            break;
-        }
-        case FSM_Enter(LOOKUP):
-        {
-            lookupOnServer();
-            break;
-        }
-        case FSM_Exit(LOOKUP):
-        {
-            assert(0 != dynamic_cast<spfsLookupPathResponse*>(msg));
-            bool isCreate, isFullLookup, isMissingAttr, isPartialLookup;
-            exitLookup(static_cast<spfsLookupPathResponse*>(msg),
-                       isCreate, isFullLookup, isMissingAttr, isPartialLookup);
-            if (isCreate)
-                FSM_Goto(currentState, CREATE_META);
-            else if (isFullLookup)
-                FSM_Goto(currentState, FINISH);
-            else if (isMissingAttr)
-                FSM_Goto(currentState, READ_ATTR);
-            else if (isPartialLookup)
-                FSM_Goto(currentState, LOOKUP);
+            bool nameCached = isParentNameCached();
+            if (nameCached)
+            {
+                bool attrCached = isParentAttrCached();
+                if (attrCached)
+                {
+                    FSM_Goto(currentState, LOOKUP_NAME);
+                }
+                else
+                {
+                    FSM_Goto(currentState, GET_PARENT_ATTRIBUTES);
+                }
+            }
             else
             {
-                cerr << "ERROR: File does not exist during open!!!!" << endl;
+                FSM_Goto(currentState, LOOKUP_PARENT_HANDLE);
             }
-
-            // Remove the lookup request
-            delete (cMessage*)msg->contextPointer();
+            break;
+        }
+        case FSM_Enter(LOOKUP_PARENT_HANDLE):
+        {
+            lookupParentOnServer();
+            break;
+        }
+        case FSM_Exit(LOOKUP_PARENT_HANDLE):
+        {
+            assert(0 != dynamic_cast<spfsLookupPathResponse*>(msg));
+            spfsLookupStatus status = processLookup(
+                static_cast<spfsLookupPathResponse*>(msg));
+            if (SPFS_FOUND == status)
+                FSM_Goto(currentState, GET_PARENT_ATTRIBUTES);
+            else if (SPFS_PARTIAL == status)
+                FSM_Goto(currentState, LOOKUP_PARENT_HANDLE);
+            else
+                cerr << __FILE__ << ":" << __LINE__ << ":"
+                     << "ERROR: Dir does not exist during creation." << endl;
+            break;
+        }
+        case FSM_Enter(GET_PARENT_ATTRIBUTES):
+        {
+            getParentAttributes();
+            break;
+        }
+        case FSM_Exit(GET_PARENT_ATTRIBUTES):
+        {
+            cacheParentAttributes();
+            FSM_Goto(currentState, LOOKUP_NAME);
+            break;
+        }
+        case FSM_Enter(LOOKUP_NAME):
+        {
+            lookupNameOnServer();
+            break;
+        }
+        case FSM_Exit(LOOKUP_NAME):
+        {
+            spfsLookupStatus status = processLookup(
+                static_cast<spfsLookupPathResponse*>(msg));
+            bool isCreate = checkFileCreateFlags(status);
+            if (isCreate)
+                FSM_Goto(currentState, CREATE_META);
+            else
+                FSM_Goto(currentState, FINISH); 
             break;
         }
         case FSM_Enter(CREATE_META):
@@ -159,18 +186,6 @@ void FSOpen::handleMessage(cMessage* msg)
             FSM_Goto(currentState, FINISH);
             break;
         }
-        case FSM_Enter(READ_ATTR):
-        {    
-            readAttributes();
-            break;
-        }
-        case FSM_Exit(READ_ATTR):
-        {
-            assert(0 != dynamic_cast<spfsGetAttrResponse*>(msg));
-            addAttributesToCache();
-            FSM_Goto(currentState, FINISH);
-            break;
-        }
         case FSM_Enter(FINISH):
         {
             finish();
@@ -182,106 +197,146 @@ void FSOpen::handleMessage(cMessage* msg)
     openReq_->setState(currentState);
 }
 
-void FSOpen::exitInit(spfsMPIFileOpenRequest* openReq,
-                      bool& outIsInDirCache,
-                      bool& outIsInAttrCache)
+bool FSOpen::isParentNameCached()
 {
-    // Preconditions
-    assert(0 != openReq->getFileName());
-    assert(0 != openReq->getFileDes());
-    assert(0 == (openReq->getMode() & MPI_MODE_EXCL));
-    
-    // Initialize outbound variable
-    outIsInDirCache = false;
-    outIsInAttrCache = false;
+    // Lookup the parent directory in the name cache
+    Filename openFile(openReq_->getFileName());
+    Filename parentDir = openFile.getParent();
 
-    // Lookup the file name in the cache
-    Filename openFile(openReq->getFileName());
-    FSHandle* lookup = client_->fsState().lookupName(openFile.str());
+    // If the parent directory is the root, it is well known
+    if (1 == parentDir.getNumPathSegments())
+    {
+        return true;
+    }
+    
+    FSHandle* lookup = client_->fsState().lookupName(parentDir.str());
     if (0 != lookup)
     {
-        // Found directory cache entry
-        outIsInDirCache = true;
-        
-        // Determine if the metadata is cached
-        FSMetaData* meta = client_->fsState().lookupAttr(*lookup);
-        if (0 != meta)
-        {
-            // Found attribute cache entry
-            outIsInAttrCache = true;            
-        }
+        return true;
     }
+    return false;
 }
 
-void FSOpen::lookupOnServer()
+bool FSOpen::isParentAttrCached()
 {
-    // retrieve the file descriptor
-    FileDescriptor* fd =  openReq_->getFileDes();
+    // Lookup the parent directory in the name cache
+    Filename openFile(openReq_->getFileName());
+    Filename parentDir = openFile.getParent();
+    
+    FSHandle* lookup = client_->fsState().lookupName(parentDir.str());
+    if (0 != lookup)
+    {
+        return true;
+    }
+    return false;
+}
 
-    // Get the closest resolved parent handle
-    int numParentHandles = fd->getNumParentHandles();
-    FSHandle parentHandle = fd->getParentHandle(numParentHandles - 1);
+void FSOpen::lookupParentOnServer()
+{
+    // Find the first resolved handle
+    int numResolvedSegments = openReq_->getNumResolvedSegments();
+    Filename openFile(openReq_->getFileName());
+    Filename parent = openFile.getParent();
+    Filename resolvedName = parent.getSegment(numResolvedSegments - 1);
 
+    // Determine the handle of the resolved name
+    FSHandle resolvedHandle =
+        FileBuilder::instance().getMetaData(resolvedName)->handle;
+    
     // Create the lookup request
     spfsLookupPathRequest* req = new spfsLookupPathRequest(
         0, SPFS_LOOKUP_PATH_REQUEST);
     req->setContextPointer(openReq_);
-    
-    // Set the parent directory handle
-    req->setFilename(fd->getFilename().c_str());
-    req->setHandle(parentHandle);
-    req->setNumResolvedSegments(numParentHandles);
+    req->setAutoCleanup(true);
+    req->setFilename(parent.c_str());
+    req->setHandle(resolvedHandle);
+    req->setNumResolvedSegments(numResolvedSegments);
 
     // Send the request
     client_->send(req, client_->getNetOutGate());
 }
 
-void FSOpen::exitLookup(spfsLookupPathResponse* lookupResponse,
-                        bool& outIsCreate, bool& outIsFullLookup,
-                        bool& outIsMissingAttr, bool& outIsPartialLookup)
+void FSOpen::getParentAttributes()
+{
+    Filename openName(openReq_->getFileName());
+    Filename parent = openName.getParent();
+    FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parent);
+
+    // Construct the request
+    spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
+    req->setContextPointer(openReq_);
+    req->setAutoCleanup(true);
+    req->setHandle(parentMeta->handle);
+    client_->send(req, client_->getNetOutGate());
+}
+
+void FSOpen::cacheParentAttributes()
+{
+    Filename openName(openReq_->getFileName());
+    Filename parentName =  openName.getParent();
+    FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parentName);
+    client_->fsState().insertAttr(parentMeta->handle, *parentMeta);
+}
+
+void FSOpen::lookupNameOnServer()
+{
+    // Find the first resolved handle
+    Filename openFile(openReq_->getFileName());
+    Filename parent = openFile.getParent();
+
+    // Determine the handle of the parent
+    FSHandle resolvedHandle =
+        FileBuilder::instance().getMetaData(parent)->handle;
+    
+    // Create the lookup request
+    spfsLookupPathRequest* req = new spfsLookupPathRequest(
+        0, SPFS_LOOKUP_PATH_REQUEST);
+    req->setContextPointer(openReq_);
+    req->setAutoCleanup(true);
+    req->setFilename(openFile.c_str());
+    req->setHandle(resolvedHandle);
+    req->setNumResolvedSegments(parent.getNumPathSegments());
+
+    // Send the request
+    client_->send(req, client_->getNetOutGate());
+}
+
+spfsLookupStatus FSOpen::processLookup(spfsLookupPathResponse* lookupResponse)
 {
     // Preconditions
     assert(0 < lookupResponse->getNumResolvedSegments());
-    
-    // Initialize outbound data
-    outIsCreate = false;
-    outIsFullLookup = false;
-    outIsMissingAttr = false;
-    outIsPartialLookup = false;
 
+    // Add the lookup results
+    int numResolvedSegments = lookupResponse->getNumResolvedSegments();
+    openReq_->setNumResolvedSegments(numResolvedSegments);
+    
     // Determine lookup results
-    switch (lookupResponse->getStatus())
+    spfsLookupStatus lookupStatus =
+        static_cast<spfsLookupStatus>(lookupResponse->getStatus());
+    if (SPFS_FOUND == lookupStatus)
     {
-        case SPFS_FOUND:
-        {
-            /* enter handle in cache */
-            FileDescriptor* filedes = openReq_->getFileDes();
-            const FSMetaData* meta = filedes->getMetaData();
-            client_->fsState().insertName(filedes->getFilename().str(),
-                                          meta->handle);
-            
-            /* look for metadata in cache */
-            if (0 == client_->fsState().lookupAttr(meta->handle))
-            {
-                outIsMissingAttr = true;
-            }
-            else
-            {
-                outIsFullLookup = true;
-            }
-            break;
-        }
-        case SPFS_PARTIAL:
-        {
-            outIsPartialLookup = true;
-            break;
-        }
-        case SPFS_NOTFOUND:
-        {
-            assert(openReq_->getMode() & MPI_MODE_CREATE);
-            outIsCreate = true;
-            break;
-        }
+        // Enter the resolved handle into the cache
+        Filename openFile(openReq_->getFileName());
+        Filename resolvedName = openFile.getSegment(numResolvedSegments - 1);
+        const FSMetaData* meta =
+            FileBuilder::instance().getMetaData(resolvedName);
+        cerr << "Adding name to cache: " << resolvedName << endl;
+        client_->fsState().insertName(resolvedName.str(), meta->handle);
+    }
+    return lookupStatus;
+}
+
+bool FSOpen::checkFileCreateFlags(const spfsLookupStatus& status)
+{
+    // TODO
+    //assert((status != SPFS_FOUND) && (openReq_->getMode() & MPI_MODE_CREATE));
+    if (openReq_->getMode() & MPI_MODE_CREATE)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 

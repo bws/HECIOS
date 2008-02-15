@@ -159,6 +159,7 @@ void FSWrite::beginWrite()
     
     // Construct the server write request
     spfsWriteRequest write(0, SPFS_WRITE_REQUEST);
+    write.setAutoCleanup(false);
     write.setContextPointer(writeReq_);
     write.setOffset(writeReq_->getOffset());
     write.setView(new FileView(fd->getFileView()));
@@ -212,6 +213,7 @@ void FSWrite::startFlow(spfsWriteResponse* writeResponse)
     spfsDataFlowStart* flowStart =
         new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
     flowStart->setContextPointer(writeReq_);
+    //flowStart->setContextPointer(serverRequest);
     
     // Set the handle as the connection id (FIXME: This is hacky)
     flowStart->setBmiConnectionId(serverRequest->getHandle());
@@ -245,9 +247,6 @@ void FSWrite::countFlowFinish(spfsDataFlowFinish* finishMsg)
     bytesWritten_ += finishMsg->getFlowSize();
     int numRemainingFlows = writeReq_->getRemainingFlows();
     writeReq_->setRemainingFlows(--numRemainingFlows);
-
-    // Cleanup the originating message
-    delete static_cast<spfsDataFlowStart*>(finishMsg->contextPointer());
 }
 
 void FSWrite::countCompletion(spfsWriteCompletionResponse* completionResponse)
@@ -259,7 +258,7 @@ void FSWrite::countCompletion(spfsWriteCompletionResponse* completionResponse)
     spfsWriteRequest* pfsReq =
         (spfsWriteRequest*)completionResponse->contextPointer();
     delete pfsReq->getDist();
-    delete pfsReq;
+    pfsReq->setAutoCleanup(true);
 }
 
 bool FSWrite::isWriteComplete()

@@ -84,7 +84,12 @@ private:
     /** Data collection */
     cOutVector createDirEntDelay;
     cOutVector createObjectDelay;
+    cOutVector flowDelay;
     cOutVector getAttrDelay;
+    cOutVector lookupPathDelay;
+    cOutVector readDelay;
+    cOutVector writeCompleteDelay;
+    cOutVector writeDelay;
 };
 
 #endif

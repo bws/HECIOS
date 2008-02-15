@@ -19,7 +19,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include "pvfs_proto_m.h"
 class cFSM;
 class cMessage;
 class FSClient;
@@ -44,21 +44,31 @@ public:
     void handleMessage(cMessage* msg);
 
 protected:
+    /** @return true if the parent's name is cached */
+    bool isParentNameCached();
 
-    /**
-     * @return The next state transition, see implementation for details
-     */
-    void exitInit(spfsMPIFileOpenRequest* openReq,
-                  bool& outIsInDirCache,
-                  bool& outIsInAttrCache);
+    /** @return true if the parent's attributes are cached */
+    bool isParentAttrCached();
 
-    /** Lookup */
-    void lookupOnServer();
+    /** Send the request to resolve the pathname up to the parent handle */
+    void lookupParentOnServer();
 
-    void exitLookup(spfsLookupPathResponse* lookupResponse,
-                    bool& outIsCreate, bool& outIsFullLookup,
-                    bool& outIsMissingAttr, bool& outIsPartialLookup);
+    /** Send the request to get the parent directory's attributes */
+    void getParentAttributes();
+    
+    /** Add the parent directory's attributes to the cache */
+    void cacheParentAttributes();
+    
+    /** Send the request to resolve the file name to a handle */
+    void lookupNameOnServer();
 
+    /** Process the name resolution progress of the lookup request */
+    spfsLookupStatus processLookup(spfsLookupPathResponse* lookupResponse);
+
+    /** @return true if the file does not exist and should be created,
+        else it returns false */
+    bool checkFileCreateFlags(const spfsLookupStatus& status);
+    
     /** Create metadata object */
     void createMeta();
 

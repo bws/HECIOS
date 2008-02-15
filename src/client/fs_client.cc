@@ -33,9 +33,14 @@ using namespace std;
 Define_Module(FSClient);
 
 FSClient::FSClient()
-    : createDirEntDelay("Client CrDirEnt Roundtrip Delay"),
-      createObjectDelay("Client CreateObject Roundtrip Delay"),
-      getAttrDelay("Client GetAttr Roundtrip Delay")
+    : createDirEntDelay("SPFS Client CrDirEnt Roundtrip Delay"),
+      createObjectDelay("SPFS Client CreateObject Roundtrip Delay"),
+      flowDelay("SPFS Client Flow Delay"),
+      getAttrDelay("SPFS Client GetAttr Roundtrip Delay"),
+      lookupPathDelay("SPFS Client Lookup Path Roundtrip Delay"),
+      readDelay("SPFS Client Read Roundtrip Delay"),
+      writeCompleteDelay("SPFS Client WriteComplete Roundtrip Delay"),
+      writeDelay("SPFS Client Write Roundtrip Delay")
 {
 }
 
@@ -174,9 +179,34 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
             createObjectDelay.record(delay);
             break;
         }
+        case SPFS_DATA_FLOW_FINISH:
+        {
+            flowDelay.record(delay);
+            break;
+        }
         case SPFS_GET_ATTR_RESPONSE:
         {
             getAttrDelay.record(delay);
+            break;
+        }
+        case SPFS_LOOKUP_PATH_RESPONSE:
+        {
+            lookupPathDelay.record(delay);
+            break;
+        }
+        case SPFS_READ_RESPONSE:
+        {
+            readDelay.record(delay);
+            break;
+        }
+        case SPFS_WRITE_COMPLETION_RESPONSE:
+        {
+            writeCompleteDelay.record(delay);
+            break;
+        }
+        case SPFS_WRITE_RESPONSE:
+        {
+            writeDelay.record(delay);
             break;
         }
         default:

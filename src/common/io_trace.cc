@@ -33,7 +33,14 @@ IOTrace::Record::Record(IOTrace::Operation opType,
     fileId_(fileId),
     offset_(offset),
     length_(length),
-    source_("<UNDEFINED>")
+    source_("<UNDEFINED>"),
+    isCreate_(false),
+    isExclusive_(false),
+    isReadOnly_(false),
+    isWriteOnly_(false),
+    isReadWrite_(false),
+    isDeleteOnClose_(false),
+    isAppend_(false)
 {
 }
 
@@ -47,7 +54,14 @@ IOTrace::Record::Record(IOTrace::Operation opType,
     fileId_(-1),
     offset_(0),
     length_(0),
-    source_("<UNDEFINED>")
+    source_("<UNDEFINED>"),
+    isCreate_(false),
+    isExclusive_(false),
+    isReadOnly_(false),
+    isWriteOnly_(false),
+    isReadWrite_(false),
+    isDeleteOnClose_(false),
+    isAppend_(false)
 {
 }
 

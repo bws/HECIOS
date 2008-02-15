@@ -88,7 +88,49 @@ public:
 
         /** @return the source for this trace record */
         std::string source() const { return source_; };
-    
+
+        /** @return true if this is a creation */
+        bool isCreate() const { return isCreate_; };
+
+        /** Set the create flag */
+        void isCreate(bool isCreate) { isCreate_ = isCreate; };
+
+        /** @return true if this is an Exclusive */
+        bool isExclusive() const { return isExclusive_; };
+
+        /** Set the Exclusive flag */
+        void isExclusive(bool isExclusive) { isExclusive_ = isExclusive; };
+
+        /** @return true if this is a Read Only */
+        bool isReadOnly() const { return isReadOnly_; };
+
+        /** Set the Read Only flag */
+        void isReadOnly(bool isReadOnly) { isReadOnly_ = isReadOnly; };
+        
+        /** @return true if this is a Write Only */
+        bool isWriteOnly() const { return isWriteOnly_; };
+
+        /** Set the Write Only flag */
+        void isWriteOnly(bool isWriteOnly) { isWriteOnly_ = isWriteOnly; };
+
+        /** @return true if this is a read write */
+        bool isReadWrite() const { return isReadWrite_; };
+
+        /** Set the Read Write flag */
+        void isReadWrite(bool isReadWrite) { isReadWrite_ = isReadWrite; };
+
+        /** @return true if this is a delete on close operation */
+        bool isDeleteOnClose() const { return isDeleteOnClose_; };
+
+        /** Set the Delete On Close flag */
+        void isDeleteOnClose(bool isDeleteOnClose) { isDeleteOnClose_ = isDeleteOnClose; };
+
+        /** @return true if this is an Append operation */
+        bool isAppend() const { return isAppend_; };
+
+        /** Set the Append flag */
+        void isAppend(bool isAppend) { isAppend_ = isAppend; };
+        
     public:
         Operation opType_;
         double timeStamp_;
@@ -98,6 +140,13 @@ public:
         std::size_t offset_;
         std::size_t length_;
         std::string source_;
+        bool isCreate_;
+        bool isExclusive_;
+        bool isReadOnly_;
+        bool isWriteOnly_;
+        bool isReadWrite_;
+        bool isDeleteOnClose_;
+        bool isAppend_;
     };
 
     /** Constructor */

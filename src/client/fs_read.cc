@@ -147,6 +147,11 @@ void FSRead::enterRead()
     
     // Construct the template read request
     spfsReadRequest read("ReadStuff", SPFS_READ_REQUEST);
+
+    // Note: The read request is NOT deleted here as one would expect.
+    // Because the server side flow completes after the client, the request
+    // is deleted on the server
+    read.setAutoCleanup(false);
     read.setContextPointer(readReq_);
     read.setOffset(readReq_->getOffset());
     read.setView(new FileView(fd->getFileView()));
@@ -202,6 +207,7 @@ void FSRead::startFlow(spfsReadResponse* readResponse)
     spfsDataFlowStart* flowStart =
         new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
     flowStart->setContextPointer(readReq_);
+    flowStart->setClientContextPointer(serverRequest);
     
     // Set the handle as the connection id (FIXME: This is hacky)
     flowStart->setBmiConnectionId(serverRequest->getHandle());
@@ -236,8 +242,12 @@ void FSRead::countFlowFinish(spfsDataFlowFinish* finishMsg)
     int numRemainingFlows = readReq_->getRemainingFlows();
     readReq_->setRemainingFlows(--numRemainingFlows);
 
-    // Cleanup the originating message
-    delete static_cast<spfsDataFlowStart*>(finishMsg->contextPointer());
+    // Extract the server request for this flow and clean up memory
+    //spfsDataFlowStart* flowStart =
+    //    static_cast<spfsDataFlowStart*>(finishMsg->contextPointer());
+    //spfsReadRequest* serverRead =
+    //    static_cast<spfsReadRequest*>(flowStart->getClientContextPointer());
+    //delete serverRead;
 }
 
 bool FSRead::isReadComplete()
@@ -254,10 +264,6 @@ void FSRead::finish()
     mpiResp->setIsSuccessful(true);
     mpiResp->setBytesRead(bytesRead_);
     client_->send(mpiResp, client_->getAppOutGate());
-
-    // Note: The read request is NOT deleted here as one would expect.
-    // Because the server side flow completes after the client, the request
-    // is deleted on the server
 }
 
 /*

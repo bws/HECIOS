@@ -131,14 +131,6 @@ void Read::sendFinalResponse()
 
 void Read::finish()
 {
-    // Delete the originating read request, a different process than for
-    // every other request which is instead deleted on the client where
-    // the request originated.  This is done because the client side read
-    // is terminated on client side flow completion.  Whereas the serverside
-    // flow will not finish until later (after the client side flow has
-    // completed).
-    delete readReq_->getDist();
-    delete readReq_;
     readReq_ = 0;
 }
 

@@ -32,6 +32,7 @@ cplusplus {{
 typedef FileDistribution* FileDistributionPtr;
 typedef FileView* FileViewPtr;
 typedef DataType* DataTypePtr;
+typedef void* VoidPtr;
 }}
 
 // Forward declarations
@@ -43,6 +44,7 @@ class noncobject FSHandle;
 class noncobject FSMetaData;
 class noncobject FSOffset;
 class noncobject FSSize;
+class noncobject VoidPtr;
 
 // PVFS Protocol Message Kind values
 enum spfsMessageKind 
@@ -98,7 +100,7 @@ message spfsRequest
     fields:
         int fsId;
         FSHandle handle;   // indicates server address and object
-        bool autoCleanup = false;
+        bool autoCleanup = true;
 
         // internal fields
         cFSM state;
@@ -367,6 +369,7 @@ message spfsDataFlowStart extends spfsRequest
         // Client Data information
         DataTypePtr dataType;
         unsigned long count;
+        VoidPtr clientContextPointer;
 
         // Server Data information
         FSSize dataSize;

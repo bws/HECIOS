@@ -104,6 +104,10 @@ private:
     spfsMPIFileReadAtRequest* createReadAtMessage(
         const IOTrace::Record* readAtRecord);
     
+    /** @return an MPI File Read At request */
+    spfsMPIFileReadAtRequest* createReadMessage(
+        const IOTrace::Record* readRecord);
+    
     /** @return an MPI File Update Time request */
     spfsMPIFileUpdateTimeRequest* createUpdateTimeMessage(
         const IOTrace::Record* utimeRecord);
@@ -112,6 +116,9 @@ private:
     spfsMPIFileWriteAtRequest* createWriteAtMessage(
         const IOTrace::Record* writeAtRecord);
     
+    /** @return an MPI File Write At request */
+    spfsMPIFileWriteAtRequest* createWriteMessage(
+        const IOTrace::Record* writeRecord);    
     
     IOTrace* trace_;
     int rank_;
