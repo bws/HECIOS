@@ -350,6 +350,8 @@ void FSOpen::createMeta()
     int metaServer = FileBuilder::instance().getMetaServers()[0];
 
     req->setHandle(FileBuilder::instance().getFirstHandle(metaServer));
+    req->setByteLength(4 + FSClient::OBJECT_ATTRIBUTES_SIZE +
+                       FSClient::CREDENTIALS_SIZE + 8 + 8 + 4 + 4);
     client_->send(req, client_->getNetOutGate());
 }
 

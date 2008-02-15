@@ -155,7 +155,7 @@ void FSRead::enterRead()
     read.setContextPointer(readReq_);
     read.setOffset(readReq_->getOffset());
     read.setView(new FileView(fd->getFileView()));
-
+    
     // Send request to each server
     int numRequests = 0;
     int numServers = metaData->dataHandles.size();
@@ -180,7 +180,10 @@ void FSRead::enterRead()
             req->setFlowTag(simulation.getUniqueNumber());
             
             // Set the message size in bytes
-            req->setByteLength(4 + 8 + 8 + 8);
+            req->setByteLength(8 + 8 + 4 + 4 + 4 +
+                               //FSClient::CREDENTIALS_SIZE +
+                               fd->getFileView().getRepresentationByteLength() +
+                               8 + 8);
             client_->send(req, client_->getNetOutGate());
 
             // Add to the number of requests sent
@@ -242,11 +245,13 @@ void FSRead::countFlowFinish(spfsDataFlowFinish* finishMsg)
     int numRemainingFlows = readReq_->getRemainingFlows();
     readReq_->setRemainingFlows(--numRemainingFlows);
 
+    // TODO
     // Extract the server request for this flow and clean up memory
     //spfsDataFlowStart* flowStart =
     //    static_cast<spfsDataFlowStart*>(finishMsg->contextPointer());
     //spfsReadRequest* serverRead =
     //    static_cast<spfsReadRequest*>(flowStart->getClientContextPointer());
+    //cerr << "Classname: " << serverRead->className() << endl;
     //delete serverRead;
 }
 

@@ -189,7 +189,11 @@ void FSWrite::beginWrite()
             req->setFlowTag(simulation.getUniqueNumber());
 
             // Set the message size in bytes
-            req->setByteLength(4 + 8 + 8 + 8);
+            req->setByteLength(8 + 8 + 4 + 4 + 4 +
+                               //FSClient::CREDENTIALS_SIZE +
+                               fd->getFileView().getRepresentationByteLength() +
+                               8 + 8);
+
             client_->send(req, client_->getNetOutGate());
 
             // Add to the number of requests sent
@@ -258,6 +262,7 @@ void FSWrite::countCompletion(spfsWriteCompletionResponse* completionResponse)
     spfsWriteRequest* pfsReq =
         (spfsWriteRequest*)completionResponse->contextPointer();
     delete pfsReq->getDist();
+    delete pfsReq->getView();
     pfsReq->setAutoCleanup(true);
 }
 

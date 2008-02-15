@@ -32,8 +32,20 @@ using namespace std;
 
 Read::Read(FSServer* module, spfsReadRequest* readReq)
     : module_(module),
-      readReq_(readReq)
+      readReq_(readReq),
+      cleanupRequest_(false)
 {
+}
+
+Read::~Read()
+{
+    if (cleanupRequest_)
+    {
+        delete readReq_->getDist();
+        delete readReq_->getView();
+        delete readReq_;
+        readReq_ = 0;
+    }
 }
 
 void Read::handleServerMessage(cMessage* msg)
@@ -88,10 +100,7 @@ void Read::handleServerMessage(cMessage* msg)
     }
 
     // Store current state
-    // Note the NULL check is only needed due to the deletion of the read
-    // request here
-    if (0 != readReq_)
-        readReq_->setState(currentState);
+    readReq_->setState(currentState);
 }
 
 void Read::startDataFlow()
@@ -131,7 +140,10 @@ void Read::sendFinalResponse()
 
 void Read::finish()
 {
-    readReq_ = 0;
+    // Set the flag so that the originating request is cleaned up during
+    // object destruction.  Don't simply delete it because the state is
+    // updated after this call to finish()
+    cleanupRequest_ = true;
 }
 
 /*

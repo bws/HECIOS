@@ -51,6 +51,9 @@ public:
     /** @return this views data type */
     const DataType* getDataType() const { return dataType_; };
 
+    /** @return the number of bytes required to represent this data type */
+    std::size_t getRepresentationByteLength() const;
+    
 private:
     /** Swap the contents of this and other */
     void swap(FileView& other);

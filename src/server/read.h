@@ -33,6 +33,9 @@ public:
     /** Constructor */
     Read(FSServer* module, spfsReadRequest* readReq);
 
+    /** Destructor */
+    ~Read();
+    
     /**
      * Perform server side read processing
      */
@@ -62,6 +65,9 @@ private:
     
     /** The originating read request */
     spfsReadRequest* readReq_;
+
+    /** Flag indicating the orginating request should be deleted on exit */
+    bool cleanupRequest_;
 };
 
 #endif

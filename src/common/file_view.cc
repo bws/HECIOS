@@ -53,6 +53,12 @@ void FileView::swap(FileView& other)
     std::swap(displacement_, other.displacement_);
     std::swap(dataType_, other.dataType_);
 }
+
+std::size_t FileView::getRepresentationByteLength() const
+{
+    return 8 + dataType_->getRepresentationByteLength();
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil
