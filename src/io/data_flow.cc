@@ -42,12 +42,14 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
     // Create the data type layout
     if (CLIENT_READ == mode_ || CLIENT_WRITE == mode_)
     {
+        FSSize aggregateSize;
         flowSize_ = DataTypeProcessor::createFileLayoutForClient(
             flowStart.getOffset(),
             *(flowStart.getDataType()),
             flowStart.getCount(),
             *(flowStart.getView()),
-            *(flowStart.getDist()));
+            *(flowStart.getDist()),
+            aggregateSize);
         layout_.addRegion(0, flowSize_);
     }
     else if (SERVER_READ == mode_ || SERVER_WRITE == mode_) 

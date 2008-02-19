@@ -36,12 +36,16 @@ class DataTypeProcessor
 {
 public:
 
-    /** @return the number of bytes processed */
+    /**
+     * @return the number of bytes processed
+     * @side fills the outAggregateSize with the total I/O size
+     */
     static FSSize createFileLayoutForClient(const FSOffset& offset,
                                             const DataType& dataType,
                                             const std::size_t& count,
                                             const FileView& view,
-                                            const FileDistribution& dist);
+                                            const FileDistribution& dist,
+                                            FSSize& outAggregateSize);
 
     /**
      * @return the number of bytes processed
@@ -52,30 +56,36 @@ public:
                                             const FSSize& dataSize,
                                             const FileView& view,
                                             const FileDistribution& dist,
-                                            DataTypeLayout& layout);
+                                            DataTypeLayout& outLayout);
 
 private:
 
-    /** @return the number of bytes processed */
+    /**
+     * @return the number of bytes processed
+     * @side fills the outAggregateSize with the total I/O size
+     */
     static FSSize processClientRequest(const FSOffset& offset,
                                        const DataType& dataType,
                                        const std::size_t& count,
                                        const FileView& view,
                                        const FileDistribution& dist,
-                                       DataTypeLayout& layout);
+                                       FSSize& outAggregateSize);
     
-    /** @return the number of bytes processed */
+    /** @return the number of bytes processed
+     * @side Fills the layout object with physical offsets and extents for
+     * this server's I/O
+     */
     static FSSize processServerRequest(const FSOffset& offset,
                                        const FSSize& dataSize,
                                        const FileView& view,
                                        const FileDistribution& dist,
-                                       DataTypeLayout& layout);
+                                       DataTypeLayout& outLayout);
 
     /** Construct the server local offset extent pairs */
     static void distributeContiguousRegion(const FSOffset& offset,
                                            const FSSize& extent,
                                            const FileDistribution& dist,
-                                           DataTypeLayout& layout);    
+                                           DataTypeLayout& outLayout);    
 };
 
 #endif

@@ -41,8 +41,9 @@ Read::~Read()
 {
     if (cleanupRequest_)
     {
+        // TODO: Fix this leak
+        //delete readReq_->getView();
         delete readReq_->getDist();
-        delete readReq_->getView();
         delete readReq_;
         readReq_ = 0;
     }

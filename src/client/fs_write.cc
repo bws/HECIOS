@@ -171,20 +171,22 @@ void FSWrite::beginWrite()
     {
         // Process the data type to determine the write size
         metaData->dist->setObjectIdx(i);
+        FSSize aggregateSize = 0;
         FSSize reqBytes = DataTypeProcessor::createFileLayoutForClient(
             writeReq_->getOffset(),
             *writeReq_->getDataType(),
             writeReq_->getCount(),
             *write.getView(),
-            *metaData->dist);
+            *metaData->dist,
+            aggregateSize);
 
         // Send write request if server hosts data
-        if (0 != reqBytes)
+        if (0 != reqBytes && 0 != aggregateSize)
         {
             spfsWriteRequest* req = static_cast<spfsWriteRequest*>(
                 write.dup());
             req->setHandle(metaData->dataHandles[i]);
-            req->setDataSize(reqBytes);
+            req->setDataSize(aggregateSize);
             req->setDist(metaData->dist->clone());
             req->setFlowTag(simulation.getUniqueNumber());
 
@@ -261,9 +263,10 @@ void FSWrite::countCompletion(spfsWriteCompletionResponse* completionResponse)
     // Cleanup the PFS request
     spfsWriteRequest* pfsReq =
         (spfsWriteRequest*)completionResponse->contextPointer();
-    delete pfsReq->getDist();
-    delete pfsReq->getView();
     pfsReq->setAutoCleanup(true);
+    delete pfsReq->getDist();
+    if (0 == numRemainingCompletions)
+        delete pfsReq->getView();
 }
 
 bool FSWrite::isWriteComplete()

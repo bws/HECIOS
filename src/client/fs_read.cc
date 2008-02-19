@@ -163,20 +163,22 @@ void FSRead::enterRead()
     {
         // Process the data type to determine the read size
         metaData->dist->setObjectIdx(i);
+        FSSize aggregateSize = 0;
         FSSize reqBytes = DataTypeProcessor::createFileLayoutForClient(
             readReq_->getOffset(),
             *readReq_->getDataType(),
             readReq_->getCount(),
             *read.getView(),
-            *metaData->dist);
+            *metaData->dist,
+            aggregateSize);
 
-        if (0 != reqBytes)
+        if (0 != reqBytes && 0 != aggregateSize)
         {
              // Set the server specific request data
             spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
             req->setHandle(metaData->dataHandles[i]);
             req->setDist(metaData->dist->clone());
-            req->setDataSize(reqBytes);
+            req->setDataSize(aggregateSize);
             req->setFlowTag(simulation.getUniqueNumber());
             
             // Set the message size in bytes

@@ -31,16 +31,17 @@ FSSize DataTypeProcessor::createFileLayoutForClient(
     const DataType& dataType,
     const size_t& count,
     const FileView& view,
-    const FileDistribution& dist)
+    const FileDistribution& dist,
+    FSSize& outAggregateSize)
 {
-    DataTypeLayout layout;
     FSSize bytesProcessed = processClientRequest(offset,
                                                  dataType,
                                                  count,
                                                  view,
                                                  dist,
-                                                 layout);
+                                                 outAggregateSize);
     assert(0 <= bytesProcessed);
+    assert(0 <= outAggregateSize);
     //assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
     return bytesProcessed;
 }
@@ -50,13 +51,13 @@ FSSize DataTypeProcessor::createFileLayoutForServer(
     const FSSize& dataSize,
     const FileView& view,
     const FileDistribution& dist,
-    DataTypeLayout& layout)
+    DataTypeLayout& outLayout)
 {
     FSSize bytesProcessed = processServerRequest(offset,
                                                  dataSize,
                                                  view,
                                                  dist,
-                                                 layout);
+                                                 outLayout);
     assert(0 <= bytesProcessed);
     //assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
     return bytesProcessed;    
@@ -70,11 +71,11 @@ FSSize DataTypeProcessor::processClientRequest(
     const std::size_t& count,
     const FileView& view,
     const FileDistribution& dist,
-    DataTypeLayout& layout)
+    FSSize& outAggregateSize)
 {
     // It isn't neccesary to flatten the memory data type, simply figure out
     // its magnitude
-    FSSize dataSize = dataType.getExtent() * count;
+    outAggregateSize = dataType.getExtent() * count;
 
     // Determine the offsets and extents into the memory buffer to send to
     // the server described in the distribution
@@ -82,14 +83,15 @@ FSSize DataTypeProcessor::processClientRequest(
     // For the simulator it isn't neccesary to get the actual offsets, so
     // use the server's results to construct the size of each server's
     // data receipt
-    return processServerRequest(offset, dataSize, view, dist, layout);
+    DataTypeLayout layout;
+    return processServerRequest(offset, outAggregateSize, view, dist, layout);
 }
 
 FSSize DataTypeProcessor::processServerRequest(const FSOffset& offset,
                                                const FSSize& dataSize,
                                                const FileView& view,
                                                const FileDistribution& dist,
-                                               DataTypeLayout& layout)
+                                               DataTypeLayout& outLayout)
 {
     // Determine the amount of contiguous file regions that correspond to
     // this server's physical file locations
@@ -103,17 +105,18 @@ FSSize DataTypeProcessor::processServerRequest(const FSOffset& offset,
         distributeContiguousRegion(disp + fileRegions[i].offset,
                                    fileRegions[i].extent,
                                    dist,
-                                   layout);
+                                   outLayout);
     }
 
-    return layout.getLength();
+    FSSize length = outLayout.getLength();
+    return length;
 }
 
 void DataTypeProcessor::distributeContiguousRegion(
     const FSOffset& offset,
     const FSSize& extent,
     const FileDistribution& dist,
-    DataTypeLayout& layout)
+    DataTypeLayout& outLayout)
 {
     // Determine the first mapped offset for this server
     FSOffset logServerOffset = dist.nextMappedLogicalOffset(offset);
@@ -129,7 +132,7 @@ void DataTypeProcessor::distributeContiguousRegion(
         FSSize requestedExtent = min(serverExtent, extent);
         
         // Add region to the layout
-        layout.addRegion(physOffset, requestedExtent);
+        outLayout.addRegion(physOffset, requestedExtent);
 
         // Determine the next mapped offset for this server
         logServerOffset = dist.nextMappedLogicalOffset(logServerOffset +

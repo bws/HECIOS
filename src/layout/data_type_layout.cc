@@ -78,8 +78,8 @@ FSSize DataTypeLayout::getLength() const
 vector<FileRegion> DataTypeLayout::getSubRegions(const FSOffset& byteOffset,
                                                  const FSSize& byteLength) const
 {
-    //cerr << __FILE__ << ":" << __LINE__ << ":"
-    //     << byteOffset << " " << byteLength << " " << getLength() << endl;
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << byteOffset << " " << byteLength << " " << getLength() << endl;
     //for(size_t i = 0; i < fileRegions_.size(); i++)
     //{
     //    cerr << "Off: " << fileRegions_[i].offset << " "
