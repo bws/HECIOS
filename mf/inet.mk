@@ -260,10 +260,11 @@ INET_LIBS = \
 	$(LIB_DIR)/ripd.a \
 	$(LIB_DIR)/zebra.a
 
+INET_CMD_LIBS= -lenvir -lcmdenv
 
 $(INET_DIR)/bin/INET:
 	cd INET && ./makemake
-	cd INET && make ROOT=$(shell pwd)/$(INET_DIR)
+	cd INET && make ROOT=$(shell pwd)/$(INET_DIR) USERIF_LIBS="$(INET_CMD_LIBS)"
 
 #
 # A little hack to get the inet objects to build first
