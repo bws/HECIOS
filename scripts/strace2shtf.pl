@@ -375,7 +375,10 @@ sub parseOpenCall
     my $descriptor = $rc;
 
     # Associate the filename and descriptor
-    addFilenameAndDescriptor($filename, $descriptor);
+    if ("-1 ENOENT (No such file or directory)" ne $descriptor)
+    {
+        addFilenameAndDescriptor($filename, $descriptor);
+    }
 
     return "OPEN $filename $openFlags $descriptor";
 }

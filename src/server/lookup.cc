@@ -44,7 +44,8 @@ void Lookup::handleServerMessage(cMessage* msg)
         INIT = 0,
         LOOKUP_NAME = FSM_Steady(1),
         FINISH_COMPLETE_LOOKUP = FSM_Steady(2),
-        FINISH_PARTIAL_LOOKUP = FSM_Steady(3)
+        FINISH_PARTIAL_LOOKUP = FSM_Steady(3),
+        FINISH_FAILED_LOOKUP = FSM_Steady(4)
     };
 
     FSM_Switch(currentState)
@@ -63,7 +64,11 @@ void Lookup::handleServerMessage(cMessage* msg)
         case FSM_Exit(LOOKUP_NAME):
         {
             assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
-            if (lookupIsComplete())
+            if (lookupIsFailed())
+            {
+                FSM_Goto(currentState, FINISH_FAILED_LOOKUP);
+            }
+            else if (lookupIsComplete())
             {
                 FSM_Goto(currentState, FINISH_COMPLETE_LOOKUP);
             }
@@ -88,6 +93,12 @@ void Lookup::handleServerMessage(cMessage* msg)
             assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
             finish(SPFS_PARTIAL);
             break;
+        }
+        case FSM_Enter(FINISH_FAILED_LOOKUP):
+        {
+            assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
+            finish(SPFS_NOTFOUND);
+            break;            
         }
     }
     // Store current state
@@ -122,7 +133,7 @@ void Lookup::lookupName()
     // Increment the number of resolved segments
     lookupReq_->setNumResolvedSegments(nextSegment + 1);
 
-    cerr << "Looking up: " << fullName << endl
+    cerr << "Looking up: " << fullName.getSegment(nextSegment) << endl
          << "  Parent: " << parentName << " " << parentHandle << endl; 
 }
 
@@ -141,6 +152,16 @@ bool Lookup::lookupIsComplete()
     }
 }
 
+bool Lookup::lookupIsFailed()
+{
+    // Determine if the next path segment exists
+    Filename fullName(lookupReq_->getFilename());
+    size_t nextSegment = lookupReq_->getNumResolvedSegments();
+    Filename nextName = fullName.getSegment(nextSegment);
+    FSMetaData* nextMeta = FileBuilder::instance().getMetaData(nextName);
+    return (0 == nextMeta);
+}
+
 bool Lookup::localLookupIsComplete()
 {
     // Determine if the next path segment resides on another server
@@ -148,6 +169,7 @@ bool Lookup::localLookupIsComplete()
     size_t nextSegment = lookupReq_->getNumResolvedSegments();
     Filename nextName = fullName.getSegment(nextSegment);
     FSMetaData* nextMeta = FileBuilder::instance().getMetaData(nextName);
+    assert(0 != nextMeta);
     if (module_->handleIsLocal(nextMeta->handle))
     {
         return false;

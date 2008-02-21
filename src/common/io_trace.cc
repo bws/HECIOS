@@ -40,7 +40,8 @@ IOTrace::Record::Record(IOTrace::Operation opType,
     isWriteOnly_(false),
     isReadWrite_(false),
     isDeleteOnClose_(false),
-    isAppend_(false)
+    isAppend_(false),
+    fileExists_(true)
 {
 }
 
@@ -61,7 +62,8 @@ IOTrace::Record::Record(IOTrace::Operation opType,
     isWriteOnly_(false),
     isReadWrite_(false),
     isDeleteOnClose_(false),
-    isAppend_(false)
+    isAppend_(false),
+    fileExists_(true)
 {
 }
 

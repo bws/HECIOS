@@ -136,6 +136,7 @@ void FileBuilder::createDirectory(const Filename& dirName,
 {
     if (!fileExists(dirName))
     {
+        //cerr << "Creating Dir: " << dirName << " Meta:" << metaServer <<endl;
         // Create implied parent directories recursively
         size_t numSegs = dirName.getNumPathSegments();
         if (1 < numSegs)
@@ -184,6 +185,8 @@ void FileBuilder::createFile(const Filename& fileName,
 {
     if (!fileExists(fileName))
     {
+        //cerr << "Creating file: " << fileName
+        //     << " NumObjs:" << numServers <<endl;
         // Create implied parent directories recursively
         size_t numSegs = fileName.getNumPathSegments();
         if (1 < numSegs)
@@ -209,7 +212,6 @@ void FileBuilder::createFile(const Filename& fileName,
                               defaultMetaDataSize_);
         
         // Construct the data handles
-        cerr << "Creating file on " << numServers << " data servers" << endl;
         int firstServer = rand() % nextServerNumber_;
         vector<FSHandle> dataHandles;
         for (size_t i = 0; i < nextServerNumber_; i++)
@@ -230,7 +232,7 @@ void FileBuilder::createFile(const Filename& fileName,
     }
     else
     {
-        cerr << "Cannot create " << fileName << ": file exists" << endl;
+        cerr << "ERROR: Cannot create " << fileName << ": file exists" << endl;
     }
 }
 
@@ -239,17 +241,30 @@ void FileBuilder::populateFileSystem(const FileSystemMap& traceFS)
     StorageLayoutManager layoutManager;
 
     FileSystemMap::const_iterator iter = traceFS.begin();
+    cerr << "DIAGNOSTIC: Trace file system contains: "
+         << traceFS.size() << " directories and files\n";
     for (size_t i = 0; i < traceFS.size(); i++)
     {
         // Determine the meta server using a round robin scheme
         size_t metaIdx = i % metaServers_.size();
 
-        // Create the file using all of the data servers
         Filename filename(iter->first);
         FSSize fileSize(iter->second);
-        createFile(filename, fileSize,
-                   metaServers_[metaIdx], getNumDataServers(), layoutManager);
-
+        assert(0 <= fileSize);
+        if (0 == fileSize)
+        {
+            // Create the directory
+            createDirectory(filename, metaServers_[metaIdx], layoutManager);
+        }
+        else
+        {
+            // Create the file using all of the data servers
+            createFile(filename, fileSize,
+                       metaServers_[metaIdx],
+                       getNumDataServers(),
+                       layoutManager);
+        }
+        
         // Increment to next file
         ++iter;
     }

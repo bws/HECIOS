@@ -244,7 +244,11 @@ IOTrace::Record* SHTFIOTrace::createOpenRecord(const string& filename,
     {
         rec->isAppend(true);
     }
-    
+
+    if (descriptor < 0)
+    {
+        rec->fileExists(false);
+    }
     return rec;
 }
 

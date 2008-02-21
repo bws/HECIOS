@@ -81,6 +81,8 @@ void FSServerConfigurator::initialize(int stage)
     {
         // Retrieve the handles per server
         handlesPerServer_ = par("handlesPerServer");
+        cerr << "DIAGNOSTIC: Maximum handles per server is: "
+             << handlesPerServer_ << endl;
         
         // Retrieve the interface table for this module
         cModule* cluster = parentModule();

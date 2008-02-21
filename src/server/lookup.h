@@ -45,6 +45,9 @@ protected:
     /** @return true if the name is fully resolved */
     bool lookupIsComplete();
 
+    /** @return true if the name does not exists */
+    bool lookupIsFailed();
+
     /** @return true if no more local segments exist */
     bool localLookupIsComplete();
     

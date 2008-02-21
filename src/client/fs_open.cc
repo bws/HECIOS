@@ -96,9 +96,13 @@ void FSOpen::handleMessage(cMessage* msg)
                 FSM_Goto(currentState, GET_PARENT_ATTRIBUTES);
             else if (SPFS_PARTIAL == status)
                 FSM_Goto(currentState, LOOKUP_PARENT_HANDLE);
+            else if (SPFS_NOTFOUND == status)
+                FSM_Goto(currentState, FINISH);
             else
+            {
                 cerr << __FILE__ << ":" << __LINE__ << ":"
                      << "ERROR: Dir does not exist during creation." << endl;
+            }
             break;
         }
         case FSM_Enter(GET_PARENT_ATTRIBUTES):
@@ -244,6 +248,8 @@ void FSOpen::lookupParentOnServer()
         FileBuilder::instance().getMetaData(resolvedName)->handle;
     
     // Create the lookup request
+    cerr << "Open: " << openFile << endl;
+    cerr << "Client looking up: " << resolvedName << " " << resolvedHandle << endl;
     spfsLookupPathRequest* req = new spfsLookupPathRequest(
         0, SPFS_LOOKUP_PATH_REQUEST);
     req->setContextPointer(openReq_);
@@ -322,6 +328,14 @@ spfsLookupStatus FSOpen::processLookup(spfsLookupPathResponse* lookupResponse)
             FileBuilder::instance().getMetaData(resolvedName);
         cerr << "Adding name to cache: " << resolvedName << endl;
         client_->fsState().insertName(resolvedName.str(), meta->handle);
+    }
+    else if (SPFS_NOTFOUND == lookupStatus)
+    {
+        // Enter the resolved handle into the cache
+        Filename openFile(openReq_->getFileName());
+        Filename resolvedName = openFile.getSegment(numResolvedSegments - 1);
+        cerr << "Could not open: " << openFile << " unable to resolve: "
+             << resolvedName << endl;
     }
     return lookupStatus;
 }

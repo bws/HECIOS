@@ -123,7 +123,7 @@ void IOApplication::handleMessage(cMessage* msg)
                 if (0 != nextMsg)
                 {
                     //cerr << "\nNext application message posted: "
-                    //     << nextMsg->kind() << endl;
+                    //     << nextMsg->className() << endl;
                     send(nextMsg, ioOutGate_);
                 }
                 else
@@ -235,10 +235,8 @@ cMessage* IOApplication::createMessage(IOTrace::Record* rec)
 void IOApplication::populateFileSystem()
 {
     assert(0 != trace_);
-    cerr << "Populating file system . . . ";
     const FileSystemMap* traceFS = trace_->getFiles();
     FileBuilder::instance().populateFileSystem(*traceFS);
-    cerr << "Done." << endl;
 }
 
 spfsMPIDirectoryCreateRequest* IOApplication::createDirectoryCreateMessage(
@@ -248,7 +246,6 @@ spfsMPIDirectoryCreateRequest* IOApplication::createDirectoryCreateMessage(
     spfsMPIDirectoryCreateRequest* createDir =
         new spfsMPIDirectoryCreateRequest(0, SPFS_MPI_DIRECTORY_CREATE_REQUEST);
     createDir->setDirName(mkdirRecord->filename().c_str());
-    cerr << "creating directory: " << mkdirRecord->filename() << endl;
     return createDir;
 }
 
@@ -266,18 +263,19 @@ spfsMPIFileOpenRequest* IOApplication::createOpenMessage(
 {
     assert(IOTrace::OPEN == openRecord->opType());
 
-    // If the file does not exist, create it
+    // Determine if this file exists in the simulator
     Filename openFile(openRecord->filename());
-    
-    // Construct a file descriptor for use in simulaiton
     FileDescriptor* fd = FileBuilder::instance().getDescriptor(openFile);
-
+    assert(!((0 != fd) xor openRecord->fileExists()));
+    
     // Associate the file id with a file descriptor
     setDescriptor(openRecord->fileId(), fd);
-    
+
+    // Create the open request
     spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
         0, SPFS_MPI_FILE_OPEN_REQUEST);
     open->setFileName(openFile.str().c_str());
+    
     open->setFileDes(fd);
 
     // Create the open access mode
@@ -387,6 +385,8 @@ spfsMPIFileWriteAtRequest* IOApplication::createWriteMessage(
 
 void IOApplication::setDescriptor(int fileId, FileDescriptor* descriptor)
 {
+    assert((0 == descriptor) && (-1 != fileId) ? false : true);
+    assert((0 != descriptor) && (-1 == fileId) ? false : true);
     descriptorById_[fileId] = descriptor;
 }
 

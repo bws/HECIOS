@@ -17,6 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+#define FSM_DEBUG  // Enable FSM Debug output
 #include "fs_create_directory.h"
 #include <iostream>
 #include <omnetpp.h>
@@ -160,13 +161,11 @@ bool FSCreateDirectory::isParentNameCached()
     {
         return true;
     }
-    
-    FSHandle* lookup = client_->fsState().lookupName(parentDir.str());
-    if (0 != lookup)
+    else
     {
-        return true;
+        FSHandle* lookup = client_->fsState().lookupName(parentDir.str());
+        return (0 != lookup);
     }
-    return false;
 }
 
 bool FSCreateDirectory::isParentAttrCached()
@@ -208,6 +207,7 @@ void FSCreateDirectory::lookupParentOnServer()
 
     // Send the request
     client_->send(req, client_->getNetOutGate());
+    cerr << "Mkdir: " << dir << " looking up: " << parent << endl;
 }
 
 spfsLookupStatus FSCreateDirectory::processLookup(
@@ -246,6 +246,8 @@ void FSCreateDirectory::getParentAttributes()
     req->setAutoCleanup(true);
     req->setHandle(parentMeta->handle);
     client_->send(req, client_->getNetOutGate());
+
+    cerr << "Getting parent attrs: " << dirName << endl;
 }
 
 void FSCreateDirectory::cacheParentAttributes()
@@ -276,9 +278,10 @@ void FSCreateDirectory::createDataObject()
     // Retrieve the bookkeeping information for this directory
     Filename dirName(createReq_->getDirName());
     const FSMetaData* metaData = FileBuilder::instance().getMetaData(dirName);
-
-    // Construct the create requests for this directory's data handles
+    assert(0 != metaData);
     assert(1 == metaData->dataHandles.size());
+    
+    // Construct the create requests for this directory's data handles
     spfsCreateRequest* create = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
     create->setContextPointer(createReq_);
     create->setAutoCleanup(true);

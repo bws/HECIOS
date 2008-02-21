@@ -44,7 +44,7 @@ module BeowulfCluster
 
         pfsConfig: FSServerConfigurator;
             parameters:
-                handlesPerServer = 10000;
+                handlesPerServer = 250000;
             display: "p=40,50;i=abstract/table2,light blue";
 
         mpiConfig: MPIConfigurator;

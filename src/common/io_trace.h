@@ -130,6 +130,12 @@ public:
 
         /** Set the Append flag */
         void isAppend(bool isAppend) { isAppend_ = isAppend; };
+
+        /** @return true if this file exists in the file system */
+        bool fileExists() const { return fileExists_; };
+
+        /** Set the file exists flag */
+        void fileExists(bool fileExists) { fileExists_ = fileExists; };
         
     public:
         Operation opType_;
@@ -147,6 +153,7 @@ public:
         bool isReadWrite_;
         bool isDeleteOnClose_;
         bool isAppend_;
+        bool fileExists_;
     };
 
     /** Constructor */
