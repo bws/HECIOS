@@ -121,6 +121,10 @@ IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
         recordStream >> descriptor >> status;
         rec = createCloseRecord(descriptor, status, startTime, duration);
     }
+    if ("CPU_PHASE" == token)
+    {
+        rec = createCpuPhaseRecord(startTime, duration);
+    }
     else if ("DELETE" == token)
     {
         string filename;
@@ -177,6 +181,14 @@ IOTrace::Record* SHTFIOTrace::createCloseRecord(int descriptor,
                                                startTime, duration);
     rec->fileId(descriptor);
     rec->filename(getFilename(descriptor));
+    return rec;
+}
+
+IOTrace::Record* SHTFIOTrace::createCpuPhaseRecord(double startTime,
+                                                   double duration)
+{
+    IOTrace::Record* rec = new IOTrace::Record(IOTrace::CPU_PHASE,
+                                               startTime, duration);
     return rec;
 }
 

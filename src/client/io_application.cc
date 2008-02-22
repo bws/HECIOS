@@ -60,7 +60,7 @@ void IOApplication::initialize()
     assert(0 != trace_);
     
     // Send the kick start message
-    cMessage* kickStart = new cMessage();
+    cMessage* kickStart = new cMessage("Kickstart");
     scheduleAt(1.0, kickStart);
 }
 
@@ -89,16 +89,20 @@ void IOApplication::finish()
  */
 void IOApplication::handleMessage(cMessage* msg)
 {
+    bool msgScheduled = false;
     if (msg->isSelfMessage())
     {
-        // On a self message, perform kick start
-        // Create file system files
-        populateFileSystem();
-        
-        // Schedule the first trace message
+        // Create file system files only once
+        static bool fileSystemPopulated = false;
+        if (!fileSystemPopulated)
+        {
+            populateFileSystem();
+            fileSystemPopulated = true;
+        }
+    
+        // Schedule the next message
+        msgScheduled = scheduleNextMessage();
         delete msg;
-        cMessage* firstMessage = getNextMessage();
-        send(firstMessage, ioOutGate_);
     }
     else if (msg->arrivalGateId() == ioInGate_)
     {
@@ -115,23 +119,12 @@ void IOApplication::handleMessage(cMessage* msg)
             case SPFS_MPI_FILE_SET_SIZE_RESPONSE:
             case SPFS_MPI_FILE_READ_AT_RESPONSE:
             case SPFS_MPI_FILE_READ_RESPONSE:
+            case SPFS_MPI_FILE_UPDATE_TIME_RESPONSE:
             case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
             case SPFS_MPI_FILE_WRITE_RESPONSE:
             {
-                // Send the next message
-                cMessage* nextMsg = getNextMessage();
-                if (0 != nextMsg)
-                {
-                    //cerr << "\nNext application message posted: "
-                    //     << nextMsg->className() << endl;
-                    send(nextMsg, ioOutGate_);
-                }
-                else
-                {
-                    cerr << "Rank " << rank_
-                         << " IOApplication Time: " << simTime()
-                         << ": No more messages to post." << endl;
-                }
+                // Schedule the next message
+                msgScheduled = scheduleNextMessage();
                 break;
             }
             default:
@@ -146,12 +139,46 @@ void IOApplication::handleMessage(cMessage* msg)
         // Delete the response
         delete msg;
     }
-
     else if (msg->arrivalGateId() == mpiInGate_)
     {
         // TODO: forwarding to cache?
+        assert(false);
         send(msg, ioOutGate_);
     }
+
+    if (!msgScheduled)
+    {
+        assert(false == trace_->hasMoreRecords());
+        cerr << "Rank " << rank_ << " IOApplication Time: " << simTime()
+             << ": No more messages to post." << endl;
+    }
+}
+
+bool IOApplication::scheduleNextMessage()
+{
+    bool msgScheduled = false;
+    if (trace_->hasMoreRecords())
+    {
+        IOTrace::Record* traceRec = trace_->nextRecord();
+        assert(0 != traceRec);
+
+        if (IOTrace::CPU_PHASE == traceRec->opType())
+        {
+            double phaseLength = traceRec->duration();
+            cMessage* cpuPhase = new cMessage("CPU Phase");
+            scheduleAt(simTime() + phaseLength, cpuPhase);
+            cerr << "Scheduling CPU Phase to last: " << phaseLength << endl;
+        }
+        else
+        {
+            cMessage* msg = createMessage(traceRec);
+            assert(0 != msg);
+            send(msg, ioOutGate_);
+        }
+        delete traceRec;
+        msgScheduled = true;
+    }
+    return msgScheduled;
 }
 
 cMessage* IOApplication::getNextMessage()
@@ -344,7 +371,11 @@ spfsMPIFileUpdateTimeRequest* IOApplication::createUpdateTimeMessage(
     const IOTrace::Record* utimeRecord)
 {
     assert(IOTrace::UTIME == utimeRecord->opType());
-    return 0;
+
+    spfsMPIFileUpdateTimeRequest* utime = new spfsMPIFileUpdateTimeRequest(
+        0, SPFS_MPI_FILE_UPDATE_TIME_REQUEST);
+    utime->setFileName(utimeRecord->filename().c_str());
+    return utime;
 }
 
 spfsMPIFileWriteAtRequest* IOApplication::createWriteAtMessage(

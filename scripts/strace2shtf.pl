@@ -188,6 +188,9 @@ sub fixRelativePath
     return $filename;
 }
 
+#
+#
+#
 sub fixPFSPath
 {
     my $filename = shift;
@@ -195,6 +198,14 @@ sub fixPFSPath
     # Replace the PFS mount volume with a simple root directory
     my $pfsFilename = "/" . substr($filename, length($g_mountDir) + 1); 
     return $pfsFilename;
+}
+
+#
+# Return a CPU Phase record
+#
+sub getCPUPhaseRecord
+{
+    return "CPU_PHASE";
 }
 
 #
@@ -478,7 +489,7 @@ sub processTraceRecord
     my @fields = split(/ /, $traceRecord);
     my $cmd = $fields[0];
 
-    my $processedRecord;
+    my $processedRecord = getCPUPhaseRecord();
     if ($cmd =~ /OPEN|SOCKET/)
     {
         my $filename = $fields[1];
@@ -526,6 +537,10 @@ sub processTraceRecord
             $processedRecord = $traceRecord;
         }
     }
+    elsif ("CPU_PHASE" eq $cmd)
+    {
+        # Do nothing
+    } 
     else
     {
         print "ERROR: Unable to process: $traceRecord\n";
@@ -616,6 +631,10 @@ sub processStraceLine
     elsif ("utime" eq $token)
     {
         $traceRecord = parseUtimeCall($syscall);
+    }
+    else
+    {
+        $traceRecord = getCPUPhaseRecord();
     }
 
     # Emit the trace record if necessary
@@ -741,6 +760,12 @@ sub main
         . "Trace Relative Path: $g_currentDir\n"
         . "PFS Mountpoint: $g_mountDir\n";
     
+    # Ignore stdin, stdout, and stderr descriptors
+    ignoreDescriptor(0);
+    ignoreDescriptor(1);
+    ignoreDescriptor(2);
+    print "Ignoring default descriptors: stdout(0) stdin(1) stderr(2)\n";
+
     # Open the input file
     my $inputFile = openInputFile($ARGV[0]);
 

@@ -88,6 +88,7 @@ private:
     cOutVector getAttrDelay;
     cOutVector lookupPathDelay;
     cOutVector readDelay;
+    cOutVector setAttrDelay;
     cOutVector writeCompleteDelay;
     cOutVector writeDelay;
 };

@@ -89,8 +89,8 @@ enum mpiMessageKind
     // MPI Extensions for our simulator
     SPFS_MPI_DIRECTORY_CREATE_REQUEST = 200;
     SPFS_MPI_DIRECTORY_CREATE_RESPONSE = 201;
-    SPFS_MPI_FILE_UTIME_REQUEST = 202;
-    SPFS_MPI_FILE_UTIME_RESPONSE = 203;
+    SPFS_MPI_FILE_UPDATE_TIME_REQUEST = 202;
+    SPFS_MPI_FILE_UPDATE_TIME_RESPONSE = 203;
     SPFS_MPI_FILE_STAT_REQUEST = 204;
     SPFS_MPI_FILE_STAT_RESPONSE = 205;
 };
@@ -319,7 +319,7 @@ message spfsMPIDirectoryCreateResponse extends spfsMPIResponse
 message spfsMPIFileUpdateTimeRequest extends spfsMPIRequest
 {
     fields:
-        string filename;
+        string fileName;
 
         // internal fields
         unsigned int numResolvedSegments = 1;

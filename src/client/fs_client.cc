@@ -23,6 +23,7 @@
 #include "fs_create_directory.h"
 #include "fs_open.h"
 #include "fs_read.h"
+#include "fs_update_time.h"
 #include "fs_write.h"
 #include "pfs_types.h"
 #include "pvfs_proto_m.h"
@@ -39,6 +40,7 @@ FSClient::FSClient()
       getAttrDelay("SPFS Client GetAttr Roundtrip Delay"),
       lookupPathDelay("SPFS Client Lookup Path Roundtrip Delay"),
       readDelay("SPFS Client Read Roundtrip Delay"),
+      setAttrDelay("SPFS Client Read Roundtrip Delay"),
       writeCompleteDelay("SPFS Client WriteComplete Roundtrip Delay"),
       writeDelay("SPFS Client Write Roundtrip Delay")
 {
@@ -121,6 +123,13 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             read.handleMessage(msg);
             break;
         }
+        case SPFS_MPI_FILE_UPDATE_TIME_REQUEST:
+        {
+            FSUpdateTime utime(
+                this, static_cast<spfsMPIFileUpdateTimeRequest*>(request));
+            utime.handleMessage(msg);
+            break;
+        }
         case SPFS_MPI_FILE_WRITE_AT_REQUEST:
         {
             FSWrite write(this,
@@ -197,6 +206,11 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
         case SPFS_READ_RESPONSE:
         {
             readDelay.record(delay);
+            break;
+        }
+        case SPFS_SET_ATTR_RESPONSE:
+        {
+            setAttrDelay.record(delay);
             break;
         }
         case SPFS_WRITE_COMPLETION_RESPONSE:

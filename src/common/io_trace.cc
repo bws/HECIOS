@@ -89,6 +89,7 @@ void IOTrace::addFilename(int fileId, std::string filename)
 std::string IOTrace::getFilename(int fileId) const
 {
     map<int, string>::const_iterator iter = filenamesById_.find(fileId);
+    assert(filenamesById_.end() != iter);
     return iter->second;
 }
 

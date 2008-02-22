@@ -61,6 +61,10 @@ private:
                                        double startTime,
                                        double duration);
 
+    /** @return a CPU_PHASE IOTraceRecord */
+    IOTrace::Record* createCpuPhaseRecord(double startTime,
+                                          double duration);
+
     /** @return a DELETE IOTraceRecord */
     IOTrace::Record* createDeleteRecord(const std::string& filename,
                                         double startTime,

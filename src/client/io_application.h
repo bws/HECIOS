@@ -76,6 +76,9 @@ protected:
         spfsMPIFileWriteAtRequest* writeAt);
     
 private:
+    /** @return true if the next message was able to be scheduled */
+    bool scheduleNextMessage();
+
     /** Create the file system files for this trace */
     void populateFileSystem();
     
