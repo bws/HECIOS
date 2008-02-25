@@ -180,7 +180,7 @@ bool Lookup::localLookupIsComplete()
     }
 }
 
-void Lookup::finish(int lookupStatus)
+void Lookup::finish(FSLookupStatus lookupStatus)
 {
     spfsLookupPathResponse* resp = new spfsLookupPathResponse(
         0, SPFS_LOOKUP_PATH_RESPONSE);

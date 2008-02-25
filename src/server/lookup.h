@@ -19,7 +19,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include "pfs_types.h"
 class cMessage;
 class spfsLookupPathRequest;
 class FSServer;
@@ -52,7 +52,7 @@ protected:
     bool localLookupIsComplete();
     
     /** Send the final response */
-    void finish(int lookupStatus);
+    void finish(FSLookupStatus lookupStatus);
     
 private:
 
@@ -72,5 +72,5 @@ private:
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

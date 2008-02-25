@@ -17,9 +17,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+//#define FSM_DEBUG  // Enable FSM Debug output
 #include "fs_open.h"
 #include <iostream>
-//#define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
 #include "client_fs_state.h"
 #include "filename.h"
@@ -90,7 +90,7 @@ void FSOpen::handleMessage(cMessage* msg)
         case FSM_Exit(LOOKUP_PARENT_HANDLE):
         {
             assert(0 != dynamic_cast<spfsLookupPathResponse*>(msg));
-            spfsLookupStatus status = processLookup(
+            FSLookupStatus status = processLookup(
                 static_cast<spfsLookupPathResponse*>(msg));
             if (SPFS_FOUND == status)
                 FSM_Goto(currentState, GET_PARENT_ATTRIBUTES);
@@ -123,7 +123,7 @@ void FSOpen::handleMessage(cMessage* msg)
         }
         case FSM_Exit(LOOKUP_NAME):
         {
-            spfsLookupStatus status = processLookup(
+            FSLookupStatus status = processLookup(
                 static_cast<spfsLookupPathResponse*>(msg));
             bool isCreate = checkFileCreateFlags(status);
             if (isCreate)
@@ -307,7 +307,7 @@ void FSOpen::lookupNameOnServer()
     client_->send(req, client_->getNetOutGate());
 }
 
-spfsLookupStatus FSOpen::processLookup(spfsLookupPathResponse* lookupResponse)
+FSLookupStatus FSOpen::processLookup(spfsLookupPathResponse* lookupResponse)
 {
     // Preconditions
     assert(0 < lookupResponse->getNumResolvedSegments());
@@ -317,8 +317,7 @@ spfsLookupStatus FSOpen::processLookup(spfsLookupPathResponse* lookupResponse)
     openReq_->setNumResolvedSegments(numResolvedSegments);
     
     // Determine lookup results
-    spfsLookupStatus lookupStatus =
-        static_cast<spfsLookupStatus>(lookupResponse->getStatus());
+    FSLookupStatus lookupStatus = lookupResponse->getStatus();
     if (SPFS_FOUND == lookupStatus)
     {
         // Enter the resolved handle into the cache
@@ -340,7 +339,7 @@ spfsLookupStatus FSOpen::processLookup(spfsLookupPathResponse* lookupResponse)
     return lookupStatus;
 }
 
-bool FSOpen::checkFileCreateFlags(const spfsLookupStatus& status)
+bool FSOpen::checkFileCreateFlags(const FSLookupStatus& status)
 {
     // TODO
     //assert((status != SPFS_FOUND) && (openReq_->getMode() & MPI_MODE_CREATE));

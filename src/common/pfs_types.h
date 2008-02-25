@@ -25,8 +25,11 @@
 #include "basic_types.h"
 class FileDistribution;
 
-/** Maximum number of entries in a path */
-#define MAXSEG 16
+/** Possible status returns from a file system lookup */
+enum FSLookupStatus { SPFS_INVALID_LOOKUP_STATUS = 0,
+                      SPFS_FOUND = 1,
+                      SPFS_PARTIAL = 2,
+                      SPFS_NOTFOUND = 3, };
 
 /** Metadata for a file */
 struct FSMetaData
@@ -46,20 +49,6 @@ inline bool operator==(const FSMetaData& lhs, const FSMetaData& rhs)
 {
     return (lhs.handle == rhs.handle);
 }
-
-/** Descriptor for an open file */
-struct FSDescriptor1
-{
-    FSMetaData* metaData; /* pointer to file unique metadata */
-    std::string path;    /* the complete path to the file */
-    int filePtr;         /* offset of current position in file */
-    
-    FSHandle handles[MAXSEG]; /* handles of all dirs along path */    
-    int segstart[MAXSEG];/* index to start of each dir name */
-    int seglen[MAXSEG];  /* length to end of path for each segment */
-    int curseg;          /* which segment is being looked up */
-    int segcnt;
-};
 
 /** Map for holding file system data for construction */
 typedef std::map<std::string, FSSize> FileSystemMap;

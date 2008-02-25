@@ -41,6 +41,7 @@ class noncobject DataTypePtr;
 class noncobject FileDistributionPtr;
 class noncobject FileViewPtr;
 class noncobject FSHandle;
+class noncobject FSLookupStatus;
 class noncobject FSMetaData;
 class noncobject FSOffset;
 class noncobject FSSize;
@@ -85,14 +86,6 @@ enum spfsMessageKind
     SPFS_DATA_FLOW_START = 434;
     SPFS_DATA_FLOW_FINISH = 435;
 };
-
-enum spfsLookupStatus {
-    SPFS_INVALID_LOOKUP_STATUS = 0; 
-    SPFS_FOUND = 1;
-    SPFS_PARTIAL = 2;
-    SPFS_NOTFOUND = 3;
-}
-
 
 // File request abstract base class
 message spfsRequest
@@ -221,7 +214,7 @@ message spfsLookupPathRequest extends spfsRequest
 message spfsLookupPathResponse extends spfsResponse
 {
     fields:
-        int status enum(spfsLookupStatus);
+        FSLookupStatus status;
         int numResolvedSegments;
 };
 

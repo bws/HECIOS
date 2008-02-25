@@ -26,6 +26,7 @@
 #include "file_builder.h"
 #include "fs_client.h"
 #include "mpi_proto_m.h"
+#include "pvfs_proto_m.h"
 using namespace std;
 
 FSCreateDirectory::FSCreateDirectory(FSClient* client,
@@ -84,7 +85,7 @@ void FSCreateDirectory::handleMessage(cMessage* msg)
         case FSM_Exit(LOOKUP_PARENT_HANDLE):
         {
             assert(0 != dynamic_cast<spfsLookupPathResponse*>(msg));
-            spfsLookupStatus status = processLookup(
+            FSLookupStatus status = processLookup(
                 static_cast<spfsLookupPathResponse*>(msg));
             if (SPFS_FOUND == status)
                 FSM_Goto(currentState, CREATE_META);
@@ -210,7 +211,7 @@ void FSCreateDirectory::lookupParentOnServer()
     cerr << "Mkdir: " << dir << " looking up: " << parent << endl;
 }
 
-spfsLookupStatus FSCreateDirectory::processLookup(
+FSLookupStatus FSCreateDirectory::processLookup(
     spfsLookupPathResponse* lookupResponse)
 {
     // Preconditions
@@ -221,8 +222,7 @@ spfsLookupStatus FSCreateDirectory::processLookup(
     createReq_->setNumResolvedSegments(numResolvedSegments);
     
     // Determine lookup results
-    spfsLookupStatus lookupStatus =
-        static_cast<spfsLookupStatus>(lookupResponse->getStatus());
+    FSLookupStatus lookupStatus = lookupResponse->getStatus();
     if (SPFS_FOUND == lookupStatus)
     {
         // Enter the parent handle into the cache

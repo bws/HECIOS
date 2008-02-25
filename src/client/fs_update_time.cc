@@ -17,7 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 //#define FSM_DEBUG  // Enable FSM Debug output
 #include "fs_update_time.h"
 #include <cassert>
@@ -87,7 +86,7 @@ void FSUpdateTime::handleMessage(cMessage* msg)
         case FSM_Exit(LOOKUP_PARENT_HANDLE):
         {
             assert(0 != dynamic_cast<spfsLookupPathResponse*>(msg));
-            spfsLookupStatus status = processLookup(
+            FSLookupStatus status = processLookup(
                 static_cast<spfsLookupPathResponse*>(msg));
             if (SPFS_FOUND == status)
                 FSM_Goto(currentState, GET_PARENT_ATTRIBUTES);
@@ -120,7 +119,7 @@ void FSUpdateTime::handleMessage(cMessage* msg)
         }
         case FSM_Exit(LOOKUP_NAME):
         {
-            spfsLookupStatus status = processLookup(
+            FSLookupStatus status = processLookup(
                 static_cast<spfsLookupPathResponse*>(msg));
             assert(SPFS_FOUND == status);
             FSM_Goto(currentState, WRITE_ATTR);
@@ -251,7 +250,7 @@ void FSUpdateTime::lookupNameOnServer()
     client_->send(req, client_->getNetOutGate());
 }
 
-spfsLookupStatus FSUpdateTime::processLookup(
+FSLookupStatus FSUpdateTime::processLookup(
     spfsLookupPathResponse* lookupResponse)
 {
     // Preconditions
@@ -262,8 +261,7 @@ spfsLookupStatus FSUpdateTime::processLookup(
     utimeReq_->setNumResolvedSegments(numResolvedSegments);
     
     // Determine lookup results
-    spfsLookupStatus lookupStatus =
-        static_cast<spfsLookupStatus>(lookupResponse->getStatus());
+    FSLookupStatus lookupStatus = lookupResponse->getStatus();
     if (SPFS_FOUND == lookupStatus)
     {
         // Enter the resolved handle into the cache

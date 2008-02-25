@@ -19,9 +19,10 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "pvfs_proto_m.h"
+#include "pfs_types.h"
 class cMessage;
 class FSClient;
+class spfsLookupPathResponse;
 class spfsMPIDirectoryCreateRequest;
 
 /**
@@ -48,7 +49,7 @@ private:
     void lookupParentOnServer();
 
     /** Process the name resolution progress of the lookup request */
-    spfsLookupStatus processLookup(spfsLookupPathResponse* lookupResponse);
+    FSLookupStatus processLookup(spfsLookupPathResponse* lookupResponse);
 
     /** Send the request to create the directory's metadata object */
     void createMeta();
