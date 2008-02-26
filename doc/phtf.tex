@@ -138,7 +138,7 @@ Generally speaking, the event file is a set of plain text files, each denotes a 
 <parameters> ::= NULL | <string> <parameters> | <number> <parameters>
 <eol> ::= "\r\n"
 <mpi calls> ::= {MPI-I/Os}
-<special calls> ::= PAUSE call
+<special calls> ::= CPU_PHASE call
 <number> ::= <digit><number>
 <string> ::= <character><string> | <digit><string>
 <digit> ::= {0123456789}
@@ -150,7 +150,7 @@ Generally speaking, the event file is a set of plain text files, each denotes a 
 \begin{description}
 	\item[record - one event that happened on current process]\footnote{The process that this file denotes}
 	\item[id - denotes the sequence of execution]
-	\item[op - type of operation(MPI-I/O calls or PAUSE call)]\footnote{A PAUSE call ask the process to pause for a certain time}
+	\item[op - type of operation(MPI-I/O calls or CPU\_PHASE call)]\footnote{A PAUSE call ask the process to pause for a certain time}
 	\item[start time - the start time of the original operation for reference]
 	\item[duration - the duration of the original operation for reference]
         \item[return value - the return value of the original operation]
@@ -161,17 +161,17 @@ Generally speaking, the event file is a set of plain text files, each denotes a 
 \label{sec:SampleMPI}
 \begin{verbatim}
 1 MPI_FILE_READ 12341 25 6 0x12dfe123 500 0 0x12dff1229
-2 PAUSE 12366 30
+2 CPU_PHASE 12366 30
 3 MPI_FILE_CLOSE 12396 5 6
 4 ...
 ...
 \end{verbatim}
 
-\subsection{PAUSE Call}\footnote{The parameters in event description follow a 'DATATYPE\_DESCRIPTION' syntax. For example, 'l\_start\_time' represents a long integer that holds the start time of an event.}
-\label{sec:PAUSECall}
+\subsection{CPU\_PHASE Call}\footnote{The parameters in event description follow a 'DATATYPE\_DESCRIPTION' syntax. For example, 'l\_start\_time' represents a long integer that holds the start time of an event.}
+\label{sec:CPUPHASECall}
 \begin{verbatim}
 Event:
- PAUSE <l_start_time> <l_duration>
+ CPU_PHASE <l_start_time> <l_duration>
 \end{verbatim}
 
 \subsection{MPI-I/O List}

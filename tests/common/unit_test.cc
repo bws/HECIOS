@@ -30,6 +30,7 @@
 #include "shtf_io_trace_test.h"
 #include "umd_io_trace_test.h"
 #include "vector_data_type_test.h"
+#include "phtf_io_trace_test.h"
 
 /**
  * Unit test driver for common subsystem module
@@ -41,6 +42,9 @@ int main(int argc, char** argv)
     CppUnit::TextTestRunner runner;
 
     // Add all of the requisite tests
+    runner.addTest( PHTFIOTraceTest::suite() );
+
+
     runner.addTest( BasicDataTypeTest::suite() );
     runner.addTest( ContiguousDataTypeTest::suite() );
     runner.addTest( FileDescriptorTest::suite() );
@@ -53,6 +57,7 @@ int main(int argc, char** argv)
     runner.addTest( SHTFIOTraceTest::suite() );
     runner.addTest( UMDIOTraceTest::suite() );
     runner.addTest( VectorDataTypeTest::suite() );
+
 
     bool success = runner.run();
     return (success ? 0 : 1);

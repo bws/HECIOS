@@ -1,9 +1,6 @@
-
-//
-// Abstract interface for all I/O applications
-//
-simple IOApplication
+simple PHTFIOApplication
     parameters:
+        dirPHTF : string,
         numTraceProcs : const;
 
     gates:

@@ -1,9 +1,6 @@
-
-//
-// Abstract interface for all I/O applications
-//
-simple IOApplication
+simple SHTFIOApplication
     parameters:
+        traceFile: string,
         numTraceProcs : const;
 
     gates:

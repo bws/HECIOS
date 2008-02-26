@@ -23,9 +23,6 @@
 #include <omnetpp.h>
 #include "io_trace.h"
 class FileDescriptor;
-class IOTrace;
-class SHTFIOTrace;
-class UMDIOTrace;
 class spfsCacheInvalidateRequest;
 class spfsMPIDirectoryCreateRequest;
 class spfsMPIFileCloseRequest;
@@ -41,15 +38,34 @@ class IOApplication : public cSimpleModule
 {
 public:
     /** Constructor */
-    IOApplication() : cSimpleModule(), trace_(0), rank_(-1) {};
+    IOApplication() : cSimpleModule(), rank_(-1) {};
     
     /** @return the file descriptor for a file id */
     FileDescriptor* getDescriptor(int fileId) const;
 
     /** @return the MPI application's canonical process rank */
     int getRank() const {return rank_;};
-    
+
 protected:
+    /** Assiciate the fileId with a file descriptor */
+    void setDescriptor(int fileId, FileDescriptor* descriptor);
+    
+    /** Send out the required cache invalidation messages */
+    void invalidateCaches(spfsMPIFileWriteAtRequest* writeAt);
+    
+    /** Create a cache invalidation message for sending to peers */
+    spfsCacheInvalidateRequest* createCacheInvalidationMessage(
+                                spfsMPIFileWriteAtRequest* writeAt);
+
+    
+private:
+    /** @return true if the next message was able to be scheduled */
+    virtual bool scheduleNextMessage() = 0;
+
+protected:
+    /** Create the file system files for this trace */
+    virtual void populateFileSystem() = 0;
+
     /** Implementation of initialize */
     virtual void initialize();
 
@@ -59,71 +75,10 @@ protected:
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
 
-    /** Get the next message to send */
-    virtual cMessage* getNextMessage();
+    /** Create a cMessage */
+    virtual cMessage* createMessage(void *) = 0;
+                
 
-    /** Create a cMessage from an IOTrace::Record */
-    virtual cMessage* createMessage(IOTrace::Record* rec);
-    
-    /** Assiciate the fileId with a file descriptor */
-    void setDescriptor(int fileId, FileDescriptor* descriptor);
-
-    /** Send out the required cache invalidation messages */
-    void invalidateCaches(spfsMPIFileWriteAtRequest* writeAt);
-    
-    /** Create a cache invalidation message for sending to peers */
-    spfsCacheInvalidateRequest* createCacheInvalidationMessage(
-        spfsMPIFileWriteAtRequest* writeAt);
-    
-private:
-    /** @return true if the next message was able to be scheduled */
-    bool scheduleNextMessage();
-
-    /** Create the file system files for this trace */
-    void populateFileSystem();
-    
-    /** @return create the IOTrace for traceFilename */
-    IOTrace* createIOTrace(const std::string& traceFilename);
-
-    /** @return a UMDIOTrace for traceFilename */
-    UMDIOTrace* createUMDIOTrace(std::string traceFilename);
-
-    /** @return a SHTFIOTrace for traceFilename */
-    SHTFIOTrace* createSHTFIOTrace(const std::string& traceFilename);
-
-    /** @return an MPI DirectoryCreate request */
-    spfsMPIDirectoryCreateRequest* createDirectoryCreateMessage(
-        const IOTrace::Record* mkdirRecord);
-    
-    /** @return an MPI File Close request */
-    spfsMPIFileCloseRequest* createCloseMessage(
-        const IOTrace::Record* closeRecord);
-    
-    /** @return an MPI File Open request */
-    spfsMPIFileOpenRequest* createOpenMessage(
-        const IOTrace::Record* openRecord);
-    
-    /** @return an MPI File Read At request */
-    spfsMPIFileReadAtRequest* createReadAtMessage(
-        const IOTrace::Record* readAtRecord);
-    
-    /** @return an MPI File Read At request */
-    spfsMPIFileReadAtRequest* createReadMessage(
-        const IOTrace::Record* readRecord);
-    
-    /** @return an MPI File Update Time request */
-    spfsMPIFileUpdateTimeRequest* createUpdateTimeMessage(
-        const IOTrace::Record* utimeRecord);
-    
-    /** @return an MPI File Write At request */
-    spfsMPIFileWriteAtRequest* createWriteAtMessage(
-        const IOTrace::Record* writeAtRecord);
-    
-    /** @return an MPI File Write At request */
-    spfsMPIFileWriteAtRequest* createWriteMessage(
-        const IOTrace::Record* writeRecord);    
-    
-    IOTrace* trace_;
     int rank_;
     int ioInGate_;
     int ioOutGate_;

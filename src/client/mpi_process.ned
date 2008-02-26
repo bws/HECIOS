@@ -30,12 +30,14 @@ import
 // Compound module describing and MPI job process
 //
 module MPIProcess
+    parameters:
+        IOApplicationType : string      ;
     gates:
         in: ioIn, mpiClientIn, mpiServerIn;
         out: ioOut, mpiClientOut, mpiServerOut;
 
     submodules:
-        app: IOApplication;
+        app:IOApplicationType like IOApplication;
             display: "p=130,80;i=block/app,white";
 
 	mpiMiddleware: MpiMiddleware;
