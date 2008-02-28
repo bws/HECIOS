@@ -51,6 +51,8 @@ void IOApplication::initialize()
     mpiOutGate_ = findGate("mpiOut");
     mpiInGate_ = findGate("mpiIn");
 
+    msgScheduled_ = false;
+
     // Set the process rank
     rank_ = rank_seed++;  
 }
@@ -72,71 +74,84 @@ void IOApplication::finish()
 
 }
 
+void IOApplication::handleSelfMessage(cMessage* msg)
+{
+    // Create file system files only once
+    static bool fileSystemPopulated = false;
+    if (!fileSystemPopulated)
+    {
+        populateFileSystem();
+        fileSystemPopulated = true;
+    }
+    
+    // Schedule the next message
+    msgScheduled_ = scheduleNextMessage();
+    delete msg;
+}
+
+void IOApplication::handleIOMessage(cMessage* msg)
+{
+    switch(msg->kind())
+    {
+        case SPFS_MPI_DIRECTORY_CREATE_RESPONSE:
+        case SPFS_MPI_FILE_CLOSE_RESPONSE:
+        case SPFS_MPI_FILE_DELETE_RESPONSE:
+        case SPFS_MPI_FILE_GET_SIZE_RESPONSE:
+        case SPFS_MPI_FILE_GET_INFO_RESPONSE:
+        case SPFS_MPI_FILE_OPEN_RESPONSE:
+        case SPFS_MPI_FILE_PREALLOCATE_RESPONSE:
+        case SPFS_MPI_FILE_SET_INFO_RESPONSE:
+        case SPFS_MPI_FILE_SET_SIZE_RESPONSE:
+        case SPFS_MPI_FILE_READ_AT_RESPONSE:
+        case SPFS_MPI_FILE_READ_RESPONSE:
+        case SPFS_MPI_FILE_UPDATE_TIME_RESPONSE:
+        case SPFS_MPI_FILE_IREAD_RESPONSE:
+        case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
+        case SPFS_MPI_FILE_WRITE_RESPONSE:
+        case SPFS_MPI_FILE_IWRITE_RESPONSE:
+        {
+            // Schedule the next message
+            msgScheduled_ = scheduleNextMessage();
+            break;
+        }
+        default:
+            cerr << "IOApplication::handleMessage not yet implemented "
+                 << "for kind: "<< msg->kind() << endl;
+            break;
+    }
+    
+    // Delete the originating request
+    delete (cMessage*)msg->contextPointer();
+    
+    // Delete the response
+    delete msg;
+}
+
+void IOApplication::handleMPIMessage(cMessage* msg)
+{
+    // TODO: forwarding to cache?
+    assert(false);
+    send(msg, ioOutGate_);        
+}
+
 /**
  * Handle MPI-IO Response messages
  */
 void IOApplication::handleMessage(cMessage* msg)
-{
-    bool msgScheduled = false;
+{   
     if (msg->isSelfMessage())
     {
-        // Create file system files only once
-        static bool fileSystemPopulated = false;
-        if (!fileSystemPopulated)
-        {
-            populateFileSystem();
-            fileSystemPopulated = true;
-        }
-    
-        // Schedule the next message
-        msgScheduled = scheduleNextMessage();
-        delete msg;
+        handleSelfMessage(msg);
     }
     else if (msg->arrivalGateId() == ioInGate_)
     {
-        switch(msg->kind())
-        {
-            case SPFS_MPI_DIRECTORY_CREATE_RESPONSE:
-            case SPFS_MPI_FILE_CLOSE_RESPONSE:
-            case SPFS_MPI_FILE_DELETE_RESPONSE:
-            case SPFS_MPI_FILE_GET_SIZE_RESPONSE:
-            case SPFS_MPI_FILE_GET_INFO_RESPONSE:
-            case SPFS_MPI_FILE_OPEN_RESPONSE:
-            case SPFS_MPI_FILE_PREALLOCATE_RESPONSE:
-            case SPFS_MPI_FILE_SET_INFO_RESPONSE:
-            case SPFS_MPI_FILE_SET_SIZE_RESPONSE:
-            case SPFS_MPI_FILE_READ_AT_RESPONSE:
-            case SPFS_MPI_FILE_READ_RESPONSE:
-            case SPFS_MPI_FILE_UPDATE_TIME_RESPONSE:
-            case SPFS_MPI_FILE_IREAD_RESPONSE:
-            case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
-            case SPFS_MPI_FILE_WRITE_RESPONSE:
-            case SPFS_MPI_FILE_IWRITE_RESPONSE:
-            {
-                // Schedule the next message
-                msgScheduled = scheduleNextMessage();
-                break;
-            }
-            default:
-                cerr << "IOApplication::handleMessage not yet implemented "
-                     << "for kind: "<< msg->kind() << endl;
-                break;
-        }
-
-        // Delete the originating request
-        delete (cMessage*)msg->contextPointer();
-        
-        // Delete the response
-        delete msg;
+        handleIOMessage(msg);
     }
     else if (msg->arrivalGateId() == mpiInGate_)
     {
-        // TODO: forwarding to cache?
-        assert(false);
-        send(msg, ioOutGate_);
     }
 
-    if (!msgScheduled)
+    if (!msgScheduled_)
     {
         cerr << "Rank " << rank_ << " IOApplication Time: " << simTime()
              << ": No more messages to post." << endl;

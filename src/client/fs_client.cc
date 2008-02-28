@@ -147,9 +147,9 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             FSRead read(this,
                         static_cast<spfsMPIFileReadAtRequest*>(request));
             read.handleMessage(msg);
-            //spfsMPIFileReadResponse *readmsg = new spfsMPIFileReadResponse(
-            //    0, SPFS_MPI_FILE_IREAD_RESPONSE);
-            //send(readmsg, appOutGateId_);                                                                           
+            spfsMPIFileReadResponse *readmsg = new spfsMPIFileReadResponse(
+                0, SPFS_MPI_FILE_IREAD_RESPONSE);
+            send(readmsg, appOutGateId_);                                                                           
             break;
         }
         case SPFS_MPI_FILE_WRITE_REQUEST:
@@ -162,9 +162,9 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             FSWrite write(this,
                           static_cast<spfsMPIFileWriteAtRequest*>(request));
             write.handleMessage(msg);
-            //spfsMPIFileWriteResponse *writemsg = new spfsMPIFileWriteResponse(
-            //    0, SPFS_MPI_FILE_IWRITE_RESPONSE);
-            //send(writemsg, appOutGateId_);
+            spfsMPIFileWriteResponse *writemsg = new spfsMPIFileWriteResponse(
+                0, SPFS_MPI_FILE_IWRITE_RESPONSE);
+            send(writemsg, appOutGateId_);
             break;
         }
         case SPFS_MPI_FILE_DELETE_REQUEST:

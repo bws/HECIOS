@@ -71,27 +71,73 @@ bool PHTFIOApplication::scheduleNextMessage()
     cMessage * msg = 0;
     PHTFEventRecord re;
     bool msgScheduled = false;
-    while(!phtfEvent_->eof()){
+    while(!phtfEvent_->eof())
+    {
         *phtfEvent_ >> re;
         msg = createMessage(&re);
-        if(msg) {
-            if(re.recordOp() == CPU_PHASE) {
-                double schTime = simTime() + msg->par("Delay").doubleValue();
-                cerr << simTime() << " : Rank " << rank_ << " cpu phase " << msg->par("Delay").doubleValue() << " at " << schTime << endl;
-                scheduleAt(schTime , msg);
-            }
-            else {
-                cerr << simTime() << " : Rank " << rank_ << " send msg kind " << msg->kind() << endl;
+        if(!msg) continue;
+        cerr << "Rank " << rank_ << ": " << re.recordStr() << endl;
+        switch(re.recordOp())
+        {
+            case CPU_PHASE:
+                scheduleCPUMessage(msg);
+                break;
+            case WAIT:
+                delete msg;
+                break;
+            case OPEN:
+                //TODO: add collaborate open operation here
+            default:
+                cerr << simTime() << " : Rank " << rank_
+                     << " send msg kind " << msg->kind()
+                     << endl;                
                 send(msg, ioOutGate_);
-            }
+                msgScheduled = true;
+                break;
+        }
+        break;
+    }    
+    return msgScheduled;
+}
 
-            msgScheduled = true;
-            
-            break;
+void PHTFIOApplication::handleIOMessage(cMessage* msg)
+{
+    cMessage * orgMsg = (cMessage*)msg->contextPointer();
+
+    if(waitReqId_ != -1 && orgMsg != 0)
+    {
+        long req = -1;
+        if(orgMsg->kind() == SPFS_MPI_FILE_IWRITE_REQUEST)
+        {
+            req = dynamic_cast<spfsMPIFileWriteAtRequest*>(orgMsg)->getReqId();
+        }
+        else if(orgMsg->kind() == SPFS_MPI_FILE_IREAD_REQUEST)
+        {
+            req = dynamic_cast<spfsMPIFileReadAtRequest*>(orgMsg)->getReqId();
+        }
+
+        if(waitReqId_ != req)
+        {
+            delete(orgMsg);
+            delete(msg);
+            return;
+        }
+        else
+        {
+            waitReqId_ = -1;
         }
     }
-    
-    return msgScheduled;
+
+    IOApplication::handleIOMessage(msg);
+}
+
+void PHTFIOApplication::scheduleCPUMessage(cMessage *msg)
+{
+    double schTime = simTime() + msg->par("Delay").doubleValue();
+    cerr << simTime() << " : Rank " << rank_
+         << " cpu phase " << msg->par("Delay").doubleValue()
+         << " until " << schTime << endl;
+    scheduleAt(schTime , msg);
 }
 
 cMessage* PHTFIOApplication::createMessage(PHTFEventRecord* rec)
@@ -99,7 +145,7 @@ cMessage* PHTFIOApplication::createMessage(PHTFEventRecord* rec)
     cMessage* mpiMsg = 0;
 
     switch(rec->recordOp())
-        {
+    {
         case BARRIER:
             break;
         case CPU_PHASE:
@@ -123,6 +169,9 @@ cMessage* PHTFIOApplication::createMessage(PHTFEventRecord* rec)
         case IWRITE:
             mpiMsg = createIWriteMessage(rec);
             break;
+        case WAIT:
+            mpiMsg = createWaitMessage(rec);
+            break;
         default:
             break;
         }
@@ -133,10 +182,19 @@ void PHTFIOApplication::populateFileSystem()
 {
     cerr << "Populating file system . . . ";
     FileSystemMap fsm;
-    fsm["/test"] = 10000;
-    fsm["/12345"] = 100;
+    fsm["/test"] = 10;
+    fsm["/12345"] = 10;
     FileBuilder::instance().populateFileSystem(fsm);
     cerr << "Done." << endl;
+}
+
+cMessage* PHTFIOApplication::createWaitMessage(
+    const PHTFEventRecord* waitRecord)
+{
+    string str = const_cast<PHTFEventRecord*>(waitRecord)->paramAt(0);
+    long reqid = strtol(str.c_str(), NULL, 16);
+    waitReqId_ = reqid;
+    return new cMessage("wait");
 }
 
 cMessage* PHTFIOApplication::createCPUPhaseMessage(
@@ -199,7 +257,8 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadAtMessage(
 spfsMPIFileReadAtRequest* PHTFIOApplication::createReadMessage(
     const PHTFEventRecord* readRecord)
 {
-    long count = 100;
+    string ctstr = const_cast<PHTFEventRecord*>(readRecord)->paramAt(2);
+    long count = strtol(ctstr.c_str(), NULL, 16);
 
     FileDescriptor* fd = getDescriptor(100);
     DataType* dataType = new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
@@ -216,8 +275,12 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadMessage(
 spfsMPIFileReadAtRequest* PHTFIOApplication::createIReadMessage(
     const PHTFEventRecord* readRecord)
 {
+    string str = const_cast<PHTFEventRecord*>(readRecord)->paramAt(4);
+    long reqid = strtol(str.c_str(), NULL, 16);
+
     spfsMPIFileReadAtRequest* iread = createReadMessage(readRecord);
-    iread->setKind(SPFS_MPI_FILE_READ_AT_REQUEST);
+    iread->setKind(SPFS_MPI_FILE_IREAD_REQUEST);
+    iread->setReqId(reqid);
     return iread;
 }
 
@@ -236,17 +299,14 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteAtMessage(
     write->setOffset(offset);
     write->setFileDes(fd);
 
-    // Generate corresponding cache invalidation messages
-    //invalidateCaches(write);
     return write;
 }
-
 
 spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
     const PHTFEventRecord* writeRecord)
 {
     string ctstr = const_cast<PHTFEventRecord*>(writeRecord)->paramAt(2);
-    long count = atol(ctstr.c_str());
+    long count = strtol(ctstr.c_str(), NULL, 16);
 
     DataType* dataType = new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
     FileDescriptor* fd = getDescriptor(100);
@@ -255,8 +315,11 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
         0, SPFS_MPI_FILE_WRITE_REQUEST);
     write->setDataType(dataType);
     write->setCount(count);
-    write->setOffset(0);
+    write->setOffset(fd->getFilePointer());
     write->setFileDes(fd);
+
+    // increase the file pointer correspondingly
+    fd->setFilePointer(fd->getFilePointer() + count);
 
     return write;
 }
@@ -264,8 +327,12 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
 spfsMPIFileWriteAtRequest* PHTFIOApplication::createIWriteMessage(
     const PHTFEventRecord* writeRecord)
 {
+    string str = const_cast<PHTFEventRecord*>(writeRecord)->paramAt(4);
+    long reqid = strtol(str.c_str(), NULL, 16);
+    
     spfsMPIFileWriteAtRequest* iwrite = createWriteMessage(writeRecord);
-    iwrite->setKind(SPFS_MPI_FILE_WRITE_AT_REQUEST);
+    iwrite->setKind(SPFS_MPI_FILE_IWRITE_REQUEST);
+    iwrite->setReqId(reqid);
     return iwrite;
 }
 

@@ -36,8 +36,6 @@ class spfsMPIFileUpdateTimeRequest;
 class spfsMPIFileWriteAtRequest;
 class spfsMPIFileWriteRequest;
 
-#define CPUPHASEKIND -1234
-
 /**
  * Model of an application process.
  */
@@ -45,7 +43,7 @@ class PHTFIOApplication : public IOApplication
 {
 public:
     /** Constructor */
-    PHTFIOApplication() :IOApplication()  {};
+    PHTFIOApplication() :IOApplication()  {waitReqId_ = -1;};
     
 protected:
     /** Implementation of initialize */
@@ -59,13 +57,19 @@ protected:
     /** Create a cMessage from an IOTrace::Record */
     virtual cMessage* createMessage(void *){return NULL;};
     virtual cMessage* createMessage(PHTFEventRecord* rec);
+
+    virtual void handleIOMessage(cMessage* msg);
     
 private:
     /** Create the file system files for this trace */
     void populateFileSystem();
 
+    void scheduleCPUMessage(cMessage *msg);
+
     cMessage* createCPUPhaseMessage(
         const PHTFEventRecord* cpuRecord);
+    cMessage* createWaitMessage(
+        const PHTFEventRecord* waitRecord);
        
     /** @return an MPI File Close request */
     spfsMPIFileCloseRequest* createCloseMessage(
@@ -100,6 +104,8 @@ private:
         const PHTFEventRecord* writeRecord);
 
     PHTFEvent * phtfEvent_;
+
+    long waitReqId_;
 
 };
 

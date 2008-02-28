@@ -243,6 +243,7 @@ void PHTFEventRecord::buildOpMap()
     PHTFEventRecord::_opmap["MPI_FILE_WRITE"] = WRITE;
     PHTFEventRecord::_opmap["MPI_BARRIER"] = BARRIER;
     PHTFEventRecord::_opmap["CPU_PHASE"] = CPU_PHASE;
+    PHTFEventRecord::_opmap["MPIO_WAIT"] = WAIT;
 }
 
 /** @return the operation id */

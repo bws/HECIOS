@@ -265,6 +265,7 @@ message spfsMPIFileReadAtRequest extends spfsMPIFileReadRequest
 {
     fields:
         long offset;
+        long reqId;
 };
 
 // File readAt response
@@ -297,6 +298,7 @@ message spfsMPIFileWriteAtRequest extends spfsMPIFileWriteRequest
 {
     fields:
         long offset;
+        long reqId;
 };
 
 // File writeAt response

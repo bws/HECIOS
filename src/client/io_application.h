@@ -75,6 +75,10 @@ protected:
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
 
+    virtual void handleSelfMessage(cMessage* msg);
+    virtual void handleIOMessage(cMessage* msg);
+    virtual void handleMPIMessage(cMessage* msg);
+
     /** Create a cMessage */
     virtual cMessage* createMessage(void *) = 0;
                 
@@ -84,6 +88,7 @@ protected:
     int ioOutGate_;
     int mpiOutGate_;
     int mpiInGate_;
+    bool msgScheduled_;
 
     /** */
     std::map<int, FileDescriptor*> descriptorById_;
