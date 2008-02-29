@@ -177,6 +177,34 @@ FileDescriptor* IOApplication::getDescriptor(int fileId) const
     return descriptor;
 }
 
+void IOApplication::invalidateCaches(spfsMPIFileWriteAtRequest* writeAt)
+{
+    // send msg to mpiOut, encapsulating spfsCacheInvalidateRequest
+    cMessage* inval = createCacheInvalidationMessage(writeAt);
+    spfsMPIBcastRequest* req =
+        new spfsMPIBcastRequest("MPI_BCAST", SPFS_MPI_BCAST_REQUEST);
+
+    req->setRoot(this->rank_);
+    req->setIsGlobal(true);
+    req->encapsulate(inval);
+    send(req, mpiOutGate_);
+}
+
+spfsCacheInvalidateRequest* IOApplication::createCacheInvalidationMessage(
+    spfsMPIFileWriteAtRequest* writeAt)
+{
+    spfsCacheInvalidateRequest* invalidator = new spfsCacheInvalidateRequest();
+    /*
+    FSHandle handle = writeAt->getFileDes()->metaData->handle;
+    invalidator->setHandle(handle);
+    invalidator->setOffset(writeAt->getOffset());
+    invalidator->setDataType(writeAt->getDataType());
+    invalidator->setCount(writeAt->getCount());
+    */
+    return invalidator;
+}
+
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil
