@@ -1,0 +1,19 @@
+       1 MPI_Barrier               0.000000 0.061279 0         91          0        512 0xb7f894a8   0x6f0fb4
+       2 CPU_PHASE                 0.061279 0.000200
+       3 MPI_Barrier               0.061479 0.105893 0         91  0x80574ac         24  0x8077b50         33
+       4 CPU_PHASE                 0.167372 0.000534
+       5 MPI_Barrier               0.167906 0.054837 0         91 0xbfe58acc   0x100000          1 0xbfe58acc
+       6 CPU_PHASE                 0.222743 0.004385
+       7 MPI_File_open             0.227128 0.146685 0         92  0x8077f98         37  0x8077cd8 0xbfe88b60
+       8 CPU_PHASE                 0.373813 0.001094
+       9 MPI_File_seek             0.374907 0.001527 0  0x80780f8          0          0        600 0x404087db
+      10 CPU_PHASE                 0.376434 0.000126
+      11 MPI_File_iwrite           0.376560 0.015201 0  0x80780f8 0xa7d9b008   0x100000          1 0xbfe88a10
+      12 CPU_PHASE                 0.391761 0.000500
+      13 MPIO_Wait                 0.392261 0.000248 0 0xbfe88a10 0xbfe88a14 0xbfe88a48  0x804b420 0x404087db
+      14 CPU_PHASE               251.982989 0.003084
+      15 MPI_File_close          251.986073 0.000331 0 0xbfe88b60          1 0xbfe88a48  0x804b8ac 0xc3bd59b5
+      16 CPU_PHASE               251.986404 0.001179
+      17 MPI_File_delete         251.987583 0.239564 0  0x80783f8  0x8077cd8   0x81e480          1 0xc3bd59b5
+      18 CPU_PHASE               252.227147 0.001272
+      19 MPI_Barrier             252.228419 4.335188 0         91          0         91          0 0x76a2f48d
