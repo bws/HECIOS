@@ -58,13 +58,13 @@ void PHTFIOTraceTest::testRecordConstructor2()
 
 void PHTFIOTraceTest::testEventConstructor()
 {
-  PHTFEvent ev("/opt/public/lanl-traces/32PE_N-N_1024K/32PE_N-N_1024K.anon/phtf/event.0");
-  CPPUNIT_ASSERT_EQUAL(ev.filePath(), string("/opt/public/lanl-traces/32PE_N-N_1024K/32PE_N-N_1024K.anon/phtf/event.0"));
+  PHTFEvent ev("tests/traces/phtf/event.0");
+  CPPUNIT_ASSERT_EQUAL(ev.filePath(), string("tests/traces/phtf/event.0"));
 }
 
 void PHTFIOTraceTest::testEventRead()
 {
-  PHTFEvent ev("/opt/public/lanl-traces/32PE_N-N_1024K/32PE_N-N_1024K.anon/phtf/event.0");
+  PHTFEvent ev("tests/traces/phtf/event.0");
   PHTFEventRecord re;
   CPPUNIT_ASSERT_EQUAL(ev.open(), (int)0);
   ev >> re;
@@ -75,15 +75,15 @@ void PHTFIOTraceTest::testEventRead()
     {
       ev >> re;
     };
-  CPPUNIT_ASSERT_EQUAL(re.recordId(), (long)32771);
+  CPPUNIT_ASSERT_EQUAL(re.recordId(), (long)19);
   ev.close();
 }
 
 void PHTFIOTraceTest::testTraceConstructor()
 {
-  PHTFTrace &tr = *PHTFTrace::getInstance("/opt/public/lanl-traces/32PE_N-N_1024K/32PE_N-N_1024K.anon/phtf/");
+  PHTFTrace &tr = *PHTFTrace::getInstance("tests/traces/phtf/");
   PHTFEvent &ev = *(tr.getEvent(0));
-  CPPUNIT_ASSERT_EQUAL(ev.filePath(), string("/opt/public/lanl-traces/32PE_N-N_1024K/32PE_N-N_1024K.anon/phtf/event.0"));
+  CPPUNIT_ASSERT_EQUAL(ev.filePath(), string("tests/traces/phtf/event.0"));
   PHTFEventRecord re;
   ev.open();
   ev >> re;
