@@ -101,6 +101,9 @@ private:
 
     /** List of response messages sent by the module being tested */
     std::vector<cMessage*> arrivals_;
+
+    /** A faked up parent module */
+    cModule* parentModule_;
 };
 
 #endif

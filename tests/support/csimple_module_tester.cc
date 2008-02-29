@@ -25,15 +25,29 @@ using namespace std;
 
 vector<string> cSimpleModuleTester::loadedNedFiles_;
 
+/** A mock parent module to set use for the initial simulation context */
+class MockParentModule : public cModule
+{
+protected:
+    virtual void scheduleStart(simtime_t t) {};
+
+    virtual void arrived(cMessage *msg,int n,simtime_t t) {};
+};
+    
 cSimpleModuleTester::cSimpleModuleTester(const char* moduleTypeName,
                                          const char* nedFile,
                                          bool autoInitialize)
     : cModule(),
       module_(0),
-      moduleInitialized_(false)
+      moduleInitialized_(false),
+      parentModule_(0)
 {
     // Attempt to load the ned file into the simulation
     loadNedFile(nedFile);
+
+    // Create the mock parent module and set it as the module context
+    parentModule_ = new MockParentModule();
+    simulation.setContextModule(parentModule_);
     
     // Retrieve the constructed module interface
     cModuleInterface* moduleIF =
