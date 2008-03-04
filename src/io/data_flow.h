@@ -23,6 +23,7 @@
 #include "basic_types.h"
 #include "data_type_layout.h"
 class cMessage;
+class cSimpleModule;
 class spfsDataFlowStart;
 
 /**
@@ -43,7 +44,8 @@ public:
     /** Constructor for a read operation */
     DataFlow(const spfsDataFlowStart& flowStart,
              std::size_t numBuffers,
-             FSSize bufferSize);
+             FSSize bufferSize,
+             cSimpleModule* parentModule);
 
     /** Destructor */
     virtual ~DataFlow() = 0;
@@ -74,6 +76,9 @@ public:
     
     /** @return true when the flow storage interaction is completed */
     bool isStorageComplete() const;
+    
+    /** @return the parent module for this flow */
+    cSimpleModule* parentModule() const { return parentModule_; };
     
     /** Handle data flow messages */
     void handleServerMessage(cMessage* msg);
@@ -109,7 +114,7 @@ protected:
 
     /** Pull data from the network */
     virtual void pullDataFromNetwork(FSSize pullSize) = 0;
-    
+
     /** Memory to disk layout of data being processed */
     DataTypeLayout layout_;
 
@@ -124,6 +129,9 @@ private:
     /** The size of a flow buffer */
     FSSize bufferSize_;
 
+    /** Parent module */
+    cSimpleModule* parentModule_;
+    
     /** Indicate whether the flow is processing a read or write */
     Mode mode_;
 

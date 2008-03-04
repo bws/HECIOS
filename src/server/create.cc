@@ -96,6 +96,7 @@ void Create::enterFinish()
 {
     spfsCreateResponse* resp = new spfsCreateResponse(0, SPFS_CREATE_RESPONSE);
     resp->setContextPointer(createReq_);
+    resp->setByteLength(4);
     module_->send(resp);
 }
 

@@ -194,7 +194,8 @@ void Lookup::finish(FSLookupStatus lookupStatus)
     {
         resp->setStatus(SPFS_NOTFOUND);
     }
-    
+
+    resp->setByteLength(8);
     module_->send(resp);
 }
 

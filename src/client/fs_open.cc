@@ -441,6 +441,9 @@ void FSOpen::readAttributes()
     spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
     req->setContextPointer(openReq_);
     req->setHandle(fd->getMetaData()->handle);
+
+    // Op + Creds + fs_id + handle + attrmask
+    req->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 8 + 8 + 4);
     client_->send(req, client_->getNetOutGate());
 }
 

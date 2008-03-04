@@ -236,6 +236,14 @@ void FileBuilder::createFile(const Filename& fileName,
     }
 }
 
+size_t FileBuilder::getNumDataObjects(const FSHandle& metaHandle) const
+{
+    std::map<FSHandle, FSMetaData*>::const_iterator pos =
+        handleToMetaMap_.find(metaHandle);
+    assert(handleToMetaMap_.end() != pos);
+    return pos->second->dataHandles.size();
+}
+
 void FileBuilder::populateFileSystem(const FileSystemMap& traceFS)
 {
     StorageLayoutManager layoutManager;

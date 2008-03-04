@@ -35,9 +35,6 @@ using namespace std;
 class BMITcpServer : public BMIEndpoint, public TCPSocket::CallbackInterface
 {
 public:
-    /** Number of bytes required as overhead to use the TCP protocol */
-    static const unsigned int TCP_OVERHEAD_BYTES = 4;
-    
     /** @return a BMIExpected message encapsulating msg */
     virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg);
     
@@ -167,12 +164,16 @@ spfsBMIExpectedMessage* BMITcpServer::createExpectedMessage(
     spfsBMIExpectedMessage* pkt = new spfsBMIExpectedMessage();
     pkt->setConnectionId(req->getBmiConnectionId());
     pkt->encapsulate(msg);
+
+    // Add the send overhead
+    msg->addByteLength(BMI_EXPECTED_MSG_BYTES);    
     return pkt;
 }
 
 void BMITcpServer::sendOverNetwork(spfsBMIExpectedMessage* msg)
 {
     assert(0 != msg);
+    assert(0 < msg->byteLength());
     
     // Find the already open socket
     map<int,TCPSocket*>::iterator pos =
@@ -182,9 +183,6 @@ void BMITcpServer::sendOverNetwork(spfsBMIExpectedMessage* msg)
     TCPSocket* responseSocket = pos->second;
     assert(0 != responseSocket);
 
-    // Add the send overhead
-    msg->addByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
-    
     // Remove the entry for this socket
     // FIXME: how to do map cleanup here
     //requestToSocketMap_.erase(req->getBmiConnectionId());
@@ -193,6 +191,8 @@ void BMITcpServer::sendOverNetwork(spfsBMIExpectedMessage* msg)
 
 void BMITcpServer::sendOverNetwork(spfsBMIUnexpectedMessage* msg)
 {
+    assert(0 != msg);
+    assert(0 < msg->byteLength());
     cerr << __FILE__ << ":" << __LINE__ << ":"
          << "Server does not support sending unexpected messages" << endl;
     assert(false);

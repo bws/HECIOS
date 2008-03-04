@@ -28,7 +28,7 @@ simple JobManager
         numBuffers : const;
 
     gates:
-        in: netIn;
+        in: netIn, directIn;
         out: netOut;
 
         in: storageIn;

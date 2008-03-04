@@ -76,8 +76,8 @@ private:
     /** The BMI connection id */
     int bmiConnectionId_;    
 
-    /** The BMI tag */
-    int bmiTag_;    
+    /** The BMI tag to use for sending */
+    int outboundBmiTag_;    
 
     /** The offset into the layout subregions for push operations */
     FSOffset pullSubregionOffset_;

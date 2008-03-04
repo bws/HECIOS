@@ -21,6 +21,7 @@
 #include <cassert>
 #include <vector>
 #include "bmi_proto_m.h"
+#include "data_flow_registry.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
@@ -29,11 +30,11 @@ BMIListIODataFlow::BMIListIODataFlow(const spfsDataFlowStart& flowStart,
                                      std::size_t numBuffers,
                                      FSSize bufferSize,
                                      cSimpleModule* module)
-    : DataFlow(flowStart, numBuffers, bufferSize),
+    : DataFlow(flowStart, numBuffers, bufferSize, module),
       filename_(flowStart.getHandle()),
       module_(module),
       bmiConnectionId_(flowStart.getBmiConnectionId()),
-      bmiTag_(flowStart.getBmiTag()),
+      outboundBmiTag_(flowStart.getOutboundBmiTag()),
       pullSubregionOffset_(0),
       pushSubregionOffset_(0)
 {
@@ -66,6 +67,9 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
             static_cast<spfsBMIPushDataRequest*>(msg);
         FSSize dataSize = pushRequest->getDataSize();
         addNetworkProgress(dataSize);
+        
+        // Send the data successfully received acknowledgement
+        sendPushAck(dataSize);
 
         // Perform the next processing step
         pushDataToStorage(dataSize);
@@ -97,9 +101,6 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         spfsOSFileWriteResponse* writeResp =
             static_cast<spfsOSFileWriteResponse*>(msg);
         addStorageProgress(writeResp->getBytesWritten());
-
-        // Send the data successfully committed acknowledgement
-        sendPushAck(writeResp->getBytesWritten());
 
         // Cleanup the originating request
         delete static_cast<cMessage*>(msg->contextPointer());
@@ -133,7 +134,7 @@ void BMIListIODataFlow::pushDataToNetwork(FSSize pushSize)
     pushRequest->setContextPointer(startMsg);
 
     // Set BMI network fields
-    pushRequest->setTag(bmiTag_);
+    pushRequest->setTag(outboundBmiTag_);
     pushRequest->setConnectionId(bmiConnectionId_);
 
     // Set flow data
@@ -145,7 +146,7 @@ void BMIListIODataFlow::pushDataToNetwork(FSSize pushSize)
     
     // Send the push request
     module_->send(pushRequest, "netOut");
-    cerr << "Pushing data to network" << endl;
+    //cerr << "Pushing data to network" << endl;
 }
 
 void BMIListIODataFlow::pullDataFromStorage(FSSize pullSize)
@@ -214,12 +215,19 @@ void BMIListIODataFlow::sendPushAck(FSSize amountRecvd)
     pushResponse->setContextPointer(startMsg);
     pushResponse->setConnectionId(bmiConnectionId_);
     pushResponse->setFlowId(getUniqueId());
-    pushResponse->setTag(bmiTag_);
+    pushResponse->setTag(outboundBmiTag_);
     pushResponse->setReceivedSize(amountRecvd);
-    pushResponse->setByteLength(16);
+    pushResponse->setByteLength(0);
 
-    // Send the push request
-    module_->send(pushResponse, "netOut");
+    // Look up the partner flow to send a direct out-of-band message
+    DataFlow* partner =
+        DataFlowRegistry::instance().getSubscribedDataFlow(outboundBmiTag_);
+    assert(0 != partner);
+    cModule* partnerModule = partner->parentModule();
+    assert(0 != partnerModule);
+    
+    // Send the acknowledgement directly to module
+    parentModule()->sendDirect(pushResponse, 0.0, partnerModule, "directIn");
 }
 
 /*

@@ -24,6 +24,7 @@
 #include "bmi_memory_data_flow.h"
 #include "bmi_proto_m.h"
 #include "data_flow.h"
+#include "data_flow_registry.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
@@ -37,6 +38,7 @@ void JobManager::initialize()
     flowBuffers_ = par("numBuffers");
 
     // Retrieve gate ids
+    directInGateId_ = findGate("directIn");
     netInGateId_ = findGate("netIn");
     netOutGateId_ = findGate("netOut");
     pfsInGateId_ = findGate("pfsIn");
@@ -47,8 +49,6 @@ void JobManager::initialize()
 
 void JobManager::finish()
 {
-    dataFlowsById_.clear();
-    dataFlowsByBMITag_.clear();
 }
 
 DataFlow* JobManager::createDataFlow(spfsDataFlowStart* flowStart)
@@ -73,74 +73,49 @@ DataFlow* JobManager::createDataFlow(spfsDataFlowStart* flowStart)
 
 int JobManager::registerDataFlow(DataFlow* flow)
 {
-    assert(0 != flow);
-    int uid = flow->getUniqueId();
-    dataFlowsById_[uid] = flow;
-    return uid;
+    return DataFlowRegistry::instance().registerDataFlow(flow);
 }
 
 void JobManager::deregisterDataFlow(int flowId)
 {
-    assert(0 != lookupDataFlow(flowId));
-    dataFlowsById_.erase(flowId);
+    DataFlowRegistry::instance().deregisterDataFlow(flowId);
 }
 
 DataFlow* JobManager::lookupDataFlow(int flowId) const
 {
-    DataFlow* flow = 0;
-    map<int, DataFlow*>::const_iterator pos = dataFlowsById_.find(flowId);
-    if (dataFlowsById_.end() != pos)
-    {
-        flow = pos->second;
-    }
-    return flow;
+    return DataFlowRegistry::instance().lookupDataFlow(flowId);
 }
 
 void JobManager::subscribeDataFlowToTag(DataFlow* flow, int flowTag)
 {
-    //cerr << name() << ": Subscribing flow for tag: " << flowTag << endl;
-    assert(0 != flow);
-    dataFlowsByBMITag_[flowTag] = flow;
+    DataFlowRegistry::instance().subscribeDataFlowToTag(flow, flowTag);
 }
 
 DataFlow* JobManager::getSubscribedDataFlow(int flowTag) const
 {
-    //cerr << name() << ": Looking up tag: " << flowTag << endl;
-    DataFlow* flow = 0;
-    map<int, DataFlow*>::const_iterator pos = dataFlowsByBMITag_.find(flowTag);
-    if (dataFlowsByBMITag_.end() != pos)
-    {
-        flow = pos->second;
-    }
-    return flow;
+    return DataFlowRegistry::instance().getSubscribedDataFlow(flowTag);
 }
 
 void JobManager::removeSubscriptionTag(int flowTag)
 {
-    assert(0 != getSubscribedDataFlow(flowTag));
-    dataFlowsByBMITag_.erase(flowTag);
+    DataFlowRegistry::instance().removeSubscriptionTag(flowTag);
 }
 
 void JobManager::unsubscribeDataFlow(DataFlow* flow)
 {
-    map<int, DataFlow*>::iterator iter;
-    for (iter = dataFlowsByBMITag_.begin(); iter != dataFlowsByBMITag_.end(); ++iter)
-    {
-        if (iter->second == flow)
-        {
-            dataFlowsByBMITag_.erase(iter);
-        }
-    }
+    DataFlowRegistry::instance().unsubscribeDataFlow(flow);
 }
 
 void JobManager::handleMessage(cMessage* msg)
 {
     // Classify the message by its arrival gate
+    // cerr << name() << "Message recvd" << endl;
     if (msg->isSelfMessage())
     {
         handleSelfMessage(msg);
     }
-    else if (msg->arrivalGateId() == netInGateId_)
+    else if (msg->arrivalGateId() == netInGateId_ ||
+             msg->arrivalGateId() == directInGateId_)
     {
         handleNetworkMessage(msg);
     }
@@ -174,7 +149,7 @@ void JobManager::handleSelfMessage(cMessage* msg)
 void JobManager::handleNetworkMessage(cMessage* msg)
 {
     assert(0 != msg);
-
+    //cerr << name() << ": Received network message\n";
     // Route message to the pfs or a flow depending on its message type
     if (spfsBMIFlowMessage* flowMsg = dynamic_cast<spfsBMIFlowMessage*>(msg))
     {
@@ -204,7 +179,7 @@ void JobManager::handlePFSMessage(cMessage* msg)
         flowStart->setFlowId(flowId);
 
         // Subscribe the flow to a BMI tag
-        subscribeDataFlowToTag(flow, flowStart->getBmiTag());
+        subscribeDataFlowToTag(flow, flowStart->getInboundBmiTag());
         
         // Start the flow
         flow->initialize();

@@ -33,6 +33,22 @@ class DataFlow;
 class FSServer : public cSimpleModule
 {
 public:
+    /**
+     * Includes the distribution, dfile count, metadata hint -> flags
+     * NOTE: Also need to add the data file arrary
+    */
+    static const int METADATA_ATTRIBUTES_BYTE_SIZE = 4 + 4 + 4;
+
+    /**
+     * Includes the distribution name size, skip4, "simple_stripe",
+     * distribution parameter size, skip4, "strip_size", dfile count
+     * 8 + 4 + 4 + 14 + 4 + 4 + 11 + 4 = 49
+     */
+    static const int DIRECTORY_ATTRIBUTES_BYTE_SIZE = 49;
+
+    /** TODO */
+    static const int DATAFILE_ATTRIBUTES_BYTE_SIZE = 16;
+    
     /** @return the default size of metadata/attributes */
     static std::size_t getDefaultAttrSize();
 

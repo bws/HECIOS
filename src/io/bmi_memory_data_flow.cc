@@ -21,6 +21,7 @@
 #include <cassert>
 #include <vector>
 #include "bmi_proto_m.h"
+#include "data_flow_registry.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
@@ -29,11 +30,11 @@ BMIMemoryDataFlow::BMIMemoryDataFlow(const spfsDataFlowStart& flowStart,
                                      std::size_t numBuffers,
                                      FSSize bufferSize,
                                      cSimpleModule* module)
-    : DataFlow(flowStart, numBuffers, bufferSize),
+    : DataFlow(flowStart, numBuffers, bufferSize, module),
       filename_(flowStart.getHandle()),
       module_(module),
       bmiConnectionId_(flowStart.getBmiConnectionId()),
-      bmiTag_(flowStart.getBmiTag()),
+      outboundBmiTag_(flowStart.getOutboundBmiTag()),
       amountPushed_(0)
 {
 }
@@ -113,12 +114,13 @@ void BMIMemoryDataFlow::pushDataToNetwork(FSSize pushSize)
     pushRequest->setContextPointer(startMsg);
     pushRequest->setConnectionId(bmiConnectionId_);
     pushRequest->setFlowId(getUniqueId());
-    pushRequest->setTag(bmiTag_);
+    pushRequest->setTag(outboundBmiTag_);
     pushRequest->setFlowSize(getSize());
     pushRequest->setDataSize(pushSize);
     pushRequest->setByteLength(pushSize);
     
     // Send the push request
+    //cerr << "Pushing client data: " << pushSize << endl;
     module_->send(pushRequest, "netOut");
     amountPushed_ += pushSize;
 }
@@ -141,12 +143,19 @@ void BMIMemoryDataFlow::sendPushAck(spfsBMIPushDataRequest* request)
     pushResponse->setContextPointer(startMsg);
     pushResponse->setConnectionId(bmiConnectionId_);
     pushResponse->setFlowId(getUniqueId());
-    pushResponse->setTag(bmiTag_);
+    pushResponse->setTag(outboundBmiTag_);
     pushResponse->setReceivedSize(request->getDataSize());
-    pushResponse->setByteLength(16);
+    pushResponse->setByteLength(0);
 
-    // Send the push request
-    module_->send(pushResponse, "netOut");
+    // Look up the partner flow to send a direct out-of-band message
+    DataFlow* partner =
+        DataFlowRegistry::instance().getSubscribedDataFlow(outboundBmiTag_);
+    assert(0 != partner);
+    cModule* partnerModule = partner->parentModule();
+    assert(0 != partnerModule);
+    
+    // Send the acknowledgement directly to module
+    parentModule()->sendDirect(pushResponse, 0.0, partnerModule, "directIn");
 }
 
 /*

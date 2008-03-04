@@ -99,7 +99,8 @@ void Write::startDataFlow()
 
     // Set the BMI connection parameters
     dataFlowStart->setBmiConnectionId(writeReq_->getBmiConnectionId());
-    dataFlowStart->setBmiTag(writeReq_->getFlowTag());
+    dataFlowStart->setInboundBmiTag(writeReq_->getServerFlowBmiTag());
+    dataFlowStart->setOutboundBmiTag(writeReq_->getClientFlowBmiTag());
 
     // Data transfer configuration
     dataFlowStart->setHandle(writeReq_->getHandle());
@@ -116,6 +117,9 @@ void Write::sendResponse()
     spfsWriteResponse* resp = new spfsWriteResponse(
         0, SPFS_WRITE_RESPONSE);
     resp->setContextPointer(writeReq_);
+
+    // Set message length for buffer_req
+    resp->setByteLength(8);
     module_->send(resp);
 }
 
@@ -124,6 +128,9 @@ void Write::sendCompletionResponse()
     spfsWriteCompletionResponse* resp = new spfsWriteCompletionResponse(
         0, SPFS_WRITE_COMPLETION_RESPONSE);
     resp->setContextPointer(writeReq_);
+
+    // Set message length for total_written
+    resp->setByteLength(8);
     module_->send(resp);
 }
 

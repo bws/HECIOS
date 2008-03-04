@@ -140,7 +140,8 @@ message spfsReadRequest extends spfsRequest
         FSSize dataSize;
         FileViewPtr view;
         FileDistributionPtr dist;
-        int flowTag;
+        int clientFlowBmiTag;
+        int serverFlowBmiTag;
 };
 
 // Read file data
@@ -157,7 +158,8 @@ message spfsWriteRequest extends spfsRequest
         FSSize dataSize;
         FileViewPtr view;
         FileDistributionPtr dist;
-        int flowTag;
+        int clientFlowBmiTag;
+        int serverFlowBmiTag;
 };
 
 // Write file data
@@ -369,7 +371,8 @@ message spfsDataFlowStart extends spfsRequest
 
         // The bmi connection and tag to use for this flow
         int bmiConnectionId;
-        int bmiTag;
+        int inboundBmiTag;
+        int outboundBmiTag;
 };
 
 // Indicate the data flow has finished

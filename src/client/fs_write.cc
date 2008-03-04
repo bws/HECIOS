@@ -188,11 +188,12 @@ void FSWrite::beginWrite()
             req->setHandle(metaData->dataHandles[i]);
             req->setDataSize(aggregateSize);
             req->setDist(metaData->dist->clone());
-            req->setFlowTag(simulation.getUniqueNumber());
+            req->setClientFlowBmiTag(simulation.getUniqueNumber());
+            req->setServerFlowBmiTag(simulation.getUniqueNumber());
 
             // Set the message size in bytes
-            req->setByteLength(8 + 8 + 4 + 4 + 4 +
-                               //FSClient::CREDENTIALS_SIZE +
+            req->setByteLength(4 + FSClient::CREDENTIALS_SIZE +
+                               8 + 8 + 4 + 4 + 4 +
                                fd->getFileView().getRepresentationByteLength() +
                                8 + 8);
 
@@ -223,7 +224,8 @@ void FSWrite::startFlow(spfsWriteResponse* writeResponse)
     
     // Set the handle as the connection id (FIXME: This is hacky)
     flowStart->setBmiConnectionId(serverRequest->getHandle());
-    flowStart->setBmiTag(serverRequest->getFlowTag());
+    flowStart->setInboundBmiTag(serverRequest->getClientFlowBmiTag());
+    flowStart->setOutboundBmiTag(serverRequest->getServerFlowBmiTag());
 
     // Flow configuration
     flowStart->setFlowType(1); // FIXME: Hacky way to say BMI-to-Memory flow

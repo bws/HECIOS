@@ -97,7 +97,7 @@ module EnhancedHost
             display: "p=296,271;i=block/fork;q=queue";
         ppp: PPPInterface[sizeof(out)];
             display: "p=237,358,row,90;q=txQueue;i=block/ifcard";
-        eth: EthernetInterface[sizeof(ethOut)];
+        eth: EthernetInterface2[sizeof(ethOut)];
             display: "p=360,358,row,90;q=txQueue;i=block/ifcard";
     connections nocheck:
         for i=0..numTcpApps-1 do

@@ -83,7 +83,7 @@ spfsBMIUnexpectedMessage* BMIDirectEndpoint::createUnexpectedMessage(
     assert(0 != request);
     spfsBMIUnexpectedMessage* pkt = new spfsBMIUnexpectedMessage();
     pkt->setHandle(request->getHandle());
-    pkt->setByteLength(BMI_OVERHEAD_BYTES + DIRECT_OVERHEAD_BYTES);
+    pkt->setByteLength(BMI_UNEXPECTED_MSG_BYTES + DIRECT_OVERHEAD_BYTES);
     pkt->encapsulate(request);
     return pkt;
 }
@@ -94,7 +94,7 @@ spfsBMIExpectedMessage* BMIDirectEndpoint::createExpectedMessage(
     assert(0 != msg);
 
     spfsBMIExpectedMessage* pkt = new spfsBMIExpectedMessage();
-    pkt->setByteLength(BMI_OVERHEAD_BYTES + DIRECT_OVERHEAD_BYTES);
+    pkt->setByteLength(BMI_EXPECTED_MSG_BYTES + DIRECT_OVERHEAD_BYTES);
     pkt->encapsulate(msg);
     return pkt;
 }

@@ -39,9 +39,6 @@ class BMITcpClient : public BMIEndpoint, public TCPSocket::CallbackInterface
 {
 public:
 
-    /** Number of bytes required as overhead to use the BMI protocol */
-    static const unsigned int TCP_OVERHEAD_BYTES = 4;
-    
     /** Constructor */
     BMITcpClient() : BMIEndpoint() {};
     
@@ -149,8 +146,8 @@ spfsBMIUnexpectedMessage* BMITcpClient::createUnexpectedMessage(
     assert(0 != request);
     spfsBMIUnexpectedMessage* pkt = new spfsBMIUnexpectedMessage();
     pkt->setHandle(request->getHandle());
-    pkt->setByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
     pkt->encapsulate(request);
+    pkt->addByteLength(BMI_UNEXPECTED_MSG_BYTES);
     return pkt;
 }
 
@@ -165,8 +162,8 @@ spfsBMIExpectedMessage* BMITcpClient::createExpectedMessage(cMessage* msg)
 void BMITcpClient::sendOverNetwork(spfsBMIExpectedMessage* msg)
 {
     assert(0 != msg);
-    msg->addByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
-    
+    assert(0 < msg->byteLength());
+
     // Retrieve the socket for this handle
     TCPSocket* sock = getConnectedSocket(msg->getConnectionId());
     sock->send(msg);
@@ -175,7 +172,7 @@ void BMITcpClient::sendOverNetwork(spfsBMIExpectedMessage* msg)
 void BMITcpClient::sendOverNetwork(spfsBMIUnexpectedMessage* msg)
 {
     assert(0 != msg);
-    msg->addByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
+    assert(0 < msg->byteLength());
     
     // Retrieve the socket for this handle
     TCPSocket* sock = getConnectedSocket(msg->getHandle());

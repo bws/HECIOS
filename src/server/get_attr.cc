@@ -19,6 +19,7 @@
 //
 #include "get_attr.h"
 #include <cassert>
+#include "file_builder.h"
 #include "filename.h"
 #include "fs_server.h"
 #include "os_proto_m.h"
@@ -94,11 +95,17 @@ void GetAttr::enterReadAttr()
 
 void GetAttr::enterFinish()
 {
+    // Lookup the number of handles for this file
+    FSHandle metaHandle = getAttrReq_->getHandle();
+    size_t numHandles = FileBuilder::instance().getNumDataObjects(metaHandle);
+    size_t handleArrayBytes = 8 * numHandles;
+    
     // Send the final response
     spfsGetAttrResponse* resp = new spfsGetAttrResponse(
         0, SPFS_GET_ATTR_RESPONSE);
     resp->setContextPointer(getAttrReq_);
-    resp->setByteLength(FSServer::getDefaultAttrSize());
+    resp->setByteLength(FSServer::METADATA_ATTRIBUTES_BYTE_SIZE +
+                        handleArrayBytes);
     module_->send(resp);
 }
 

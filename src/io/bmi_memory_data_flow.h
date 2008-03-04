@@ -77,8 +77,8 @@ private:
     /** The BMI connection id */
     int bmiConnectionId_;    
 
-    /** The BMI tag associated with this flow */
-    int bmiTag_;
+    /** The BMI tag used to send outbound data */
+    int outboundBmiTag_;
 
     /** The amount of data pushed into the network */
     FSSize amountPushed_;

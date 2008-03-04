@@ -99,6 +99,7 @@ void CreateDirEnt::finish()
     spfsCreateDirEntResponse* resp =
         new spfsCreateDirEntResponse(0, SPFS_CREATE_DIR_ENT_RESPONSE);
     resp->setContextPointer(createDirEntReq_);
+    resp->setByteLength(4);
     module_->send(resp);
 }
 

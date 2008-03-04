@@ -33,8 +33,11 @@ class spfsResponse;
 class BMIEndpoint : public cSimpleModule
 {
 public:
-    /** Number of bytes required as overhead to use the BMI protocol */
-    static const unsigned int BMI_OVERHEAD_BYTES = 4;
+    /** Number of bytes required as overhead to send a BMI unexpected msg */
+    static const unsigned int BMI_UNEXPECTED_MSG_BYTES = 24;
+
+    /** Number of bytes required as overhead to send a BMI expected response */
+    static const unsigned int BMI_EXPECTED_MSG_BYTES = 0;
     
     /** Constructor */
     BMIEndpoint() : cSimpleModule() {};

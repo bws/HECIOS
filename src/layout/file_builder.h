@@ -80,8 +80,11 @@ public:
                     int numDataServers,
                     StorageLayoutManagerIFace& layoutManager);
 
+    /** @return the number of data objects for a metadata handle */
+    size_t getNumDataObjects( const FSHandle& metaHandle) const;
+    
     /** @return the list of blocks for a file handle */
-    std::vector<int> getDiskBlocks(const FSHandle& handle) const;
+    std::vector<int> getDiskBlocks(const FSHandle& dataHandle) const;
 
     /** Populate the file system with the files described in the IOTrace */
     void populateFileSystem(const FileSystemMap& traceFS);

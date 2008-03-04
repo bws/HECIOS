@@ -36,9 +36,6 @@ using namespace std;
 class BMITcpEndpoint : public BMIEndpoint, public TCPSocket::CallbackInterface
 {
 public:
-    /** Number of bytes required as overhead to use the TCP protocol */
-    static const unsigned int TCP_OVERHEAD_BYTES = 4;
-    
     /** @return a BMIExpected message encapsulating msg */
     virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg);
     
@@ -168,8 +165,8 @@ spfsBMIUnexpectedMessage* BMITcpEndpoint::createUnexpectedMessage(
     assert(0 != request);
     spfsBMIUnexpectedMessage* pkt = new spfsBMIUnexpectedMessage();
     pkt->setHandle(request->getHandle());
-    pkt->setByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
     pkt->encapsulate(request);
+    pkt->addByteLength(BMI_UNEXPECTED_MSG_BYTES);
     return pkt;
 }
 
@@ -183,8 +180,8 @@ spfsBMIExpectedMessage* BMITcpEndpoint::createExpectedMessage(
     
     spfsBMIExpectedMessage* pkt = new spfsBMIExpectedMessage();
     pkt->setConnectionId(req->getBmiConnectionId());
-    pkt->setByteLength(BMI_OVERHEAD_BYTES + TCP_OVERHEAD_BYTES);
     pkt->encapsulate(msg);
+    pkt->addByteLength(BMI_EXPECTED_MSG_BYTES);
     return pkt;
 }
 

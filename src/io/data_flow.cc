@@ -29,10 +29,12 @@ using namespace std;
 
 DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
                    size_t numBuffers,
-                   FSSize bufferSize)
+                   FSSize bufferSize,
+                   cSimpleModule* parentModule)
     : originatingMessage_(&flowStart),
       numBuffers_(numBuffers),
       bufferSize_(bufferSize),
+      parentModule_(parentModule),
       mode_(static_cast<Mode>(flowStart.getFlowMode())),
       uniqueId_(simulation.getUniqueNumber()),
       flowSize_(0),

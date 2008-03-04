@@ -179,7 +179,8 @@ void FSRead::enterRead()
             req->setHandle(metaData->dataHandles[i]);
             req->setDist(metaData->dist->clone());
             req->setDataSize(aggregateSize);
-            req->setFlowTag(simulation.getUniqueNumber());
+            req->setClientFlowBmiTag(simulation.getUniqueNumber());
+            req->setServerFlowBmiTag(simulation.getUniqueNumber());
             
             // Set the message size in bytes
             req->setByteLength(8 + 8 + 4 + 4 + 4 +
@@ -216,7 +217,8 @@ void FSRead::startFlow(spfsReadResponse* readResponse)
     
     // Set the handle as the connection id (FIXME: This is hacky)
     flowStart->setBmiConnectionId(serverRequest->getHandle());
-    flowStart->setBmiTag(serverRequest->getFlowTag());
+    flowStart->setInboundBmiTag(serverRequest->getClientFlowBmiTag());
+    flowStart->setOutboundBmiTag(serverRequest->getServerFlowBmiTag());
 
     // Flow configuration
     flowStart->setFlowType(1); // BMI-to-Memory flow

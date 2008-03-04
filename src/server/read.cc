@@ -117,7 +117,8 @@ void Read::startDataFlow()
 
     // Set the BMI connection parameters
     dataFlowStart->setBmiConnectionId(readReq_->getBmiConnectionId());
-    dataFlowStart->setBmiTag(readReq_->getFlowTag());
+    dataFlowStart->setInboundBmiTag(readReq_->getServerFlowBmiTag());
+    dataFlowStart->setOutboundBmiTag(readReq_->getClientFlowBmiTag());
 
     // Data transfer configuration
     dataFlowStart->setHandle(readReq_->getHandle());

@@ -26,6 +26,18 @@ import
     "EtherSwitch",
     "FlatNetworkConfigurator";
 
+channel FastE
+    delay 0.0   // sec
+    error 0.0
+    datarate 100000000  // bit/sec
+endchannel
+
+channel GigE
+    delay 0.0   // sec
+    error 0.0
+    datarate 1000000000 // bit/sec
+endchannel
+
 module BeowulfCluster
 
     parameters:
@@ -39,7 +51,7 @@ module BeowulfCluster
         ion: IONode[numIONodes];
             display: "p=20,380,m,8;i=abstract/cache,magenta";
 
-        switch: EtherSwitch;
+        switch: EtherSwitch2;
             display: "p=256,250;i=abstract/switch,cyan";
 
         pfsConfig: FSServerConfigurator;
@@ -61,13 +73,13 @@ module BeowulfCluster
     connections:
 
         for i = 0..numCPUNodes-1 do
-            cpun[i].ethOut --> switch.in++;
-            cpun[i].ethIn <-- switch.out++;
+            cpun[i].ethOut --> FastE --> switch.in++;
+            cpun[i].ethIn <-- FastE <-- switch.out++;
         endfor;
 
         for i = 0..numIONodes - 1 do
-            ion[i].ethOut --> switch.in++;
-            ion[i].ethIn <-- switch.out++;
+            ion[i].ethOut --> FastE --> switch.in++;
+            ion[i].ethIn <-- FastE <-- switch.out++;
         endfor;
 
     display: "o=white"; // affects background
