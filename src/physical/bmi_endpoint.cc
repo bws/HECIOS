@@ -104,20 +104,25 @@ void BMIEndpoint::handleMessage(cMessage* msg)
 void BMIEndpoint::handleMessageFromNetwork(cMessage* msg)
 {
     assert(0 != msg);
+
+    // Caclulate the delay associated with extracting a message from
+    // the network
+    simtime_t delay = fixedOverheadSecs_ +
+        scaledOverheadSecs_ * msg->byteLength();
     
     // If the message is a flow message, send it directly
     // Otherwise extract the payload and send it on
     if (0 != dynamic_cast<spfsBMIPushDataRequest*>(msg) ||
         0 != dynamic_cast<spfsBMIPushDataResponse*>(msg))
     {
-        send(msg, appOutGateId_);
+        sendDelayed(msg, delay, appOutGateId_);
     }
     else
     {
         spfsBMIMessage* bmiMsg = dynamic_cast<spfsBMIMessage*>(msg);
         assert(0 != bmiMsg);
         cMessage* pfsMsg =  extractBMIPayload(bmiMsg);
-        send(pfsMsg, appOutGateId_);
+        sendDelayed(pfsMsg, delay, appOutGateId_);
         delete msg;        
     }
 }
