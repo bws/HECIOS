@@ -28,6 +28,7 @@
 #
 HECIOS_DIR := @CONFIG_PROJECT_DIR@
 BUILD_DIR := @CONFIG_BUILD_DIR@
+INSTALL_DIR = $HOME/software/hecios
 OMNET_DIR := @OMNET_DIR@
 CONFIG_CXXFLAGS := @CONFIG_CXXFLAGS@
 CONFIG_UNSAFE_CXXFLAGS := @CONFIG_UNSAFE_CXXFLAGS@
@@ -218,6 +219,17 @@ ned_clean:
 
 all_clean: clean tests_clean inet_clean
 
+install:
+	$(INSTALL) -d $(INSTALL_DIR)/bin
+	$(INSTALL) -d $(INSTALL_DIR)/examples
+	$(INSTALL) -d $(INSTALL_DIR)/lib/ned
+	$(INSTALL) -c bin/hecios* $(INSTALL_DIR)/bin
+	$(INSTALL) -c lib/*.* $(INSTALL_DIR)/lib
+	$(INSTALL) -c ini/*.ini $(INSTALL_DIR)/examples
+	find . -name *.ned -exec $(INSTALL) -c {} $(INSTALL_DIR)/lib/ned \;
+	find . -name *.ned > $(INSTALL_DIR)/lib/ned/all_ned.lst
+	@echo "HECIOS successfully installed."
+
 #
 # Build targets for documentation
 #
@@ -251,4 +263,4 @@ test: tests_all
 #
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all all_clean clean default depclean doc gui ned_clean test tests_clean
+.PHONY: all all_clean clean default depclean doc gui install ned_clean test tests_clean

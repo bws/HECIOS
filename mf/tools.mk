@@ -3,6 +3,7 @@
 #
 AR = ar
 CP = cp
+INSTALL = install
 MKDIR = mkdir -p
 RM = rm -f
 CXX = g++
