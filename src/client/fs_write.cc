@@ -211,13 +211,13 @@ void FSWrite::startFlow(spfsWriteResponse* writeResponse)
     flowStart->setContextPointer(writeReq_);
     //flowStart->setContextPointer(serverRequest);
     
-    // Set the handle as the connection id (FIXME: This is hacky)
+    // Set the handle as the connection id (TODO: This is hacky)
     flowStart->setBmiConnectionId(serverRequest->getHandle());
     flowStart->setInboundBmiTag(serverRequest->getClientFlowBmiTag());
     flowStart->setOutboundBmiTag(serverRequest->getServerFlowBmiTag());
 
     // Flow configuration
-    flowStart->setFlowType(1); // FIXME: Hacky way to say BMI-to-Memory flow
+    flowStart->setFlowType(SPFS_BMI_TO_MEMORY_FLOW);
     flowStart->setFlowMode(DataFlow::CLIENT_WRITE);
 
     // Data transfer configuration

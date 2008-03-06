@@ -40,6 +40,7 @@ class cFSM;
 class noncobject DataTypePtr;
 class noncobject FileDistributionPtr;
 class noncobject FileViewPtr;
+class noncobject FSFlowType;
 class noncobject FSHandle;
 class noncobject FSLookupStatus;
 class noncobject FSMetaData;
@@ -358,7 +359,7 @@ message spfsDataFlowStart extends spfsRequest
 {
     fields:
         // Flow information
-        int flowType;
+        FSFlowType flowType;
         int flowMode;
         int flowId; // Set by the job manager
         FileDistributionPtr dist;

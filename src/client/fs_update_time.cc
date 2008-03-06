@@ -287,8 +287,8 @@ void FSUpdateTime::writeAttributes()
     req->setContextPointer(utimeReq_);
     client_->send(req, client_->getNetOutGate());
 
-    // FIXME Add the attributes to the cache
-    //addAttributesToCache();
+    // Add the attributes to the cache
+    client_->fsState().insertAttr(meta->handle, *meta);
 }
 
 void FSUpdateTime::finish()

@@ -25,6 +25,11 @@
 #include "basic_types.h"
 class FileDistribution;
 
+/** Supported data flow types */
+enum FSFlowType { SPFS_INVALID_FLOW_TYPE = 0,
+                  SPFS_BMI_TO_MEMORY_FLOW,
+                  SPFS_BMI_TO_LIST_IO_FLOW, };
+
 /** Possible status returns from a file system lookup */
 enum FSLookupStatus { SPFS_INVALID_LOOKUP_STATUS = 0,
                       SPFS_FOUND = 1,

@@ -94,7 +94,7 @@ void Write::startDataFlow()
     dataFlowStart->setContextPointer(writeReq_);
 
     // Set the flow configuration
-    dataFlowStart->setFlowType(0);
+    dataFlowStart->setFlowType(SPFS_BMI_TO_LIST_IO_FLOW);
     dataFlowStart->setFlowMode(DataFlow::SERVER_WRITE);
 
     // Set the BMI connection parameters
