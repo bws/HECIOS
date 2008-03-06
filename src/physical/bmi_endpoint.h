@@ -83,6 +83,12 @@ private:
 
     /** @return true if handle corresponds to this node */
     bool handleIsLocal(const FSHandle& handle);
+
+    /** @return the delay before the inbound message can be delivered */
+    simtime_t getNextMessageInScheduleTime(size_t byteLength);
+
+    /** @return the delay before the outbound message can be delivered */
+    simtime_t getNextMessageOutScheduleTime(size_t byteLength);
     
     /** Gate id for appIn */
     int appInGateId_;
@@ -93,6 +99,12 @@ private:
     /** Handle range for this endpoint */
     HandleRange handleRange_;
 
+    /** Variable for serializing all outbound messages */ 
+    double nextMessageScheduledOutTime_;
+    
+    /** Variable for serializing all inbound messages */ 
+    double nextMessageScheduledInTime_;
+    
     /** Fixed overhead for sending and receiving a BMI message */
     double fixedOverheadSecs_;
 

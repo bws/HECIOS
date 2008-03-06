@@ -27,7 +27,9 @@ simple FSServerConfigurator
         handlesPerServer: const,
         metaDataSizeInBytes: const,
         createDirEntProcessingDelaySecs: numeric const,
-        createObjectProcessingDelaySecs: numeric const,
+        createDFileProcessingDelaySecs: numeric const,
+        createDirectoryProcessingDelaySecs: numeric const,
+        createMetadataProcessingDelaySecs: numeric const,
         getAttrProcessingDelaySecs: numeric const,
         lookupPathProcessingDelaySecs: numeric const,
         setAttrProcessingDelaySecs: numeric const;

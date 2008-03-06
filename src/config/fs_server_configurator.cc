@@ -79,8 +79,14 @@ void FSServerConfigurator::initialize(int stage)
         FileBuilder::instance().setDefaultMetaDataSize(metaDataSize);
 
         // Get the server processing delays for each message
-        double createDelay = par("createObjectProcessingDelaySecs");
-        FSServer::setCreateObjectProcessingDelay(createDelay);
+        double createDFileDelay = par("createDFileProcessingDelaySecs");
+        FSServer::setCreateDFileProcessingDelay(createDFileDelay);
+        
+        double createDirDelay = par("createDirectoryProcessingDelaySecs");
+        FSServer::setCreateDirectoryProcessingDelay(createDirDelay);
+        
+        double createMetaDelay = par("createMetadataProcessingDelaySecs");
+        FSServer::setCreateMetadataProcessingDelay(createMetaDelay);
         
         double createDirEntDelay = par("createDirEntProcessingDelaySecs"); 
         FSServer::setCreateDirEntProcessingDelay(createDirEntDelay);

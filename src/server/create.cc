@@ -99,7 +99,25 @@ void Create::enterFinish()
     spfsCreateResponse* resp = new spfsCreateResponse(0, SPFS_CREATE_RESPONSE);
     resp->setContextPointer(createReq_);
     resp->setByteLength(4);
-    module_->sendDelayed(resp, FSServer::createObjectProcessingDelay());
+
+    // Determine the processing delay
+    simtime_t delay = 0.0;
+    if (SPFS_DATA_OBJECT == createReq_->getObjectType())
+    {
+        delay = FSServer::createDFileProcessingDelay();
+    }
+    else if (SPFS_DIRECTORY_OBJECT == createReq_->getObjectType())
+    {
+        delay = FSServer::createDirectoryProcessingDelay();
+    }
+    else
+    {
+        assert(SPFS_METADATA_OBJECT == createReq_->getObjectType());
+        delay = FSServer::createMetadataProcessingDelay();
+    }
+
+    // Send the message after calculated delay
+    module_->sendDelayed(resp, delay);
 }
 
 /*

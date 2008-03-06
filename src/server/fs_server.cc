@@ -40,7 +40,9 @@ using namespace std;
 Define_Module(FSServer);
 
 size_t FSServer::defaultAttrSize_ = 0;
-simtime_t FSServer::createObjectProcessingDelay_ = 0.0;
+simtime_t FSServer::createDFileProcessingDelay_ = 0.0;
+simtime_t FSServer::createDirectoryProcessingDelay_ = 0.0;
+simtime_t FSServer::createMetadataProcessingDelay_ = 0.0;
 simtime_t FSServer::createDirEntProcessingDelay_ = 0.0;
 simtime_t FSServer::getAttrProcessingDelay_ = 0.0;
 simtime_t FSServer::lookupPathProcessingDelay_ = 0.0;
@@ -56,14 +58,34 @@ size_t FSServer::getDirectoryEntrySize()
     return 128;
 }
 
-void FSServer::setCreateObjectProcessingDelay(simtime_t createObjectDelay)
+void FSServer::setCreateDFileProcessingDelay(simtime_t createDFileDelay)
 {
-    createObjectProcessingDelay_ = createObjectDelay;
+    createDFileProcessingDelay_ = createDFileDelay;
 }
 
-simtime_t FSServer::createObjectProcessingDelay()
+simtime_t FSServer::createDFileProcessingDelay()
 {
-    return createObjectProcessingDelay_;
+    return createDFileProcessingDelay_;
+}
+
+void FSServer::setCreateDirectoryProcessingDelay(simtime_t createDirDelay)
+{
+    createDirectoryProcessingDelay_ = createDirDelay;
+}
+
+simtime_t FSServer::createDirectoryProcessingDelay()
+{
+    return createDirectoryProcessingDelay_;
+}
+
+void FSServer::setCreateMetadataProcessingDelay(simtime_t createMetaDelay)
+{
+    createMetadataProcessingDelay_ = createMetaDelay;
+}
+
+simtime_t FSServer::createMetadataProcessingDelay()
+{
+    return createMetadataProcessingDelay_;
 }
 
 void FSServer::setCreateDirEntProcessingDelay(simtime_t createDirEntDelay)

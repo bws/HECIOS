@@ -58,11 +58,23 @@ public:
     /** Set the default size of metadata/attributes */
     static void setDefaultAttrSize(std::size_t attrSize);
 
-    /** Set the create object processing delay */
-    static void setCreateObjectProcessingDelay(simtime_t createObjectDelay);
+    /** Set the create data file processing delay */
+    static void setCreateDFileProcessingDelay(simtime_t createDFileDelay);
 
-    /** @return the server processing delay for creating an object */
-    static simtime_t createObjectProcessingDelay();
+    /** @return the server processing delay for creating a data object */
+    static simtime_t createDFileProcessingDelay();
+    
+    /** Set the create directory processing delay */
+    static void setCreateDirectoryProcessingDelay(simtime_t createDirDelay);
+
+    /** @return the server processing delay for creating a directory */
+    static simtime_t createDirectoryProcessingDelay();
+    
+    /** Set the create metadata processing delay */
+    static void setCreateMetadataProcessingDelay(simtime_t createMetadataDelay);
+
+    /** @return the server processing delay for creating a metadata object */
+    static simtime_t createMetadataProcessingDelay();
     
     /** Set the create directory entry processing delay */
     static void setCreateDirEntProcessingDelay(simtime_t createDirEntDelay);
@@ -154,8 +166,14 @@ private:
     /** Default attribute size */
     static std::size_t defaultAttrSize_;
 
-    /** Create object server processing delay*/
-    static simtime_t createObjectProcessingDelay_;
+    /** Create DFile server processing delay*/
+    static simtime_t createDFileProcessingDelay_;
+
+    /** Create directory server processing delay*/
+    static simtime_t createDirectoryProcessingDelay_;
+
+    /** Create metadata server processing delay*/
+    static simtime_t createMetadataProcessingDelay_;
 
     /** Create Directory Entry server processing delay */
     static simtime_t createDirEntProcessingDelay_;

@@ -44,7 +44,11 @@ void BMIEndpoint::initialize()
     // Extract the BMI overhead costs
     fixedOverheadSecs_ = par("fixedOverheadSecs").doubleValue();
     scaledOverheadSecs_ = par("scaledOverheadSecs").doubleValue();
-    
+
+    // Initialize the in and outbound message shedule times
+    nextMessageScheduledInTime_ = 0.0;
+    nextMessageScheduledOutTime_ = 0.0;
+
     // Initialize the derived implementation
     initializeEndpoint();
 }
@@ -65,10 +69,10 @@ void BMIEndpoint::handleMessage(cMessage* msg)
     //     its from the network, send it to the application/server
     if (msg->arrivalGateId() == appInGateId_)
     {
-        // Perform the network startup costs
-        simtime_t delay = fixedOverheadSecs_ +
-            scaledOverheadSecs_ * msg->byteLength();
-        scheduleAt(simTime() + delay, msg);
+        // Perform the network queueing costs
+        simtime_t scheduleTime =
+            getNextMessageOutScheduleTime(msg->byteLength());
+        scheduleAt(scheduleTime, msg);
     }
     else if (msg->isSelfMessage())
     {
@@ -105,10 +109,9 @@ void BMIEndpoint::handleMessageFromNetwork(cMessage* msg)
 {
     assert(0 != msg);
 
-    // Caclulate the delay associated with extracting a message from
-    // the network
-    simtime_t delay = fixedOverheadSecs_ +
-        scaledOverheadSecs_ * msg->byteLength();
+    // Calculate the network queueing costs
+    simtime_t delay =
+        getNextMessageInScheduleTime(msg->byteLength()) - simTime();
     
     // If the message is a flow message, send it directly
     // Otherwise extract the payload and send it on
@@ -140,6 +143,30 @@ cMessage* BMIEndpoint::extractBMIPayload(spfsBMIMessage* bmiMsg)
 bool BMIEndpoint::handleIsLocal(const FSHandle& handle)
 {
     return (handle >= handleRange_.first && handle <= handleRange_.last);
+}
+
+simtime_t BMIEndpoint::getNextMessageInScheduleTime(size_t byteLength)
+{
+    simtime_t currentTime = simTime();
+    if (nextMessageScheduledInTime_ < currentTime)
+    {
+        nextMessageScheduledInTime_ = currentTime;
+    }
+    nextMessageScheduledInTime_ += fixedOverheadSecs_ + (scaledOverheadSecs_ *
+                                                         byteLength);
+    return nextMessageScheduledInTime_;
+}
+
+simtime_t BMIEndpoint::getNextMessageOutScheduleTime(size_t byteLength)
+{
+    simtime_t currentTime = simTime();
+    if (nextMessageScheduledOutTime_ < currentTime)
+    {
+        nextMessageScheduledOutTime_ = currentTime;
+    }
+    nextMessageScheduledOutTime_ += fixedOverheadSecs_ + (scaledOverheadSecs_ *
+                                                          byteLength);
+    return nextMessageScheduledOutTime_;
 }
 
 /*
