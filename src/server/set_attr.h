@@ -19,7 +19,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 class cMessage;
 class spfsSetAttrRequest;
 class FSServer;
@@ -30,7 +29,6 @@ class FSServer;
 class SetAttr
 {
 public:
-
     /** Constructor */
     SetAttr(FSServer* module, spfsSetAttrRequest* setAttrReq);
 
@@ -40,7 +38,6 @@ public:
     void handleServerMessage(cMessage* msg);
 
 protected:
-
     /**
      * Perform action when entering the WRITE_ATTR state
      */
@@ -52,7 +49,6 @@ protected:
     void enterFinish();
     
 private:
-
     /** The parent module */
     FSServer* module_;
     

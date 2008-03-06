@@ -30,7 +30,6 @@ class FSServer;
 class CreateDirEnt
 {
 public:
-
     /** Constructor */
     CreateDirEnt(FSServer* module, spfsCreateDirEntRequest* createDirEntReq);
 

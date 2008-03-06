@@ -40,6 +40,11 @@ using namespace std;
 Define_Module(FSServer);
 
 size_t FSServer::defaultAttrSize_ = 0;
+simtime_t FSServer::createObjectProcessingDelay_ = 0.0;
+simtime_t FSServer::createDirEntProcessingDelay_ = 0.0;
+simtime_t FSServer::getAttrProcessingDelay_ = 0.0;
+simtime_t FSServer::lookupPathProcessingDelay_ = 0.0;
+simtime_t FSServer::setAttrProcessingDelay_ = 0.0;
 
 size_t FSServer::getDefaultAttrSize()
 {
@@ -51,9 +56,63 @@ size_t FSServer::getDirectoryEntrySize()
     return 128;
 }
 
+void FSServer::setCreateObjectProcessingDelay(simtime_t createObjectDelay)
+{
+    createObjectProcessingDelay_ = createObjectDelay;
+}
+
+simtime_t FSServer::createObjectProcessingDelay()
+{
+    return createObjectProcessingDelay_;
+}
+
+void FSServer::setCreateDirEntProcessingDelay(simtime_t createDirEntDelay)
+{
+    createDirEntProcessingDelay_ = createDirEntDelay;
+}
+
+simtime_t FSServer::createDirEntProcessingDelay()
+{
+    return createDirEntProcessingDelay_;
+}
+
+void FSServer::setGetAttrProcessingDelay(simtime_t getAttrDelay)
+{
+    getAttrProcessingDelay_ = getAttrDelay;
+}
+
+simtime_t FSServer::getAttrProcessingDelay()
+{
+    return getAttrProcessingDelay_;
+}
+
+void FSServer::setLookupPathProcessingDelay(simtime_t lookupPathDelay)
+{
+    lookupPathProcessingDelay_ = lookupPathDelay;
+}
+
+simtime_t FSServer::lookupPathProcessingDelay()
+{
+    return lookupPathProcessingDelay_;
+}
+
+void FSServer::setSetAttrProcessingDelay(simtime_t setAttrDelay)
+{
+    setAttrProcessingDelay_ = setAttrDelay;
+}
+
+simtime_t FSServer::setAttrProcessingDelay()
+{
+    return setAttrProcessingDelay_;
+}
+
 FSServer::FSServer()
     : cSimpleModule(),
-      getAttrDiskTime_("Server GetAttr Disk Time")
+      createDirEntDiskDelay_("SPFS Create DirEnt Disk Delay"),
+      createObjectDiskDelay_("SPFS Create Object Disk Delay"),
+      getAttrDiskDelay_("SPFS GetAttr Disk Delay"),
+      lookupDiskDelay_("SPFS Lookup Disk Delay"),
+      setAttrDiskDelay_("SPFS SetAttr Disk Delay")
 {
 }
 
@@ -179,6 +238,48 @@ void FSServer::send(cMessage* msg)
 {
     cSimpleModule::send(msg, outGateId_);
 }
+
+void FSServer::sendDelayed(cMessage* msg, simtime_t delay)
+{
+    cSimpleModule::sendDelayed(msg, delay, outGateId_);
+}
+
+void FSServer::recordCreateDirEntDiskDelay(cMessage* fileWriteResponse)
+{
+    createDirEntDiskDelay_.record(getRoundTripDelay(fileWriteResponse));
+}
+
+void FSServer::recordCreateObjectDiskDelay(cMessage* fileOpenResponse)
+{
+    createObjectDiskDelay_.record(getRoundTripDelay(fileOpenResponse));
+}
+
+void FSServer::recordGetAttrDiskDelay(cMessage* fileReadResponse)
+{
+    getAttrDiskDelay_.record(getRoundTripDelay(fileReadResponse));
+}
+
+void FSServer::recordLookupDiskDelay(cMessage* fileReadResponse)
+{
+    lookupDiskDelay_.record(getRoundTripDelay(fileReadResponse));
+}
+
+void FSServer::recordSetAttrDiskDelay(cMessage* fileWriteResponse)
+{
+    setAttrDiskDelay_.record(getRoundTripDelay(fileWriteResponse));
+}
+
+simtime_t FSServer::getRoundTripDelay(cMessage* response) const
+{
+    // Get the originating request
+    cMessage* request = static_cast<cMessage*>(response->contextPointer());
+    
+    // Determine the request response roundtrip time
+    simtime_t reqSendTime = request->creationTime();
+    simtime_t respArriveTime = simTime();
+    return (respArriveTime - reqSendTime);
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

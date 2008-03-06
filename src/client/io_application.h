@@ -38,7 +38,7 @@ class IOApplication : public cSimpleModule
 {
 public:
     /** Constructor */
-    IOApplication() : cSimpleModule(), rank_(-1) {};
+    IOApplication();
     
     /** @return the file descriptor for a file id */
     FileDescriptor* getDescriptor(int fileId) const;
@@ -80,19 +80,27 @@ protected:
     virtual void handleMPIMessage(cMessage* msg);
 
     /** Create a cMessage */
-    virtual cMessage* createMessage(void *) = 0;
-                
+    virtual cMessage* createMessage(void *) = 0;                
 
+    /** process rank */
     int rank_;
+
+    /** gate ids */
     int ioInGate_;
     int ioOutGate_;
     int mpiOutGate_;
     int mpiInGate_;
     bool msgScheduled_;
 
-    /** */
+    /** Map of file descriptors keyed by descriptor ID */
     std::map<int, FileDescriptor*> descriptorById_;
 
+    /** Timing data collections */
+    cOutVector directoryCreateDelay_;
+    cOutVector fileOpenDelay_;
+    cOutVector fileReadDelay_;
+    cOutVector fileWriteDelay_;
+    cOutVector fileUpdateTimeDelay_;
 };
 
 #endif

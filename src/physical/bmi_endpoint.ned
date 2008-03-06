@@ -23,6 +23,10 @@
 //
 simple BMIEndpoint
 
+    parameters:
+        fixedOverheadSecs: numeric,
+        scaledOverheadSecs : numeric;
+
     gates:
         in: appIn;
         out: appOut;

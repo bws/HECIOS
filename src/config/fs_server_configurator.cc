@@ -73,9 +73,26 @@ void FSServerConfigurator::initialize(int stage)
 {
     if (0 == stage)
     {
+        // Get the metadata size, which is currently ignored for good reason
         size_t metaDataSize = par("metaDataSizeInBytes");
         FSServer::setDefaultAttrSize(metaDataSize);
         FileBuilder::instance().setDefaultMetaDataSize(metaDataSize);
+
+        // Get the server processing delays for each message
+        double createDelay = par("createObjectProcessingDelaySecs");
+        FSServer::setCreateObjectProcessingDelay(createDelay);
+        
+        double createDirEntDelay = par("createDirEntProcessingDelaySecs"); 
+        FSServer::setCreateDirEntProcessingDelay(createDirEntDelay);
+
+        double getAttrDelay = par("getAttrProcessingDelaySecs");
+        FSServer::setGetAttrProcessingDelay(getAttrDelay);
+
+        double lookupPathDelay = par("lookupPathProcessingDelaySecs");
+        FSServer::setLookupPathProcessingDelay(lookupPathDelay);
+
+        double setAttrDelay = par("setAttrProcessingDelaySecs");
+        FSServer::setSetAttrProcessingDelay(setAttrDelay);
     }
     else if (3 == stage)
     {

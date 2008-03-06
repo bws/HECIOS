@@ -33,16 +33,139 @@ using namespace std;
 // Define FSClient module for this class
 Define_Module(FSClient);
 
+spfsCreateRequest* FSClient::createCreateRequest(const FSHandle& handle,
+                                                 FSObjectType objectType)
+{
+    spfsCreateRequest* create = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
+    create->setHandle(handle);
+    create->setObjectType(objectType);
+
+    // Set the create request size (op, creds, fs_id, objType, extentArraySize,
+    // extentArray)
+    create->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 + 4 + 4 + 8);    
+    return create;
+}
+
+spfsCreateDirEntRequest* FSClient::createCreateDirEntRequest(
+    const FSHandle& handle, const Filename& entry)
+{
+    spfsCreateDirEntRequest* createDirEnt =
+        new spfsCreateDirEntRequest(0, SPFS_CREATE_DIR_ENT_REQUEST);
+    createDirEnt->setHandle(handle);
+    createDirEnt->setEntry(entry.c_str());
+
+    // Set the create dirent request size (op, creds, fs_id, entry,
+    // newHandle, parentHandle)
+    createDirEnt->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 +
+                                entry.str().length() + 1 + 8 + 8);
+    return createDirEnt;
+}
+
+spfsGetAttrRequest* FSClient::createGetAttrRequest(const FSHandle& handle,
+                                                   FSObjectType objectType)
+{
+    spfsGetAttrRequest* getAttr = new spfsGetAttrRequest(0,
+                                                         SPFS_GET_ATTR_REQUEST);
+    getAttr->setHandle(handle);
+    getAttr->setObjectType(objectType);
+
+    // Set the get attr request size (op, creds, fs_id, handle, attrMask)
+    getAttr->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 + 8 + 4);
+    return getAttr;
+}
+
+spfsLookupPathRequest* FSClient::createLookupPathRequest(
+        const Filename& lookupName,
+        const FSHandle& handle,
+        int numResolvedSegments)
+{
+    spfsLookupPathRequest* lookup = new spfsLookupPathRequest(
+        0, SPFS_LOOKUP_PATH_REQUEST);
+    lookup->setFilename(lookupName.c_str());
+    lookup->setHandle(handle);
+    lookup->setNumResolvedSegments(numResolvedSegments);
+    lookup->setLocallyResolvedSegments(0);
+
+    // Set the lookup request size (op, creds, fs_id, pathSize, path, handle,
+    // attrMask)
+    lookup->setByteLength(4 + FSClient:: CREDENTIALS_SIZE + 4 +
+                          4 + lookupName.str().length() + 8 + 4);
+    return lookup;
+}
+
+spfsReadRequest* FSClient::createReadRequest(const FSHandle& handle,
+                                             const FileView& view,
+                                             FSOffset offset,
+                                             FSSize dataSize,
+                                             const FileDistribution& dist)
+{
+    spfsReadRequest* read = new spfsReadRequest(0, SPFS_READ_REQUEST);
+    read->setHandle(handle);
+    read->setView(new FileView(view));
+    read->setOffset(offset);
+    read->setDataSize(dataSize);
+    read->setDist(dist.clone());
+    read->setClientFlowBmiTag(simulation.getUniqueNumber());
+    read->setServerFlowBmiTag(simulation.getUniqueNumber());
+    
+    // Set the Read request size (op, creds, fs_id, handle, objType,
+    // attrMask, Attributes) TODO: fix attribute size
+    read->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 +
+                        8 + 4 + 4 + 4 +
+                        view.getRepresentationByteLength() +
+                        8 + 8);
+    return read;
+}
+
+spfsSetAttrRequest* FSClient::createSetAttrRequest(const FSHandle& handle,
+                                                   FSObjectType objectType)
+{
+    spfsSetAttrRequest* setAttr =
+        new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
+    setAttr->setHandle(handle);
+    setAttr->setObjectType(objectType);
+
+    // Set the SetAttr request size (op, creds, fs_id, handle, objType,
+    // attrMask, Attributes) TODO: fix attribute size
+    setAttr->setByteLength(4 + FSClient:: CREDENTIALS_SIZE + 4 + 8 +
+                           4 + 4 + 64);
+    return setAttr;
+}
+
+spfsWriteRequest* FSClient::createWriteRequest(const FSHandle& handle,
+                                               const FileView& view,
+                                               FSOffset offset,
+                                               FSSize dataSize,
+                                               const FileDistribution& dist)
+{
+    spfsWriteRequest* write = new spfsWriteRequest(0, SPFS_WRITE_REQUEST);
+    write->setHandle(handle);
+    write->setView(new FileView(view));
+    write->setOffset(offset);
+    write->setDataSize(dataSize);
+    write->setDist(dist.clone());
+    write->setClientFlowBmiTag(simulation.getUniqueNumber());
+    write->setServerFlowBmiTag(simulation.getUniqueNumber());
+    
+    // Set the Write request size (op, creds, fs_id, handle, objType,
+    // attrMask, Attributes) TODO: fix attribute size
+    write->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 +
+                         8 + 4 + 4 + 4 +
+                         view.getRepresentationByteLength() +
+                         8 + 8);
+    return write;
+}
+
 FSClient::FSClient()
-    : createDirEntDelay("SPFS Client CrDirEnt Roundtrip Delay"),
-      createObjectDelay("SPFS Client CreateObject Roundtrip Delay"),
-      flowDelay("SPFS Client Flow Delay"),
-      getAttrDelay("SPFS Client GetAttr Roundtrip Delay"),
-      lookupPathDelay("SPFS Client Lookup Path Roundtrip Delay"),
-      readDelay("SPFS Client Read Roundtrip Delay"),
-      setAttrDelay("SPFS Client Read Roundtrip Delay"),
-      writeCompleteDelay("SPFS Client WriteComplete Roundtrip Delay"),
-      writeDelay("SPFS Client Write Roundtrip Delay")
+    : createDirEntDelay_("SPFS Client CrDirEnt Roundtrip Delay"),
+      createObjectDelay_("SPFS Client CreateObject Roundtrip Delay"),
+      flowDelay_("SPFS Client Flow Delay"),
+      getAttrDelay_("SPFS Client GetAttr Roundtrip Delay"),
+      lookupPathDelay_("SPFS Client Lookup Path Roundtrip Delay"),
+      readDelay_("SPFS Client Read Roundtrip Delay"),
+      setAttrDelay_("SPFS Client SetAttr Roundtrip Delay"),
+      writeCompleteDelay_("SPFS Client WriteComplete Roundtrip Delay"),
+      writeDelay_("SPFS Client Write Roundtrip Delay")
 {
 }
 
@@ -188,10 +311,9 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
 
 void FSClient::collectServerResponseData(cMessage* serverResponse)
 {
+    // Determine the request response roundtrip time
     cMessage* parentRequest =
         static_cast<cMessage*>(serverResponse->contextPointer());
-
-    // Determine the request response roundtrip time
     simtime_t reqSendTime = parentRequest->creationTime();
     simtime_t respArriveTime = simTime();
     simtime_t delay = respArriveTime - reqSendTime;
@@ -200,47 +322,47 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
     {
         case SPFS_CREATE_DIR_ENT_RESPONSE:
         {
-            createDirEntDelay.record(delay);
+            createDirEntDelay_.record(delay);
             break;
         }
         case SPFS_CREATE_RESPONSE:
         {
-            createObjectDelay.record(delay);
+            createObjectDelay_.record(delay);
             break;
         }
         case SPFS_DATA_FLOW_FINISH:
         {
-            flowDelay.record(delay);
+            flowDelay_.record(delay);
             break;
         }
         case SPFS_GET_ATTR_RESPONSE:
         {
-            getAttrDelay.record(delay);
+            getAttrDelay_.record(delay);
             break;
         }
         case SPFS_LOOKUP_PATH_RESPONSE:
         {
-            lookupPathDelay.record(delay);
+            lookupPathDelay_.record(delay);
             break;
         }
         case SPFS_READ_RESPONSE:
         {
-            readDelay.record(delay);
+            readDelay_.record(delay);
             break;
         }
         case SPFS_SET_ATTR_RESPONSE:
         {
-            setAttrDelay.record(delay);
+            setAttrDelay_.record(delay);
             break;
         }
         case SPFS_WRITE_COMPLETION_RESPONSE:
         {
-            writeCompleteDelay.record(delay);
+            writeCompleteDelay_.record(delay);
             break;
         }
         case SPFS_WRITE_RESPONSE:
         {
-            writeDelay.record(delay);
+            writeDelay_.record(delay);
             break;
         }
         default:

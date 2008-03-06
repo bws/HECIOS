@@ -39,7 +39,11 @@ void BMIEndpoint::initialize()
 
     // Set the handle range to an invalid range
     HandleRange init = {UINT_MAX, UINT_MAX - 1};
-    setHandleRange(init);
+    setHandleRange(init);    
+
+    // Extract the BMI overhead costs
+    fixedOverheadSecs_ = par("fixedOverheadSecs").doubleValue();
+    scaledOverheadSecs_ = par("scaledOverheadSecs").doubleValue();
     
     // Initialize the derived implementation
     initializeEndpoint();
@@ -53,9 +57,20 @@ void BMIEndpoint::finish()
 
 void BMIEndpoint::handleMessage(cMessage* msg)
 {
-    // If the request is from the application, send it over the network
-    // else its from the network, send it to the application/server
+    // If the request is from the application,
+    //     reschedule it to account for fixed network costs
+    // else if its a self message
+    //     send it over the network
+    // else
+    //     its from the network, send it to the application/server
     if (msg->arrivalGateId() == appInGateId_)
+    {
+        // Perform the network startup costs
+        simtime_t delay = fixedOverheadSecs_ +
+            scaledOverheadSecs_ * msg->byteLength();
+        scheduleAt(simTime() + delay, msg);
+    }
+    else if (msg->isSelfMessage())
     {
         // Handle requests, responses, and data flows seperately
         if (spfsRequest* req = dynamic_cast<spfsRequest*>(msg))

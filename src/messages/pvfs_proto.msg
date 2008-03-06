@@ -43,6 +43,7 @@ class noncobject FileViewPtr;
 class noncobject FSHandle;
 class noncobject FSLookupStatus;
 class noncobject FSMetaData;
+class noncobject FSObjectType;
 class noncobject FSOffset;
 class noncobject FSSize;
 class noncobject VoidPtr;
@@ -111,7 +112,7 @@ message spfsResponse
 message spfsCreateRequest extends spfsRequest
 {
     fields:
-        int objectType;
+        FSObjectType objectType;
 };
 
 // Create a file system object
@@ -179,6 +180,7 @@ message spfsWriteCompletionResponse extends spfsResponse
 message spfsGetAttrRequest extends spfsRequest
 {
     fields:
+        FSObjectType objectType;
         string path; // remove this ???
 };
 
@@ -193,6 +195,7 @@ message spfsGetAttrResponse extends spfsResponse
 message spfsSetAttrRequest extends spfsRequest
 {
     fields:
+        FSObjectType objectType;
         FSMetaData meta;
 };
 
@@ -210,6 +213,7 @@ message spfsLookupPathRequest extends spfsRequest
         string filename;
         int numResolvedSegments;
         bool isCreate;
+        int locallyResolvedSegments = 0;
 };
 
 // Lookup a path

@@ -1,5 +1,5 @@
-#ifndef FS_MODULE_H
-#define FS_MODULE_H
+#ifndef FS_CLIENT_H
+#define FS_CLIENT_H
 //
 // This file is part of Hecios
 //
@@ -20,9 +20,18 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 #include <omnetpp.h>
 #include "client_fs_state.h"
+#include "pfs_types.h"
+class FileDistribution;
+class FileView;
+class spfsCreateRequest;
+class spfsCreateDirEntRequest;
+class spfsGetAttrRequest;
+class spfsLookupPathRequest;
+class spfsReadRequest;
+class spfsSetAttrRequest;
+class spfsWriteRequest;
 
 class FSClient : public cSimpleModule
 {
@@ -38,6 +47,42 @@ public:
      */
     static const unsigned int CREDENTIALS_SIZE = 8;
 
+    /** @return a new Create request */
+    static spfsCreateRequest* createCreateRequest(const FSHandle& handle,
+                                                  FSObjectType objectType);
+
+    /** @return a new Create request */
+    static spfsCreateDirEntRequest* createCreateDirEntRequest(
+        const FSHandle& handle, const Filename& entry);
+
+    /** @return a new GetAttr request */
+    static spfsGetAttrRequest* createGetAttrRequest(const FSHandle& handle,
+                                                    FSObjectType objectType);
+
+    /** @return a new LookupPath request */
+    static spfsLookupPathRequest* createLookupPathRequest(
+        const Filename& lookupname,
+        const FSHandle& handle,
+        int numResolvedSegments);
+
+    /** @return a new Read Request */
+    static spfsReadRequest* createReadRequest(const FSHandle& handle,
+                                              const FileView& view,
+                                              FSOffset offset,
+                                              FSSize dataSize,
+                                              const FileDistribution& dist);
+
+    /** @return a new SetAttr request */
+    static spfsSetAttrRequest* createSetAttrRequest(const FSHandle& handle,
+                                                    FSObjectType objectType);
+
+    /** @return a new Write Request */
+    static spfsWriteRequest* createWriteRequest(const FSHandle& handle,
+                                                const FileView& view,
+                                                FSOffset offset,
+                                                FSSize dataSize,
+                                                const FileDistribution& dist);
+    
     /** Constructor */
     FSClient();
     
@@ -49,7 +94,7 @@ public:
     
     /** @return the network outbound gate id */
     int getNetOutGate() const { return netOutGateId_; };
-    
+
 protected:
     /** Initialize the module */
     virtual void initialize();
@@ -82,15 +127,15 @@ private:
     ClientFSState clientState_;
 
     /** Data collection */
-    cOutVector createDirEntDelay;
-    cOutVector createObjectDelay;
-    cOutVector flowDelay;
-    cOutVector getAttrDelay;
-    cOutVector lookupPathDelay;
-    cOutVector readDelay;
-    cOutVector setAttrDelay;
-    cOutVector writeCompleteDelay;
-    cOutVector writeDelay;
+    cOutVector createDirEntDelay_;
+    cOutVector createObjectDelay_;
+    cOutVector flowDelay_;
+    cOutVector getAttrDelay_;
+    cOutVector lookupPathDelay_;
+    cOutVector readDelay_;
+    cOutVector setAttrDelay_;
+    cOutVector writeCompleteDelay_;
+    cOutVector writeDelay_;
 };
 
 #endif

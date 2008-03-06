@@ -58,9 +58,36 @@ public:
     /** Set the default size of metadata/attributes */
     static void setDefaultAttrSize(std::size_t attrSize);
 
-    /** */
-    cOutVector getAttrDiskTime_;
+    /** Set the create object processing delay */
+    static void setCreateObjectProcessingDelay(simtime_t createObjectDelay);
 
+    /** @return the server processing delay for creating an object */
+    static simtime_t createObjectProcessingDelay();
+    
+    /** Set the create directory entry processing delay */
+    static void setCreateDirEntProcessingDelay(simtime_t createDirEntDelay);
+
+    /** @return the server processing delay for creating a directory entry */
+    static simtime_t createDirEntProcessingDelay();
+    
+    /** Set the attribute retrieval processing delay */
+    static void setGetAttrProcessingDelay(simtime_t getAttrDelay);
+
+    /** @return the server processing delay for getting object attributes */
+    static simtime_t getAttrProcessingDelay();
+    
+    /** Set the Path resolution processing delay */
+    static void setLookupPathProcessingDelay(simtime_t lookupPathDelay);
+
+    /** @return the server processing delay for resolving a path */
+    static simtime_t lookupPathProcessingDelay();
+    
+    /** Set the attributes set processing delay */
+    static void setSetAttrProcessingDelay(simtime_t setAttrDelay);
+
+    /** @return the server processing delay for setting object attributes */
+    static simtime_t setAttrProcessingDelay();
+    
     /** Constructor */
     FSServer();
 
@@ -83,7 +110,25 @@ public:
     void setHandleRange(const HandleRange& range) {range_ = range;};
 
     /** Send the message out of the PFS server */
-    void send(cMessage*);
+    void send(cMessage* outMsg);
+
+    /** Send the message out of the PFS server after delay */
+    void sendDelayed(cMessage* outMsg, simtime_t delay);
+
+    /** Record the disk delay for creating directory entries */
+    void recordCreateDirEntDiskDelay(cMessage* fileWriteResponse);
+
+    /** Record the disk delay for creating objects */
+    void recordCreateObjectDiskDelay(cMessage* fileOpenResponse);
+
+    /** Record the disk delay for retrieving attributes */
+    void recordGetAttrDiskDelay(cMessage* fileReadResponse);
+
+    /** Record the disk delay for performing name lookup */
+    void recordLookupDiskDelay(cMessage* fileReadResponse);
+
+    /** Record the disk delay for setting attributes */
+    void recordSetAttrDiskDelay(cMessage* fileWriteResponse);
     
 protected:
     
@@ -100,9 +145,29 @@ protected:
     void processRequest(spfsRequest* request, cMessage* msg);
     
 private:
+    /**
+     * @return the difference between the current time and originating req
+     *    creation time
+     */
+    simtime_t getRoundTripDelay(cMessage* response) const;
 
     /** Default attribute size */
     static std::size_t defaultAttrSize_;
+
+    /** Create object server processing delay*/
+    static simtime_t createObjectProcessingDelay_;
+
+    /** Create Directory Entry server processing delay */
+    static simtime_t createDirEntProcessingDelay_;
+
+    /** Get Attributes server processing delay */
+    static simtime_t getAttrProcessingDelay_;
+
+    /** Lookup Path server processing delay */
+    static simtime_t lookupPathProcessingDelay_;
+
+    /** Set Attributes server processing delay */
+    static simtime_t setAttrProcessingDelay_;
     
     /** Unique server number */
     std::size_t serverNumber_;
@@ -117,7 +182,12 @@ private:
     int inGateId_;
     int outGateId_;
 
-    
+    /** Data collection vectors */
+    cOutVector createDirEntDiskDelay_;
+    cOutVector createObjectDiskDelay_;
+    cOutVector getAttrDiskDelay_;
+    cOutVector lookupDiskDelay_;
+    cOutVector setAttrDiskDelay_;
 };
 
 #endif

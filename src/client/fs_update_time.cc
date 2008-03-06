@@ -196,12 +196,9 @@ void FSUpdateTime::lookupParentOnServer()
     // Create the lookup request
     cerr << "UTime: " << utimeFile << endl;
     cerr << "Client looking up: " << resolvedName << " " << resolvedHandle << endl;
-    spfsLookupPathRequest* req = new spfsLookupPathRequest(
-        0, SPFS_LOOKUP_PATH_REQUEST);
+    spfsLookupPathRequest* req = FSClient::createLookupPathRequest(
+        parent, resolvedHandle, numResolvedSegments);
     req->setContextPointer(utimeReq_);
-    req->setFilename(parent.c_str());
-    req->setHandle(resolvedHandle);
-    req->setNumResolvedSegments(numResolvedSegments);
 
     // Send the request
     client_->send(req, client_->getNetOutGate());
@@ -214,9 +211,10 @@ void FSUpdateTime::getParentAttributes()
     FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parent);
 
     // Construct the request
-    spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
+    spfsGetAttrRequest *req =
+        FSClient::createGetAttrRequest(parentMeta->handle,
+                                       SPFS_METADATA_OBJECT);
     req->setContextPointer(utimeReq_);
-    req->setHandle(parentMeta->handle);
     client_->send(req, client_->getNetOutGate());
 }
 
@@ -239,12 +237,9 @@ void FSUpdateTime::lookupNameOnServer()
         FileBuilder::instance().getMetaData(parent)->handle;
     
     // Create the lookup request
-    spfsLookupPathRequest* req = new spfsLookupPathRequest(
-        0, SPFS_LOOKUP_PATH_REQUEST);
+    spfsLookupPathRequest* req = FSClient::createLookupPathRequest(
+        utimeFile, resolvedHandle, parent.getNumPathSegments());
     req->setContextPointer(utimeReq_);
-    req->setFilename(utimeFile.c_str());
-    req->setHandle(resolvedHandle);
-    req->setNumResolvedSegments(parent.getNumPathSegments());
 
     // Send the request
     client_->send(req, client_->getNetOutGate());
@@ -287,13 +282,12 @@ void FSUpdateTime::writeAttributes()
 {
     Filename utimeName(utimeReq_->getFileName());
     const FSMetaData* meta = FileBuilder::instance().getMetaData(utimeName);
-    spfsSetAttrRequest *req = new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
+    spfsSetAttrRequest *req =
+        FSClient::createSetAttrRequest(meta->handle, SPFS_METADATA_OBJECT);
     req->setContextPointer(utimeReq_);
-    req->setHandle(meta->handle);
-    req->setByteLength(8 + 8 + 64);
     client_->send(req, client_->getNetOutGate());
 
-    // Add the attributes to the cache
+    // FIXME Add the attributes to the cache
     //addAttributesToCache();
 }
 

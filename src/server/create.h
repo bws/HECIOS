@@ -30,7 +30,6 @@ class FSServer;
 class Create
 {
 public:
-
     /** Constructor */
     Create(FSServer* module, spfsCreateRequest* createReq);
 
@@ -69,5 +68,5 @@ private:
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

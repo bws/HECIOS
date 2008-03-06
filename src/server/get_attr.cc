@@ -65,7 +65,7 @@ void GetAttr::handleServerMessage(cMessage* msg)
         case FSM_Enter(FINISH):
         {
             assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
-            collectDiskTimeData(msg);
+            module_->recordGetAttrDiskDelay(msg);
             enterFinish();
             break;
         }
@@ -106,20 +106,9 @@ void GetAttr::enterFinish()
     resp->setContextPointer(getAttrReq_);
     resp->setByteLength(FSServer::METADATA_ATTRIBUTES_BYTE_SIZE +
                         handleArrayBytes);
-    module_->send(resp);
-}
 
-void GetAttr::collectDiskTimeData(cMessage* osReadResponse)
-{
-    cMessage* osReadRequest =
-        static_cast<cMessage*>(osReadResponse->contextPointer());
-
-    // Determine the request response roundtrip time
-    simtime_t reqSendTime = osReadRequest->creationTime();
-    simtime_t respArriveTime = module_->simTime();
-    simtime_t delay = respArriveTime - reqSendTime;
-    
-    module_->getAttrDiskTime_.record(delay);
+    // Add processing delay for processing
+    module_->sendDelayed(resp, FSServer::getAttrProcessingDelay());
 }
 
 /*
@@ -129,5 +118,5 @@ void GetAttr::collectDiskTimeData(cMessage* osReadResponse)
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

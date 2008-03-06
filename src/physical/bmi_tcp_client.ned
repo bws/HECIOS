@@ -22,7 +22,9 @@
 simple BMITcpClient
 
     parameters:
-        connectPort: numeric const; // port to connect to
+        connectPort: numeric const, // port to connect to
+        fixedOverheadSecs: numeric const,
+        scaledOverheadSecs : numeric const;
 
     gates:
         in: appIn;

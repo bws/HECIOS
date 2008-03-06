@@ -64,6 +64,7 @@ void Lookup::handleServerMessage(cMessage* msg)
         case FSM_Exit(LOOKUP_NAME):
         {
             assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
+            module_->recordLookupDiskDelay(msg);
             if (lookupIsFailed())
             {
                 FSM_Goto(currentState, FINISH_FAILED_LOOKUP);
@@ -130,15 +131,30 @@ void Lookup::lookupName()
     // Send the request
     module_->send(fileRead);
 
-    // Increment the number of resolved segments
-    lookupReq_->setNumResolvedSegments(nextSegment + 1);
-
     cerr << "Looking up: " << fullName.getSegment(nextSegment) << endl
          << "  Parent: " << parentName << " " << parentHandle << endl; 
 }
 
+bool Lookup::lookupIsFailed()
+{
+    // Determine if the next path segment exists
+    Filename fullName(lookupReq_->getFilename());
+    size_t nextSegment = lookupReq_->getNumResolvedSegments();
+    Filename nextName = fullName.getSegment(nextSegment);
+    FSMetaData* nextMeta = FileBuilder::instance().getMetaData(nextName);
+    return (0 == nextMeta);
+}
+
 bool Lookup::lookupIsComplete()
 {
+    // Increment the number of resolved segments
+    int resolvedSegments = lookupReq_->getNumResolvedSegments();
+    lookupReq_->setNumResolvedSegments(resolvedSegments + 1);
+
+    // Increment the number of locally resolved segments
+    int localResolutions = lookupReq_->getLocallyResolvedSegments() + 1;
+    lookupReq_->setLocallyResolvedSegments(localResolutions);
+    
     // The lookup is complete if the name is fully resolved
     Filename fullName(lookupReq_->getFilename());
     size_t nextSegment = lookupReq_->getNumResolvedSegments();
@@ -150,16 +166,6 @@ bool Lookup::lookupIsComplete()
     {
         return false;
     }
-}
-
-bool Lookup::lookupIsFailed()
-{
-    // Determine if the next path segment exists
-    Filename fullName(lookupReq_->getFilename());
-    size_t nextSegment = lookupReq_->getNumResolvedSegments();
-    Filename nextName = fullName.getSegment(nextSegment);
-    FSMetaData* nextMeta = FileBuilder::instance().getMetaData(nextName);
-    return (0 == nextMeta);
 }
 
 bool Lookup::localLookupIsComplete()
@@ -195,8 +201,10 @@ void Lookup::finish(FSLookupStatus lookupStatus)
         resp->setStatus(SPFS_NOTFOUND);
     }
 
-    resp->setByteLength(8);
-    module_->send(resp);
+    // Determine the number of handles looked up
+    int localResolutions = lookupReq_->getLocallyResolvedSegments();
+    resp->setByteLength(4 + 8 * localResolutions);
+    module_->sendDelayed(resp, FSServer::lookupPathProcessingDelay());
 }
 
 /*
@@ -206,5 +214,5 @@ void Lookup::finish(FSLookupStatus lookupStatus)
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

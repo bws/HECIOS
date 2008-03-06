@@ -198,13 +198,9 @@ void FSCreateDirectory::lookupParentOnServer()
         FileBuilder::instance().getMetaData(resolvedName)->handle;
     
     // Create the lookup request
-    spfsLookupPathRequest* req = new spfsLookupPathRequest(
-        0, SPFS_LOOKUP_PATH_REQUEST);
+    spfsLookupPathRequest* req = FSClient::createLookupPathRequest(
+        parent, resolvedHandle, numResolvedSegments);
     req->setContextPointer(createReq_);
-    req->setAutoCleanup(true);
-    req->setFilename(parent.c_str());
-    req->setHandle(resolvedHandle);
-    req->setNumResolvedSegments(numResolvedSegments);
 
     // Send the request
     client_->send(req, client_->getNetOutGate());
@@ -241,10 +237,9 @@ void FSCreateDirectory::getParentAttributes()
     FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parent);
 
     // Construct the request
-    spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
+    spfsGetAttrRequest *req = FSClient::createGetAttrRequest(parentMeta->handle,
+                                       SPFS_METADATA_OBJECT);
     req->setContextPointer(createReq_);
-    req->setAutoCleanup(true);
-    req->setHandle(parentMeta->handle);
     client_->send(req, client_->getNetOutGate());
 
     cerr << "Getting parent attrs: " << dirName << endl;
@@ -264,12 +259,10 @@ void FSCreateDirectory::createMeta()
     int metaServer = FileBuilder::instance().getMetaServers()[0];
 
     // Build message to create metadata
-    spfsCreateRequest* req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
+    spfsCreateRequest* req = FSClient::createCreateRequest(
+        FileBuilder::instance().getFirstHandle(metaServer),
+        SPFS_METADATA_OBJECT);
     req->setContextPointer(createReq_);
-    req->setAutoCleanup(true);
-    req->setHandle(FileBuilder::instance().getFirstHandle(metaServer));
-    req->setByteLength(4 + FSClient::OBJECT_ATTRIBUTES_SIZE +
-                       FSClient::CREDENTIALS_SIZE + 8 + 8 + 4 + 4);
     client_->send(req, client_->getNetOutGate());
 }
 
@@ -282,12 +275,10 @@ void FSCreateDirectory::createDataObject()
     assert(1 == metaData->dataHandles.size());
     
     // Construct the create requests for this directory's data handles
-    spfsCreateRequest* create = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
+    spfsCreateRequest* create =
+        FSClient::createCreateRequest(metaData->dataHandles[0],
+                                      SPFS_DIRECTORY_OBJECT);
     create->setContextPointer(createReq_);
-    create->setAutoCleanup(true);
-    create->setHandle(metaData->dataHandles[0]);
-    create->setByteLength(4 + FSClient::OBJECT_ATTRIBUTES_SIZE +
-                          FSClient::CREDENTIALS_SIZE + 8 + 8 + 4 + 4);
     client_->send(create, client_->getNetOutGate());
 }
 
@@ -299,14 +290,9 @@ void FSCreateDirectory::createDirEnt()
     FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parentName);
 
     // Construct the directory entry creation request
-    spfsCreateDirEntRequest *req;
-    req = new spfsCreateDirEntRequest(0, SPFS_CREATE_DIR_ENT_REQUEST);
+    spfsCreateDirEntRequest *req =
+        FSClient::createCreateDirEntRequest(parentMeta->handle, dirName);
     req->setContextPointer(createReq_);
-    req->setAutoCleanup(true);
-    req->setHandle(parentMeta->handle);
-    req->setEntry(dirName.c_str());
-    req->setByteLength(4 + dirName.str().length() + 8 + 8 + 8 + 8 +
-                       FSClient::CREDENTIALS_SIZE);
     client_->send(req, client_->getNetOutGate());   
 }
 

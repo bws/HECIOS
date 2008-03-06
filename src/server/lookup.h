@@ -30,7 +30,6 @@ class FSServer;
 class Lookup
 {
 public:
-
     /** Constructor */
     Lookup(FSServer* module, spfsLookupPathRequest* lookupReq);
 
@@ -55,7 +54,6 @@ protected:
     void finish(FSLookupStatus lookupStatus);
     
 private:
-
     /** The parent module */
     FSServer* module_;
     

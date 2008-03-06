@@ -40,6 +40,17 @@ using namespace std;
 // OMNet Registriation Method
 static int rank_seed = 0;
 
+IOApplication::IOApplication()
+    : cSimpleModule(),
+      rank_(-1),
+      directoryCreateDelay_("SPFS MPI Directory Create Delay"),
+      fileOpenDelay_("SPFS MPI File Open Delay"),
+      fileReadDelay_("SPFS MPI File Read Delay"),
+      fileWriteDelay_("SPFS MPI File Write Delay"),
+      fileUpdateTimeDelay_("SPFS MPI File Update Time Delay")
+{
+}
+
 /**
  * Construct an I/O trace using configuration supplied tracefile(s)
  */
@@ -91,37 +102,84 @@ void IOApplication::handleSelfMessage(cMessage* msg)
 
 void IOApplication::handleIOMessage(cMessage* msg)
 {
+    // Determine the request response roundtrip time
+    cMessage* parentRequest = static_cast<cMessage*>(msg->contextPointer());
+    simtime_t reqSendTime = parentRequest->creationTime();
+    simtime_t respArriveTime = simTime();
+    simtime_t delay = respArriveTime - reqSendTime;
+
+    // Collect statistics for the operation's total delay
     switch(msg->kind())
     {
         case SPFS_MPI_DIRECTORY_CREATE_RESPONSE:
+        {
+            directoryCreateDelay_.record(delay);
+            break;
+        }
         case SPFS_MPI_FILE_CLOSE_RESPONSE:
+        {
+            break;
+        }
         case SPFS_MPI_FILE_DELETE_RESPONSE:
+        {
+            break;
+        }
         case SPFS_MPI_FILE_GET_SIZE_RESPONSE:
+        {
+            break;
+        }
         case SPFS_MPI_FILE_GET_INFO_RESPONSE:
+        {
+            break;
+        }
         case SPFS_MPI_FILE_OPEN_RESPONSE:
+        {
+            fileOpenDelay_.record(delay);
+            break;
+        }
         case SPFS_MPI_FILE_PREALLOCATE_RESPONSE:
+        {
+            break;
+        }
         case SPFS_MPI_FILE_SET_INFO_RESPONSE:
+        {
+            break;
+        }
         case SPFS_MPI_FILE_SET_SIZE_RESPONSE:
+        {
+            break;
+        }
+        case SPFS_MPI_FILE_IREAD_RESPONSE:
         case SPFS_MPI_FILE_READ_AT_RESPONSE:
         case SPFS_MPI_FILE_READ_RESPONSE:
+        {
+            fileReadDelay_.record(delay);
+            break;
+        }
         case SPFS_MPI_FILE_UPDATE_TIME_RESPONSE:
-        case SPFS_MPI_FILE_IREAD_RESPONSE:
+        {
+            fileUpdateTimeDelay_.record(delay);
+            break;
+        }
+        case SPFS_MPI_FILE_IWRITE_RESPONSE:
         case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
         case SPFS_MPI_FILE_WRITE_RESPONSE:
-        case SPFS_MPI_FILE_IWRITE_RESPONSE:
         {
-            // Schedule the next message
-            msgScheduled_ = scheduleNextMessage();
+            fileWriteDelay_.record(delay);
             break;
         }
         default:
-            cerr << "IOApplication::handleMessage not yet implemented "
-                 << "for kind: "<< msg->kind() << endl;
+            cerr << "ERROR: " << __FILE__ << ":" << __LINE__
+                 << ":handleMessage not yet implemented for kind: "
+                 << msg->kind() << endl;
             break;
     }
     
+    // Schedule the next message
+    msgScheduled_ = scheduleNextMessage();
+    
     // Delete the originating request
-    delete (cMessage*)msg->contextPointer();
+    delete parentRequest;
     
     // Delete the response
     delete msg;

@@ -92,6 +92,12 @@ private:
 
     /** Handle range for this endpoint */
     HandleRange handleRange_;
+
+    /** Fixed overhead for sending and receiving a BMI message */
+    double fixedOverheadSecs_;
+
+    /** Data size dependent overhead for sending and receiving a BMI message */
+    double scaledOverheadSecs_;
 };
 
 /*

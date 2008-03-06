@@ -49,6 +49,7 @@ void FSOpen::handleMessage(cMessage* msg)
         INIT = 0,
         LOOKUP_PARENT_HANDLE = FSM_Steady(1),
         GET_PARENT_ATTRIBUTES = FSM_Steady(2),
+        CHECK_OPEN_FLAGS = FSM_Transient(3),
         LOOKUP_NAME = FSM_Steady(4),
         CREATE_META = FSM_Steady(5),
         CREATE_DATA = FSM_Transient(6),
@@ -69,7 +70,7 @@ void FSOpen::handleMessage(cMessage* msg)
                 bool attrCached = isParentAttrCached();
                 if (attrCached)
                 {
-                    FSM_Goto(currentState, LOOKUP_NAME);
+                    FSM_Goto(currentState, CHECK_OPEN_FLAGS);
                 }
                 else
                 {
@@ -113,7 +114,21 @@ void FSOpen::handleMessage(cMessage* msg)
         case FSM_Exit(GET_PARENT_ATTRIBUTES):
         {
             cacheParentAttributes();
-            FSM_Goto(currentState, LOOKUP_NAME);
+            FSM_Goto(currentState, CHECK_OPEN_FLAGS);
+            break;
+        }
+        case FSM_Enter(CHECK_OPEN_FLAGS):
+        {
+            // Transient state no-op
+            break;
+        }
+        case FSM_Exit(CHECK_OPEN_FLAGS):
+        {
+            bool isCreate = checkFileCreateFlags();
+            if (isCreate)
+                FSM_Goto(currentState, CREATE_META);
+            else
+                FSM_Goto(currentState, LOOKUP_NAME); 
             break;
         }
         case FSM_Enter(LOOKUP_NAME):
@@ -125,16 +140,12 @@ void FSOpen::handleMessage(cMessage* msg)
         {
             FSLookupStatus status = processLookup(
                 static_cast<spfsLookupPathResponse*>(msg));
-            bool isCreate = checkFileCreateFlags(status);
-            if (isCreate)
-                FSM_Goto(currentState, CREATE_META);
-            else
-                FSM_Goto(currentState, FINISH); 
+            assert(SPFS_FOUND == status);
+            FSM_Goto(currentState, FINISH); 
             break;
         }
         case FSM_Enter(CREATE_META):
         {    
-            assert(0 != dynamic_cast<spfsLookupPathResponse*>(msg));
             createMeta();
             break;
         }
@@ -250,14 +261,10 @@ void FSOpen::lookupParentOnServer()
     // Create the lookup request
     cerr << "Open: " << openFile << endl;
     cerr << "Client looking up: " << resolvedName << " " << resolvedHandle << endl;
-    spfsLookupPathRequest* req = new spfsLookupPathRequest(
-        0, SPFS_LOOKUP_PATH_REQUEST);
+    spfsLookupPathRequest* req = FSClient::createLookupPathRequest(
+        parent, resolvedHandle, numResolvedSegments);
     req->setContextPointer(openReq_);
-    req->setAutoCleanup(true);
-    req->setFilename(parent.c_str());
-    req->setHandle(resolvedHandle);
-    req->setNumResolvedSegments(numResolvedSegments);
-
+    
     // Send the request
     client_->send(req, client_->getNetOutGate());
 }
@@ -269,10 +276,12 @@ void FSOpen::getParentAttributes()
     FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parent);
 
     // Construct the request
-    spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
+    cerr << "Getting parent attributes: " << parent << endl;
+    spfsGetAttrRequest *req =
+        FSClient::createGetAttrRequest(parentMeta->handle,
+                                       SPFS_METADATA_OBJECT);
     req->setContextPointer(openReq_);
     req->setAutoCleanup(true);
-    req->setHandle(parentMeta->handle);
     client_->send(req, client_->getNetOutGate());
 }
 
@@ -295,13 +304,9 @@ void FSOpen::lookupNameOnServer()
         FileBuilder::instance().getMetaData(parent)->handle;
     
     // Create the lookup request
-    spfsLookupPathRequest* req = new spfsLookupPathRequest(
-        0, SPFS_LOOKUP_PATH_REQUEST);
+    spfsLookupPathRequest* req = FSClient::createLookupPathRequest(
+        openFile, resolvedHandle, parent.getNumPathSegments());
     req->setContextPointer(openReq_);
-    req->setAutoCleanup(true);
-    req->setFilename(openFile.c_str());
-    req->setHandle(resolvedHandle);
-    req->setNumResolvedSegments(parent.getNumPathSegments());
 
     // Send the request
     client_->send(req, client_->getNetOutGate());
@@ -339,10 +344,8 @@ FSLookupStatus FSOpen::processLookup(spfsLookupPathResponse* lookupResponse)
     return lookupStatus;
 }
 
-bool FSOpen::checkFileCreateFlags(const FSLookupStatus& status)
+bool FSOpen::checkFileCreateFlags()
 {
-    // TODO
-    //assert((status != SPFS_FOUND) && (openReq_->getMode() & MPI_MODE_CREATE));
     if (openReq_->getMode() & MPI_MODE_CREATE)
     {
         return true;
@@ -356,15 +359,11 @@ bool FSOpen::checkFileCreateFlags(const FSLookupStatus& status)
 void FSOpen::createMeta()
 {
     // Build message to create metadata
-    spfsCreateRequest* req = new spfsCreateRequest(0, SPFS_CREATE_REQUEST);
-    req->setContextPointer(openReq_);
-
-    // hash path to meta server number
     int metaServer = FileBuilder::instance().getMetaServers()[0];
-
-    req->setHandle(FileBuilder::instance().getFirstHandle(metaServer));
-    req->setByteLength(4 + FSClient::OBJECT_ATTRIBUTES_SIZE +
-                       FSClient::CREDENTIALS_SIZE + 8 + 8 + 4 + 4);
+    FSHandle dummyHandle = FileBuilder::instance().getFirstHandle(metaServer);
+    spfsCreateRequest* req =
+        FSClient::createCreateRequest(dummyHandle, SPFS_METADATA_OBJECT);
+    req->setContextPointer(openReq_);
     client_->send(req, client_->getNetOutGate());
 }
 
@@ -377,11 +376,10 @@ void FSOpen::createDataObjects()
     // Construct the create requests for this file's data handles
     for (size_t i = 0; i < metaData->dataHandles.size(); i++)
     {
-        spfsCreateRequest* create = new spfsCreateRequest(0,
-                                                          SPFS_CREATE_REQUEST);
+        spfsCreateRequest* create =
+            FSClient::createCreateRequest(metaData->dataHandles[i],
+                                          SPFS_DATA_OBJECT);
         create->setContextPointer(openReq_);
-        create->setHandle(metaData->dataHandles[i]);
-        create->setByteLength(8);
         client_->send(create, client_->getNetOutGate());
     }
 
@@ -407,10 +405,10 @@ bool FSOpen::isDataCreationComplete()
 void FSOpen::writeAttributes()
 {
     FileDescriptor* fd = openReq_->getFileDes();
-    spfsSetAttrRequest *req = new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
+    spfsSetAttrRequest* req =
+        FSClient::createSetAttrRequest(fd->getMetaData()->handle,
+                                       SPFS_METADATA_OBJECT);
     req->setContextPointer(openReq_);
-    req->setHandle(fd->getMetaData()->handle);
-    req->setByteLength(8 + 8 + 64);
     client_->send(req, client_->getNetOutGate());
 
     // Add the attributes to the cache
@@ -426,25 +424,10 @@ void FSOpen::createDirEnt()
     FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parentName);
 
     // Construct the directory entry creation request
-    spfsCreateDirEntRequest *req;
-    req = new spfsCreateDirEntRequest(0, SPFS_CREATE_DIR_ENT_REQUEST);
+    spfsCreateDirEntRequest *req = FSClient::createCreateDirEntRequest(
+        parentMeta->handle, fd->getFilename());
     req->setContextPointer(openReq_);
-    req->setHandle(parentMeta->handle);
-    req->setEntry(fd->getFilename().c_str());
-    req->setByteLength(8 + 8 + fd->getFilename().str().length());
     client_->send(req, client_->getNetOutGate());   
-}
-
-void FSOpen::readAttributes()
-{
-    FileDescriptor* fd = openReq_->getFileDes();
-    spfsGetAttrRequest *req = new spfsGetAttrRequest(0, SPFS_GET_ATTR_REQUEST);
-    req->setContextPointer(openReq_);
-    req->setHandle(fd->getMetaData()->handle);
-
-    // Op + Creds + fs_id + handle + attrmask
-    req->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 8 + 8 + 4);
-    client_->send(req, client_->getNetOutGate());
 }
 
 void FSOpen::addAttributesToCache()

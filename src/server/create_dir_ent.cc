@@ -67,6 +67,7 @@ void CreateDirEnt::handleServerMessage(cMessage* msg)
         case FSM_Enter(FINISH):
         {
             assert(0 != dynamic_cast<spfsOSFileWriteResponse*>(msg));
+            module_->recordCreateDirEntDiskDelay(msg);
             finish();
             break;
         }
@@ -100,7 +101,7 @@ void CreateDirEnt::finish()
         new spfsCreateDirEntResponse(0, SPFS_CREATE_DIR_ENT_RESPONSE);
     resp->setContextPointer(createDirEntReq_);
     resp->setByteLength(4);
-    module_->send(resp);
+    module_->sendDelayed(resp, FSServer::createDirEntProcessingDelay());
 }
 
 /*

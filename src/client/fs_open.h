@@ -67,7 +67,7 @@ protected:
 
     /** @return true if the file does not exist and should be created,
         else it returns false */
-    bool checkFileCreateFlags(const FSLookupStatus& status);
+    bool checkFileCreateFlags();
     
     /** Create metadata object */
     void createMeta();

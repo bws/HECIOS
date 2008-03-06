@@ -65,6 +65,7 @@ void SetAttr::handleServerMessage(cMessage* msg)
         case FSM_Enter(FINISH):
         {
             assert(0 != dynamic_cast<spfsOSFileWriteResponse*>(msg));
+            module_->recordSetAttrDiskDelay(msg);
             enterFinish();
             break;
         }
@@ -96,10 +97,10 @@ void SetAttr::enterFinish()
 {
     // Send the final response
     spfsSetAttrResponse* resp = new spfsSetAttrResponse(
-        0, SPFS_GET_ATTR_RESPONSE);
+        0, SPFS_SET_ATTR_RESPONSE);
     resp->setContextPointer(setAttrReq_);
     resp->setByteLength(4);
-    module_->send(resp);
+    module_->sendDelayed(resp, FSServer::setAttrProcessingDelay());
 }
 
 /*
@@ -109,5 +110,5 @@ void SetAttr::enterFinish()
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

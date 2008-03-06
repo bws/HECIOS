@@ -24,7 +24,9 @@
 simple BMITcpServer
 
     parameters:
-        listenPort: numeric const; // port to listen on
+        listenPort: numeric const, // port to listen on
+        fixedOverheadSecs: numeric const,
+        scaledOverheadSecs : numeric const;
 
     gates:
         in: appIn;

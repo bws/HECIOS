@@ -30,7 +30,6 @@ class FSServer;
 class GetAttr
 {
 public:
-
     /** Constructor */
     GetAttr(FSServer* module, spfsGetAttrRequest* getAttrReq);
 
@@ -52,9 +51,6 @@ protected:
     void enterFinish();
     
 private:
-    /** Collect data spent accessing disk */
-    void collectDiskTimeData(cMessage* osReadResponse);
-    
     /** The parent module */
     FSServer* module_;
     

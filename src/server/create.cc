@@ -62,12 +62,14 @@ void Create::handleServerMessage(cMessage* msg)
     case FSM_Exit(CREATE):
         {
             assert(0 != dynamic_cast<spfsOSFileOpenResponse*>(msg));
+            module_->recordLookupDiskDelay(msg);
             FSM_Goto(currentState, FINISH);
             break;
         }
     case FSM_Enter(FINISH):
         {
             assert(0 != dynamic_cast<spfsOSFileOpenResponse*>(msg));
+            module_->recordCreateObjectDiskDelay(msg);
             enterFinish();
             break;
         }
@@ -97,7 +99,7 @@ void Create::enterFinish()
     spfsCreateResponse* resp = new spfsCreateResponse(0, SPFS_CREATE_RESPONSE);
     resp->setContextPointer(createReq_);
     resp->setByteLength(4);
-    module_->send(resp);
+    module_->sendDelayed(resp, FSServer::createObjectProcessingDelay());
 }
 
 /*

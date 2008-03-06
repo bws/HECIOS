@@ -31,6 +31,12 @@ enum FSLookupStatus { SPFS_INVALID_LOOKUP_STATUS = 0,
                       SPFS_PARTIAL = 2,
                       SPFS_NOTFOUND = 3, };
 
+/** Parallel file system object types */
+enum FSObjectType { SPFS_INVALID_OBJECT_TYPE = 0,
+                    SPFS_DATA_OBJECT,
+                    SPFS_DIRECTORY_OBJECT,
+                    SPFS_METADATA_OBJECT, };
+
 /** Metadata for a file */
 struct FSMetaData
 {

@@ -157,13 +157,6 @@ void FSWrite::beginWrite()
     FileDescriptor* fd = writeReq_->getFileDes();
     const FSMetaData* metaData = fd->getMetaData();
     
-    // Construct the server write request
-    spfsWriteRequest write(0, SPFS_WRITE_REQUEST);
-    write.setAutoCleanup(false);
-    write.setContextPointer(writeReq_);
-    write.setOffset(writeReq_->getOffset());
-    write.setView(new FileView(fd->getFileView()));
-
     // Send request to each server
     int numRequests = 0;
     int numServers = metaData->dataHandles.size();
@@ -176,27 +169,23 @@ void FSWrite::beginWrite()
             writeReq_->getOffset(),
             *writeReq_->getDataType(),
             writeReq_->getCount(),
-            *write.getView(),
+            fd->getFileView(),
             *metaData->dist,
             aggregateSize);
 
         // Send write request if server hosts data
         if (0 != reqBytes && 0 != aggregateSize)
         {
-            spfsWriteRequest* req = static_cast<spfsWriteRequest*>(
-                write.dup());
-            req->setHandle(metaData->dataHandles[i]);
-            req->setDataSize(aggregateSize);
-            req->setDist(metaData->dist->clone());
-            req->setClientFlowBmiTag(simulation.getUniqueNumber());
-            req->setServerFlowBmiTag(simulation.getUniqueNumber());
+            spfsWriteRequest* req = FSClient::createWriteRequest(
+                metaData->dataHandles[i],
+                fd->getFileView(),
+                writeReq_->getOffset(),
+                aggregateSize,
+                *(metaData->dist));
+            req->setContextPointer(writeReq_);
 
-            // Set the message size in bytes
-            req->setByteLength(4 + FSClient::CREDENTIALS_SIZE +
-                               8 + 8 + 4 + 4 + 4 +
-                               fd->getFileView().getRepresentationByteLength() +
-                               8 + 8);
-
+            // Disable auto cleanup, this request receives several responses
+            req->setAutoCleanup(false);
             client_->send(req, client_->getNetOutGate());
 
             // Add to the number of requests sent
