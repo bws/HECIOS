@@ -138,9 +138,7 @@ void FSOpen::handleMessage(cMessage* msg)
         }
         case FSM_Exit(LOOKUP_NAME):
         {
-            FSLookupStatus status = processLookup(
-                static_cast<spfsLookupPathResponse*>(msg));
-            assert(SPFS_FOUND == status);
+            processLookup(static_cast<spfsLookupPathResponse*>(msg));
             FSM_Goto(currentState, FINISH); 
             break;
         }
@@ -338,7 +336,7 @@ FSLookupStatus FSOpen::processLookup(spfsLookupPathResponse* lookupResponse)
         // Enter the resolved handle into the cache
         Filename openFile(openReq_->getFileName());
         Filename resolvedName = openFile.getSegment(numResolvedSegments - 1);
-        cerr << "Could not open: " << openFile << " unable to resolve: "
+        cerr << "Could not open: " << openFile << " unable to resolve past: "
              << resolvedName << endl;
     }
     return lookupStatus;
