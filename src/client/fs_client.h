@@ -86,27 +86,6 @@ public:
     /** Constructor */
     FSClient();
     
-    /** @return the client processing delay to write a file */
-    simtime_t FSClient::directoryCreateProcessingDelay() const;
-
-    /** @return the client processing delay to close a file */
-    simtime_t FSClient::fileCloseProcessingDelay() const;
-
-    /** @return the client processing delay to open a file */
-    simtime_t FSClient::fileOpenProcessingDelay() const;
-
-    /** @return the client processing delay to read a file */
-    simtime_t FSClient::fileReadProcessingDelay() const;
-
-    /** @return the client processing delay to stat a file */
-    simtime_t FSClient::fileStatProcessingDelay() const;
-
-    /** @return the client processing delay to update file atime */
-    simtime_t FSClient::fileUpdateTimeProcessingDelay() const;
-
-    /** @return the client processing delay to write a file */
-    simtime_t FSClient::fileWriteProcessingDelay() const;
-
     /** @return a reference to the client filesystem state */
     ClientFSState& fsState() { return clientState_; };
 
@@ -127,7 +106,9 @@ protected:
     virtual void handleMessage(cMessage *msg);
 
 private:
-
+    /** Schedule the incoming message after its associated processing delay */
+    void scheduleRequest(cMessage* request);
+    
     /**
      * Process the incoming message based on the originating request type
      *
@@ -149,7 +130,7 @@ private:
     double directoryCreateProcessingDelay_;
 
     /** Client processing delay for file close */
-    double fileCloseProcessingDelayDelay_;
+    double fileCloseProcessingDelay_;
 
     /** Client processing delay for file open */
     double fileOpenProcessingDelay_;

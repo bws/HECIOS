@@ -169,36 +169,6 @@ FSClient::FSClient()
 {
 }
 
-simtime_t FSClient::directoryCreateProcessingDelay() const
-{
-    return directoryCreateProcessingDelay_;
-}
-
-simtime_t FSClient::fileOpenProcessingDelay() const
-{
-    return fileOpenProcessingDelay_;
-}
-
-simtime_t FSClient::fileReadProcessingDelay() const
-{
-    return fileReadProcessingDelay_;
-}
-
-simtime_t FSClient::fileStatProcessingDelay() const
-{
-    return fileStatProcessingDelay_;
-}
-
-simtime_t FSClient::fileUpdateTimeProcessingDelay() const
-{
-    return fileUpdateTimeProcessingDelay_;
-}
-
-simtime_t FSClient::fileWriteProcessingDelay() const
-{
-    return fileWriteProcessingDelay_;
-}
-
 void FSClient::initialize()
 {
     // Determine gate ids
@@ -209,7 +179,7 @@ void FSClient::initialize()
 
     // Retrieve processing delays
     directoryCreateProcessingDelay_ = par("directoryCreateProcessingDelaySecs");
-    fileCloseProcessingDelayDelay_ = par("fileCloseProcessingDelaySecs");
+    fileCloseProcessingDelay_ = par("fileCloseProcessingDelaySecs");
     fileOpenProcessingDelay_ = par("fileOpenProcessingDelaySecs");
     fileReadProcessingDelay_ = par("fileReadProcessingDelaySecs");
     fileStatProcessingDelay_ = par("fileStatProcessingDelaySecs");
@@ -223,7 +193,17 @@ void FSClient::finish()
 
 void FSClient::handleMessage(cMessage *msg)
 {
+    // If the message is from the application, schedule it with
+    // its associated processing delay
+    // Else if its a self message, then it has been delayed, and will
+    //   need to be processed immediately
+    // Else its a response and needs to be processed immediately
     if (msg->arrivalGateId() == appInGateId_)
+    {
+        // Account for the request processing delay
+        scheduleRequest(msg);
+    }
+    else if (msg->isSelfMessage())
     {
         processMessage(msg, msg);
     }
@@ -252,6 +232,52 @@ void FSClient::handleMessage(cMessage *msg)
         // Cleanup the response
         delete msg;
     }
+}
+
+void FSClient::scheduleRequest(cMessage* request)
+{
+    simtime_t scheduleTime = simTime();
+    switch(request->kind())
+    {
+        case SPFS_MPI_DIRECTORY_CREATE_REQUEST:
+        {
+            scheduleTime += directoryCreateProcessingDelay_;
+            break;
+        }
+        case SPFS_MPI_FILE_OPEN_REQUEST:
+        {
+            scheduleTime += fileOpenProcessingDelay_;
+            break;
+        }
+        case SPFS_MPI_FILE_CLOSE_REQUEST :
+        {
+            scheduleTime += fileCloseProcessingDelay_;
+            break;
+        }
+        case SPFS_MPI_FILE_READ_AT_REQUEST:
+        {
+            scheduleTime += fileReadProcessingDelay_;
+            break;
+        }
+        case SPFS_MPI_FILE_UPDATE_TIME_REQUEST:
+        {
+            scheduleTime += fileUpdateTimeProcessingDelay_;
+            break;
+        }
+        case SPFS_MPI_FILE_WRITE_AT_REQUEST:
+        {
+            scheduleTime += fileWriteProcessingDelay_;
+            break;
+        }
+        default:
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "ERROR: Unknown Message: " << request->kind()
+                 << " " << request->info() << endl;
+            break;
+        }
+    }
+    scheduleAt(scheduleTime, request);
 }
 
 void FSClient::processMessage(cMessage* request, cMessage* msg)
