@@ -86,6 +86,27 @@ public:
     /** Constructor */
     FSClient();
     
+    /** @return the client processing delay to write a file */
+    simtime_t FSClient::directoryCreateProcessingDelay() const;
+
+    /** @return the client processing delay to close a file */
+    simtime_t FSClient::fileCloseProcessingDelay() const;
+
+    /** @return the client processing delay to open a file */
+    simtime_t FSClient::fileOpenProcessingDelay() const;
+
+    /** @return the client processing delay to read a file */
+    simtime_t FSClient::fileReadProcessingDelay() const;
+
+    /** @return the client processing delay to stat a file */
+    simtime_t FSClient::fileStatProcessingDelay() const;
+
+    /** @return the client processing delay to update file atime */
+    simtime_t FSClient::fileUpdateTimeProcessingDelay() const;
+
+    /** @return the client processing delay to write a file */
+    simtime_t FSClient::fileWriteProcessingDelay() const;
+
     /** @return a reference to the client filesystem state */
     ClientFSState& fsState() { return clientState_; };
 
@@ -117,11 +138,33 @@ private:
 
     /** Collect statistics on server responses */
     void collectServerResponseData(cMessage* serverResponse);
-    
+
+    /** Gate ids */
     int appInGateId_;
     int appOutGateId_;
     int netInGateId_;
     int netOutGateId_;
+
+    /** Client processing delay for directory creation */
+    double directoryCreateProcessingDelay_;
+
+    /** Client processing delay for file close */
+    double fileCloseProcessingDelayDelay_;
+
+    /** Client processing delay for file open */
+    double fileOpenProcessingDelay_;
+
+    /** Client processing delay for file read */
+    double fileReadProcessingDelay_;
+
+    /** Client processing delay for file stat */
+    double fileStatProcessingDelay_;
+
+    /** Client processing delay for file utime */
+    double fileUpdateTimeProcessingDelay_;
+
+    /** Client processing delay for file write */
+    double fileWriteProcessingDelay_;
 
     /** Client file system state */
     ClientFSState clientState_;

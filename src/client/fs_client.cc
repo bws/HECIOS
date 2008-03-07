@@ -169,12 +169,52 @@ FSClient::FSClient()
 {
 }
 
+simtime_t FSClient::directoryCreateProcessingDelay() const
+{
+    return directoryCreateProcessingDelay_;
+}
+
+simtime_t FSClient::fileOpenProcessingDelay() const
+{
+    return fileOpenProcessingDelay_;
+}
+
+simtime_t FSClient::fileReadProcessingDelay() const
+{
+    return fileReadProcessingDelay_;
+}
+
+simtime_t FSClient::fileStatProcessingDelay() const
+{
+    return fileStatProcessingDelay_;
+}
+
+simtime_t FSClient::fileUpdateTimeProcessingDelay() const
+{
+    return fileUpdateTimeProcessingDelay_;
+}
+
+simtime_t FSClient::fileWriteProcessingDelay() const
+{
+    return fileWriteProcessingDelay_;
+}
+
 void FSClient::initialize()
 {
+    // Determine gate ids
     appInGateId_ = findGate("appIn");
     appOutGateId_ = findGate("appOut");
     netInGateId_ = findGate("netIn");
     netOutGateId_ = findGate("netOut");
+
+    // Retrieve processing delays
+    directoryCreateProcessingDelay_ = par("directoryCreateProcessingDelaySecs");
+    fileCloseProcessingDelayDelay_ = par("fileCloseProcessingDelaySecs");
+    fileOpenProcessingDelay_ = par("fileOpenProcessingDelaySecs");
+    fileReadProcessingDelay_ = par("fileReadProcessingDelaySecs");
+    fileStatProcessingDelay_ = par("fileStatProcessingDelaySecs");
+    fileUpdateTimeProcessingDelay_ = par("fileUpdateTimeProcessingDelaySecs");
+    fileWriteProcessingDelay_ = par("fileWriteProcessingDelaySecs");
 }
 
 void FSClient::finish()

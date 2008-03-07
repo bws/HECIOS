@@ -21,18 +21,16 @@
 
 // Description of the interface for all FSClients
 simple FSClient
+    parameters:
+        directoryCreateProcessingDelaySecs: numeric const,
+        fileCloseProcessingDelaySecs: numeric const,
+        fileOpenProcessingDelaySecs: numeric const,
+        fileReadProcessingDelaySecs: numeric const,
+        fileStatProcessingDelaySecs: numeric const,
+        fileUpdateTimeProcessingDelaySecs: numeric const,
+        fileWriteProcessingDelaySecs: numeric const;
 
     gates:
-
-        in: appIn, netIn;
-        out: appOut, netOut;
-endsimple
-
-// Walt's implementation of the FSClient interface
-simple fsModule
-
-    gates:
-
         in: appIn, netIn;
         out: appOut, netOut;
 endsimple
