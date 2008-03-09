@@ -153,7 +153,8 @@ void BufferCache::handleBlockResponse(cMessage* msg)
     }
     else
     {
-        // Discard dirty block write back responses
+        // Discard dirty block write back request and response
+        delete req;
         delete msg;
     }
 }

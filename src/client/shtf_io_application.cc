@@ -22,7 +22,6 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "basic_data_type.h"
 #include "cache_proto_m.h"
 #include "filename.h"
 #include "file_builder.h"
@@ -39,6 +38,13 @@ using namespace std;
 // OMNet Registriation Method
 Define_Module(SHTFIOApplication);
 
+
+SHTFIOApplication::SHTFIOApplication()
+    : IOApplication(),
+      trace_(0),
+      byteDataType_(BasicDataType::MPI_BYTE_WIDTH)
+{
+}
 
 /**
  * Construct an I/O trace using configuration supplied tracefile(s)
@@ -239,12 +245,11 @@ spfsMPIFileReadAtRequest* SHTFIOApplication::createReadMessage(
     assert(IOTrace::READ == readRecord->opType());
 
     FileDescriptor* fd = getDescriptor(readRecord->fileId());
-    DataType* dataType = new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
 
     spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
         0, SPFS_MPI_FILE_READ_AT_REQUEST);
     read->setCount(readRecord->length());
-    read->setDataType(dataType);
+    read->setDataType(&byteDataType_);
     read->setOffset(readRecord->offset());
     read->setFileDes(fd);
     return read;
@@ -257,12 +262,11 @@ spfsMPIFileReadAtRequest* SHTFIOApplication::createReadAtMessage(
     assert(IOTrace::READ_AT == readAtRecord->opType());
 
     FileDescriptor* fd = getDescriptor(readAtRecord->fileId());
-    DataType* dataType = new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
 
     spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
         0, SPFS_MPI_FILE_READ_AT_REQUEST);
     read->setCount(readAtRecord->length());
-    read->setDataType(dataType);
+    read->setDataType(&byteDataType_);
     read->setOffset(readAtRecord->offset());
     read->setFileDes(fd);
     return read;
@@ -285,18 +289,14 @@ spfsMPIFileWriteAtRequest* SHTFIOApplication::createWriteAtMessage(
 {
     assert(IOTrace::WRITE_AT == writeAtRecord->opType());
 
-    DataType* dataType = new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
     FileDescriptor* fd = getDescriptor(writeAtRecord->fileId());
 
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
         0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
     write->setCount(writeAtRecord->length());
-    write->setDataType(dataType);
+    write->setDataType(&byteDataType_);
     write->setOffset(writeAtRecord->offset());
     write->setFileDes(fd);
-
-    // Generate corresponding cache invalidation messages
-    //invalidateCaches(write);
     return write;
 }
 
@@ -305,16 +305,14 @@ spfsMPIFileWriteAtRequest* SHTFIOApplication::createWriteMessage(
 {
     assert(IOTrace::WRITE == writeRecord->opType());
 
-    DataType* dataType = new BasicDataType(BasicDataType::MPI_BYTE_WIDTH);
     FileDescriptor* fd = getDescriptor(writeRecord->fileId());
 
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
         0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
     write->setCount(writeRecord->length());
-    write->setDataType(dataType);
+    write->setDataType(&byteDataType_);
     write->setOffset(writeRecord->offset());
     write->setFileDes(fd);
-
     return write;
 }
 

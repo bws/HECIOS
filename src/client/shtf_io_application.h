@@ -19,11 +19,10 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 #include <omnetpp.h>
+#include "basic_data_type.h"
 #include "io_application.h"
 #include "io_trace.h"
-
 class FileDescriptor;
 class IOTrace;
 class SHTFIOTrace;
@@ -44,7 +43,7 @@ class SHTFIOApplication : public IOApplication
 {
 public:
     /** Constructor */
-    SHTFIOApplication():IOApplication(){};
+    SHTFIOApplication();
     
 protected:
     /** Implementation of initialize */
@@ -98,11 +97,16 @@ private:
     /** @return an MPI File Write At request */
     spfsMPIFileWriteAtRequest* createWriteAtMessage(
         const IOTrace::Record* writeAtRecord);
-    
+
+    /** @return an MPI File Write At request */
     spfsMPIFileWriteAtRequest* createWriteMessage(
         const IOTrace::Record* writeRecord);
-    
+
+    /** SHTF Tracefile for this application */
     IOTrace* trace_;
+
+    /** Byte data type used by POSIX I/O applications */
+    BasicDataType byteDataType_;
 };
 
 #endif

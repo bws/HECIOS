@@ -256,8 +256,7 @@ void FSWrite::countCompletion(spfsWriteCompletionResponse* completionResponse)
         (spfsWriteRequest*)completionResponse->contextPointer();
     pfsReq->setAutoCleanup(true);
     delete pfsReq->getDist();
-    if (0 == numRemainingCompletions)
-        delete pfsReq->getView();
+    delete pfsReq->getView();
 }
 
 bool FSWrite::isWriteComplete()
