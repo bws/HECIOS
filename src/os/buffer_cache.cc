@@ -227,9 +227,7 @@ LRUBufferCache::LRUBufferCache()
 
 void LRUBufferCache::initializeCache()
 {
-    long long gigabyte = 1073741824;
-    long long blockSize = 512;
-    long long numEntries = 4 * gigabyte / blockSize;
+    long numEntries = par("numEntries");
     cache_ = new LRUCache<LogicalBlockAddress, bool>(numEntries);
 }
 

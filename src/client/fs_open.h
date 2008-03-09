@@ -36,7 +36,6 @@ class spfsSetAttrResponse;
 class FSOpen
 {
 public:
-
     /** Constructor */
     FSOpen(FSClient* client, spfsMPIFileOpenRequest* openReq);
     
@@ -97,7 +96,6 @@ protected:
     void finish();
     
 private:
-
     /** The filesystem client module */
     FSClient* client_;
 
