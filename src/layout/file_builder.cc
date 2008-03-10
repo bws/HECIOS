@@ -141,8 +141,10 @@ void FileBuilder::createDirectory(const Filename& dirName,
         size_t numSegs = dirName.getNumPathSegments();
         if (1 < numSegs)
         {
+            // Place the nested directory on the next meta Server
+            int nextMeta = (metaServer + 1) % metaServers_.size();
             createDirectory(dirName.getSegment(numSegs - 2),
-                            metaServer,
+                            nextMeta,
                             layoutManager);
         }
         // Create the MetaData for the directory
@@ -191,8 +193,9 @@ void FileBuilder::createFile(const Filename& fileName,
         size_t numSegs = fileName.getNumPathSegments();
         if (1 < numSegs)
         {
+            int nextMeta = (metaServer + 1) % metaServers_.size();
             createDirectory(fileName.getSegment(numSegs - 2),
-                            metaServer,
+                            nextMeta,
                             layoutManager);
         }
         
