@@ -30,6 +30,7 @@
 #include "file_view.h"
 #include "csimple_module_tester.h"
 #include "job_manager.h"
+#include "pfs_types.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
@@ -98,7 +99,7 @@ void JobManagerTest::setUp()
 
     // Create the begin flow request
     flowStart_ = new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
-    flowStart_->setFlowType(1);
+    flowStart_->setFlowType(SPFS_BMI_TO_MEMORY_FLOW);
     flowStart_->setFlowMode(DataFlow::SERVER_READ);
     flowStart_->setContextPointer(readRequest_);
     flowStart_->setOffset(0);

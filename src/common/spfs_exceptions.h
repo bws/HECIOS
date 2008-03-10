@@ -34,6 +34,17 @@ public:
     NoSuchEntry() : std::runtime_error("") {};
 };
 
+/**
+ * Exception raised when the trace file cannot be opened
+ */
+class NoSuchTraceFile : public std::runtime_error
+{
+public:
+
+    /** Default constructor */
+    NoSuchTraceFile(std::string filename) : std::runtime_error(filename) {};
+};
+
 #endif
 
 /*

@@ -355,7 +355,14 @@ UMDIOTrace* SHTFIOApplication::createUMDIOTrace(string traceFilename)
 
 SHTFIOTrace* SHTFIOApplication::createSHTFIOTrace(const string& traceFilename)
 {
-    return new SHTFIOTrace(traceFilename);
+    SHTFIOTrace* trace = 0;
+    try
+    {
+        trace = new SHTFIOTrace(traceFilename);
+    } catch(...)
+    {
+    }
+    return trace;
 }
 
 

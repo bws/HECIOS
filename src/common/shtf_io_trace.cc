@@ -23,6 +23,7 @@
 #include <sstream>
 #include "filename.h"
 #include "pfs_utils.h"
+#include "spfs_exceptions.h"
 using namespace std;
 
 /**
@@ -32,9 +33,9 @@ SHTFIOTrace::SHTFIOTrace(const string& traceFileName)
     : IOTrace(1),
       traceFileName_(traceFileName),
       numFiles_(0),
-      numRecords_(0),
+      numRecords_(-1),
       offsetToTraceRecords_(0),
-      curRecord_(-1)
+      nextRecord_(-1)
 {
     // Open the trace file
     traceFile_.open(traceFileName_.c_str(), ios::in|ios::binary);
@@ -62,11 +63,13 @@ SHTFIOTrace::SHTFIOTrace(const string& traceFileName)
             string tmp;
             getline(traceFile_, tmp);
         }
-        curRecord_ = 0;
+        nextRecord_ = 1;
     }
     else
     {
-        cerr << "Unable to open trace: " << traceFileName_ << endl;
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             <<"ERROR: Unable to open trace: " << traceFileName_ << endl;
+        throw(NoSuchTraceFile(traceFileName));
     }
 }
 
@@ -78,7 +81,7 @@ SHTFIOTrace::~SHTFIOTrace()
 
 bool SHTFIOTrace::hasMoreRecords() const
 {
-    return (curRecord_ < numRecords_);
+    return (nextRecord_ <= numRecords_);
 }
 
 /**
@@ -87,7 +90,7 @@ bool SHTFIOTrace::hasMoreRecords() const
 IOTrace::Record* SHTFIOTrace::nextRecord()
 {
     IOTrace::Record* rec = 0;
-    if (curRecord_ < numRecords_)
+    if (hasMoreRecords())
     {
         string line;
         getline(traceFile_, line);
@@ -96,8 +99,8 @@ IOTrace::Record* SHTFIOTrace::nextRecord()
         istringstream recordStream(line);
         rec = createIOTraceRecord(recordStream);
 
-        // Increment the current record count
-        curRecord_++;    
+        // Increment the next record ptr
+        nextRecord_++;    
     }
     
     return rec;

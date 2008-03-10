@@ -131,8 +131,9 @@ private:
     int numFiles_;
     int numRecords_;
     int offsetToTraceRecords_;
-    
-    mutable int curRecord_;
+
+    /** The next record to retrieve */
+    mutable int nextRecord_;
 };
 
 #endif

@@ -76,8 +76,11 @@ void SHTFIOTraceTest::tearDown()
 void SHTFIOTraceTest::testConstructor()
 {
     // Test with an invalid file
-    SHTFIOTrace test1("shtf_dummy_name");
-    CPPUNIT_ASSERT(false == test1.isValid());
+    try {
+        SHTFIOTrace test1("shtf_dummy_name");
+        CPPUNIT_FAIL("Should not be able to open non-existant file.");
+    }
+    catch(...) {}
 
     //Test with a valid trace file
     SHTFIOTrace test2("tests/traces/test_trace.shtf");
@@ -86,10 +89,6 @@ void SHTFIOTraceTest::testConstructor()
 
 void SHTFIOTraceTest::testIsValid()
 {
-    // Test with an invalid file
-    SHTFIOTrace test1("shtf_dummy_name");
-    CPPUNIT_ASSERT(false == test1.isValid());
-
     //Test with a valid trace file
     SHTFIOTrace test2("tests/traces/test_trace.shtf");
     CPPUNIT_ASSERT(true == test2.isValid());
@@ -103,6 +102,7 @@ void SHTFIOTraceTest::testHasMoreRecords()
     {
         CPPUNIT_ASSERT(true == test.hasMoreRecords());
         IOTrace::Record* rec = test.nextRecord();
+        //cerr << "i: " << i << " num recs: " << test.getNumRecords() << endl;
         delete rec;
     }
 

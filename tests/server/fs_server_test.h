@@ -25,7 +25,9 @@
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
 #include "csimple_module_tester.h"
+#include "file_builder.h"
 #include "fs_server.h"
+#include "mock_storage_layout_manager.h"
 #include "mpi_proto_m.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
@@ -58,10 +60,23 @@ public:
 private:
 
     cSimpleModuleTester* moduleTester_;
+    FSMetaData* testMeta_;
 };
 
 void FSServerTest::setUp()
 {
+    // Register servers for use during testing
+    HandleRange range1 = {100, 200};
+    HandleRange range2 = {2000, 3000};
+    FileBuilder::instance().registerFSServer(range1, true);
+    FileBuilder::instance().registerFSServer(range2, false);
+
+    // Test file for use during testing
+    MockStorageLayoutManager layout;
+    Filename file("/dir1/dir2/file1");
+    FileBuilder::instance().createFile(file, 1024, 0, 4, layout);
+    testMeta_ = FileBuilder::instance().getMetaData(file);
+    
     // Create the module for testing
     moduleTester_ = new cSimpleModuleTester("FSServer",
                                             "src/server/fs_server.ned");
@@ -69,6 +84,8 @@ void FSServerTest::setUp()
 
 void FSServerTest::tearDown()
 {
+    FileBuilder::clearState();
+    
     delete moduleTester_;
     moduleTester_ = 0;
 }
@@ -79,7 +96,7 @@ void FSServerTest::testGetAttr()
     // Test the delivery of the first request
     spfsMPIFileReadRequest mpiRequest(0, SPFS_MPI_FILE_READ_REQUEST);
     spfsGetAttrRequest getAttrRequest(0, SPFS_GET_ATTR_REQUEST);
-    getAttrRequest.setHandle(1);
+    getAttrRequest.setHandle(testMeta_->handle);
     getAttrRequest.setContextPointer(&mpiRequest);
     moduleTester_->deliverMessage(&getAttrRequest, "in");
     CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
@@ -101,7 +118,7 @@ void FSServerTest::testSetAttr()
     // Test the delivery of the first request
     spfsMPIFileOpenRequest mpiRequest(0, SPFS_MPI_FILE_OPEN_REQUEST);
     spfsSetAttrRequest setAttrRequest(0, SPFS_SET_ATTR_REQUEST);
-    setAttrRequest.setHandle(1);
+    setAttrRequest.setHandle(testMeta_->handle);
     setAttrRequest.setContextPointer(&mpiRequest);
     moduleTester_->deliverMessage(&setAttrRequest, "in");
     CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
