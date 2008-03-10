@@ -185,10 +185,28 @@ void FSClient::initialize()
     fileStatProcessingDelay_ = par("fileStatProcessingDelaySecs");
     fileUpdateTimeProcessingDelay_ = par("fileUpdateTimeProcessingDelaySecs");
     fileWriteProcessingDelay_ = par("fileWriteProcessingDelaySecs");
+
+    // Initialize scalar record data
+    numACacheHits_ = 0;
+    numACacheMisses_ = 0;
+    numDCacheHits_ = 0;
+    numDCacheMisses_ = 0;
+    numDirCreates_ = 0;
+    numFileCloses_ = 0;
+    numFileOpens_ = 0;
+    numFileReads_ = 0;
+    numFileWrites_ = 0;
+    numFileUtimes_ = 0;
 }
 
 void FSClient::finish()
 {
+    recordScalar("SPFS Dir Creates", numDirCreates_);
+    recordScalar("SPFS File Closes", numFileCloses_);
+    recordScalar("SPFS File Opens", numFileOpens_);
+    recordScalar("SPFS File Reads", numFileReads_);
+    recordScalar("SPFS File Writes", numFileWrites_);
+    recordScalar("SPFS File Utimes", numFileUtimes_);
 }
 
 void FSClient::handleMessage(cMessage *msg)
@@ -241,31 +259,37 @@ void FSClient::scheduleRequest(cMessage* request)
     {
         case SPFS_MPI_DIRECTORY_CREATE_REQUEST:
         {
+            numDirCreates_++;
             scheduleTime += directoryCreateProcessingDelay_;
             break;
         }
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
+            numFileOpens_++;
             scheduleTime += fileOpenProcessingDelay_;
             break;
         }
         case SPFS_MPI_FILE_CLOSE_REQUEST :
         {
+            numFileCloses_++;
             scheduleTime += fileCloseProcessingDelay_;
             break;
         }
         case SPFS_MPI_FILE_READ_AT_REQUEST:
         {
+            numFileReads_++;
             scheduleTime += fileReadProcessingDelay_;
             break;
         }
         case SPFS_MPI_FILE_UPDATE_TIME_REQUEST:
         {
+            numFileUtimes_++;
             scheduleTime += fileUpdateTimeProcessingDelay_;
             break;
         }
         case SPFS_MPI_FILE_WRITE_AT_REQUEST:
         {
+            numFileWrites_++;
             scheduleTime += fileWriteProcessingDelay_;
             break;
         }

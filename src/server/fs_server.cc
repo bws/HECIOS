@@ -159,10 +159,26 @@ void FSServer::initialize()
     // Retrieve the gate ids
     inGateId_ = gate("in")->id();
     outGateId_ = gate("out")->id();
+
+    // Initialize scalar data
+    numCreateDirEnts_ = 0;
+    numCreateObjects_ = 0;
+    numGetAttrs_ = 0;
+    numLookups_ = 0;
+    numReads_ = 0;
+    numSetAttrs_ = 0;
+    numWrites_ = 0;
 }
 
 void FSServer::finish()
 {
+    recordScalar("SPFS Server CrDirEnts", numCreateDirEnts_);
+    recordScalar("SPFS Server CreateObjects", numCreateObjects_);
+    recordScalar("SPFS Server GetAttrs", numGetAttrs_);
+    recordScalar("SPFS Server Lookups", numLookups_);
+    recordScalar("SPFS Server Reads", numReads_);
+    recordScalar("SPFS Server SetAttrs", numSetAttrs_);
+    recordScalar("SPFS Server Writes", numWrites_);
 }
 
 void FSServer::setNumber(size_t number)
@@ -264,6 +280,41 @@ void FSServer::send(cMessage* msg)
 void FSServer::sendDelayed(cMessage* msg, simtime_t delay)
 {
     cSimpleModule::sendDelayed(msg, delay, outGateId_);
+}
+
+void FSServer::recordCreateDirEnt()
+{
+    numCreateDirEnts_++;
+}
+
+void FSServer::recordCreateObject()
+{
+    numCreateObjects_++;
+}
+
+void FSServer::recordGetAttr()
+{
+    numGetAttrs_++;
+}
+
+void FSServer::recordLookup()
+{
+    numLookups_++;
+}
+
+void FSServer::recordRead()
+{
+    numReads_++;
+}
+
+void FSServer::recordSetAttr()
+{
+    numSetAttrs_++;
+}
+
+void FSServer::recordWrite()
+{
+    numWrites_++;
 }
 
 void FSServer::recordCreateDirEntDiskDelay(cMessage* fileWriteResponse)

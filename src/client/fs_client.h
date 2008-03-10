@@ -150,7 +150,19 @@ private:
     /** Client file system state */
     ClientFSState clientState_;
 
-    /** Data collection */
+    /** Fixed data collection */
+    double numACacheHits_;
+    double numACacheMisses_;
+    double numDCacheHits_;
+    double numDCacheMisses_;
+    double numDirCreates_;
+    double numFileCloses_;
+    double numFileOpens_;
+    double numFileReads_;
+    double numFileWrites_;
+    double numFileUtimes_;
+
+    /** Temporal data collection */
     cOutVector createDirEntDelay_;
     cOutVector createObjectDelay_;
     cOutVector flowDelay_;

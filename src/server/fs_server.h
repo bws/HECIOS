@@ -127,6 +127,27 @@ public:
     /** Send the message out of the PFS server after delay */
     void sendDelayed(cMessage* outMsg, simtime_t delay);
 
+    /** Record that a create dirent request has arrived */
+    void recordCreateDirEnt();
+    
+    /** Record that a create object request has arrived */
+    void recordCreateObject();
+    
+    /** Record that a get attributes request has arrived */
+    void recordGetAttr();
+    
+    /** Record that a lookup path request has arrived */
+    void recordLookup();
+    
+    /** Record that a read request has arrived */
+    void recordRead();
+    
+    /** Record that a set attributes dirent request has arrived */
+    void recordSetAttr();
+    
+    /** Record that a write request has arrived */
+    void recordWrite();
+    
     /** Record the disk delay for creating directory entries */
     void recordCreateDirEntDiskDelay(cMessage* fileWriteResponse);
 
@@ -200,6 +221,15 @@ private:
     int inGateId_;
     int outGateId_;
 
+    /** Data collection scalars */
+    double numCreateDirEnts_;
+    double numCreateObjects_;
+    double numGetAttrs_;
+    double numLookups_;
+    double numReads_;
+    double numSetAttrs_;
+    double numWrites_;
+    
     /** Data collection vectors */
     cOutVector createDirEntDiskDelay_;
     cOutVector createObjectDiskDelay_;

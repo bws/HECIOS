@@ -40,44 +40,41 @@ void HardDisk::initialize()
 
 void HardDisk::finish()
 {
+    recordScalar("SPFS Disk Delay", totalDelay_);
 }
 
 void HardDisk::handleMessage(cMessage *msg)
 {
-    if (msg->isSelfMessage())
+    // Service and construct responses for read and write requests
+    double delay = 0.0;
+    cMessage* resp = 0;
+    if (spfsOSReadDeviceRequest* read =
+        dynamic_cast<spfsOSReadDeviceRequest*>(msg))
     {
-        // Send response for serviced request
-        send(msg, "out");
+        LogicalBlockAddress diskBlock = read->getAddress();
+        delay = service(diskBlock, true);
+        resp = new spfsOSReadDeviceResponse();
+    }
+    else if (spfsOSWriteDeviceRequest* write =
+             dynamic_cast<spfsOSWriteDeviceRequest*>(msg))
+    {
+        LogicalBlockAddress diskBlock = write->getAddress();
+        delay = service(diskBlock, false);
+        resp = new spfsOSWriteDeviceResponse();
     }
     else
     {
-        // Service and construct responses for read and write requests
-        double delay = 0.0;
-        cMessage* resp = 0;
-        if (spfsOSReadDeviceRequest* read =
-            dynamic_cast<spfsOSReadDeviceRequest*>(msg))
-        {
-            LogicalBlockAddress diskBlock = read->getAddress();
-            delay = service(diskBlock, true);
-            resp = new spfsOSReadDeviceResponse();
-        }
-        else if (spfsOSWriteDeviceRequest* write =
-                 dynamic_cast<spfsOSWriteDeviceRequest*>(msg))
-        {
-            LogicalBlockAddress diskBlock = write->getAddress();
-            delay = service(diskBlock, false);
-            resp = new spfsOSWriteDeviceResponse();
-        }
-        else
-        {
-            cerr << "Error in Hard Disk Module!!!" << endl;
-            assert(0);
-        }
-
-        // Schedule response at the end of service period
-        resp->setContextPointer(msg);
-        scheduleAt(simTime() + delay, resp);
+        cerr << "Error in Hard Disk Module!!!" << endl;
+        assert(0);
     }
+
+    // Update collection data
+    //cerr << "Disk delay: " << delay <<endl;
+    totalDelay_ += delay;
+    
+    // Schedule response at the end of service period
+    resp->setContextPointer(msg);
+    sendDelayed(resp, delay, "out");
 }
 
 long HardDisk::getBasicBlockSize() const
@@ -127,8 +124,8 @@ void BasicModelDisk::initialize()
     // could use strings here, but double reinterpret won't work :(
     capacity_ = 512 * numSectors_;
 
-    // Park the head at cylinder 0 to begin with
-    lastCylinder_ = 0;
+    // Park the head at the central cylinder to begin with
+    lastCylinder_ = numCylinders_/2;
 }
 
 double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
@@ -144,7 +141,7 @@ double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
     int destSector = temp % sectorsPerTrack_ + 1;
 
     // Account for cylinder switch/arm movement
-    int cylindersToMove = abs(int(destCylinder - lastCylinder_));
+    int cylindersToMove = destCylinder - lastCylinder_;
     if (0 != cylindersToMove)
     {
         // Simply use the average seek time to calculate cylinder location

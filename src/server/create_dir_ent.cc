@@ -50,6 +50,7 @@ void CreateDirEnt::handleServerMessage(cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
+            module_->recordCreateDirEnt();
             FSM_Goto(currentState, WRITE_DIR_ENT);
             break;
         }

@@ -50,6 +50,7 @@ void Create::handleServerMessage(cMessage* msg)
     case FSM_Exit(INIT):
         {
             assert(0 != dynamic_cast<spfsCreateRequest*>(msg));
+            module_->recordCreateObject();
             FSM_Goto(currentState, CREATE);
             break;
         }

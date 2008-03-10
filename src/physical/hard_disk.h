@@ -62,6 +62,9 @@ private:
 
     /** @return the basic block size for the disk model */
     virtual uint32_t basicBlockSize() const = 0;
+
+    /** Total time spent accessing the disk */
+    double totalDelay_;
     
 };
 

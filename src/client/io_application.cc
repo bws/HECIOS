@@ -43,6 +43,7 @@ static int rank_seed = 0;
 IOApplication::IOApplication()
     : cSimpleModule(),
       rank_(-1),
+      cpuPhaseDelay_("SPFS CPU Phase Delay"),
       directoryCreateDelay_("SPFS MPI Directory Create Delay"),
       fileOpenDelay_("SPFS MPI File Open Delay"),
       fileReadDelay_("SPFS MPI File Read Delay"),
@@ -93,6 +94,16 @@ void IOApplication::handleSelfMessage(cMessage* msg)
     {
         populateFileSystem();
         fileSystemPopulated = true;
+    }
+
+    // Record the length of this CPU Phase
+    if (0 == strcmp("CPU Phase", msg->name()))
+    {
+        // Determine the request response roundtrip time
+        simtime_t phaseBeginTime = msg->creationTime();
+        simtime_t phaseEndTime = simTime();
+        simtime_t delay = phaseBeginTime - phaseEndTime;
+        cpuPhaseDelay_.record(delay);
     }
     
     // Schedule the next message

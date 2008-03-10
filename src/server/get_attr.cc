@@ -48,6 +48,7 @@ void GetAttr::handleServerMessage(cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
+            module_->recordGetAttr();
             FSM_Goto(currentState, READ_ATTR);
             break;
         }

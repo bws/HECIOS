@@ -41,7 +41,7 @@ Read::~Read()
 {
     if (cleanupRequest_)
     {
-        // TODO: Fix this leak
+        // FIXME: Fix this leak
         //delete readReq_->getView();
         delete readReq_->getDist();
         delete readReq_;
@@ -67,6 +67,7 @@ void Read::handleServerMessage(cMessage* msg)
         case FSM_Exit(INIT):
         {
             assert(0 != dynamic_cast<spfsReadRequest*>(msg));
+            module_->recordRead();
             FSM_Goto(currentState, START_DATA_FLOW);
             break;
         }

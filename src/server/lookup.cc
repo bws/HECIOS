@@ -53,6 +53,7 @@ void Lookup::handleServerMessage(cMessage* msg)
         case FSM_Exit(INIT):
         {
             assert(0 != dynamic_cast<spfsLookupPathRequest*>(msg));
+            module_->recordLookup();
             FSM_Goto(currentState, LOOKUP_NAME);
             break;
         }

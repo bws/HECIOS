@@ -51,6 +51,7 @@ void Write::handleServerMessage(cMessage* msg)
         case FSM_Exit(INIT):
         {
             assert(0 != dynamic_cast<spfsWriteRequest*>(msg));
+            module_->recordWrite();
             FSM_Goto(currentState, START_DATA_FLOW);
             break;
         }

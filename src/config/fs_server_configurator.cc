@@ -132,16 +132,16 @@ void FSServerConfigurator::initialize(int stage)
             
             // Register the server's handle range
             int serverNum;
-            if (0 == i)
-            {
-                serverNum = FileBuilder::instance().registerFSServer(
-                    server->getHandleRange(), true);
-            }
-            else
-            {
-                serverNum = FileBuilder::instance().registerFSServer(
-                    server->getHandleRange(), false);
-            }
+            //if (0 == i)
+            //{
+            serverNum = FileBuilder::instance().registerFSServer(
+                server->getHandleRange(), true);
+            //}
+            //else
+            // {
+            //serverNum = FileBuilder::instance().registerFSServer(
+            //    server->getHandleRange(), false);
+            //}
             
             // Set the server's server number (will construct ranges also)
             server->setNumber(serverNum);

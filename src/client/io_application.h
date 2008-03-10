@@ -96,6 +96,7 @@ protected:
     std::map<int, FileDescriptor*> descriptorById_;
 
     /** Timing data collections */
+    cOutVector cpuPhaseDelay_;
     cOutVector directoryCreateDelay_;
     cOutVector fileOpenDelay_;
     cOutVector fileReadDelay_;

@@ -48,6 +48,7 @@ void SetAttr::handleServerMessage(cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
+            module_->recordSetAttr();
             FSM_Goto(currentState, WRITE_ATTR);
             break;
         }
