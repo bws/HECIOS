@@ -140,6 +140,8 @@ FSServer::FSServer()
 
 bool FSServer::handleIsLocal(const FSHandle& handle) const
 {
+    cerr << "Server checking handle locality: " << handle
+         << " Range [" << range_.first << "," << range_.last << "]\n";
     return ((handle >= range_.first) && (handle <= range_.last));
 }
 

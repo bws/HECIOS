@@ -66,20 +66,23 @@ void Lookup::handleServerMessage(cMessage* msg)
         {
             assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
             module_->recordLookupDiskDelay(msg);
-            if (lookupIsFailed())
+            LookupStatus status = processLookupResult();
+            
+            if (LOCAL_LOOKUP_FAILED == status)
             {
                 FSM_Goto(currentState, FINISH_FAILED_LOOKUP);
             }
-            else if (lookupIsComplete())
+            else if (FULL_LOOKUP_COMPLETE == status)
             {
                 FSM_Goto(currentState, FINISH_COMPLETE_LOOKUP);
             }
-            else if (localLookupIsComplete())
+            else if (LOCAL_LOOKUP_COMPLETE == status)
             {
                 FSM_Goto(currentState, FINISH_PARTIAL_LOOKUP);
             }
             else
             {
+                assert(LOCAL_LOOKUP_INCOMPLETE == status);
                 FSM_Goto(currentState, LOOKUP_NAME);
             }
             break;
@@ -132,59 +135,50 @@ void Lookup::lookupName()
     // Send the request
     module_->send(fileRead);
 
-    cerr << "Looking up: " << fullName.getSegment(nextSegment) << endl
-         << "  Parent: " << parentName << " " << parentHandle << endl; 
+    //cerr << "Looking up: " << fullName.getSegment(nextSegment) << endl
+    //     << "  Parent: " << parentName << " " << parentHandle << endl; 
 }
 
-bool Lookup::lookupIsFailed()
+Lookup::LookupStatus Lookup::processLookupResult()
 {
-    // Determine if the next path segment exists
+    // Get the next path segment (the result of this dirent lookup)
+    size_t resolvedSegments = lookupReq_->getNumResolvedSegments();
     Filename fullName(lookupReq_->getFilename());
-    size_t nextSegment = lookupReq_->getNumResolvedSegments();
-    Filename nextName = fullName.getSegment(nextSegment);
-    FSMetaData* nextMeta = FileBuilder::instance().getMetaData(nextName);
-    return (0 == nextMeta);
-}
+    Filename nextParent = fullName.getSegment(resolvedSegments);
+    FSMetaData* nextMeta = FileBuilder::instance().getMetaData(nextParent);
 
-bool Lookup::lookupIsComplete()
-{
-    // Increment the number of resolved segments
-    int resolvedSegments = lookupReq_->getNumResolvedSegments();
-    lookupReq_->setNumResolvedSegments(resolvedSegments + 1);
-
-    // Increment the number of locally resolved segments
-    int localResolutions = lookupReq_->getLocallyResolvedSegments() + 1;
-    lookupReq_->setLocallyResolvedSegments(localResolutions);
-    
-    // The lookup is complete if the name is fully resolved
-    Filename fullName(lookupReq_->getFilename());
-    size_t nextSegment = lookupReq_->getNumResolvedSegments();
-    if ((nextSegment) == fullName.getNumPathSegments())
+    // Return the status of the next path segment
+    //cerr << "Server resolved segs: " << resolvedSegments
+    //     << " Name segs: " << fullName.getNumPathSegments() << endl;
+    LookupStatus status = INVALID_LOOKUP_STATUS;
+    if (0 == nextMeta)
     {
-        return true;
+        status = LOCAL_LOOKUP_FAILED;
     }
     else
     {
-        return false;
-    }
-}
+        // Increment the number of resolved segments
+        resolvedSegments++;
+        lookupReq_->setNumResolvedSegments(resolvedSegments);
 
-bool Lookup::localLookupIsComplete()
-{
-    // Determine if the next path segment resides on another server
-    Filename fullName(lookupReq_->getFilename());
-    size_t nextSegment = lookupReq_->getNumResolvedSegments();
-    Filename nextName = fullName.getSegment(nextSegment);
-    FSMetaData* nextMeta = FileBuilder::instance().getMetaData(nextName);
-    assert(0 != nextMeta);
-    if (module_->handleIsLocal(nextMeta->handle))
-    {
-        return false;
+        // Increment the number of locally resolved segments
+        size_t localResolutions = lookupReq_->getLocallyResolvedSegments() + 1;
+        lookupReq_->setLocallyResolvedSegments(localResolutions);
+        
+        if (resolvedSegments == fullName.getNumPathSegments())
+        {
+            status = FULL_LOOKUP_COMPLETE;
+        }
+        else if (module_->handleIsLocal(nextMeta->dataHandles[0]))
+        {
+            status = LOCAL_LOOKUP_INCOMPLETE;
+        }
+        else
+        {
+            status = LOCAL_LOOKUP_COMPLETE;
+        }
     }
-    else
-    {
-        return true;
-    }
+    return status;
 }
 
 void Lookup::finish(FSLookupStatus lookupStatus)

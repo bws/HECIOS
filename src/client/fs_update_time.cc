@@ -121,8 +121,16 @@ void FSUpdateTime::handleMessage(cMessage* msg)
         {
             FSLookupStatus status = processLookup(
                 static_cast<spfsLookupPathResponse*>(msg));
-            assert(SPFS_FOUND == status);
-            FSM_Goto(currentState, WRITE_ATTR);
+            if (SPFS_FOUND == status)
+            {
+                FSM_Goto(currentState, WRITE_ATTR);
+            }
+            else
+            {
+                assert(SPFS_NOTFOUND == status);
+                assert(false);
+                FSM_Goto(currentState, FINISH);
+            }
             break;
         }
         case FSM_Enter(WRITE_ATTR):
@@ -194,8 +202,9 @@ void FSUpdateTime::lookupParentOnServer()
         FileBuilder::instance().getMetaData(resolvedName)->handle;
     
     // Create the lookup request
-    cerr << "UTime: " << utimeFile << endl;
-    cerr << "Client looking up: " << resolvedName << " " << resolvedHandle << endl;
+    //cerr << "UTime: " << utimeFile << endl;
+    //cerr << "Client looking up: " << resolvedName <<
+    //    " " << resolvedHandle << " " << numResolvedSegments << endl;
     spfsLookupPathRequest* req = FSClient::createLookupPathRequest(
         parent, resolvedHandle, numResolvedSegments);
     req->setContextPointer(utimeReq_);
@@ -264,16 +273,14 @@ FSLookupStatus FSUpdateTime::processLookup(
         Filename resolvedName = utimeFile.getSegment(numResolvedSegments - 1);
         const FSMetaData* meta =
             FileBuilder::instance().getMetaData(resolvedName);
-        cerr << "Adding name to cache: " << resolvedName << endl;
         client_->fsState().insertName(resolvedName.str(), meta->handle);
     }
     else if (SPFS_NOTFOUND == lookupStatus)
     {
-        // Enter the resolved handle into the cache
         Filename utimeFile(utimeReq_->getFileName());
         Filename resolvedName = utimeFile.getSegment(numResolvedSegments - 1);
         cerr << "Could not lookup: " << utimeFile << " unable to resolve: "
-             << resolvedName << endl;
+             << resolvedName << " count; " << numResolvedSegments << endl;
     }
     return lookupStatus;
 }

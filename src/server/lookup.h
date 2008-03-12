@@ -37,19 +37,19 @@ public:
     void handleServerMessage(cMessage* msg);
 
 protected:
-
+    /** Local lookup status results */
+    enum LookupStatus {INVALID_LOOKUP_STATUS = 0,
+                       FULL_LOOKUP_COMPLETE,
+                       LOCAL_LOOKUP_COMPLETE,
+                       LOCAL_LOOKUP_INCOMPLETE,
+                       LOCAL_LOOKUP_FAILED};
+    
     /** Lookup the handle in the directory entries on disk */
     void lookupName();
 
-    /** @return true if the name is fully resolved */
-    bool lookupIsComplete();
+    /** Determine the lookup result */
+    LookupStatus processLookupResult();
 
-    /** @return true if the name does not exists */
-    bool lookupIsFailed();
-
-    /** @return true if no more local segments exist */
-    bool localLookupIsComplete();
-    
     /** Send the final response */
     void finish(FSLookupStatus lookupStatus);
     
