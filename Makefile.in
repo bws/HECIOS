@@ -64,7 +64,7 @@ VPATH = $(HECIOS_DIR)
 #
 # Master Makefile default targets
 #
-DEFAULT_TARGETS = $(BIN_DIR)/hecios
+DEFAULT_TARGETS = $(BIN_DIR)/hecios_cmd
 default: $(DEFAULT_TARGETS)
 
 
