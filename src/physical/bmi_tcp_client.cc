@@ -90,9 +90,6 @@ private:
 
     /** Map containing all connected sockets (for message handling) */
     TCPSocketMap socketMap_;
-
-    /** Map containing the progress of flows */
-    std::map<int, FSSize> flowProgressById_;
 };
 
 // OMNet Registriation Method

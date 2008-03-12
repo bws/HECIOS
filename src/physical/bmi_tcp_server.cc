@@ -24,6 +24,8 @@
 #include "TCPSocketMap.h"
 #include "bmi_endpoint.h"
 #include "bmi_proto_m.h"
+#include "ip_socket_map.h"
+#include "pfs_utils.h"
 #include "pvfs_proto_m.h"
 #include "umd_io_trace.h"
 #include <omnetpp.h>
@@ -66,30 +68,29 @@ protected:
                                    bool urgent);
     
 private:
-
-    /** The port to listen on */
-    int listenPort_;
-
-    /** Map for handling messages from open sockets */
-    TCPSocketMap socketMap_;
-
-    /** The server's listening socket */
-    TCPSocket listenSocket_;
-
-    /** Mapping from a messages socketId to the socket */
-    std::map<int,TCPSocket*> requestToSocketMap_;
-
-    /** Gate id for appIn */
-    //int appInGateId_;
-
-    /** Gate id for appOut */
-    //int appOutGateId_;
-
+    /** @return a socket with an open connection to a remote server */
+    TCPSocket* getConnectedSocket(const FSHandle& handle);
+    
     /** Gate id for tcpIn */
     int tcpInGateId_;
     
     /** Gate id for tcpOut */
     int tcpOutGateId_;
+
+    /** The port to listen on */
+    int listenPort_;
+
+    /** The server's listening socket */
+    TCPSocket listenSocket_;
+
+    /** Map for handling messages from open client sockets */
+    TCPSocketMap socketMap_;
+
+    /** Mapping from a messages socketId to the socket */
+    std::map<int,TCPSocket*> requestToSocketMap_;
+    
+    /** Mapping of Server IP's to connected server sockets */
+    IPSocketMap remoteServerConnectionMap_;    
 };
 
 // OMNet Registriation Method
@@ -97,9 +98,14 @@ Define_Module(BMITcpServer);
 
 void BMITcpServer::initializeEndpoint()
 {
+    // Extract the gate ids
+    tcpInGateId_ = gate("tcpIn")->id();
+    tcpOutGateId_ = gate("tcpOut")->id();
+
     // Extract the port information
     listenPort_ = par("listenPort").longValue();
-
+    assert (0 <= listenPort_);
+    
     // Setup the socket receive stuff
     listenSocket_.setOutputGate(gate("tcpOut"));
     listenSocket_.setCallbackObject(this, 0);
@@ -107,12 +113,6 @@ void BMITcpServer::initializeEndpoint()
     // Open the server side socket
     listenSocket_.bind(listenPort_);
     listenSocket_.listen();
-
-    // Extract the gate ids
-    //appInGateId_ = gate("appIn")->id();
-    //appOutGateId_ = gate("appOut")->id();
-    tcpInGateId_ = gate("tcpIn")->id();
-    tcpOutGateId_ = gate("tcpOut")->id();
 }
 
 void BMITcpServer::finalizeEndpoint()
@@ -149,8 +149,14 @@ void BMITcpServer::handleMessage(cMessage* msg)
 spfsBMIUnexpectedMessage* BMITcpServer::createUnexpectedMessage(
     spfsRequest* request)
 {
-    cerr << "Unexpected message creation not supported on server" << endl; 
-    return 0;
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Unexpected message creation by server" << endl;
+    assert(0 != request);
+    spfsBMIUnexpectedMessage* pkt = new spfsBMIUnexpectedMessage();
+    pkt->setHandle(request->getHandle());
+    pkt->encapsulate(request);
+    pkt->addByteLength(BMI_UNEXPECTED_MSG_BYTES);
+    return pkt;
 }
 
 spfsBMIExpectedMessage* BMITcpServer::createExpectedMessage(
@@ -194,8 +200,11 @@ void BMITcpServer::sendOverNetwork(spfsBMIUnexpectedMessage* msg)
     assert(0 != msg);
     assert(0 < msg->byteLength());
     cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Server does not support sending unexpected messages" << endl;
-    assert(false);
+         << "Server sending unexpected messages" << endl;
+
+    // Retrieve the socket for this handle
+    TCPSocket* sock = getConnectedSocket(msg->getHandle());
+    sock->send(msg);
 }
 
 cMessage* BMITcpServer::extractBMIPayload(spfsBMIMessage* bmiMsg)
@@ -217,6 +226,29 @@ cMessage* BMITcpServer::extractBMIPayload(spfsBMIMessage* bmiMsg)
         requestToSocketMap_[request->getBmiConnectionId()] = responseSocket;
     }
     return payload;
+}
+
+TCPSocket* BMITcpServer::getConnectedSocket(const FSHandle& handle)
+{
+    IPvXAddress* serverIp = PFSUtils::instance().getServerIP(handle);
+    TCPSocket* sock = remoteServerConnectionMap_.getSocket(serverIp->str());
+
+    // If a connected socket does not exist, create it
+    if (0 == sock)
+    {
+        sock = new TCPSocket();
+        sock->setOutputGate(gate("tcpOut"));
+        sock->setCallbackObject(this, NULL);
+        sock->connect(serverIp->get4(), listenPort_);
+
+        // Add open socket for use in later communication
+        remoteServerConnectionMap_.addSocket(serverIp->str(), sock);
+
+        // Add open socket to TCPSocketMap for handling later TCP messages
+        socketMap_.addSocket(sock);
+    }
+
+    return sock;
 }
 
 //
