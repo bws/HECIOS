@@ -32,14 +32,37 @@ using namespace std;
 
 FSOpen::FSOpen(FSClient* client, spfsMPIFileOpenRequest* openReq)
     : client_(client),
-      openReq_(openReq)
+      openReq_(openReq),
+      useCollectiveCommunication_(false)
 {
     assert(0 != client_);
     assert(0 != openReq_);
 }
 
-// Processing that occurs upon receipt of an MPI-IO Open request
+FSOpen::FSOpen(FSClient* client,
+               spfsMPIFileOpenRequest* openReq,
+               bool useCollectiveCommunication)
+    : client_(client),
+      openReq_(openReq),
+      useCollectiveCommunication_(useCollectiveCommunication)
+{
+    assert(0 != client_);
+    assert(0 != openReq_);
+}
+
 void FSOpen::handleMessage(cMessage* msg)
+{
+    if (useCollectiveCommunication_)
+    {
+        collectiveMessageProcessor(msg);
+    }
+    else
+    {
+        serialMessageProcessor(msg);
+    }
+}
+
+void FSOpen::serialMessageProcessor(cMessage* msg)
 {
     /** Restore the existing state for this Open Request */
     cFSM currentState = openReq_->getState();
@@ -196,6 +219,127 @@ void FSOpen::handleMessage(cMessage* msg)
         case FSM_Exit(WRITE_DIRENT):
         {
             assert(0 != dynamic_cast<spfsCreateDirEntResponse*>(msg));
+            FSM_Goto(currentState, FINISH);
+            break;
+        }
+        case FSM_Enter(FINISH):
+        {
+            finish();
+            break;
+        }
+    }
+
+    // Store state
+    openReq_->setState(currentState);
+}
+
+void FSOpen::collectiveMessageProcessor(cMessage* msg)
+{
+    /** Restore the existing state for this Open Request */
+    cFSM currentState = openReq_->getState();
+
+    /** File system open state machine states */
+    enum {
+        INIT = 0,
+        LOOKUP_PARENT_HANDLE = FSM_Steady(1),
+        GET_PARENT_ATTRIBUTES = FSM_Steady(2),
+        CHECK_OPEN_FLAGS = FSM_Transient(3),
+        LOOKUP_NAME = FSM_Steady(4),
+        COLLECTIVE_CREATE = FSM_Steady(5),
+        FINISH = FSM_Steady(10)
+    };
+
+    FSM_Switch(currentState)
+    {
+        case FSM_Exit(INIT):
+        {
+            assert(0 != dynamic_cast<spfsMPIFileOpenRequest*>(msg));
+            bool nameCached = isParentNameCached();
+            if (nameCached)
+            {
+                bool attrCached = isParentAttrCached();
+                if (attrCached)
+                {
+                    FSM_Goto(currentState, CHECK_OPEN_FLAGS);
+                }
+                else
+                {
+                    FSM_Goto(currentState, GET_PARENT_ATTRIBUTES);
+                }
+            }
+            else
+            {
+                FSM_Goto(currentState, LOOKUP_PARENT_HANDLE);
+            }
+            break;
+        }
+        case FSM_Enter(LOOKUP_PARENT_HANDLE):
+        {
+            lookupParentOnServer();
+            break;
+        }
+        case FSM_Exit(LOOKUP_PARENT_HANDLE):
+        {
+            assert(0 != dynamic_cast<spfsLookupPathResponse*>(msg));
+            FSLookupStatus status = processLookup(
+                static_cast<spfsLookupPathResponse*>(msg));
+            if (SPFS_FOUND == status)
+                FSM_Goto(currentState, GET_PARENT_ATTRIBUTES);
+            else if (SPFS_PARTIAL == status)
+                FSM_Goto(currentState, LOOKUP_PARENT_HANDLE);
+            else if (SPFS_NOTFOUND == status)
+                FSM_Goto(currentState, FINISH);
+            else
+            {
+                cerr << __FILE__ << ":" << __LINE__ << ":"
+                     << "ERROR: Dir does not exist during creation." << endl;
+            }
+            break;
+        }
+        case FSM_Enter(GET_PARENT_ATTRIBUTES):
+        {
+            getParentAttributes();
+            break;
+        }
+        case FSM_Exit(GET_PARENT_ATTRIBUTES):
+        {
+            cacheParentAttributes();
+            FSM_Goto(currentState, CHECK_OPEN_FLAGS);
+            break;
+        }
+        case FSM_Enter(CHECK_OPEN_FLAGS):
+        {
+            // Transient state no-op
+            break;
+        }
+        case FSM_Exit(CHECK_OPEN_FLAGS):
+        {
+            bool isCreate = checkFileCreateFlags();
+            if (isCreate)
+                FSM_Goto(currentState, COLLECTIVE_CREATE);
+            else
+                FSM_Goto(currentState, LOOKUP_NAME); 
+            break;
+        }
+        case FSM_Enter(LOOKUP_NAME):
+        {
+            lookupNameOnServer();
+            break;
+        }
+        case FSM_Exit(LOOKUP_NAME):
+        {
+            processLookup(static_cast<spfsLookupPathResponse*>(msg));
+            FSM_Goto(currentState, FINISH); 
+            break;
+        }
+        case FSM_Enter(COLLECTIVE_CREATE):
+        {    
+            createMeta();
+            break;
+        }
+        case FSM_Exit(COLLECTIVE_CREATE):
+        {
+            assert(0 != dynamic_cast<spfsCreateResponse*>(msg));
             FSM_Goto(currentState, FINISH);
             break;
         }

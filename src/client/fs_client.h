@@ -25,6 +25,9 @@
 #include "pfs_types.h"
 class FileDistribution;
 class FileView;
+class spfsCollectiveCreateRequest;
+class spfsCollectiveGetAttrRequest;
+class spfsCollectiveRemoveRequest;
 class spfsCreateRequest;
 class spfsCreateDirEntRequest;
 class spfsGetAttrRequest;
@@ -46,6 +49,12 @@ public:
      *  UID(4), GID(4)
      */
     static const unsigned int CREDENTIALS_SIZE = 8;
+
+    /** @return a new Collective Create request */
+    static spfsCollectiveCreateRequest* createCollectiveCreateRequest(
+        const FSHandle& handle,
+        FSObjectType objectType,
+        std::size_t numDataObjects);
 
     /** @return a new Create request */
     static spfsCreateRequest* createCreateRequest(const FSHandle& handle,

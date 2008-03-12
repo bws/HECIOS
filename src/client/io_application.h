@@ -95,7 +95,11 @@ protected:
     /** Map of file descriptors keyed by descriptor ID */
     std::map<int, FileDescriptor*> descriptorById_;
 
-    /** Timing data collections */
+    /** Fixed data collection */
+    double totalCpuPhaseTime_;
+    double applicationCompletionTime_;
+    
+    /** Temporal timing data collections */
     cOutVector cpuPhaseDelay_;
     cOutVector directoryCreateDelay_;
     cOutVector fileOpenDelay_;

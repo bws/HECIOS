@@ -87,6 +87,12 @@ enum spfsMessageKind
     SPFS_LIST_ATTR_RESPONSE = 433;
     SPFS_DATA_FLOW_START = 434;
     SPFS_DATA_FLOW_FINISH = 435;
+    SPFS_COLLECTIVE_CREATE_REQUEST = 436;
+    SPFS_COLLECTIVE_CREATE_RESPONSE = 437;
+    SPFS_COLLECTIVE_GET_ATTR_REQUEST = 438;
+    SPFS_COLLECTIVE_GET_ATTR_RESPONSE = 439;
+    SPFS_COLLECTIVE_REMOVE_REQUEST = 440;
+    SPFS_COLLECTIVE_REMOVE_RESPONSE = 441;
 };
 
 // File request abstract base class
@@ -386,6 +392,20 @@ message spfsDataFlowFinish extends spfsResponse
     fields:
         int flowId;
         FSSize flowSize;
+};
+
+// Create a file system object
+message spfsCollectiveCreateRequest extends spfsRequest
+{
+    fields:
+        FSObjectType objectType;
+};
+
+// Create a file system object
+message spfsCollectiveCreateResponse extends spfsResponse
+{
+    fields:
+        FSHandle handle;
 };
 
 //

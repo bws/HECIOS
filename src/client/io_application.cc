@@ -66,7 +66,11 @@ void IOApplication::initialize()
     msgScheduled_ = false;
 
     // Set the process rank
-    rank_ = rank_seed++;  
+    rank_ = rank_seed++;
+
+    // Initialize scalar data collection values
+    totalCpuPhaseTime_ = 0.0;
+    applicationCompletionTime_ = 0.0;
 }
 
 /**
@@ -83,6 +87,9 @@ void IOApplication::finish()
 
     // Reset the rank generator to 0
     rank_seed = 0;
+
+    recordScalar("SPFS Total CPU Phase Delay", totalCpuPhaseTime_);
+    recordScalar("SPFS App. Completion Time", applicationCompletionTime_);
 
 }
 
@@ -104,6 +111,7 @@ void IOApplication::handleSelfMessage(cMessage* msg)
         simtime_t phaseEndTime = simTime();
         simtime_t delay = phaseBeginTime - phaseEndTime;
         cpuPhaseDelay_.record(delay);
+        totalCpuPhaseTime_ += delay;
     }
     
     // Schedule the next message
@@ -224,6 +232,7 @@ void IOApplication::handleMessage(cMessage* msg)
     {
         cerr << "Rank " << rank_ << " IOApplication Time: " << simTime()
              << ": No more messages to post." << endl;
+        applicationCompletionTime_ = simTime();
     }
 }
 

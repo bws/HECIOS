@@ -36,13 +36,24 @@ class spfsSetAttrResponse;
 class FSOpen
 {
 public:
-    /** Constructor */
+    /** Construct FSOpen processor without collective optimization enabled */
     FSOpen(FSClient* client, spfsMPIFileOpenRequest* openReq);
+
+    /** Construct FSOpen processor with collective optimization settable */
+    FSOpen(FSClient* client,
+           spfsMPIFileOpenRequest* openReq,
+           bool useCollectiveCommunication);
     
     /** Handle MPI-Open Message */
     void handleMessage(cMessage* msg);
 
 protected:
+    /** Message processing for opens with serial creates */
+    void serialMessageProcessor(cMessage* msg);
+
+    /** Message processing for Opens with collective creates */
+    void collectiveMessageProcessor(cMessage* msg);
+    
     /** @return true if the parent's name is cached */
     bool isParentNameCached();
 
@@ -101,6 +112,9 @@ private:
 
     /** The originating MPI Open request */
     spfsMPIFileOpenRequest* openReq_;
+
+    /** Use server to server based collectives to create file */
+    bool useCollectiveCommunication_;
 };
 
 #endif

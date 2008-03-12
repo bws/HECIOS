@@ -33,6 +33,22 @@ using namespace std;
 // Define FSClient module for this class
 Define_Module(FSClient);
 
+spfsCollectiveCreateRequest* createCollectiveCreateRequest(
+        const FSHandle& handle, FSObjectType objectType, size_t numDataObjects)
+{
+    spfsCollectiveCreateRequest* create =
+        new spfsCollectiveCreateRequest(0, SPFS_COLLECTIVE_CREATE_REQUEST);
+    create->setHandle(handle);
+    create->setObjectType(objectType);
+
+    // Set the collective create request size (op, creds, fs_id, objType,
+    //  numExtentArrays, extentArraySizes, extentArrays)
+    long msgSize = 4 + FSClient::CREDENTIALS_SIZE + 4 + 4 +
+        4 + numDataObjects*4 + numDataObjects*8;
+    create->setByteLength(msgSize);
+    return create;
+}
+
 spfsCreateRequest* FSClient::createCreateRequest(const FSHandle& handle,
                                                  FSObjectType objectType)
 {
