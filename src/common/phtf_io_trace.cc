@@ -19,10 +19,12 @@
 //
 
 #include "phtf_io_trace.h"
+
 using namespace std;
 
 std::map<std::string, PHTFOperation>  PHTFEventRecord::_opmap;
 std::string PHTFTrace::eventFileNamePrefix = string("event.");
+std::string PHTFTrace::runtimeFileNamePrefix = string("runtime.");
 PHTFTrace* PHTFTrace::_trace = NULL;
 
 
@@ -252,6 +254,7 @@ PHTFOperation PHTFEventRecord::strToOp(std::string opstr)
     string op = opstr;
     for(string::iterator it = op.begin(); it != op.end(); it++)
         *it = toupper(*it);
+
     if(PHTFEventRecord::_opmap.count(op) > 0)return PHTFEventRecord::_opmap.find(op)->second;
     else return INVALID;
 }
@@ -308,9 +311,20 @@ void PHTFEventRecord::buildRecordFields()
  * Constructor
  * @param filepath The path to the event file
  */
-PHTFEvent::PHTFEvent(string filepath)
+PHTFEvent::PHTFEvent(string filepath, string runtimepath)
 {
     filePath(filepath);
+    _runtime = new PHTFIni(runtimepath);
+}
+
+string PHTFEvent::memValue(string type, string pointer)
+{
+    return _runtime->iniValue(type, pointer);
+}
+
+void PHTFEvent::memValue(string type, string pointer, string value)
+{
+    _runtime->iniValue(type,pointer, value);
 }
 
 /** @return The string that contains the file path */
@@ -366,7 +380,7 @@ PHTFEvent & PHTFEvent::operator >> (PHTFEventRecord & rec)
 {
     string line;
     if(_ifs.is_open())
-        {
+    {
             getline(_ifs, line);
             rec = PHTFEventRecord(line);
         }
@@ -376,6 +390,11 @@ PHTFEvent & PHTFEvent::operator >> (PHTFEventRecord & rec)
 /** Write a record into the event file */
 PHTFEvent & PHTFEvent::operator << (const PHTFEventRecord & rec)
 {
+    if(_ofs.is_open())
+    {
+        string str(const_cast<PHTFEventRecord &>(rec).recordStr());
+        _ofs << str << endl;
+    }
     return *this;
 }
 
@@ -398,8 +417,10 @@ void PHTFTrace::buildEvents()
     for(int i = 0; i < size; i ++)
         {
             stringstream ss("");
+            stringstream ss2("");
             ss << dirPath() << PHTFTrace::eventFileNamePrefix << i;
-            PHTFEvent *ev = new PHTFEvent(ss.str());
+            ss2 << dirPath() << PHTFTrace::runtimeFileNamePrefix << i;
+            PHTFEvent *ev = new PHTFEvent(ss.str(), ss2.str());
             _events.push_back(ev); 
         }
 }
@@ -460,6 +481,123 @@ PHTFTrace* PHTFTrace::getInstance(string dirpath)
     return PHTFTrace::_trace;
 }
 
+PHTFIni::PHTFIni(string filename)
+{
+    fileName_ = filename;
+}
+
+void PHTFIni::readIni()
+{
+    ifstream ifs;
+    ifs.open(fileName_.c_str());
+
+    data_.clear();
+
+    if(!ifs.is_open())return;
+
+    string section;
+    string::size_type index;
+
+    PHTFIniItem *item = 0;
+    while(!ifs.eof())
+    {
+        string line;
+        getline(ifs, line);
+        if(line[0] == ';')continue;
+
+        if(line[0] == '[')
+        {
+            index = line.find("]", 1);
+            section = line.substr(1, index - 1);
+
+            item = new PHTFIniItem;
+
+            data_[section] = item;
+        }
+        else
+        {
+            index = line.find("=", 0);
+            if(index == string::npos)continue;
+            
+            string field = line.substr(0, index);
+            string value = line.substr(index + 1, line.length());
+
+            if(item)
+            {
+                (*item)[field] = value;
+            }
+        }
+    }
+
+    ifs.close();
+}
+
+void PHTFIni::writeIni()
+{
+    ofstream ofs;
+    ofs.open(fileName_.c_str());
+
+    if(!ofs.is_open())return;
+
+    map<string, PHTFIniItem *>::iterator it1;
+    PHTFIniItem::iterator it2;
+
+    for(it1 = data_.begin(); it1 != data_.end(); it1 ++)
+    {
+        ofs << "[" << it1->first << "]" << endl;
+        for(it2 = it1->second->begin(); it2 != it1->second->end(); it2 ++)
+        {
+            ofs << it2->first << "=" << it2->second << endl;
+        }
+        ofs << endl;
+    }
+
+    ofs.close();
+}
+
+bool PHTFIni::exist(string section)
+{
+    readIni();
+
+    if(data_.find(section) != data_.end())
+        return true;
+    else
+        return false;
+}
+
+bool PHTFIni::exist(string section, string field)
+{
+    readIni();
+
+    if(exist(section))
+    {
+        if(data_[section]->find(field) != data_[section]->end())
+            return true;
+    }
+
+    return false;
+}
+
+string PHTFIni::iniValue(string section, string field)
+{
+    if(exist(section, field))
+    {
+        return (*data_[section])[field];
+    }
+    else
+    {
+        return "";
+    }
+}
+
+void PHTFIni::iniValue(string section, string field, string value)
+{
+    if(!exist(section))
+        data_[section] = new PHTFIniItem;
+
+    (*data_[section])[field] = value;
+    writeIni();
+}
 
 /*
  * Local variables:

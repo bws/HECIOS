@@ -31,6 +31,7 @@ class PHTFEvent;
 class PHTFEventRecord;
 class PHTFArch;
 class PHTFFs;
+class PHTFIni;
 
 
 /**
@@ -171,7 +172,7 @@ public:
      * Constructor
      * @param filepath The path to the event file
      */
-    PHTFEvent(std::string filepath);
+    PHTFEvent(std::string filepath, std::string runtimepath);
     /**
      * Constructor
      */
@@ -202,12 +203,38 @@ public:
     /** Write a record into the event file */
     PHTFEvent & operator << (const PHTFEventRecord & rec);
 
+    std::string memValue(std::string type, std::string pointer);
+    void memValue(std::string type, std::string pointer, std::string value);
+
 private:
     std::string _filepath;
     std::ifstream _ifs;
     std::ofstream _ofs;
+    PHTFIni *_runtime;
 };
 
+/**
+ * PHTF Ini File Handler
+ */
+typedef std::map<std::string, std::string> PHTFIniItem;
+
+class PHTFIni
+{
+protected:
+    std::map<std::string, PHTFIniItem *> data_;
+    void readIni();
+    void writeIni();
+
+private:
+    std::string fileName_;
+    
+public:
+    PHTFIni(std::string filename);
+    bool exist(std::string section);
+    bool exist(std::string section, std::string field);
+    std::string iniValue(std::string section, std::string field);
+    void iniValue(std::string section, std::string field, std::string value);
+};
 
 /**
  * PHTF IO Trace Arch File Handler
@@ -231,6 +258,7 @@ class PHTFFs
 class PHTFTrace
 {
     static std::string eventFileNamePrefix;
+    static std::string runtimeFileNamePrefix;
 
 protected:
     /**
@@ -269,8 +297,6 @@ private:
     PHTFFs _fsfile;
     static PHTFTrace *_trace;
 };
-
-
 
 #endif
 

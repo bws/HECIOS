@@ -15,4 +15,5 @@ SIM_SRC += $(DIR)/basic_data_type.cc \
 	$(DIR)/shtf_io_trace.cc \
 	$(DIR)/umd_io_trace.cc \
 	$(DIR)/vector_data_type.cc\
-	$(DIR)/phtf_io_trace.cc
+	$(DIR)/phtf_io_trace.cc \
+	$(DIR)/comm_man.cc

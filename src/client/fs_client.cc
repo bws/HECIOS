@@ -378,6 +378,7 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             read.handleMessage(msg);
             spfsMPIFileReadResponse *readmsg = new spfsMPIFileReadResponse(
                 0, SPFS_MPI_FILE_IREAD_RESPONSE);
+            readmsg->setContextPointer(request->dup());
             send(readmsg, appOutGateId_);                                                                           
             break;
         }
@@ -393,6 +394,7 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             write.handleMessage(msg);
             spfsMPIFileWriteResponse *writemsg = new spfsMPIFileWriteResponse(
                 0, SPFS_MPI_FILE_IWRITE_RESPONSE);
+            writemsg->setContextPointer(request->dup());
             send(writemsg, appOutGateId_);
             break;
         }

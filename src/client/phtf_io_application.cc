@@ -87,6 +87,20 @@ bool PHTFIOApplication::scheduleNextMessage()
                 break;
             case OPEN:
                 //TODO: add collaborate open operation here
+                // if rank_ == 0, do open
+                // else wait for bcast
+                if(rank_ == 0)
+                {
+                    cerr << simTime() << " : Rank " << rank_
+                         << " send msg kind " << msg->kind()
+                         << endl;                
+                    send(msg, ioOutGate_);
+                }
+                else
+                {
+                    delete msg;
+                }
+                break;                
             default:
                 cerr << simTime() << " : Rank " << rank_
                      << " send msg kind " << msg->kind()
@@ -98,6 +112,14 @@ bool PHTFIOApplication::scheduleNextMessage()
         break;
     }    
     return msgScheduled;
+}
+
+void PHTFIOApplication::handleMPIMessage(cMessage* msg)
+{
+    cerr << "Rank " << rank_ << " received bcast msg!" << endl;
+    cMessage *enmsg = msg->decapsulate();
+    delete enmsg;
+    delete msg;
 }
 
 void PHTFIOApplication::handleIOMessage(cMessage* msg)
@@ -126,6 +148,19 @@ void PHTFIOApplication::handleIOMessage(cMessage* msg)
         {
             waitReqId_ = -1;
         }
+    }
+
+    if(orgMsg != 0 && orgMsg->kind() == SPFS_MPI_FILE_OPEN_REQUEST)
+    {
+        // bcast
+        spfsMPIBcastRequest *req =
+            new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
+
+        req->setRoot(rank_);
+        req->setIsGlobal(true);
+        req->encapsulate((cMessage*)msg->dup());
+        send(req, mpiOutGate_);
+        return;
     }
 
     IOApplication::handleIOMessage(msg);
@@ -220,19 +255,27 @@ spfsMPIFileCloseRequest* PHTFIOApplication::createCloseMessage(
 spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
     const PHTFEventRecord* openRecord)
 {
-    // If the file does not exist, create it
-    Filename openFile("/test");
-    
-    // Construct a file descriptor for use in simulaiton
-    FileDescriptor* fd = FileBuilder::instance().getDescriptor(openFile);
-
-    // Associate the file id with a file descriptor
-    setDescriptor(100, fd);
-    
     spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
         0, SPFS_MPI_FILE_OPEN_REQUEST);
-    open->setFileName(openFile.str().c_str());
-    open->setFileDes(fd);
+    
+    if(rank_ == 0) // ranklist[0]
+    {
+        // If the file does not exist, create it
+        Filename openFile("/test");
+        
+        // Construct a file descriptor for use in simulaiton
+        FileDescriptor* fd = FileBuilder::instance().getDescriptor(openFile);
+        
+        // Associate the file id with a file descriptor
+        setDescriptor(100, fd);
+        
+        int mode = (int)strtol(const_cast<PHTFEventRecord*>(openRecord)->paramAt(4).c_str(), NULL, 10);
+        
+        open->setFileName(openFile.str().c_str());
+        open->setFileDes(fd);
+        open->setMode(mode);
+    }
+    
     return open;
 }
 

@@ -206,9 +206,7 @@ void IOApplication::handleIOMessage(cMessage* msg)
 
 void IOApplication::handleMPIMessage(cMessage* msg)
 {
-    // TODO: forwarding to cache?
-    assert(false);
-    send(msg, ioOutGate_);        
+// override in subclass
 }
 
 /**
@@ -226,6 +224,7 @@ void IOApplication::handleMessage(cMessage* msg)
     }
     else if (msg->arrivalGateId() == mpiInGate_)
     {
+        handleMPIMessage(msg);
     }
 
     if (!msgScheduled_)

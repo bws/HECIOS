@@ -59,6 +59,7 @@ protected:
     virtual cMessage* createMessage(PHTFEventRecord* rec);
 
     virtual void handleIOMessage(cMessage* msg);
+    virtual void handleMPIMessage(cMessage* msg);
     
 private:
     /** Create the file system files for this trace */
@@ -106,7 +107,6 @@ private:
     PHTFEvent * phtfEvent_;
 
     long waitReqId_;
-
 };
 
 #endif
