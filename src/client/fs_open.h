@@ -103,8 +103,11 @@ protected:
     /** Add the lookup file's attributes to cache */
     void addAttributesToCache();
 
-    /** Finalize operation */
+    /** Send final response */
     void finish();
+
+    /** Send the collective creation message */
+    void collectiveCreate();
     
 private:
     /** The filesystem client module */

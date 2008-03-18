@@ -127,6 +127,9 @@ public:
     /** Send the message out of the PFS server after delay */
     void sendDelayed(cMessage* outMsg, simtime_t delay);
 
+    /** Record that a collective create request has arrived */
+    void recordCollectiveCreate();
+    
     /** Record that a create dirent request has arrived */
     void recordCreateDirEnt();
     
@@ -222,6 +225,7 @@ private:
     int outGateId_;
 
     /** Data collection scalars */
+    double numCollectiveCreates_;
     double numCreateDirEnts_;
     double numCreateObjects_;
     double numGetAttrs_;
@@ -231,6 +235,9 @@ private:
     double numWrites_;
     
     /** Data collection vectors */
+    cOutVector collectiveCreateDiskDelay_;
+    cOutVector collectiveGetAttrDiskDelay_;
+    cOutVector collectiveRemoveDiskDelay_;
     cOutVector createDirEntDiskDelay_;
     cOutVector createObjectDiskDelay_;
     cOutVector getAttrDiskDelay_;

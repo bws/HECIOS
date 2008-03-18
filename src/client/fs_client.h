@@ -21,6 +21,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <omnetpp.h>
+#include <vector>
 #include "client_fs_state.h"
 #include "pfs_types.h"
 class FileDistribution;
@@ -50,11 +51,10 @@ public:
      */
     static const unsigned int CREDENTIALS_SIZE = 8;
 
-    /** @return a new Collective Create request */
+    /** @return a new Collective File Create request */
     static spfsCollectiveCreateRequest* createCollectiveCreateRequest(
         const FSHandle& handle,
-        FSObjectType objectType,
-        std::size_t numDataObjects);
+        std::vector<FSHandle> dataHandles);
 
     /** @return a new Create request */
     static spfsCreateRequest* createCreateRequest(const FSHandle& handle,
@@ -135,6 +135,15 @@ private:
     int netInGateId_;
     int netOutGateId_;
 
+    /** Enable collective file creation optimization */
+    bool useCollectiveCreate_;
+    
+    /** Enable collective file get attributes optimization */
+    bool useCollectiveGetAttr_;
+    
+    /** Enable collective file remove optimization */
+    bool useCollectiveRemove_;
+    
     /** Client processing delay for directory creation */
     double directoryCreateProcessingDelay_;
 
@@ -172,6 +181,7 @@ private:
     double numFileUtimes_;
 
     /** Temporal data collection */
+    cOutVector collectiveCreateDelay_;
     cOutVector createDirEntDelay_;
     cOutVector createObjectDelay_;
     cOutVector flowDelay_;

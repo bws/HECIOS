@@ -22,6 +22,7 @@
 #include <climits>
 #include <cstring>
 #include <iostream>
+#include "collective_create.h"
 #include "create.h"
 #include "create_dir_ent.h"
 #include "data_flow.h"
@@ -130,6 +131,9 @@ simtime_t FSServer::setAttrProcessingDelay()
 
 FSServer::FSServer()
     : cSimpleModule(),
+      collectiveCreateDiskDelay_("SPFS Coll Create Disk Delay"),
+      collectiveGetAttrDiskDelay_("SPFS Coll GetAttr Disk Delay"),
+      collectiveRemoveDiskDelay_("SPFS Coll Remove Disk Delay"),
       createDirEntDiskDelay_("SPFS Create DirEnt Disk Delay"),
       createObjectDiskDelay_("SPFS Create Object Disk Delay"),
       getAttrDiskDelay_("SPFS GetAttr Disk Delay"),
@@ -163,6 +167,7 @@ void FSServer::initialize()
     outGateId_ = gate("out")->id();
 
     // Initialize scalar data
+    numCollectiveCreates_ = 0;
     numCreateDirEnts_ = 0;
     numCreateObjects_ = 0;
     numGetAttrs_ = 0;
@@ -174,6 +179,7 @@ void FSServer::initialize()
 
 void FSServer::finish()
 {
+    recordScalar("SPFS Server Collective Creates", numCollectiveCreates_);
     recordScalar("SPFS Server CrDirEnts", numCreateDirEnts_);
     recordScalar("SPFS Server CreateObjects", numCreateObjects_);
     recordScalar("SPFS Server GetAttrs", numGetAttrs_);
@@ -220,6 +226,13 @@ void FSServer::processRequest(spfsRequest* request, cMessage* msg)
     assert(0 != request);
     switch(request->kind())
     {
+        case SPFS_COLLECTIVE_CREATE_REQUEST:
+        {
+            CollectiveCreate collCreate(
+                this, static_cast<spfsCollectiveCreateRequest*>(request));
+            collCreate.handleServerMessage(msg);
+            break;
+        }
         case SPFS_CREATE_REQUEST:
         {
             Create create(this, static_cast<spfsCreateRequest*>(request));
@@ -282,6 +295,11 @@ void FSServer::send(cMessage* msg)
 void FSServer::sendDelayed(cMessage* msg, simtime_t delay)
 {
     cSimpleModule::sendDelayed(msg, delay, outGateId_);
+}
+
+void FSServer::recordCollectiveCreate()
+{
+    numCollectiveCreates_++;
 }
 
 void FSServer::recordCreateDirEnt()

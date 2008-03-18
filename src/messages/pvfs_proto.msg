@@ -399,6 +399,8 @@ message spfsCollectiveCreateRequest extends spfsRequest
 {
     fields:
         FSObjectType objectType;
+        FSHandle dataHandles[];
+        int numOutstandingRequests;
 };
 
 // Create a file system object

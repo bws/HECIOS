@@ -22,6 +22,9 @@
 // Description of the interface for all FSClients
 simple FSClient
     parameters:
+        useCollectiveCreate: bool,
+        useCollectiveGetAttr: bool,
+        useCollectiveRemove: bool,
         directoryCreateProcessingDelaySecs: numeric const,
         fileCloseProcessingDelaySecs: numeric const,
         fileOpenProcessingDelaySecs: numeric const,

@@ -33,18 +33,25 @@ using namespace std;
 // Define FSClient module for this class
 Define_Module(FSClient);
 
-spfsCollectiveCreateRequest* createCollectiveCreateRequest(
-        const FSHandle& handle, FSObjectType objectType, size_t numDataObjects)
+spfsCollectiveCreateRequest* FSClient::createCollectiveCreateRequest(
+    const FSHandle& handle, vector<FSHandle> dataHandles)
 {
     spfsCollectiveCreateRequest* create =
         new spfsCollectiveCreateRequest(0, SPFS_COLLECTIVE_CREATE_REQUEST);
     create->setHandle(handle);
-    create->setObjectType(objectType);
+    create->setObjectType(SPFS_METADATA_OBJECT);
+
+    // Add the data handles
+    create->setDataHandlesArraySize(dataHandles.size());
+    for (size_t i = 0; i < dataHandles.size(); i++)
+    {
+        create->setDataHandles(i, dataHandles[i]);
+    }
 
     // Set the collective create request size (op, creds, fs_id, objType,
     //  numExtentArrays, extentArraySizes, extentArrays)
     long msgSize = 4 + FSClient::CREDENTIALS_SIZE + 4 + 4 +
-        4 + numDataObjects*4 + numDataObjects*8;
+        4 + dataHandles.size()*4 + dataHandles.size()*8;
     create->setByteLength(msgSize);
     return create;
 }
@@ -173,7 +180,8 @@ spfsWriteRequest* FSClient::createWriteRequest(const FSHandle& handle,
 }
 
 FSClient::FSClient()
-    : createDirEntDelay_("SPFS Client CrDirEnt Roundtrip Delay"),
+    : collectiveCreateDelay_("SPFS Collective Create Roundtrip Delay"),
+      createDirEntDelay_("SPFS Client CrDirEnt Roundtrip Delay"),
       createObjectDelay_("SPFS Client CreateObject Roundtrip Delay"),
       flowDelay_("SPFS Client Flow Delay"),
       getAttrDelay_("SPFS Client GetAttr Roundtrip Delay"),
@@ -192,6 +200,11 @@ void FSClient::initialize()
     appOutGateId_ = findGate("appOut");
     netInGateId_ = findGate("netIn");
     netOutGateId_ = findGate("netOut");
+
+    // Retrieve client optimizations
+    useCollectiveCreate_ = par("useCollectiveCreate");
+    useCollectiveGetAttr_ = par("useCollectiveGetAttr");
+    useCollectiveRemove_ = par("useCollectiveRemove");
 
     // Retrieve processing delays
     directoryCreateProcessingDelay_ = par("directoryCreateProcessingDelaySecs");
@@ -334,7 +347,8 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
             FSOpen open(this,
-                        static_cast<spfsMPIFileOpenRequest*>(request));
+                        static_cast<spfsMPIFileOpenRequest*>(request),
+                        useCollectiveCreate_);
             open.handleMessage(msg);
             break;
         }
@@ -428,6 +442,11 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
     
     switch(serverResponse->kind())
     {
+        case SPFS_COLLECTIVE_CREATE_RESPONSE:
+        {
+            collectiveCreateDelay_.record(delay);
+            break;
+        }
         case SPFS_CREATE_DIR_ENT_RESPONSE:
         {
             createDirEntDelay_.record(delay);
@@ -475,7 +494,8 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
         }
         default:
         {
-            cerr << "Unable to collect data for message: "
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "Unable to collect data for message: "
                  << serverResponse->kind() << endl;
         }
     }

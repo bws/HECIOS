@@ -54,6 +54,8 @@ void FSOpen::handleMessage(cMessage* msg)
 {
     if (useCollectiveCommunication_)
     {
+        cerr << __FILE__ << ":" << __LINE__ <<":"
+             << " Using collecitve create" << endl;
         collectiveMessageProcessor(msg);
     }
     else
@@ -334,12 +336,12 @@ void FSOpen::collectiveMessageProcessor(cMessage* msg)
         }
         case FSM_Enter(COLLECTIVE_CREATE):
         {    
-            createMeta();
+            collectiveCreate();
             break;
         }
         case FSM_Exit(COLLECTIVE_CREATE):
         {
-            assert(0 != dynamic_cast<spfsCreateResponse*>(msg));
+            assert(0 != dynamic_cast<spfsCollectiveCreateResponse*>(msg));
             FSM_Goto(currentState, FINISH);
             break;
         }
@@ -566,7 +568,7 @@ void FSOpen::createDirEnt()
     FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parentName);
 
     // Construct the directory entry creation request
-    spfsCreateDirEntRequest *req = FSClient::createCreateDirEntRequest(
+    spfsCreateDirEntRequest* req = FSClient::createCreateDirEntRequest(
         parentMeta->handle, fd->getFilename());
     req->setContextPointer(openReq_);
     client_->send(req, client_->getNetOutGate());   
@@ -587,7 +589,19 @@ void FSOpen::finish()
     resp->setFileDes(openReq_->getFileDes());
     client_->send(resp, client_->getAppOutGate());
 }
-            
+
+void FSOpen::collectiveCreate()
+{
+    // Get the parent handle
+    FileDescriptor* fd = openReq_->getFileDes();
+    FSMetaData* meta = FileBuilder::instance().getMetaData(fd->getFilename());
+
+    spfsCollectiveCreateRequest* req = FSClient::createCollectiveCreateRequest(
+        meta->handle, meta->dataHandles);
+    req->setContextPointer(openReq_);
+    client_->send(req, client_->getNetOutGate());
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

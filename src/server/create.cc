@@ -63,7 +63,7 @@ void Create::handleServerMessage(cMessage* msg)
     case FSM_Exit(CREATE):
         {
             assert(0 != dynamic_cast<spfsOSFileOpenResponse*>(msg));
-            module_->recordLookupDiskDelay(msg);
+            module_->recordCreateObjectDiskDelay(msg);
             FSM_Goto(currentState, FINISH);
             break;
         }
