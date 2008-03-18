@@ -36,6 +36,8 @@ HardDisk::~HardDisk()
 
 void HardDisk::initialize()
 {
+    // Initialize collection data
+    totalDelay_ = 0;
 }
 
 void HardDisk::finish()
@@ -97,6 +99,9 @@ void BasicModelDisk::handleMessage(cMessage* msg)
 
 void BasicModelDisk::initialize()
 {
+    // Initialize parent
+    HardDisk::initialize();
+    
     // Drive layout parameters
     numCylinders_ = par("numCylinders").longValue();
     numHeads_ = par("numHeads").longValue();

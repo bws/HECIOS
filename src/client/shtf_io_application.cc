@@ -186,6 +186,11 @@ spfsMPIFileCloseRequest* SHTFIOApplication::createCloseMessage(
     const IOTrace::Record* closeRecord)
 {
     assert(IOTrace::CLOSE == closeRecord->opType());
+
+    // Remove and clean up the file descriptor
+    FileDescriptor* fd = removeDescriptor(closeRecord->fileId());
+    delete fd;
+    
     spfsMPIFileCloseRequest* close = new spfsMPIFileCloseRequest(
         0, SPFS_MPI_FILE_CLOSE_REQUEST);
     return close;

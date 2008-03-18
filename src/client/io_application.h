@@ -47,8 +47,15 @@ public:
     int getRank() const {return rank_;};
 
 protected:
-    /** Assiciate the fileId with a file descriptor */
+    /** Associate the fileId with a file descriptor */
     void setDescriptor(int fileId, FileDescriptor* descriptor);
+
+    /**
+     * Disassociate the fileId with its file descriptor
+     *
+     * @return the disassociated file descriptor
+     */
+    FileDescriptor* removeDescriptor(int FileId);
     
     /** Send out the required cache invalidation messages */
     void invalidateCaches(spfsMPIFileWriteAtRequest* writeAt);
@@ -57,12 +64,6 @@ protected:
     spfsCacheInvalidateRequest* createCacheInvalidationMessage(
                                 spfsMPIFileWriteAtRequest* writeAt);
 
-    
-private:
-    /** @return true if the next message was able to be scheduled */
-    virtual bool scheduleNextMessage() = 0;
-
-protected:
     /** Create the file system files for this trace */
     virtual void populateFileSystem() = 0;
 
@@ -91,6 +92,10 @@ protected:
     int mpiOutGate_;
     int mpiInGate_;
     bool msgScheduled_;
+
+private:
+    /** @return true if the next message was able to be scheduled */
+    virtual bool scheduleNextMessage() = 0;
 
     /** Map of file descriptors keyed by descriptor ID */
     std::map<int, FileDescriptor*> descriptorById_;

@@ -242,6 +242,14 @@ void IOApplication::setDescriptor(int fileId, FileDescriptor* descriptor)
     descriptorById_[fileId] = descriptor;
 }
 
+FileDescriptor* IOApplication::removeDescriptor(int fileId)
+{
+    FileDescriptor* descriptor = getDescriptor(fileId);
+    assert(0 != descriptor);
+    descriptorById_.erase(fileId);
+    return descriptor;
+}
+
 FileDescriptor* IOApplication::getDescriptor(int fileId) const
 {
     FileDescriptor* descriptor = 0;
