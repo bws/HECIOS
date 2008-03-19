@@ -41,9 +41,21 @@ exit($g_mainrc);
 #
 sub printUsage
 {
-    print "Usage $0 <options> strace_file\n";
-    print "  -C  the current working directory when the trace was collected\n";
-    print "  -d  the mount point of the PVFS file system when the trace ran\n";
+    # Description
+    print "This script constructs an SHTF file compatible with HECIOS for\n";
+    print "use in simulation runs.  The trace file should be generated with\n";
+    print "the following command: \n";
+    print "    strace -rT -o <output_file> <execution cmd> \n";
+    print "\n";
+
+    # Usage
+    my $progName = basename($0);
+    print "Usage: $progName <options> strace_file\n";
+    print "Options:\n";
+    print "  -C <current_dir>     the current working directory when the\n";
+    print "                         trace was collected\n";
+    print "  -d <mount_dir>       the mount point of the PVFS file system\n";
+    print "                         when the trace ran\n";
 }
 
 #
