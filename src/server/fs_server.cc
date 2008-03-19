@@ -48,6 +48,7 @@ simtime_t FSServer::createDirEntProcessingDelay_ = 0.0;
 simtime_t FSServer::getAttrProcessingDelay_ = 0.0;
 simtime_t FSServer::lookupPathProcessingDelay_ = 0.0;
 simtime_t FSServer::setAttrProcessingDelay_ = 0.0;
+bool FSServer::collectDiskData_ = false;
 
 size_t FSServer::getDefaultAttrSize()
 {
@@ -200,6 +201,10 @@ void FSServer::setNumber(size_t number)
     serverName_ = "server" + s.str();    
 }
 
+void FSServer::setCollectDiskData(bool doesCollect)
+{
+    collectDiskData_ = doesCollect;
+}
 
 void FSServer::handleMessage(cMessage* msg)
 {
@@ -339,27 +344,42 @@ void FSServer::recordWrite()
 
 void FSServer::recordCreateDirEntDiskDelay(cMessage* fileWriteResponse)
 {
-    createDirEntDiskDelay_.record(getRoundTripDelay(fileWriteResponse));
+    if (collectDiskData_)
+    {
+        createDirEntDiskDelay_.record(getRoundTripDelay(fileWriteResponse));
+    }
 }
 
 void FSServer::recordCreateObjectDiskDelay(cMessage* fileOpenResponse)
 {
-    createObjectDiskDelay_.record(getRoundTripDelay(fileOpenResponse));
+    if (collectDiskData_)
+    {
+        createObjectDiskDelay_.record(getRoundTripDelay(fileOpenResponse));
+    }
 }
 
 void FSServer::recordGetAttrDiskDelay(cMessage* fileReadResponse)
 {
-    getAttrDiskDelay_.record(getRoundTripDelay(fileReadResponse));
+    if (collectDiskData_)
+    {
+        getAttrDiskDelay_.record(getRoundTripDelay(fileReadResponse));
+    }
 }
 
 void FSServer::recordLookupDiskDelay(cMessage* fileReadResponse)
 {
-    lookupDiskDelay_.record(getRoundTripDelay(fileReadResponse));
+    if (collectDiskData_)
+    {
+        lookupDiskDelay_.record(getRoundTripDelay(fileReadResponse));
+    }
 }
 
 void FSServer::recordSetAttrDiskDelay(cMessage* fileWriteResponse)
 {
-    setAttrDiskDelay_.record(getRoundTripDelay(fileWriteResponse));
+    if (collectDiskData_)
+    {
+        setAttrDiskDelay_.record(getRoundTripDelay(fileWriteResponse));
+    }
 }
 
 simtime_t FSServer::getRoundTripDelay(cMessage* response) const

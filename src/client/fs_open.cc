@@ -54,8 +54,6 @@ void FSOpen::handleMessage(cMessage* msg)
 {
     if (useCollectiveCommunication_)
     {
-        cerr << __FILE__ << ":" << __LINE__ <<":"
-             << " Using collecitve create" << endl;
         collectiveMessageProcessor(msg);
     }
     else

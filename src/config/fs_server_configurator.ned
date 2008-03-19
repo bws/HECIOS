@@ -32,6 +32,7 @@ simple FSServerConfigurator
         createMetadataProcessingDelaySecs: numeric const,
         getAttrProcessingDelaySecs: numeric const,
         lookupPathProcessingDelaySecs: numeric const,
-        setAttrProcessingDelaySecs: numeric const;
+        setAttrProcessingDelaySecs: numeric const,
+        collectDiskData: bool;
 
 endsimple

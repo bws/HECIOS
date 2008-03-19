@@ -89,7 +89,6 @@ bool SHTFIOApplication::scheduleNextMessage()
             double phaseLength = traceRec->duration();
             cMessage* cpuPhase = new cMessage("CPU Phase");
             scheduleAt(simTime() + phaseLength, cpuPhase);
-            cerr << "Scheduling CPU Phase to last: " << phaseLength << endl;
         }
         else
         {

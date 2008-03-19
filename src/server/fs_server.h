@@ -100,6 +100,9 @@ public:
     /** @return the server processing delay for setting object attributes */
     static simtime_t setAttrProcessingDelay();
     
+    /** Set disk data collection on or off */
+    static void setCollectDiskData(bool collectFlag);
+    
     /** Constructor */
     FSServer();
 
@@ -114,7 +117,7 @@ public:
 
     /** @return true if handle is on this server */
     bool handleIsLocal(const FSHandle& handle) const;
-    
+
     /** Set the server's unique number */
     void setNumber(std::size_t number);
 
@@ -210,6 +213,9 @@ private:
 
     /** Set Attributes server processing delay */
     static simtime_t setAttrProcessingDelay_;
+    
+    /** Data collection flag */
+    static bool collectDiskData_;
     
     /** Unique server number */
     std::size_t serverNumber_;

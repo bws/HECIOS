@@ -42,8 +42,8 @@ BMIListIODataFlow::BMIListIODataFlow(const spfsDataFlowStart& flowStart,
 
 BMIListIODataFlow::~BMIListIODataFlow()
 {
-    cout << "Flow Completed Net: " << getNetworkProgress()
-         << " Store: " << getStorageProgress() << endl;
+    //cerr << "Flow Completed Net: " << getNetworkProgress()
+    //     << " Store: " << getStorageProgress() << endl;
 }
 
 void BMIListIODataFlow::startTransfer()

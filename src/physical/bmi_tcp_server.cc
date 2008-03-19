@@ -149,8 +149,8 @@ void BMITcpServer::handleMessage(cMessage* msg)
 spfsBMIUnexpectedMessage* BMITcpServer::createUnexpectedMessage(
     spfsRequest* request)
 {
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Unexpected message creation by server" << endl;
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Unexpected message creation by server" << endl;
     assert(0 != request);
     spfsBMIUnexpectedMessage* pkt = new spfsBMIUnexpectedMessage();
     pkt->setHandle(request->getHandle());
@@ -199,8 +199,8 @@ void BMITcpServer::sendOverNetwork(spfsBMIUnexpectedMessage* msg)
 {
     assert(0 != msg);
     assert(0 < msg->byteLength());
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Server sending unexpected messages" << endl;
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Server sending unexpected messages" << endl;
 
     // Retrieve the socket for this handle
     TCPSocket* sock = getConnectedSocket(msg->getHandle());

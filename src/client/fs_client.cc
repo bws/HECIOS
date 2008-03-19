@@ -49,8 +49,8 @@ spfsCollectiveCreateRequest* FSClient::createCollectiveCreateRequest(
     }
 
     // Set the collective create request size (op, creds, fs_id, objType,
-    //  numExtentArrays, extentArraySizes, extentArrays)
-    long msgSize = 4 + FSClient::CREDENTIALS_SIZE + 4 + 4 +
+    //  metahandle, numExtentArrays, extentArraySizes, extentArrays)
+    long msgSize = 4 + FSClient::CREDENTIALS_SIZE + 4 + 4 + 8 +
         4 + dataHandles.size()*4 + dataHandles.size()*8;
     create->setByteLength(msgSize);
     return create;

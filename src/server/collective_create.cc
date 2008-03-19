@@ -154,18 +154,13 @@ void CollectiveCreate::sendCollectiveRequests()
     //   Send the second partition to another server
     //   Repeat process with first half of the list
     int numRemainingHandles = createReq_->getDataHandlesArraySize(); 
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Collective request gend: " << numRemainingHandles << endl;
-    
     while (0 < numRemainingHandles)
     {
         // Determine the next partition
         int splitIdx = numRemainingHandles / 2;
         int numChildHandles = numRemainingHandles - splitIdx;
-        cerr << __FILE__ << ":" << __LINE__ << ":"
-             << "Collective request gend: " << splitIdx << " "
-             << numChildHandles << endl;
 
+        // Send the child collective create call
         spfsCollectiveCreateRequest* childCreate =
             createChildCollectiveRequest(splitIdx, numChildHandles);
         childCreate->setContextPointer(createReq_);
@@ -241,9 +236,12 @@ CollectiveCreate::createChildCollectiveRequest(int idx, int numHandles) const
     {
         childCreate->setDataHandles(i, createReq_->getDataHandles(i + idx));
     }
+    //cerr << "Child collective handles: "
+    //     << childCreate->getDataHandlesArraySize() << endl;
 
-    cerr << "Child collective handles: "
-         << childCreate->getDataHandlesArraySize() << endl;
+    // Set the message size
+    long msgSize = 4 + 16 + 4 + 4 + 8 + 4 + numHandles*4 + numHandles*8;
+    childCreate->setByteLength(msgSize);
     return childCreate;
 }
 

@@ -89,19 +89,22 @@ bool SHTFIOTrace::hasMoreRecords() const
  */
 IOTrace::Record* SHTFIOTrace::nextRecord()
 {
-    IOTrace::Record* rec = 0;
-    if (hasMoreRecords())
-    {
-        string line;
-        getline(traceFile_, line);
-        
-        // Create a new message and fill it out with the relevant data
-        istringstream recordStream(line);
-        rec = createIOTraceRecord(recordStream);
+    assert(true == hasMoreRecords());
 
-        // Increment the next record ptr
-        nextRecord_++;    
+    string line;
+    getline(traceFile_, line);
+        
+    // Create a new message and fill it out with the relevant data
+    istringstream recordStream(line);
+    IOTrace::Record* rec = createIOTraceRecord(recordStream);
+    if (0 == rec)
+    {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "Unable to construct record from: " << line << endl;
     }
+    
+    // Increment the next record ptr
+    nextRecord_++;
     
     return rec;
 }

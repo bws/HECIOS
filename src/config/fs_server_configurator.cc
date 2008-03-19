@@ -99,6 +99,10 @@ void FSServerConfigurator::initialize(int stage)
 
         double setAttrDelay = par("setAttrProcessingDelaySecs");
         FSServer::setSetAttrProcessingDelay(setAttrDelay);
+
+        // Get the flag controlling disk data collection
+        bool collectDiskData = par("collectDiskData");
+        FSServer::setCollectDiskData(collectDiskData);        
     }
     else if (3 == stage)
     {
