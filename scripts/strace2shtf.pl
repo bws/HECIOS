@@ -37,6 +37,16 @@ my $g_mainrc = main();
 exit($g_mainrc);
 
 #
+# Print out the usage statement
+#
+sub printUsage
+{
+    print "Usage $0 <options> strace_file\n";
+    print "  -C  the current working directory when the trace was collected\n";
+    print "  -d  the mount point of the PVFS file system when the trace ran\n";
+}
+
+#
 # Open the input file for reading
 #
 sub openInputFile
@@ -209,6 +219,34 @@ sub getCPUPhaseRecord
 }
 
 #
+# Parse a file access call
+#
+sub parseAccessCall
+{
+    my $line = shift;
+    my $recordFile = shift;
+    my $mountDir = shift;
+
+    # Parse the record
+    my @stuff = split(/\(/, $line);
+    my @args = split(/([,\)]) /, $stuff[1]);
+    my @toks = split(/([\[\]])/, $line);
+    my $rc = $line;
+    $rc =~ s/.* = //;
+
+    # Remove the surrounding "" from the filename
+    my $filename = substr($args[0], 1);
+    chop($filename);
+    $filename = fixRelativePath($filename);
+    my $perms = $args[1];
+
+    # Update meta data
+    addFilename($filename);
+
+    return "ACCESS $filename $perms $rc";
+}
+
+#
 # Parse a descriptor close call, updating the ignore list if this was an
 # ignored descriptor
 #
@@ -297,7 +335,7 @@ sub parseIOCall
     my $extent = $rc;
 
     # Update the global trace metadata
-    #print "Desc: $descriptor Off: $offset  Ext: $extent\n";
+    #print "Type: $ioType Desc: $descriptor Off: $offset  Ext: $extent\n";
     updateFileSize($descriptor, $offset, $extent);
 
     # Update the file pointer
@@ -395,6 +433,54 @@ sub parseOpenCall
 }
 
 #
+# Parse a Readdir call and construct a trace record
+#
+sub parseReaddirCall
+{
+    my $line = shift;
+    my $recordFile = shift;
+
+    # Parse the read record
+    my @stuff = split(/\(/, $line);
+    my @args = split(/, /, $stuff[1]);
+    my $rc = $line;
+    $rc =~ s/.*\".*\".* = //;
+
+    my $cmd = uc($stuff[0]);
+    my $descriptor = $args[0];
+    my $count = $args[1];
+
+    return "READDIR $descriptor $count $rc";
+}
+
+#
+# Parse an rmdir system call and construct a trace record
+#
+sub parseRmdirCall
+{
+    my $line = shift;
+    my $recordFile = shift;
+    my $mountDir = shift;
+
+    # Parse the record
+    my @stuff = split(/\(/, $line);
+    my @args = split(/([,\)]) /, $stuff[1]);
+    my @toks = split(/([\[\]])/, $line);
+    my $rc = $line;
+    $rc =~ s/.*\".*\".* = //;
+
+    # Remove the surrounding "" from the filename
+    my $filename = substr($args[0], 1);
+    chop($filename);
+    $filename = fixRelativePath($filename);
+
+    # Update meta data
+    addFilename($filename);
+
+    return "RMDIR $filename $rc";
+}
+
+#
 # Parse a socket call in order to ignore the socket descriptor
 #
 sub parseSocketCall
@@ -411,6 +497,33 @@ sub parseSocketCall
     addFilenameAndDescriptor($socketName, $socketDescriptor);
 
     return "SOCKET $socketName NULL $socketDescriptor";
+}
+
+#
+# Parse a file stat system call and construct a trace record
+#
+sub parseStatCall
+{
+    my $line = shift;
+    my $recordFile = shift;
+    my $mountDir = shift;
+
+    # Parse the record
+    my @stuff = split(/\(/, $line);
+    my @args = split(/([,\)]) /, $stuff[1]);
+    my @toks = split(/([\[\]])/, $line);
+    my $rc = $line;
+    $rc =~ s/.*\".*\".* = //;
+
+    # Remove the surrounding "" from the filename
+    my $filename = substr($args[0], 1);
+    chop($filename);
+    $filename = fixRelativePath($filename);
+
+    # Update meta data
+    addFilename($filename);
+
+    return "STAT $filename $rc";
 }
 
 #
@@ -446,17 +559,6 @@ sub parseUnlinkCall
 {
     my $line = shift;
     my $recordFile = shift;
-    print "ERROR: Don't handle: $line";
-    return "$line";
-}
-
-#
-# Parse a file stat system call and construct a trace record
-#
-sub parseStatCall
-{
-    my $line = shift;
-    my $recordFile = shift;
     my $mountDir = shift;
 
     # Parse the record
@@ -474,7 +576,7 @@ sub parseStatCall
     # Update meta data
     addFilename($filename);
 
-    return "STAT $filename $rc";
+    return "UNLINK $filename $rc";
 }
 
 #
@@ -518,7 +620,7 @@ sub processTraceRecord
             $processedRecord = $traceRecord;
         }
     }
-    elsif ($cmd =~ /MKDIR|STAT|UTIME/)
+    elsif ($cmd =~ /ACCESS|MKDIR|RMDIR|STAT|UNLINK|UTIME/)
     {
         my $filename = $fields[1];
         if (isFileInPFS($g_mountDir, $filename))
@@ -559,6 +661,7 @@ sub emitTraceRecord
     my $startTime = shift;
     my $duration = shift;
 
+    # Print the data to the record file
     print $recordFile "$startTime $duration $traceRecord\n";
 }
 
@@ -576,21 +679,48 @@ sub processStraceLine
     my $relativeTime = substr($line, 0, 13);
     $g_traceTimeStamp += $relativeTime;
 
+    # Extract the call time field (duration) from the end of the line
+    $line =~ m/<(\d+\.\d+)>/;
+    my $callTime = $1;
+
     # Extract the system call from the line
     my $syscall = substr($line, 14);
     $syscall =~ s/ <\d+\.\d+>//;
+
+    # The list of tokens to emit CPU time rather than a record for
+    my $ignoredCommands = 
+        "_sysctl|arch_prctl|bind|brk|" .
+        "chdir|clock_gettime|connect|" .
+        "execve|futex|" .
+        "geteuid|getrlimit|getpid|getxattr|" .
+        "mmap|mprot|munmap|poll|recvfrom|" .
+        "rt_sigaction|rt_sigprocmask|" .
+        "sendto|set_tid_address|setsockopt|umask|uname";
 
     # Possible interesting operations of open, read, write, close, and utime
     my @cmd = split(/\(/, $syscall);
     my $token = $cmd[0];
     my $traceRecord;
-    if ("chmod" eq $token)
+    if ($token =~ /$ignoredCommands/)
+    {
+        $traceRecord = getCPUPhaseRecord();
+    }
+    elsif ("access" eq $token)
+    {
+        $traceRecord = parseAccessCall($syscall);
+    }
+    elsif ("chmod" eq $token)
     {
         $traceRecord = parseChmodCall($syscall);
     }
     elsif ("close" eq $token)
     {
         $traceRecord = parseCloseCall($syscall);
+    }
+    elsif ("exit_group" eq $token)
+    {
+        $traceRecord = getCPUPhaseRecord();
+        $callTime = 0.0;
     }
     elsif ("fcntl" eq $token || "ioctl" eq $token)
     {
@@ -599,6 +729,14 @@ sub processStraceLine
     elsif ("fstat" eq $token)
     {
         $traceRecord = parseFstatCall($syscall);
+    }
+    elsif ("getdents64" eq $token)
+    {
+        $traceRecord = parseReaddirCall($syscall);
+    }
+    elsif ("lstat" eq $token)
+    {
+        $traceRecord = parseStatCall($syscall);
     }
     elsif ("mkdir" eq $token)
     {
@@ -615,6 +753,14 @@ sub processStraceLine
     elsif ("read" eq $token || "write" eq $token)
     {
         $traceRecord = parseIOCall($syscall);
+    }
+    elsif ("readdir" eq $token)
+    {
+        $traceRecord = parseReaddirCall($syscall);
+    }
+    elsif ("rmdir" eq $token)
+    {
+        $traceRecord = parseRmdirCall($syscall);
     }
     elsif ("socket" eq $token)
     {
@@ -634,19 +780,14 @@ sub processStraceLine
     }
     else
     {
-        $traceRecord = getCPUPhaseRecord();
+        # Print out the unidentified token
+        print "Unable to identify: $token\n";
+        
     }
 
-    # Emit the trace record if necessary
-    my $ignoredCommands = "access|arch_prctl|bind|brk|connect|execve" .
-        "|exit_group|geteuid|getpid|mmap|mprot|munmap|poll|recvfrom" .
-        "|rt_sigaction|sendto|setsockopt|umask|uname";
     my $returnCode = !1;
     if ($traceRecord)
     {
-        # Extract the call time field from the end of the line
-        $line =~ m/<(\d+\.\d+)>/;
-        my $callTime = $1;
         my $processedRecord = processTraceRecord($traceRecord);
         if ($processedRecord)
         {
@@ -658,15 +799,9 @@ sub processStraceLine
         }
         $returnCode = 1;
     }
-    elsif ($token =~ /$ignoredCommands/)
-    {
-        # The following commands are ignored and should be considered
-        # successfully parsed
-        $returnCode = 1;
-    }
     else
     {
-        print "ERROR: Could not identify: $token\n";
+        print "ERROR: Could not parse: $syscall\n";
     }
 
     return $returnCode;
@@ -727,7 +862,7 @@ sub main
     my $numArgs = $#ARGV + 1;
     if (1 > $numArgs)
     {
-        print "Usage: $0 [-m dir] <strace file>\n";
+        printUsage();
         exit 1;
     }
 
@@ -740,7 +875,14 @@ sub main
 
     # Parse command line arguments
     my %options = ();
-    getopts("C:d:", \%options);
+    getopts("C:d:h", \%options);
+
+    # Print the help information if requested
+    if ($options{"h"})
+    {
+        printUsage();
+        exit 1;
+    }
 
     # Determine the trace's current working directory
     if ($options{"C"})
@@ -761,8 +903,11 @@ sub main
         . "PFS Mountpoint: $g_mountDir\n";
     
     # Ignore stdin, stdout, and stderr descriptors
+    addFilenameAndDescriptor("stdin", 0);
     ignoreDescriptor(0);
+    addFilenameAndDescriptor("stdout", 1);
     ignoreDescriptor(1);
+    addFilenameAndDescriptor("stderr", 2);
     ignoreDescriptor(2);
     print "Ignoring default descriptors: stdout(0) stdin(1) stderr(2)\n";
 
