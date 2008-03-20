@@ -8,8 +8,6 @@ Items to do:
 
 -  Add random offset selection to the CreateDirEnt server state machine
   
--  Fix the client side Open to perform create
-
 -  Fix the VectorDataType to work correctly
 
 -  Add unit tests for DataTypes
@@ -23,5 +21,3 @@ Items to do:
 -  Add file sync support to file system
 
 -  Add file system sync to the file system
-
--  Add directory creation support to the file system
