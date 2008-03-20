@@ -203,7 +203,17 @@ sub fixRelativePath
     my $filename = shift;
 
     # If the path is relative, prepend the current directory
-    if ("/" ne substr($filename, 0, 1))
+    if ("." eq $filename)
+    {
+        $filename = $g_currentDir;
+    }
+    elsif (".." eq $filename)
+    {
+        #my $upOneDir = dirname($g_currentDir);
+        #print "On receiving .. changing: $filename -> $upOneDir\n";
+        $filename = dirname($g_currentDir);
+    }
+    elsif ("/" ne substr($filename, 0, 1))
     {
         $filename = $g_currentDir . "/" . $filename;
     }
@@ -259,6 +269,38 @@ sub parseAccessCall
 }
 
 #
+# Parse a chdir call.  This one isn't like the reset.  It changes the parser
+# state, and then emits a CPU PHASE record.
+#
+sub parseChdirCall
+{
+    my $line = shift;
+    my $recordFile = shift;
+    my $mountDir = shift;
+
+    # Parse the record
+    my @stuff = split(/\(/, $line);
+    my @args = split(/([,\)]) /, $stuff[1]);
+    my @toks = split(/([\[\]])/, $line);
+    my $rc = $line;
+    $rc =~ s/.* = //;
+
+    # Remove the surrounding "" from the filename
+    my $filename = substr($args[0], 1);
+    chop($filename);
+    $filename = fixRelativePath($filename);
+
+    # Add the directory
+    addFilename($filename);
+
+    # Update the current working directory
+    $g_currentDir = $filename;
+    #print "WARNING: Set the current working dir to $g_currentDir\n";
+
+    return getCPUPhaseRecord();
+}
+
+#
 # Parse a descriptor close call, updating the ignore list if this was an
 # ignored descriptor
 #
@@ -285,6 +327,30 @@ sub parseChmodCall
     my $line = shift;
     print "Error: not parsing $line";
     return "Unparsed line: $line\n";
+}
+
+#
+# Parse a fchdir call.  This one isn't a typical command record.  It changes 
+# the parser state (current directory), and then emits a CPU PHASE record.
+#
+sub parseFchdirCall
+{
+    my $line = shift;
+    my $recordFile = shift;
+    my $mountDir = shift;
+
+    # Parse the record
+    my @stuff = split(/\(/, $line);
+    my @args = split(/([,\)]) /, $stuff[1]);
+
+    # Remove the surrounding "" from the filename
+    my $descriptor = $args[0];
+
+    # Update the current working directory
+    $g_currentDir = $g_descriptorToFilename{$descriptor};
+    #print "WARNING: Set the current working dir to $g_currentDir\n";
+
+    return getCPUPhaseRecord();
 }
 
 #
@@ -454,13 +520,13 @@ sub parseReaddirCall
 
     # Parse the read record
     my @stuff = split(/\(/, $line);
-    my @args = split(/, /, $stuff[1]);
+    my @args = split(/([,\)]) /, $stuff[1]);
     my $rc = $line;
-    $rc =~ s/.*\".*\".* = //;
+    $rc =~ s/.* = //;
 
     my $cmd = uc($stuff[0]);
     my $descriptor = $args[0];
-    my $count = $args[1];
+    my $count = $args[4];
 
     return "READDIR $descriptor $count $rc";
 }
@@ -702,7 +768,7 @@ sub processStraceLine
     # The list of tokens to emit CPU time rather than a record for
     my $ignoredCommands = 
         "_sysctl|arch_prctl|bind|brk|" .
-        "chdir|clock_gettime|connect|" .
+        "clock_gettime|connect|" .
         "execve|futex|" .
         "geteuid|getrlimit|getpid|getxattr|" .
         "mmap|mprot|munmap|poll|recvfrom|" .
@@ -721,6 +787,10 @@ sub processStraceLine
     {
         $traceRecord = parseAccessCall($syscall);
     }
+    elsif ("chdir" eq $token)
+    {
+        $traceRecord = parseChdirCall($syscall);
+    }
     elsif ("chmod" eq $token)
     {
         $traceRecord = parseChmodCall($syscall);
@@ -733,6 +803,10 @@ sub processStraceLine
     {
         $traceRecord = getCPUPhaseRecord();
         $callTime = 0.0;
+    }
+    elsif ("fchdir" eq $token)
+    {
+        $traceRecord = parseFchdirCall($syscall);
     }
     elsif ("fcntl" eq $token || "ioctl" eq $token)
     {
