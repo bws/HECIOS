@@ -30,6 +30,8 @@ class UMDIOTrace;
 class spfsCacheInvalidateRequest;
 class spfsMPIDirectoryCreateRequest;
 class spfsMPIFileCloseRequest;
+class spfsMPIFileGetAModeRequest;
+class spfsMPIFileGetSizeRequest;
 class spfsMPIFileOpenRequest;
 class spfsMPIFileReadAtRequest;
 class spfsMPIFileUpdateTimeRequest;
@@ -54,8 +56,10 @@ protected:
 
     virtual bool scheduleNextMessage();
 
-    /** Create a cMessage from an IOTrace::Record */
+    /** FIXME: broken abstraction */
     virtual cMessage* createMessage(void *){return NULL;};
+
+    /** Create a cMessage from an IOTrace::Record */
     virtual cMessage* createMessage(IOTrace::Record* rec);
     
 private:
@@ -78,6 +82,14 @@ private:
     /** @return an MPI File Close request */
     spfsMPIFileCloseRequest* createCloseMessage(
         const IOTrace::Record* closeRecord);
+    
+    /** @return an MPI File Get AMode request */
+    spfsMPIFileGetAModeRequest* createGetAModeMessage(
+        const IOTrace::Record* accessRecord);
+    
+    /** @return an MPI File Get Size request */
+    spfsMPIFileGetSizeRequest* createGetSizeMessage(
+        const IOTrace::Record* statRecord);
     
     /** @return an MPI File Open request */
     spfsMPIFileOpenRequest* createOpenMessage(

@@ -121,13 +121,19 @@ IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
     string token;
     recordStream >> token;
 
-    if ("CLOSE" == token)
+    if ("ACCESS" == token)
+    {
+        string filename;
+        recordStream >> filename;
+        rec = createAccessRecord(filename, startTime, duration);
+    }
+    else if ("CLOSE" == token)
     {
         int descriptor, status;
         recordStream >> descriptor >> status;
         rec = createCloseRecord(descriptor, status, startTime, duration);
     }
-    if ("CPU_PHASE" == token)
+    else if ("CPU_PHASE" == token)
     {
         rec = createCpuPhaseRecord(startTime, duration);
     }
@@ -158,6 +164,19 @@ IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
         rec = createReadRecord(descriptor, offset, extent,
                                startTime, duration);
     }
+    else if ("READDIR" == token)
+    {
+        string filename;
+        recordStream >> filename;
+        //rec = createReadRecord(descriptor, offset, extent,
+        //                       startTime, duration);
+    }
+    else if ("STAT" == token)
+    {
+        string filename;
+        recordStream >> filename;
+        rec = createStatRecord(filename, startTime, duration);
+    }
     else if ("UTIME" == token)
     {
         string filename, utime, tmp;
@@ -187,6 +206,16 @@ IOTrace::Record* SHTFIOTrace::createCloseRecord(int descriptor,
                                                startTime, duration);
     rec->fileId(descriptor);
     rec->filename(getFilename(descriptor));
+    return rec;
+}
+
+IOTrace::Record* SHTFIOTrace::createAccessRecord(const string& filename,
+                                                 double startTime,
+                                                 double duration)
+{
+    IOTrace::Record* rec = new IOTrace::Record(IOTrace::ACCESS,
+                                               startTime, duration);
+    rec->filename(filename);
     return rec;
 }
 
@@ -300,11 +329,13 @@ IOTrace::Record* SHTFIOTrace::createReadRecord(int descriptor,
     return rec;
 }
 
-IOTrace::Record* SHTFIOTrace::createStatRecord(double startTime,
+IOTrace::Record* SHTFIOTrace::createStatRecord(const string& filename,
+                                               double startTime,
                                                double duration)
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::STAT,
                                                startTime, duration);
+    rec->filename(filename);
     return rec;
 }
 

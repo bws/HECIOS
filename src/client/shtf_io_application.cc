@@ -108,6 +108,11 @@ cMessage* SHTFIOApplication::createMessage(IOTrace::Record* rec)
 
     // Create the correct messages for each operation type
     switch(rec->opType()) {
+        case IOTrace::ACCESS:
+        {
+            mpiMsg = createGetAModeMessage(rec);
+            break;
+        }
         case IOTrace::CLOSE:
         {
             mpiMsg = createCloseMessage(rec);
@@ -131,6 +136,11 @@ cMessage* SHTFIOApplication::createMessage(IOTrace::Record* rec)
         case IOTrace::READ:
         {
             mpiMsg = createReadMessage(rec);
+            break;
+        }
+        case IOTrace::STAT:
+        {
+            mpiMsg = createGetSizeMessage(rec);
             break;
         }
         case IOTrace::UTIME:
@@ -193,6 +203,28 @@ spfsMPIFileCloseRequest* SHTFIOApplication::createCloseMessage(
     spfsMPIFileCloseRequest* close = new spfsMPIFileCloseRequest(
         0, SPFS_MPI_FILE_CLOSE_REQUEST);
     return close;
+}
+
+spfsMPIFileGetAModeRequest* SHTFIOApplication::createGetAModeMessage(
+    const IOTrace::Record* accessRecord)
+{
+    assert(IOTrace::ACCESS == accessRecord->opType());
+
+    spfsMPIFileGetAModeRequest* getAMode = new spfsMPIFileGetAModeRequest(
+        0, SPFS_MPI_FILE_GET_AMODE_REQUEST);
+    getAMode->setFileName(accessRecord->filename().c_str());
+    return getAMode;
+}
+
+spfsMPIFileGetSizeRequest* SHTFIOApplication::createGetSizeMessage(
+    const IOTrace::Record* statRecord)
+{
+    assert(IOTrace::STAT == statRecord->opType());
+
+    spfsMPIFileGetSizeRequest* getSize = new spfsMPIFileGetSizeRequest(
+        0, SPFS_MPI_FILE_GET_SIZE_REQUEST);
+    getSize->setFileName(statRecord->filename().c_str());
+    return getSize;
 }
 
 spfsMPIFileOpenRequest* SHTFIOApplication::createOpenMessage(

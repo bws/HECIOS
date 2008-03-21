@@ -55,6 +55,11 @@ private:
     /** @return the IOTraceRecord contained in the recordStream*/
     IOTrace::Record* createIOTraceRecord(std::istream& recordStream);
 
+    /** @return an ACCESS IOTraceRecord */
+    IOTrace::Record* createAccessRecord(const std::string& filename,
+                                        double startTime,
+                                        double duration);
+
     /** @return a CLOSE IOTraceRecord */
     IOTrace::Record* createCloseRecord(int descriptor,
                                        int status,
@@ -85,10 +90,10 @@ private:
 
     /** @return a READ_AT IOTraceRecord */
     IOTrace::Record* createReadAtRecord(int descriptor,
-                                         size_t offset,
-                                         size_t extent,
-                                         double startTime,
-                                         double duration);
+                                        size_t offset,
+                                        size_t extent,
+                                        double startTime,
+                                        double duration);
 
     /** @return a READ IOTraceRecord */
     IOTrace::Record* createReadRecord(int descriptor,
@@ -97,8 +102,14 @@ private:
                                       double startTime,
                                       double duration);
 
+    /** @return an READDIR IOTraceRecord */
+    IOTrace::Record* createReadDirRecord(const std::string& dirName,
+                                         double startTime,
+                                         double duration);
+
     /** @return a STAT IOTraceRecord */
-    IOTrace::Record* createStatRecord(double startTime,
+    IOTrace::Record* createStatRecord(const std::string& filename,
+                                      double startTime,
                                       double duration);
 
     /** @return a UTIME IOTraceRecord */

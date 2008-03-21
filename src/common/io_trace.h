@@ -36,8 +36,9 @@ public:
      * Operation Types
      */
     enum Operation {INVALID = 0,
-                    CPU_PHASE, OPEN, DELETE, MKDIR, UTIME, STAT,
-                    CLOSE, SEEK, READ_AT, READ, WRITE, WRITE_AT};
+                    ACCESS, CPU_PHASE, OPEN, DELETE,
+                    MKDIR, UTIME, STAT, CLOSE, SEEK,
+                    READ_AT, READ, READ_DIR, WRITE, WRITE_AT};
 
     /** I/O trace record.  A single entry from the tracefile. */
     class Record

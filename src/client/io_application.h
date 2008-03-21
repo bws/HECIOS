@@ -80,7 +80,7 @@ protected:
     virtual void handleIOMessage(cMessage* msg);
     virtual void handleMPIMessage(cMessage* msg);
 
-    /** Create a cMessage */
+    /** FIXME: this should not be needed -- a bad hack */
     virtual cMessage* createMessage(void *) = 0;                
 
     /** process rank */
