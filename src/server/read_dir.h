@@ -1,5 +1,5 @@
-#ifndef CREATE_DIR_ENT_H
-#define CREATE_DIR_ENT_H
+#ifndef READ_DIR_H
+#define READ_DIR_H
 //
 // This file is part of Hecios
 //
@@ -20,20 +20,20 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 class cMessage;
-class spfsCreateDirEntRequest;
+class spfsReadDirRequest;
 class FSServer;
 
 /**
- * State machine for performing directory entry creation processing
+ * State machine for performing directory read processing
  */
-class CreateDirEnt
+class ReadDir
 {
 public:
     /** Constructor */
-    CreateDirEnt(FSServer* module, spfsCreateDirEntRequest* createDirEntReq);
+    ReadDir(FSServer* module, spfsReadDirRequest* readDir);
 
     /**
-     * Handle message as part of the creation process
+     * Handle message as part of the read process
      */
     void handleServerMessage(cMessage* msg);
 
@@ -42,7 +42,7 @@ protected:
     /**
      * Send the file creation message to the OS
      */
-    void writeDirEnt();
+    void readDir();
     
     /**
      * Send the final response to the client
@@ -54,8 +54,8 @@ private:
     /** The parent module */
     FSServer* module_;
     
-    /** The originating create directory entry request */
-    spfsCreateDirEntRequest* createDirEntReq_;
+    /** The originating read directory request */
+    spfsReadDirRequest* readDirReq_;
 };
 
 #endif

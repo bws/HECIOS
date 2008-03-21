@@ -99,6 +99,11 @@ void FileSystem::processMessage(spfsOSFileRequest* request, cMessage* msg)
     {
         processOpenMessage(openReq, msg);
     }
+    else if (spfsOSFileUnlinkRequest* unlinkReq =
+             dynamic_cast<spfsOSFileUnlinkRequest*>(request))
+    {
+        processUnlinkMessage(unlinkReq, msg);
+    }
     else
     {
         cerr << "FileSystem: Illegal request sent to file system!!!" << endl;
@@ -125,6 +130,26 @@ void FileSystem::processOpenMessage(spfsOSFileOpenRequest* request,
     {
         spfsOSFileOpenResponse* response =
             new spfsOSFileOpenResponse(0, SPFS_OS_FILE_OPEN_RESPONSE);
+        response->setContextPointer(request);
+        send(response, outGateId_);
+    }
+}
+
+void FileSystem::processUnlinkMessage(spfsOSFileUnlinkRequest* request,
+                                      cMessage* msg)
+{
+    // If this is the opening request, send the metadata request
+    // else its the meta data response, send the final response
+    if (request == msg)
+    {
+        // FIXME: This really needs to write the parent data
+        // and the freed inode list
+        writeMetaData(request);
+    }
+    else
+    {
+        spfsOSFileUnlinkResponse* response =
+            new spfsOSFileUnlinkResponse(0, SPFS_OS_FILE_UNLINK_RESPONSE);
         response->setContextPointer(request);
         send(response, outGateId_);
     }

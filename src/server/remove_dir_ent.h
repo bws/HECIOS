@@ -1,5 +1,5 @@
-#ifndef CREATE_DIR_ENT_H
-#define CREATE_DIR_ENT_H
+#ifndef REMOVE_DIR_ENT_H
+#define REMOVE_DIR_ENT_H
 //
 // This file is part of Hecios
 //
@@ -20,17 +20,17 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 class cMessage;
-class spfsCreateDirEntRequest;
+class spfsRemoveDirEntRequest;
 class FSServer;
 
 /**
- * State machine for performing directory entry creation processing
+ * State machine for performing directory entry remove processing
  */
-class CreateDirEnt
+class RemoveDirEnt
 {
 public:
     /** Constructor */
-    CreateDirEnt(FSServer* module, spfsCreateDirEntRequest* createDirEntReq);
+    RemoveDirEnt(FSServer* module, spfsRemoveDirEntRequest* removeDirEntReq);
 
     /**
      * Handle message as part of the creation process
@@ -40,7 +40,7 @@ public:
 protected:
 
     /**
-     * Send the file creation message to the OS
+     * Send the file write message to the OS
      */
     void writeDirEnt();
     
@@ -54,8 +54,8 @@ private:
     /** The parent module */
     FSServer* module_;
     
-    /** The originating create directory entry request */
-    spfsCreateDirEntRequest* createDirEntReq_;
+    /** The originating remove directory entry request */
+    spfsRemoveDirEntRequest* removeDirEntReq_;
 };
 
 #endif

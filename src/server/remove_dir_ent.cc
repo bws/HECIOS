@@ -19,24 +19,24 @@
 //
 #include <cassert>
 #include <omnetpp.h>
-#include "create_dir_ent.h"
+#include "remove_dir_ent.h"
 #include "filename.h"
 #include "fs_server.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-CreateDirEnt::CreateDirEnt(FSServer* module,
-                           spfsCreateDirEntRequest* createDirEntReq)
+RemoveDirEnt::RemoveDirEnt(FSServer* module,
+                           spfsRemoveDirEntRequest* removeDirEntReq)
     : module_(module),
-      createDirEntReq_(createDirEntReq)
+      removeDirEntReq_(removeDirEntReq)
 {
 }
 
-void CreateDirEnt::handleServerMessage(cMessage* msg)
+void RemoveDirEnt::handleServerMessage(cMessage* msg)
 {
     // Restore the existing state for this request
-    cFSM currentState = createDirEntReq_->getState();
+    cFSM currentState = removeDirEntReq_->getState();
 
     // Server lookup states
     enum {
@@ -49,7 +49,7 @@ void CreateDirEnt::handleServerMessage(cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            module_->recordCreateDirEnt();
+            module_->recordRemoveDirEnt();
             FSM_Goto(currentState, WRITE_DIR_ENT);
             break;
         }
@@ -67,24 +67,24 @@ void CreateDirEnt::handleServerMessage(cMessage* msg)
         case FSM_Enter(FINISH):
         {
             assert(0 != dynamic_cast<spfsOSFileWriteResponse*>(msg));
-            module_->recordCreateDirEntDiskDelay(msg);
+            module_->recordRemoveDirEntDiskDelay(msg);
             finish();
             break;
         }
     }
 
     // Store current state
-    createDirEntReq_->setState(currentState);
+    removeDirEntReq_->setState(currentState);
 }
 
-void CreateDirEnt::writeDirEnt()
+void RemoveDirEnt::writeDirEnt()
 {
     // Convert the handle into a local file name
-    Filename filename(createDirEntReq_->getHandle());
+    Filename filename(removeDirEntReq_->getHandle());
 
     // Create the file write request
     spfsOSFileWriteRequest* fileWrite = new spfsOSFileWriteRequest();
-    fileWrite->setContextPointer(createDirEntReq_);
+    fileWrite->setContextPointer(removeDirEntReq_);
     fileWrite->setFilename(filename.c_str());
     fileWrite->setOffsetArraySize(1);
     fileWrite->setExtentArraySize(1);
@@ -95,13 +95,13 @@ void CreateDirEnt::writeDirEnt()
     module_->send(fileWrite);
 }
 
-void CreateDirEnt::finish()
+void RemoveDirEnt::finish()
 {
-    spfsCreateDirEntResponse* resp =
-        new spfsCreateDirEntResponse(0, SPFS_CREATE_DIR_ENT_RESPONSE);
-    resp->setContextPointer(createDirEntReq_);
+    spfsRemoveDirEntResponse* resp =
+        new spfsRemoveDirEntResponse(0, SPFS_REMOVE_DIR_ENT_RESPONSE);
+    resp->setContextPointer(removeDirEntReq_);
     resp->setByteLength(4);
-    module_->sendDelayed(resp, FSServer::createDirEntProcessingDelay());
+    module_->sendDelayed(resp, FSServer::removeDirEntProcessingDelay());
 }
 
 /*

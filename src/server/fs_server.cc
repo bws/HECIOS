@@ -22,6 +22,7 @@
 #include <climits>
 #include <cstring>
 #include <iostream>
+#include "change_dir_ent.h"
 #include "collective_create.h"
 #include "create.h"
 #include "create_dir_ent.h"
@@ -29,7 +30,10 @@
 #include "get_attr.h"
 #include "bmi_list_io_data_flow.h"
 #include "lookup.h"
+#include "read_dir.h"
 #include "read.h"
+#include "remove_dir_ent.h"
+#include "remove.h"
 #include "set_attr.h"
 #include "write.h"
 #include "pvfs_proto_m.h"
@@ -41,12 +45,16 @@ using namespace std;
 Define_Module(FSServer);
 
 size_t FSServer::defaultAttrSize_ = 0;
+simtime_t FSServer::changeDirEntProcessingDelay_ = 0.0;
 simtime_t FSServer::createDFileProcessingDelay_ = 0.0;
 simtime_t FSServer::createDirectoryProcessingDelay_ = 0.0;
 simtime_t FSServer::createMetadataProcessingDelay_ = 0.0;
 simtime_t FSServer::createDirEntProcessingDelay_ = 0.0;
 simtime_t FSServer::getAttrProcessingDelay_ = 0.0;
 simtime_t FSServer::lookupPathProcessingDelay_ = 0.0;
+simtime_t FSServer::readDirProcessingDelay_ = 0.0;
+simtime_t FSServer::removeDirEntProcessingDelay_ = 0.0;
+simtime_t FSServer::removeObjectProcessingDelay_ = 0.0;
 simtime_t FSServer::setAttrProcessingDelay_ = 0.0;
 bool FSServer::collectDiskData_ = false;
 
@@ -58,6 +66,16 @@ size_t FSServer::getDefaultAttrSize()
 size_t FSServer::getDirectoryEntrySize()
 {
     return 128;
+}
+
+void FSServer::setChangeDirEntProcessingDelay(simtime_t changeDirEntDelay)
+{
+    changeDirEntProcessingDelay_ = changeDirEntDelay;
+}
+
+simtime_t FSServer::changeDirEntProcessingDelay()
+{
+    return changeDirEntProcessingDelay_;
 }
 
 void FSServer::setCreateDFileProcessingDelay(simtime_t createDFileDelay)
@@ -120,6 +138,36 @@ simtime_t FSServer::lookupPathProcessingDelay()
     return lookupPathProcessingDelay_;
 }
 
+void FSServer::setReadDirProcessingDelay(simtime_t readDirDelay)
+{
+    readDirProcessingDelay_ = readDirDelay;
+}
+
+simtime_t FSServer::readDirProcessingDelay()
+{
+    return readDirProcessingDelay_;
+}
+
+void FSServer::setRemoveDirEntProcessingDelay(simtime_t removeDirEntDelay)
+{
+    removeDirEntProcessingDelay_ = removeDirEntDelay;
+}
+
+simtime_t FSServer::removeDirEntProcessingDelay()
+{
+    return removeDirEntProcessingDelay_;
+}
+
+void FSServer::setRemoveObjectProcessingDelay(simtime_t removeObjectDelay)
+{
+    removeObjectProcessingDelay_ = removeObjectDelay;
+}
+
+simtime_t FSServer::removeObjectProcessingDelay()
+{
+    return removeObjectProcessingDelay_;
+}
+
 void FSServer::setSetAttrProcessingDelay(simtime_t setAttrDelay)
 {
     setAttrProcessingDelay_ = setAttrDelay;
@@ -132,6 +180,7 @@ simtime_t FSServer::setAttrProcessingDelay()
 
 FSServer::FSServer()
     : cSimpleModule(),
+      changeDirEntDiskDelay_("SPFS Change DirEnt Disk Delay"),
       collectiveCreateDiskDelay_("SPFS Coll Create Disk Delay"),
       collectiveGetAttrDiskDelay_("SPFS Coll GetAttr Disk Delay"),
       collectiveRemoveDiskDelay_("SPFS Coll Remove Disk Delay"),
@@ -139,6 +188,9 @@ FSServer::FSServer()
       createObjectDiskDelay_("SPFS Create Object Disk Delay"),
       getAttrDiskDelay_("SPFS GetAttr Disk Delay"),
       lookupDiskDelay_("SPFS Lookup Disk Delay"),
+      readDirDiskDelay_("SPFS ReadDir Disk Delay"),
+      removeDirEntDiskDelay_("SPFS Remove DirEnt Disk Delay"),
+      removeObjectDiskDelay_("SPFS Remove Object Disk Delay"),
       setAttrDiskDelay_("SPFS SetAttr Disk Delay")
 {
 }
@@ -173,6 +225,7 @@ void FSServer::initialize()
     numCreateObjects_ = 0;
     numGetAttrs_ = 0;
     numLookups_ = 0;
+    numReadDirs_ = 0;
     numReads_ = 0;
     numSetAttrs_ = 0;
     numWrites_ = 0;
@@ -185,6 +238,7 @@ void FSServer::finish()
     recordScalar("SPFS Server CreateObjects", numCreateObjects_);
     recordScalar("SPFS Server GetAttrs", numGetAttrs_);
     recordScalar("SPFS Server Lookups", numLookups_);
+    recordScalar("SPFS Server ReadDirs", numReadDirs_);
     recordScalar("SPFS Server Reads", numReads_);
     recordScalar("SPFS Server SetAttrs", numSetAttrs_);
     recordScalar("SPFS Server Writes", numWrites_);
@@ -231,6 +285,13 @@ void FSServer::processRequest(spfsRequest* request, cMessage* msg)
     assert(0 != request);
     switch(request->kind())
     {
+        case SPFS_CHANGE_DIR_ENT_REQUEST:
+        {
+            ChangeDirEnt changeDirEnt(
+                this, static_cast<spfsChangeDirEntRequest*>(request));
+            changeDirEnt.handleServerMessage(msg);
+            break;
+        }
         case SPFS_COLLECTIVE_CREATE_REQUEST:
         {
             CollectiveCreate collCreate(
@@ -263,10 +324,29 @@ void FSServer::processRequest(spfsRequest* request, cMessage* msg)
             lookup.handleServerMessage(msg);
             break;
         }
+        case SPFS_READ_DIR_REQUEST:
+        {
+            ReadDir readDir(this, static_cast<spfsReadDirRequest*>(request));
+            readDir.handleServerMessage(msg);
+            break;
+        }
         case SPFS_READ_REQUEST:
         {
             Read read(this, static_cast<spfsReadRequest*>(request));
             read.handleServerMessage(msg);
+            break;
+        }
+        case SPFS_REMOVE_DIR_ENT_REQUEST:
+        {
+            RemoveDirEnt removeDirEnt(
+                this, static_cast<spfsRemoveDirEntRequest*>(request));
+            removeDirEnt.handleServerMessage(msg);
+            break;
+        }
+        case SPFS_REMOVE_REQUEST:
+        {
+            Remove remove(this, static_cast<spfsRemoveRequest*>(request));
+            remove.handleServerMessage(msg);
             break;
         }
         case SPFS_SET_ATTR_REQUEST:
@@ -302,9 +382,24 @@ void FSServer::sendDelayed(cMessage* msg, simtime_t delay)
     cSimpleModule::sendDelayed(msg, delay, outGateId_);
 }
 
+void FSServer::recordChangeDirEnt()
+{
+    numChangeDirEnts_++;
+}
+
 void FSServer::recordCollectiveCreate()
 {
     numCollectiveCreates_++;
+}
+
+void FSServer::recordCollectiveGetAttr()
+{
+    numCollectiveGetAttrs_++;
+}
+
+void FSServer::recordCollectiveRemove()
+{
+    numCollectiveRemoves_++;
 }
 
 void FSServer::recordCreateDirEnt()
@@ -327,9 +422,24 @@ void FSServer::recordLookup()
     numLookups_++;
 }
 
+void FSServer::recordReadDir()
+{
+    numReadDirs_++;
+}
+
 void FSServer::recordRead()
 {
     numReads_++;
+}
+
+void FSServer::recordRemoveDirEnt()
+{
+    numRemoveDirEnts_++;
+}
+
+void FSServer::recordRemoveObject()
+{
+    numRemoveObjects_++;
 }
 
 void FSServer::recordSetAttr()
@@ -340,6 +450,14 @@ void FSServer::recordSetAttr()
 void FSServer::recordWrite()
 {
     numWrites_++;
+}
+
+void FSServer::recordChangeDirEntDiskDelay(cMessage* fileWriteResponse)
+{
+    if (collectDiskData_)
+    {
+        changeDirEntDiskDelay_.record(getRoundTripDelay(fileWriteResponse));
+    }
 }
 
 void FSServer::recordCreateDirEntDiskDelay(cMessage* fileWriteResponse)
@@ -371,6 +489,30 @@ void FSServer::recordLookupDiskDelay(cMessage* fileReadResponse)
     if (collectDiskData_)
     {
         lookupDiskDelay_.record(getRoundTripDelay(fileReadResponse));
+    }
+}
+
+void FSServer::recordReadDirDiskDelay(cMessage* fileReadResponse)
+{
+    if (collectDiskData_)
+    {
+        readDirDiskDelay_.record(getRoundTripDelay(fileReadResponse));
+    }
+}
+
+void FSServer::recordRemoveDirEntDiskDelay(cMessage* fileWriteResponse)
+{
+    if (collectDiskData_)
+    {
+        removeDirEntDiskDelay_.record(getRoundTripDelay(fileWriteResponse));
+    }
+}
+
+void FSServer::recordRemoveObjectDiskDelay(cMessage* fileUnlinkResponse)
+{
+    if (collectDiskData_)
+    {
+        removeObjectDiskDelay_.record(getRoundTripDelay(fileUnlinkResponse));
     }
 }
 

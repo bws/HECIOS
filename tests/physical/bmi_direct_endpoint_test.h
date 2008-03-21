@@ -76,7 +76,7 @@ void BMIDirectEndpointTest::setUp()
 
 void BMIDirectEndpointTest::tearDown()
 {
-    delete moduleTester_;
+    //delete moduleTester_;
     moduleTester_ = 0;
 }
 

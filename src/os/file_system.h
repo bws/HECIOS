@@ -29,6 +29,7 @@ class Filename;
 class StorageLayout;
 class spfsOSFileLIORequest;
 class spfsOSFileOpenRequest;
+class spfsOSFileUnlinkRequest;
 class spfsOSFileRequest;
 
 /**
@@ -92,6 +93,9 @@ private:
 
     /** Process the the multiple messages for a single File open request */
     void processOpenMessage(spfsOSFileOpenRequest* request, cMessage* msg);
+
+    /** Process the the multiple messages for a single File unlink request */
+    void processUnlinkMessage(spfsOSFileUnlinkRequest* request, cMessage* msg);
 
     /** Process the the multiple messages for a single File I/O request */
     void processIOMessage(spfsOSFileLIORequest* request, cMessage* msg);

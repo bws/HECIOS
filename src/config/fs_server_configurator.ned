@@ -26,12 +26,16 @@ simple FSServerConfigurator
     parameters:
         handlesPerServer: const,
         metaDataSizeInBytes: const,
+        changeDirEntProcessingDelaySecs: numeric const,
         createDirEntProcessingDelaySecs: numeric const,
         createDFileProcessingDelaySecs: numeric const,
         createDirectoryProcessingDelaySecs: numeric const,
         createMetadataProcessingDelaySecs: numeric const,
         getAttrProcessingDelaySecs: numeric const,
         lookupPathProcessingDelaySecs: numeric const,
+        readDirProcessingDelaySecs: numeric const,
+        removeDirEntProcessingDelaySecs: numeric const,
+        removeObjectProcessingDelaySecs: numeric const,
         setAttrProcessingDelaySecs: numeric const,
         collectDiskData: bool;
 

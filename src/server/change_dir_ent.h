@@ -1,5 +1,5 @@
-#ifndef CREATE_DIR_ENT_H
-#define CREATE_DIR_ENT_H
+#ifndef CHANGE_DIR_ENT_H
+#define CHANGE_DIR_ENT_H
 //
 // This file is part of Hecios
 //
@@ -20,27 +20,27 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 class cMessage;
-class spfsCreateDirEntRequest;
+class spfsChangeDirEntRequest;
 class FSServer;
 
 /**
- * State machine for performing directory entry creation processing
+ * State machine for performing directory entry change processing
  */
-class CreateDirEnt
+class ChangeDirEnt
 {
 public:
     /** Constructor */
-    CreateDirEnt(FSServer* module, spfsCreateDirEntRequest* createDirEntReq);
+    ChangeDirEnt(FSServer* module, spfsChangeDirEntRequest* changeDirEntReq);
 
     /**
-     * Handle message as part of the creation process
+     * Handle message as part of the change entry process
      */
     void handleServerMessage(cMessage* msg);
 
 protected:
 
     /**
-     * Send the file creation message to the OS
+     * Send the file write message to the OS
      */
     void writeDirEnt();
     
@@ -54,8 +54,8 @@ private:
     /** The parent module */
     FSServer* module_;
     
-    /** The originating create directory entry request */
-    spfsCreateDirEntRequest* createDirEntReq_;
+    /** The originating change directory entry request */
+    spfsChangeDirEntRequest* changeDirEntReq_;
 };
 
 #endif

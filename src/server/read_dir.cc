@@ -19,29 +19,28 @@
 //
 #include <cassert>
 #include <omnetpp.h>
-#include "create_dir_ent.h"
+#include "read_dir.h"
 #include "filename.h"
 #include "fs_server.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-CreateDirEnt::CreateDirEnt(FSServer* module,
-                           spfsCreateDirEntRequest* createDirEntReq)
+ReadDir::ReadDir(FSServer* module, spfsReadDirRequest* readDirReq)
     : module_(module),
-      createDirEntReq_(createDirEntReq)
+      readDirReq_(readDirReq)
 {
 }
 
-void CreateDirEnt::handleServerMessage(cMessage* msg)
+void ReadDir::handleServerMessage(cMessage* msg)
 {
     // Restore the existing state for this request
-    cFSM currentState = createDirEntReq_->getState();
+    cFSM currentState = readDirReq_->getState();
 
     // Server lookup states
     enum {
         INIT = 0,
-        WRITE_DIR_ENT = FSM_Steady(1),
+        READ_DIR = FSM_Steady(1),
         FINISH = FSM_Steady(2),
     };
 
@@ -49,59 +48,61 @@ void CreateDirEnt::handleServerMessage(cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            module_->recordCreateDirEnt();
-            FSM_Goto(currentState, WRITE_DIR_ENT);
+            module_->recordReadDir();
+            FSM_Goto(currentState, READ_DIR);
             break;
         }
-        case FSM_Enter(WRITE_DIR_ENT):
+        case FSM_Enter(READ_DIR):
         {
-            assert(0 != dynamic_cast<spfsCreateDirEntRequest*>(msg));
-            writeDirEnt();
+            assert(0 != dynamic_cast<spfsReadDirRequest*>(msg));
+            readDir();
             break;
         }
-        case FSM_Exit(WRITE_DIR_ENT):
+        case FSM_Exit(READ_DIR):
         {
             FSM_Goto(currentState, FINISH);
             break;
         }
         case FSM_Enter(FINISH):
         {
-            assert(0 != dynamic_cast<spfsOSFileWriteResponse*>(msg));
-            module_->recordCreateDirEntDiskDelay(msg);
+            assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
+            module_->recordReadDirDiskDelay(msg);
             finish();
             break;
         }
     }
 
     // Store current state
-    createDirEntReq_->setState(currentState);
+    readDirReq_->setState(currentState);
 }
 
-void CreateDirEnt::writeDirEnt()
+void ReadDir::readDir()
 {
     // Convert the handle into a local file name
-    Filename filename(createDirEntReq_->getHandle());
+    Filename filename(readDirReq_->getHandle());
 
-    // Create the file write request
-    spfsOSFileWriteRequest* fileWrite = new spfsOSFileWriteRequest();
-    fileWrite->setContextPointer(createDirEntReq_);
-    fileWrite->setFilename(filename.c_str());
-    fileWrite->setOffsetArraySize(1);
-    fileWrite->setExtentArraySize(1);
-    fileWrite->setOffset(0, 0);
-    fileWrite->setExtent(0, module_->getDirectoryEntrySize());
+    // Create the file read request
+    spfsOSFileReadRequest* fileRead = new spfsOSFileReadRequest();
+    fileRead->setContextPointer(readDirReq_);
+    fileRead->setFilename(filename.c_str());
+    fileRead->setOffsetArraySize(1);
+    fileRead->setExtentArraySize(1);
+    fileRead->setOffset(0, readDirReq_->getDirOffset());
+    fileRead->setExtent(0, readDirReq_->getDirEntCount());
     
     // Send the write request
-    module_->send(fileWrite);
+    module_->send(fileRead);
 }
 
-void CreateDirEnt::finish()
+void ReadDir::finish()
 {
-    spfsCreateDirEntResponse* resp =
-        new spfsCreateDirEntResponse(0, SPFS_CREATE_DIR_ENT_RESPONSE);
-    resp->setContextPointer(createDirEntReq_);
-    resp->setByteLength(4);
-    module_->sendDelayed(resp, FSServer::createDirEntProcessingDelay());
+    spfsReadDirResponse* resp =
+        new spfsReadDirResponse(0, SPFS_READ_DIR_RESPONSE);
+    resp->setContextPointer(readDirReq_);
+
+    // Calculate the response size
+    resp->setByteLength(readDirReq_->getDirEntCount() * (8 + 256));
+    module_->sendDelayed(resp, FSServer::readDirProcessingDelay());
 }
 
 /*

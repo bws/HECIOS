@@ -19,29 +19,28 @@
 //
 #include <cassert>
 #include <omnetpp.h>
-#include "create_dir_ent.h"
+#include "remove.h"
 #include "filename.h"
 #include "fs_server.h"
 #include "os_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-CreateDirEnt::CreateDirEnt(FSServer* module,
-                           spfsCreateDirEntRequest* createDirEntReq)
+Remove::Remove(FSServer* module, spfsRemoveRequest* removeReq)
     : module_(module),
-      createDirEntReq_(createDirEntReq)
+      removeReq_(removeReq)
 {
 }
 
-void CreateDirEnt::handleServerMessage(cMessage* msg)
+void Remove::handleServerMessage(cMessage* msg)
 {
     // Restore the existing state for this request
-    cFSM currentState = createDirEntReq_->getState();
+    cFSM currentState = removeReq_->getState();
 
     // Server lookup states
     enum {
         INIT = 0,
-        WRITE_DIR_ENT = FSM_Steady(1),
+        REMOVE_OBJECT = FSM_Steady(1),
         FINISH = FSM_Steady(2),
     };
 
@@ -49,59 +48,54 @@ void CreateDirEnt::handleServerMessage(cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            module_->recordCreateDirEnt();
-            FSM_Goto(currentState, WRITE_DIR_ENT);
+            module_->recordRemoveObject();
+            FSM_Goto(currentState, REMOVE_OBJECT);
             break;
         }
-        case FSM_Enter(WRITE_DIR_ENT):
+        case FSM_Enter(REMOVE_OBJECT):
         {
-            assert(0 != dynamic_cast<spfsCreateDirEntRequest*>(msg));
-            writeDirEnt();
+            assert(0 != dynamic_cast<spfsRemoveRequest*>(msg));
+            unlinkFile();
             break;
         }
-        case FSM_Exit(WRITE_DIR_ENT):
+        case FSM_Exit(REMOVE_OBJECT):
         {
             FSM_Goto(currentState, FINISH);
             break;
         }
         case FSM_Enter(FINISH):
         {
-            assert(0 != dynamic_cast<spfsOSFileWriteResponse*>(msg));
-            module_->recordCreateDirEntDiskDelay(msg);
+            assert(0 != dynamic_cast<spfsOSFileUnlinkResponse*>(msg));
+            module_->recordRemoveObjectDiskDelay(msg);
             finish();
             break;
         }
     }
 
     // Store current state
-    createDirEntReq_->setState(currentState);
+    removeReq_->setState(currentState);
 }
 
-void CreateDirEnt::writeDirEnt()
+void Remove::unlinkFile()
 {
     // Convert the handle into a local file name
-    Filename filename(createDirEntReq_->getHandle());
+    Filename filename(removeReq_->getHandle());
 
-    // Create the file write request
-    spfsOSFileWriteRequest* fileWrite = new spfsOSFileWriteRequest();
-    fileWrite->setContextPointer(createDirEntReq_);
-    fileWrite->setFilename(filename.c_str());
-    fileWrite->setOffsetArraySize(1);
-    fileWrite->setExtentArraySize(1);
-    fileWrite->setOffset(0, 0);
-    fileWrite->setExtent(0, module_->getDirectoryEntrySize());
+    // Create the file unlink request
+    spfsOSFileUnlinkRequest* fileUnlink = new spfsOSFileUnlinkRequest();
+    fileUnlink->setContextPointer(removeReq_);
+    fileUnlink->setFilename(filename.c_str());
     
-    // Send the write request
-    module_->send(fileWrite);
+    // Send the unlink request
+    module_->send(fileUnlink);
 }
 
-void CreateDirEnt::finish()
+void Remove::finish()
 {
-    spfsCreateDirEntResponse* resp =
-        new spfsCreateDirEntResponse(0, SPFS_CREATE_DIR_ENT_RESPONSE);
-    resp->setContextPointer(createDirEntReq_);
+    spfsRemoveResponse* resp = new spfsRemoveResponse(0, SPFS_REMOVE_RESPONSE);
+    resp->setContextPointer(removeReq_);
     resp->setByteLength(4);
-    module_->sendDelayed(resp, FSServer::createDirEntProcessingDelay());
+    module_->sendDelayed(resp, FSServer::removeObjectProcessingDelay());
 }
 
 /*

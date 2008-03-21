@@ -44,16 +44,18 @@ enum spfsOSMessageKind
     SPFS_OS_FILE_WRITE_RESPONSE = 607;
     SPFS_OS_FILE_SYNC_REQUEST = 608;
     SPFS_OS_FILE_SYNC_RESPONSE = 609;
-    SPFS_OS_READ_BLOCKS_REQUEST = 610;
-    SPFS_OS_READ_BLOCKS_RESPONSE = 611;
-    SPFS_OS_WRITE_BLOCKS_REQUEST = 612;
-    SPFS_OS_WRITE_BLOCKS_RESPONSE = 613;
-    SPFS_OS_READ_DEVICE_REQUEST = 614;
-    SPFS_OS_READ_DEVICE_RESPONSE = 615;
-    SPFS_OS_WRITE_DEVICE_REQUEST = 616;
-    SPFS_OS_WRITE_DEVICE_RESPONSE = 617;
-    SPFS_OS_SYNC_REQUEST = 618;
-    SPFS_OS_SYNC_RESPONSE = 619;
+    SPFS_OS_FILE_UNLINK_REQUEST = 610;
+    SPFS_OS_FILE_UNLINK_RESPONSE = 611;
+    SPFS_OS_READ_BLOCKS_REQUEST = 612;
+    SPFS_OS_READ_BLOCKS_RESPONSE = 613;
+    SPFS_OS_WRITE_BLOCKS_REQUEST = 614;
+    SPFS_OS_WRITE_BLOCKS_RESPONSE = 615;
+    SPFS_OS_READ_DEVICE_REQUEST = 616;
+    SPFS_OS_READ_DEVICE_RESPONSE = 617;
+    SPFS_OS_WRITE_DEVICE_REQUEST = 618;
+    SPFS_OS_WRITE_DEVICE_RESPONSE = 619;
+    SPFS_OS_SYNC_REQUEST = 620;
+    SPFS_OS_SYNC_RESPONSE = 621;
 };
 
 // Abstract base class for all OS File requests
@@ -150,6 +152,16 @@ message spfsOSFileSyncRequest extends spfsOSFileRequest
 
 // File sync response from the OS' native file system
 message spfsOSFileSyncResponse extends spfsOSFileResponse
+{
+};
+
+// File unlink request to the OS' native file system
+message spfsOSFileUnlinkRequest extends spfsOSFileRequest
+{
+};
+
+// File unlink response from the OS' native file system
+message spfsOSFileUnlinkResponse extends spfsOSFileResponse
 {
 };
 
