@@ -137,12 +137,6 @@ IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
     {
         rec = createCpuPhaseRecord(startTime, duration);
     }
-    else if ("DELETE" == token)
-    {
-        string filename;
-        recordStream >> filename;
-        rec = createDeleteRecord(filename, startTime, duration);
-    }
     else if ("MKDIR" == token)
     {
         string filename, perms;
@@ -176,6 +170,12 @@ IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
         string filename;
         recordStream >> filename;
         rec = createStatRecord(filename, startTime, duration);
+    }
+    else if ("UNLINK" == token)
+    {
+        string filename;
+        recordStream >> filename;
+        rec = createUnlinkRecord(filename, startTime, duration);
     }
     else if ("UTIME" == token)
     {
@@ -224,16 +224,6 @@ IOTrace::Record* SHTFIOTrace::createCpuPhaseRecord(double startTime,
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::CPU_PHASE,
                                                startTime, duration);
-    return rec;
-}
-
-IOTrace::Record* SHTFIOTrace::createDeleteRecord(const string& filename,
-                                                 double startTime,
-                                                 double duration)
-{
-    IOTrace::Record* rec = new IOTrace::Record(IOTrace::DELETE,
-                                               startTime, duration);
-    rec->filename(filename);
     return rec;
 }
 
@@ -329,11 +319,41 @@ IOTrace::Record* SHTFIOTrace::createReadRecord(int descriptor,
     return rec;
 }
 
+IOTrace::Record* SHTFIOTrace::createReadDirRecord(const string& dirName,
+                                                  double startTime,
+                                                  double duration)
+{
+    IOTrace::Record* rec = new IOTrace::Record(IOTrace::READDIR,
+                                               startTime, duration);
+    rec->filename(dirName);
+    return rec;
+}
+
+IOTrace::Record* SHTFIOTrace::createRmDirRecord(const string& dirName,
+                                                double startTime,
+                                                double duration)
+{
+    IOTrace::Record* rec = new IOTrace::Record(IOTrace::RMDIR,
+                                               startTime, duration);
+    rec->filename(dirName);
+    return rec;
+}
+
 IOTrace::Record* SHTFIOTrace::createStatRecord(const string& filename,
                                                double startTime,
                                                double duration)
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::STAT,
+                                               startTime, duration);
+    rec->filename(filename);
+    return rec;
+}
+
+IOTrace::Record* SHTFIOTrace::createUnlinkRecord(const string& filename,
+                                                 double startTime,
+                                                 double duration)
+{
+    IOTrace::Record* rec = new IOTrace::Record(IOTrace::UNLINK,
                                                startTime, duration);
     rec->filename(filename);
     return rec;

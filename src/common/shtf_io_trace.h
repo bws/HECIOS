@@ -107,10 +107,20 @@ private:
                                          double startTime,
                                          double duration);
 
+    /** @return an RMDIR IOTraceRecord */
+    IOTrace::Record* createRmDirRecord(const std::string& dirName,
+                                       double startTime,
+                                       double duration);
+
     /** @return a STAT IOTraceRecord */
     IOTrace::Record* createStatRecord(const std::string& filename,
                                       double startTime,
                                       double duration);
+
+    /** @return a UNLINK IOTraceRecord */
+    IOTrace::Record* createUnlinkRecord(const std::string& filename,
+                                        double startTime,
+                                        double duration);
 
     /** @return a UTIME IOTraceRecord */
     IOTrace::Record* createUtimeRecord(const std::string& filename,
