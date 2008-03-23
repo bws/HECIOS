@@ -26,12 +26,14 @@ enum mpiMiddlewareRequestKind
 {
     SPFS_MPIMID_REQUEST = 701;
     SPFS_MPIMID_BCAST_REQUEST = 702;
+    SPFS_MPIMID_BARRIER_REQUEST = 703;
 };
 
 enum mpiMiddlewareResponseKind
 {
     SPFS_MPIMID_RESPONSE = 801;
     SPFS_MPIMID_BCAST_RESPONSE = 802;
+    SPFS_MPIMID_BARRIER_RESPONSE = 803;
 };
 
 message spfsMPIMidRequest
@@ -48,17 +50,21 @@ message spfsMPIMidResponse
 message spfsMPIMidBcastRequest extends spfsMPIMidRequest
 {
     fields:
-        long uniId;
+        int communicator;
         int root;
-        int step;
-        int rankSet[] = 0;
+        int parent;
 };
 
 message spfsMPIMidBcastResponse extends spfsMPIMidResponse
 {
     fields:
-        long uniId;
 };
+
+message spfsMPIMidBarrierRequest extends spfsMPIMidRequest
+{
+    fields:
+        int communicator;
+}
 
 //
 // Local variables:

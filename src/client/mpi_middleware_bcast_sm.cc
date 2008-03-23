@@ -23,6 +23,7 @@
 #include "mpi_middleware.h"
 #include "mpi_mid_m.h"
 #include "mpi_proto_m.h"
+#include "comm_man.h"
 #include <iostream>
 #include <cassert>
 
@@ -31,10 +32,9 @@ using namespace std;
 MPIMidBcastSM::MPIMidBcastSM(MpiMiddleware *mpi_mid)
 {
     mpiMiddleware_ = mpi_mid;
-    rankNum_ = 0;
-    rspNum_ = 0;
-    rspUniId_ = -1;
-    rspRank_ = -1;
+    rspCounter_ = 0;
+    childNum_ = 0;
+    parentWRank_ = -1;
 }
 
 void MPIMidBcastSM::handleMessage(cMessage* msg)
@@ -43,76 +43,84 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     {
         INIT = 0,
         BCAST = FSM_Transient(1),
-        PREWAIT = FSM_Steady(2),
-        WAIT = FSM_Transient(3),
-        RSP = FSM_Steady(4),
+        WAIT = FSM_Steady(2),
+        RSP = FSM_Transient(3),
     };
 
     FSM_Switch(currentState_)
     {
-    case FSM_Exit(INIT):
-        {
-            spfsMPIMidBcastRequest* req = dynamic_cast<spfsMPIMidBcastRequest*>(msg);
-            assert(0 != req);
+        case FSM_Enter(INIT):
+            {
+//                cerr << mpiMiddleware_->getRank() << "enter INIT" << endl;
+                rspCounter_ = 0;
+                childNum_ = 0;
+                parentWRank_ = -1;
+                break;
+            }
+        case FSM_Exit(INIT):
+            {
+//                cerr << mpiMiddleware_->getRank() << "exit INIT" << endl;
+                if(msg->kind() == SPFS_MPIMID_BCAST_REQUEST)
+                    if(spfsMPIMidBcastRequest* req = dynamic_cast<spfsMPIMidBcastRequest*>(msg))
+                    {
+                        req = 0;
+                        FSM_Goto(currentState_, BCAST);
+                    }
             
-            req = NULL;
-            FSM_Goto(currentState_, BCAST);
-            
-            break;
-        }
+                break;
+            }
     
-    case FSM_Enter(BCAST):
-        {   
-            spfsMPIMidBcastRequest* req = dynamic_cast<spfsMPIMidBcastRequest*> (msg);
-            assert(0 != req);
-            
-            enterBcast(req);
+        case FSM_Enter(BCAST):
+            {
+//                cerr << mpiMiddleware_->getRank() << "enter BCAST" << endl;
+                if(msg->kind() == SPFS_MPIMID_BCAST_REQUEST)
+                    if(spfsMPIMidBcastRequest* req = dynamic_cast<spfsMPIMidBcastRequest*> (msg))
+                        enterBcast(req);
 
-            break;
-        }
+                break;
+            }
     
-    case FSM_Exit(BCAST):
-        {
-            if(rankNum_ != 0)
-                FSM_Goto(currentState_, PREWAIT);
-            else
-                FSM_Goto(currentState_, RSP);
-            break;
-        }
+        case FSM_Exit(BCAST):
+            {
+//                cerr << mpiMiddleware_->getRank() << "exit BCAST" << endl;
+                if(childNum_ != 0)
+                    FSM_Goto(currentState_, WAIT);
+                else
+                    FSM_Goto(currentState_, RSP);
+                break;
+            }
     
-    case FSM_Enter(PREWAIT):
-        {
-            break;
-        }
+        case FSM_Enter(WAIT):
+            {
+//                cerr << mpiMiddleware_->getRank() << "enter WAIT" << endl;
+                if(msg->kind() == SPFS_MPIMID_BCAST_RESPONSE)
+                    if(spfsMPIMidBcastResponse* rsp = dynamic_cast<spfsMPIMidBcastResponse*> (msg))
+                        enterWait(rsp);
+                break;
+            }
     
-    case FSM_Exit(PREWAIT):
-        {
-            FSM_Goto(currentState_, WAIT);
-            break;
-        }
+        case FSM_Exit(WAIT):
+            {
+//                cerr << mpiMiddleware_->getRank() << "exit WAIT" << rspCounter_ << ":" << childNum_ << endl;
+                if(msg->kind() == SPFS_MPIMID_BCAST_RESPONSE)
+                    if(rspCounter_ == childNum_ - 1)
+                        FSM_Goto(currentState_, RSP);
+                break;
+            }
     
-    case FSM_Enter(WAIT):
-        {
-            if(spfsMPIMidBcastResponse* rsp = dynamic_cast<spfsMPIMidBcastResponse*> (msg))
-                enterWait(rsp);
-            break;
-        }
-    
-    case FSM_Exit(WAIT):
-        {
-            if(rspNum_ == rankNum_)
-                FSM_Goto(currentState_, RSP);
-            else
-                FSM_Goto(currentState_, PREWAIT);
-            break;
-        }
-    
-    case FSM_Enter(RSP):
-        {
-            enterRsp();
-            break;
-        }
-    default:
+        case FSM_Enter(RSP):
+            {
+//                cerr << mpiMiddleware_->getRank() << "enter RSP" << endl;
+                enterRsp();
+                break;
+            }
+        case FSM_Exit(RSP):
+            {
+//                cerr << mpiMiddleware_->getRank() << "exit RSP" << endl;
+                FSM_Goto(currentState_, INIT);
+                break;
+            }
+        default:
         {
             cerr << "Dear god what went wrong" << endl;
             break;
@@ -122,99 +130,97 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
 
 void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
 {
-    // get parent uni id
-    rspUniId_ = msg->getUniId();
+    int size = CommMan::getInstance()->commSize(msg->getCommunicator());
+    int parent = msg->getParent();
+    int root = msg->getRoot();
+    int rank = CommMan::getInstance()->commRank(msg->getCommunicator(),
+                                                mpiMiddleware_->getRank());
 
-    // calculate number of tree levels
-    int steps = (int)ceil(log(msg->getRankSetArraySize())/log(2));
+    parentSM_ = msg->contextPointer();
+    // calculate number of tree levels    
+    int steps = (int)ceil(log(size) / log(2));
     // calculate current level
-    int currentStep = msg->getStep() + 1;
-    int selfRank = -1;
+    
+    int mystep = 0;
 
-    rankNum_ = 0;
-    // get parent's owner rank
-    rspRank_ = msg->getRoot();
-
-    // if not the tree root, send the embedded msg to app
-    if(rspRank_ != mpiMiddleware_->getRank())
+    int dist = (size + rank - parent) % (0x1 << steps);
+    while(dist != 0)
     {
-        cMessage * enmsg = static_cast<cMessage*>(msg->encapsulatedMsg()->dup());
+        dist >>= 1;
+        mystep ++;
+    }
+    
+    if(rank != root)
+    {
+        // send embed msg to app
+        cMessage * enmsg = msg->encapsulatedMsg();
+        enmsg = (cMessage*)(enmsg->dup());
         if(enmsg)mpiMiddleware_->sendApp(enmsg);
     }
 
-    // find self virtual rank in the bcasting virtual rank set
-    for(unsigned int i = 0; i < msg->getRankSetArraySize(); i++)
+    parentWRank_ = CommMan::getInstance()->commTrans(msg->getCommunicator(),
+                                                     parent, MPI_COMM_WORLD);
+    
+    for(int i = mystep; i < steps; i ++)
     {
-        if(msg->getRankSet(i) == mpiMiddleware_->getRank())selfRank = i;
-    }
-
-    // if in the v-rank set
-    if(selfRank != -1)
-    {
-        for(int i = currentStep; i < steps; i ++)
+        // calculate next direct child node rank
+        int child_rank = (rank + (0x1 << i)) % (0x1 << steps);
+        if(child_rank < size)
         {
-            // calculate next direct child node rank
-            unsigned int targetRank = selfRank ^ (0x1 << i);
-
-            // prepare msg for child
-            // update step
-            msg->setStep(i);
-            if(targetRank >= msg->getRankSetArraySize())
-            {
-                continue;
-            }
-
-            // update uni id & subtree root
-            msg->setUniId((long)this);
-            msg->setRoot(msg->getRankSet(selfRank));
-      
+//            cerr << root << ":" << rank << " sends to " << child_rank << endl;
+            
             spfsMPISendRequest* req = new spfsMPISendRequest();
             cMessage* dupMsg = static_cast<cMessage*>(msg->dup());
 
-            req->setRank(msg->getRankSet(targetRank));
-            req->encapsulate(dupMsg);
+            dupMsg->decapsulate();
 
+            dupMsg->encapsulate((cMessage*)msg->encapsulatedMsg()->dup());
+
+            dynamic_cast<spfsMPIMidBcastRequest*>(dupMsg)->setParent(rank);
+
+            int child_wrank = CommMan::getInstance()->
+                commTrans(msg->getCommunicator(),
+                          child_rank, MPI_COMM_WORLD);
+            
+            req->setRank(child_wrank);
+            req->encapsulate(dupMsg);
+            
             // send msg to child
             mpiMiddleware_->sendNet(req);
-            rankNum_ ++;
+            childNum_ ++;
         }
     }
 
+    delete msg->decapsulate();
     delete msg;
 }
 
 void MPIMidBcastSM::enterWait(spfsMPIMidBcastResponse* msg)
-{ 
-    long uniId = (long)this;
-    if(uniId == msg->getUniId())
-    {
-        // count for number of responded nodes
-        rspNum_++;
-    }
-    delete msg;
+{
+    rspCounter_++;
+    if(msg)delete msg;
 }
 
 void MPIMidBcastSM::enterRsp()
 {
-    // if i am the root
-    if(rspRank_ == mpiMiddleware_->getRank())
+    if(parentWRank_ == mpiMiddleware_->getRank())
     {
-        // may need to response to app
+        // response to app
+        spfsMPIBcastResponse *msg = new spfsMPIBcastResponse("bcast rsp", SPFS_MPI_BCAST_RESPONSE);
+        mpiMiddleware_->sendApp(msg);
     }
     else
     {
-        // response to rspRank_, which is the message sender
+        // response to parent
         spfsMPIMidBcastResponse *msg = new spfsMPIMidBcastResponse("bcast rsp", SPFS_MPIMID_BCAST_RESPONSE);
-        msg->setUniId(rspUniId_);
-
+        
         spfsMPISendRequest* req = new spfsMPISendRequest();
-        req->setRank(rspRank_);
+
+        req->setRank(parentWRank_);
         req->encapsulate(static_cast<cMessage*>(msg));
+        msg->setContextPointer(parentSM_);
         mpiMiddleware_->sendNet(req);
     }
-    
-    // now ready to destory self
-    delete this;
 }
 
 /*

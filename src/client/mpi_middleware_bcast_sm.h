@@ -45,6 +45,8 @@ public:
     /** Handle MPI-mid-bcast Msg */
     void handleMessage(cMessage* msg);
 
+    ~MPIMidBcastSM() {};
+
 protected:
     /** enter bcast state */
     void enterBcast(spfsMPIMidBcastRequest* msg);
@@ -56,15 +58,12 @@ protected:
     void enterRsp();
 
 private:
-    /** Private destructor to prevent declaration as an auto variable */
-    ~MPIMidBcastSM() {};
-    
     MpiMiddleware *mpiMiddleware_; // point to owner class
-    int rspRank_; // point to parent rank
-    int rankNum_; // direct children number
-    int rspNum_; // direct children that responsed
-    long rspUniId_; // unique id for parent rank (used for its owner class to find it)
     cFSM currentState_; // finite state machine
+    int rspCounter_;
+    int childNum_;
+    int parentWRank_;
+    void *parentSM_;
 };
 
 

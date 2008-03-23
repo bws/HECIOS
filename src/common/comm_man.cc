@@ -21,6 +21,15 @@
 
 using namespace std;
 
+CommMan* CommMan::commman_ = NULL;
+
+CommMan* CommMan::getInstance()
+{
+    if(CommMan::commman_ == NULL)
+        CommMan::commman_ = new CommMan();
+    return CommMan::commman_;
+}
+
 bool CommMan::exist(int comm)
 {
     if(communicators_.find(comm) != communicators_.end())
@@ -46,10 +55,23 @@ int CommMan::joinComm(int comm, int wrank)
     if(!exist(comm))
         communicators_[comm] = new RankPair;
 
-    int size = commSize(comm);
-    (*communicators_[comm])[size] = comm == MPI_COMM_WORLD ? size : wrank;
+    if(comm == MPI_COMM_WORLD)
+    {
+        int size = commSize(comm);
+        (*communicators_[comm])[size] = size;
+        return size;
+    }
 
-    return size;
+    if(commRank(comm, wrank) == -1)
+    {
+        int size = commSize(comm);
+        (*communicators_[comm])[size] = wrank;
+        return size;
+    }
+    else
+    {
+        return commRank(comm, wrank);
+    }
 }
 
 int CommMan::commSize(int comm)

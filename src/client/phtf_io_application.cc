@@ -29,9 +29,11 @@
 #include "file_builder.h"
 #include "file_descriptor.h"
 #include "mpi_proto_m.h"
+#include "mpi_mid_m.h"
 #include "pfs_utils.h"
 #include "storage_layout_manager.h"
 #include "phtf_io_trace.h"
+#include "comm_man.h"
 
 using namespace std;
 
@@ -50,6 +52,10 @@ void PHTFIOApplication::initialize()
     phtfEvent_ = PHTFTrace::getInstance(dirStr)->getEvent(rank_);
     phtfEvent_->open();
     PHTFEventRecord::buildOpMap();
+
+    context_ = 0;
+    counter_ = 0;
+    sum_ = 0;
     
     // Send the kick start message
     cMessage* kickStart = new cMessage();
@@ -64,6 +70,28 @@ void PHTFIOApplication::finish()
     IOApplication::finish();
 
     phtfEvent_->close();
+}
+
+void PHTFIOApplication::handleBarrier(cMessage* msg)
+{
+    if(counter_ == 0)
+    {
+        spfsMPIBcastRequest *req =
+            new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
+                
+        req->setRoot(rank_);
+        req->setCommunicator(MPI_COMM_WORLD);
+        req->encapsulate(msg);
+        send(req, mpiOutGate_);
+    }
+
+    counter_ ++;
+
+    if(counter_ == sum_)
+    {
+        counter_ = 0;
+        scheduleAt(simTime()+0.0001, new cMessage());
+    }
 }
 
 bool PHTFIOApplication::scheduleNextMessage()
@@ -82,25 +110,22 @@ bool PHTFIOApplication::scheduleNextMessage()
             case CPU_PHASE:
                 scheduleCPUMessage(msg);
                 break;
+            case BARRIER:
+                handleBarrier(msg);
+                break;
             case WAIT:
                 delete msg;
                 break;
             case OPEN:
-                //TODO: add collaborate open operation here
-                // if rank_ == 0, do open
-                // else wait for bcast
                 if(rank_ == 0)
                 {
-                    cerr << simTime() << " : Rank " << rank_
-                         << " send msg kind " << msg->kind()
-                         << endl;                
                     send(msg, ioOutGate_);
                 }
                 else
                 {
-                    delete msg;
+                    context_ = msg;
                 }
-                break;                
+                break;        
             default:
                 cerr << simTime() << " : Rank " << rank_
                      << " send msg kind " << msg->kind()
@@ -116,10 +141,19 @@ bool PHTFIOApplication::scheduleNextMessage()
 
 void PHTFIOApplication::handleMPIMessage(cMessage* msg)
 {
-    cerr << "Rank " << rank_ << " received bcast msg!" << endl;
-    cMessage *enmsg = msg->decapsulate();
-    delete enmsg;
-    delete msg;
+    if(msg->kind() == SPFS_MPI_FILE_OPEN_RESPONSE)
+    {
+        msg->setContextPointer(context_);
+        setDescriptor(100, dynamic_cast<spfsMPIFileOpenResponse*>(msg)->getFileDes());
+        IOApplication::handleIOMessage(msg);
+    }
+    else if(msg->kind() == SPFS_MPIMID_BARRIER_REQUEST)
+    {
+        handleBarrier(msg);
+    }
+    else if(msg->kind() == SPFS_MPI_BCAST_RESPONSE)
+    {
+    }
 }
 
 void PHTFIOApplication::handleIOMessage(cMessage* msg)
@@ -157,10 +191,9 @@ void PHTFIOApplication::handleIOMessage(cMessage* msg)
             new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
 
         req->setRoot(rank_);
-        req->setIsGlobal(true);
+        req->setCommunicator(MPI_COMM_WORLD);
         req->encapsulate((cMessage*)msg->dup());
         send(req, mpiOutGate_);
-        return;
     }
 
     IOApplication::handleIOMessage(msg);
@@ -182,6 +215,7 @@ cMessage* PHTFIOApplication::createMessage(PHTFEventRecord* rec)
     switch(rec->recordOp())
     {
         case BARRIER:
+            mpiMsg = createBarrierMessage(rec);
             break;
         case CPU_PHASE:
             mpiMsg = createCPUPhaseMessage(rec);
@@ -223,6 +257,17 @@ void PHTFIOApplication::populateFileSystem()
     cerr << "Done." << endl;
 }
 
+cMessage* PHTFIOApplication::createBarrierMessage(
+    const PHTFEventRecord* barrierRecord)
+{
+    string str = const_cast<PHTFEventRecord*>(barrierRecord)->paramAt(0);
+    int comm = (int)strtol(str.c_str(), NULL, 10);
+    sum_ = CommMan::getInstance()->commSize(comm);
+    spfsMPIMidBarrierRequest *mpimsg = new spfsMPIMidBarrierRequest(0, SPFS_MPIMID_BARRIER_REQUEST);
+    mpimsg->setCommunicator(comm);
+    return mpimsg;
+}
+
 cMessage* PHTFIOApplication::createWaitMessage(
     const PHTFEventRecord* waitRecord)
 {
@@ -237,7 +282,7 @@ cMessage* PHTFIOApplication::createCPUPhaseMessage(
 {
     double delay = const_cast<PHTFEventRecord*>(cpuRecord)->duration();
     
-    cMessage *msg = new cMessage("CPU");
+    cMessage *msg = new cMessage("CPU Phase");
     cPar *cp = new cPar("Delay");
     *cp = delay;
     msg->addPar(cp);
@@ -258,20 +303,30 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
     spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
         0, SPFS_MPI_FILE_OPEN_REQUEST);
     
-    if(rank_ == 0) // ranklist[0]
+    if(rank_ == 0)
     {
-        // If the file does not exist, create it
-        Filename openFile("/test");
+        string fpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(1);
+        long handle = strtol(const_cast<PHTFEventRecord*>(openRecord)->paramAt(5).c_str(), NULL, 16);
+
+        std::vector<FSHandle> fsh;
+        
+        FSMetaData md =
+        {
+            0x744, 0, 0, 0, 1, handle, fsh, 0
+        };
+
+        Filename fn(phtfEvent_->memValue("String", fpt));
         
         // Construct a file descriptor for use in simulaiton
-        FileDescriptor* fd = FileBuilder::instance().getDescriptor(openFile);
-        
+        FileDescriptor* fd =
+            new FileDescriptor(fn, md);
+
         // Associate the file id with a file descriptor
         setDescriptor(100, fd);
         
-        int mode = (int)strtol(const_cast<PHTFEventRecord*>(openRecord)->paramAt(4).c_str(), NULL, 10);
+        int mode = (int)strtol(const_cast<PHTFEventRecord*>(openRecord)->paramAt(2).c_str(), NULL, 10);
         
-        open->setFileName(openFile.str().c_str());
+        open->setFileName(fn.str().c_str());
         open->setFileDes(fd);
         open->setMode(mode);
     }
@@ -358,11 +413,11 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
         0, SPFS_MPI_FILE_WRITE_REQUEST);
     write->setDataType(dataType);
     write->setCount(count);
-    write->setOffset(fd->getFilePointer());
+    write->setOffset(0);
     write->setFileDes(fd);
 
     // increase the file pointer correspondingly
-    fd->setFilePointer(fd->getFilePointer() + count);
+    //fd->setFilePointer(count);
 
     return write;
 }

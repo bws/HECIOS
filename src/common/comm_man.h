@@ -33,9 +33,11 @@ protected:
     std::map<int, RankPair *> communicators_;
     bool exist(int comm);
     bool exist(int comm, int rank);
+    CommMan(){};
+    static CommMan * commman_;
 
 public:
-    CommMan(){};
+    static CommMan * getInstance();
 
     int joinComm(int comm, int wrank);
     

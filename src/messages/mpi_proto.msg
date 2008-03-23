@@ -354,8 +354,8 @@ message spfsMPIFileUpdateTimeResponse extends spfsMPIResponse
 message spfsMPIBcastRequest extends spfsMPIRequest
 {
     fields:	
-        long root;
-        bool isGlobal;
+        int root;
+        int communicator;
 };
 
 // Broadcast response

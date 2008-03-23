@@ -305,6 +305,8 @@ void FSClient::scheduleRequest(cMessage* request)
             break;
         }
         case SPFS_MPI_FILE_READ_AT_REQUEST:
+        case SPFS_MPI_FILE_READ_REQUEST:
+        case SPFS_MPI_FILE_IREAD_REQUEST:
         {
             numFileReads_++;
             scheduleTime += fileReadProcessingDelay_;
@@ -317,6 +319,8 @@ void FSClient::scheduleRequest(cMessage* request)
             break;
         }
         case SPFS_MPI_FILE_WRITE_AT_REQUEST:
+        case SPFS_MPI_FILE_WRITE_REQUEST:
+        case SPFS_MPI_FILE_IWRITE_REQUEST:
         {
             numFileWrites_++;
             scheduleTime += fileWriteProcessingDelay_;

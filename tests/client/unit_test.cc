@@ -4,6 +4,7 @@
 #include "fs_client_test.h"
 #include "lru_complex_cache_test.h"
 #include "lru_simple_cache_test.h"
+#include "mpi_middleware_bcast_sm_test.h"
 
 int main(int argc, char** argv)
 {
@@ -12,6 +13,7 @@ int main(int argc, char** argv)
     // Add all of the requisite tests
     runner.addTest( ClientFSStateTest::suite() );
     runner.addTest( FSClientTest::suite() );
+    runner.addTest( MPIMiddlewareBcastSmTest::suite() );
     //runner.addTest( LRUSimpleCacheTest::suite() );
     //runner.addTest( LRUComplexCacheTest::suite() );
 

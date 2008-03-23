@@ -25,6 +25,7 @@
 class spfsCacheInvalidateRequest;
 class spfsMPIMidBcastRequest;
 class spfsMPIBcastRequest;
+class MPIMidBcastSM;
 
 using namespace std;
 
@@ -56,9 +57,6 @@ protected:
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
 
-    /** Implementation of handle bcast message */
-    virtual void appBcastHandler(spfsMPIBcastRequest* msg);
-    
 private:
     int appInGate_;
     int appOutGate_;
@@ -67,6 +65,7 @@ private:
     int netServerOutGate_;
     int netClientOutGate_;
     int rank_;
+    
 };
 
 

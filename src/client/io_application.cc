@@ -34,11 +34,11 @@
 #include "storage_layout_manager.h"
 #include "umd_io_trace.h"
 #include "phtf_io_trace.h"
+#include "comm_man.h"
 
 using namespace std;
 
 // OMNet Registriation Method
-static int rank_seed = 0;
 
 IOApplication::IOApplication()
     : cSimpleModule(),
@@ -66,7 +66,7 @@ void IOApplication::initialize()
     msgScheduled_ = false;
 
     // Set the process rank
-    rank_ = rank_seed++;
+    rank_ = CommMan::getInstance()->joinComm(MPI_COMM_WORLD, 0);
 
     // Initialize scalar data collection values
     totalCpuPhaseTime_ = 0.0;
@@ -86,7 +86,6 @@ void IOApplication::finish()
     }
 
     // Reset the rank generator to 0
-    rank_seed = 0;
 
     recordScalar("SPFS Total CPU Phase Delay", totalCpuPhaseTime_);
     recordScalar("SPFS App. Completion Time", applicationCompletionTime_);
@@ -270,7 +269,7 @@ void IOApplication::invalidateCaches(spfsMPIFileWriteAtRequest* writeAt)
         new spfsMPIBcastRequest("MPI_BCAST", SPFS_MPI_BCAST_REQUEST);
 
     req->setRoot(this->rank_);
-    req->setIsGlobal(true);
+    req->setCommunicator(MPI_COMM_WORLD);
     req->encapsulate(inval);
     send(req, mpiOutGate_);
 }

@@ -46,6 +46,7 @@ void MpiMiddleware::initialize()
     netClientInGate_  = findGate("netClientIn");
     netClientOutGate_ = findGate("netClientOut");
     rank_ = rankSeed++;
+    cerr << "middleware: " << rank_ << " initialize"<< endl;
 }
 
 void MpiMiddleware::finish()
@@ -61,12 +62,19 @@ void MpiMiddleware::handleMessage(cMessage* msg)
     {
         switch(msg->kind())
         {
-        case SPFS_MPI_BCAST_REQUEST:
-            appBcastHandler(dynamic_cast<spfsMPIBcastRequest *>(msg));
-            break;
-        default:
-            cerr << "mpi middleware handleMessage received unknown msg: " << msg->kind() << endl;
-            break;
+            case SPFS_MPI_BCAST_REQUEST:
+                spfsMPIMidBcastRequest *req = new spfsMPIMidBcastRequest(0, SPFS_MPIMID_BCAST_REQUEST);
+                req->setRoot(dynamic_cast<spfsMPIBcastRequest *>(msg)->getRoot());
+                req->setParent(dynamic_cast<spfsMPIBcastRequest *>(msg)->getRoot());
+                req->setCommunicator(dynamic_cast<spfsMPIBcastRequest *>(msg)->getCommunicator());
+                req->encapsulate(msg->decapsulate());
+                MPIMidBcastSM * sm = new MPIMidBcastSM(this);
+                req->setContextPointer(sm);
+                sm->handleMessage(req);
+                break;
+            default:
+                cerr << "mpi middleware handleMessage received unknown msg: " << msg->kind() << endl;
+                break;
         }
     }
 
@@ -79,83 +87,23 @@ void MpiMiddleware::handleMessage(cMessage* msg)
 
         switch(ebdMsg->kind())
         {
-            
-        case SPFS_MPIMID_BCAST_REQUEST:
+            case SPFS_MPIMID_BCAST_REQUEST:
             {
-                spfsMPIMidBcastRequest * bcastReq = dynamic_cast<spfsMPIMidBcastRequest*>(ebdMsg);
-                assert(bcastReq != 0);
-                
-                MPIMidBcastSM * bcastSm = new MPIMidBcastSM(this); // bcastsm will be self destructed after doing his job
-                bcastSm->handleMessage(bcastReq);
-
+                MPIMidBcastSM * sm = new MPIMidBcastSM(this);
+                ebdMsg->setContextPointer(sm);
+                sm->handleMessage(ebdMsg);
                 break;
             }
             
-        case SPFS_MPIMID_BCAST_RESPONSE:
+            case SPFS_MPIMID_BCAST_RESPONSE:
             {
-                spfsMPIMidBcastResponse * bcastRsp = dynamic_cast<spfsMPIMidBcastResponse*>(ebdMsg);
-                assert(bcastRsp != 0);
-                
-                MPIMidBcastSM * bcastSm2 = static_cast<MPIMidBcastSM*>((void*)bcastRsp->getUniId());
-                assert(bcastSm2 != 0);
-                
-                bcastSm2->handleMessage(bcastRsp);
-                
+                MPIMidBcastSM * sm = static_cast<MPIMidBcastSM*>(ebdMsg->contextPointer());
+                sm->handleMessage(ebdMsg);                
                 break;
             }
         }
     }
     delete msg;
-}
-
-// handling bcast request from application
-void MpiMiddleware::appBcastHandler(spfsMPIBcastRequest* mpiReq)
-{
-    assert(mpiReq != 0);
-
-    vector<IPvXAddress*> ips = PFSUtils::instance().getAllRankIP();
-
-    // Sequentially assigning ranks to comm member array if it is a global bcasting
-    if(mpiReq->getIsGlobal())
-    {
-        unsigned int node_num = ips.size();
-        mpiReq->setCommMembersArraySize(node_num);
-        
-        for(unsigned int i = 0; i < node_num; i++)
-        {
-            mpiReq->setCommMembers(i, i);
-        }
-    }
-
-    // Preparing the mpi mid bcast request msg
-    cMessage *req = mpiReq->decapsulate();
-    assert(req);
-  
-    spfsMPIMidBcastRequest *mpiMidReq = new spfsMPIMidBcastRequest("Mpimid Bcast", SPFS_MPIMID_BCAST_REQUEST);
-    mpiMidReq->encapsulate(req);
-    mpiMidReq->setStep(-1);
-    mpiMidReq->setRoot(-1);
-
-    // Get comm members from bcast msg sent by app, and write into mpi mid bcast msg
-    int rankSize = mpiReq->getCommMembersArraySize();
-    mpiMidReq->setRankSetArraySize(rankSize);
-    for(int i = 0; i < rankSize; i++)
-    {
-        int rank = mpiReq->getCommMembers(i);
-        if(rank_ == mpiReq->getRoot())
-            mpiMidReq->setRoot(i);
-        mpiMidReq->setRankSet(i, rank);
-
-        // change the comm member[0] to self rank, the algorithm starts bcasting from rank 0
-        if(rank_ == rank)
-        {
-            mpiMidReq->setRankSet(i, mpiMidReq->getRankSet(0));
-            mpiMidReq->setRankSet(0, rank);
-        }
-    }
-
-    MPIMidBcastSM * bcastSm = new MPIMidBcastSM(this); // bcastSm will be self destructed after doing his job
-    bcastSm->handleMessage(mpiMidReq);
 }
 
 int MpiMiddleware::getRank()

@@ -67,6 +67,11 @@ private:
 
     void scheduleCPUMessage(cMessage *msg);
 
+    void handleBarrier(cMessage *msg);
+
+    cMessage* createBarrierMessage(
+        const PHTFEventRecord* barrierRecord);
+
     cMessage* createCPUPhaseMessage(
         const PHTFEventRecord* cpuRecord);
     cMessage* createWaitMessage(
@@ -107,6 +112,11 @@ private:
     PHTFEvent * phtfEvent_;
 
     long waitReqId_;
+
+    cMessage * context_;
+
+    int counter_;
+    int sum_;
 };
 
 #endif
