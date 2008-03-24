@@ -29,7 +29,7 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSStat::FSStat(FSClient* client, spfsMPIFileUpdateTimeRequest* statReq)
+FSStat::FSStat(FSClient* client, spfsMPIFileStatRequest* statReq)
     : client_(client),
       statReq_(statReq)
 {
@@ -40,26 +40,26 @@ FSStat::FSStat(FSClient* client, spfsMPIFileUpdateTimeRequest* statReq)
 // Processing that occurs upon receipt of an MPI-IO UpdateTime request
 void FSStat::handleMessage(cMessage* msg)
 {
-    // TODO
-    cerr << "ERROR: File STAT is not yet implemented correctly!!!" << endl;
-    /** Restore the existing state for this request */
+    // Restore the existing state for this request
     cFSM currentState = statReq_->getState();
 
-    /** File system stat state machine states */
+    // File system stat state machine states
     enum {
         INIT = 0,
         LOOKUP_PARENT_HANDLE = FSM_Steady(1),
         GET_PARENT_ATTRIBUTES = FSM_Steady(2),
         LOOKUP_NAME = FSM_Steady(4),
-        WRITE_ATTR = FSM_Steady(5),
-        FINISH = FSM_Steady(10)
+        GET_METADATA_ATTR = FSM_Steady(5),
+        GET_DATA_ATTRS = FSM_Transient(6),
+        COUNT_RESPONSES = FSM_Steady(7),
+        FINISH = FSM_Steady(8)
     };
 
     FSM_Switch(currentState)
     {
         case FSM_Exit(INIT):
         {
-            assert(0 != dynamic_cast<spfsMPIFileUpdateTimeRequest*>(msg));
+            assert(0 != dynamic_cast<spfsMPIFileStatRequest*>(msg));
             bool nameCached = isParentNameCached();
             if (nameCached)
             {
@@ -123,20 +123,43 @@ void FSStat::handleMessage(cMessage* msg)
             FSLookupStatus status = processLookup(
                 static_cast<spfsLookupPathResponse*>(msg));
             assert(SPFS_FOUND == status);
-            FSM_Goto(currentState, WRITE_ATTR);
+            FSM_Goto(currentState, GET_METADATA_ATTR);
             break;
         }
-        case FSM_Enter(WRITE_ATTR):
+        case FSM_Enter(GET_METADATA_ATTR):
         {
-            writeAttributes();
+            getMetaDataAttributes();
             break;
         }
-        case FSM_Exit(WRITE_ATTR):
+        case FSM_Exit(GET_METADATA_ATTR):
         {
-            assert(0 != dynamic_cast<spfsSetAttrResponse*>(msg));
-            FSM_Goto(currentState, FINISH);
+            assert(0 != dynamic_cast<spfsGetAttrResponse*>(msg));
+            FSM_Goto(currentState, GET_DATA_ATTRS);
             break;
         }
+        case FSM_Enter(GET_DATA_ATTRS):
+        {
+            getDataAttributes();
+            break;
+        }
+        case FSM_Exit(GET_DATA_ATTRS):
+        {
+            FSM_Goto(currentState, COUNT_RESPONSES);
+            break;
+        }        
+        case FSM_Enter(COUNT_RESPONSES):
+        {
+            break;
+        }
+        case FSM_Exit(COUNT_RESPONSES):
+        {
+            bool isFinished = processResponse(msg);
+            if (isFinished)
+                FSM_Goto(currentState, FINISH);
+            else
+                FSM_Goto(currentState, COUNT_RESPONSES);
+            break;
+        }        
         case FSM_Enter(FINISH):
         {
             finish();
@@ -283,18 +306,51 @@ FSLookupStatus FSStat::processLookup(spfsLookupPathResponse* lookupResponse)
     return lookupStatus;
 }
 
-void FSStat::writeAttributes()
+void FSStat::getMetaDataAttributes()
 {
     Filename statName(statReq_->getFileName());
     const FSMetaData* meta = FileBuilder::instance().getMetaData(statName);
-    spfsSetAttrRequest *req = new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
+    spfsGetAttrRequest* req = FSClient::createGetAttrRequest(
+        meta->handle, SPFS_METADATA_OBJECT);
     req->setContextPointer(statReq_);
-    req->setHandle(meta->handle);
-    req->setByteLength(8 + 8 + 64);
     client_->send(req, client_->getNetOutGate());
+}
 
-    // Add the attributes to the cache
-    //addAttributesToCache();
+void FSStat::getDataAttributes()
+{
+    if (statReq_->getDetermineFileSize())
+    {
+        Filename statName(statReq_->getFileName());
+        const FSMetaData* meta = FileBuilder::instance().getMetaData(statName);
+
+        for (size_t i = 0; i < meta->dataHandles.size(); i++)
+        {
+            spfsGetAttrRequest* req = FSClient::createGetAttrRequest(
+                meta->dataHandles[i], SPFS_DATA_OBJECT);
+            req->setContextPointer(statReq_);
+            client_->send(req, client_->getNetOutGate());
+        }
+
+        statReq_->setRemainingResponses(meta->dataHandles.size());
+    }
+    else
+    {
+        statReq_->setRemainingResponses(0);
+    }
+}
+
+bool FSStat::processResponse(cMessage* getAttrResponse)
+{
+    assert(0 != dynamic_cast<spfsGetAttrResponse*>(getAttrResponse));
+
+    bool isComplete = false;
+    int numOutstanding = statReq_->getRemainingResponses() - 1;
+    statReq_->setRemainingResponses(numOutstanding);
+    if (0 == numOutstanding)
+    {
+        isComplete = true;
+    }
+    return isComplete;
 }
 
 void FSStat::finish()

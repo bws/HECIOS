@@ -33,7 +33,9 @@ class spfsCreateRequest;
 class spfsCreateDirEntRequest;
 class spfsGetAttrRequest;
 class spfsLookupPathRequest;
+class spfsReadDirRequest;
 class spfsReadRequest;
+class spfsRemoveRequest;
 class spfsSetAttrRequest;
 class spfsWriteRequest;
 
@@ -74,6 +76,10 @@ public:
         const FSHandle& handle,
         int numResolvedSegments);
 
+    /** @return a new Read Dir request */
+    static spfsReadDirRequest* createReadDirRequest(const FSHandle& handle,
+                                                    std::size_t dirEntCount);
+    
     /** @return a new Read Request */
     static spfsReadRequest* createReadRequest(const FSHandle& handle,
                                               const FileView& view,
@@ -147,6 +153,12 @@ private:
     /** Client processing delay for directory creation */
     double directoryCreateProcessingDelay_;
 
+    /** Client processing delay for directory read */
+    double directoryReadProcessingDelay_;
+
+    /** Client processing delay for directory removal */
+    double directoryRemoveProcessingDelay_;
+
     /** Client processing delay for file close */
     double fileCloseProcessingDelay_;
 
@@ -174,9 +186,12 @@ private:
     double numDCacheHits_;
     double numDCacheMisses_;
     double numDirCreates_;
+    double numDirReads_;
+    double numDirRemoves_;
     double numFileCloses_;
     double numFileOpens_;
     double numFileReads_;
+    double numFileStats_;
     double numFileWrites_;
     double numFileUtimes_;
 
@@ -187,7 +202,9 @@ private:
     cOutVector flowDelay_;
     cOutVector getAttrDelay_;
     cOutVector lookupPathDelay_;
+    cOutVector readDirDelay_;
     cOutVector readDelay_;
+    cOutVector removeDelay_;
     cOutVector setAttrDelay_;
     cOutVector writeCompleteDelay_;
     cOutVector writeDelay_;

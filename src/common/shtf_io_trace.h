@@ -103,7 +103,8 @@ private:
                                       double duration);
 
     /** @return an READDIR IOTraceRecord */
-    IOTrace::Record* createReadDirRecord(const std::string& dirName,
+    IOTrace::Record* createReadDirRecord(int descriptor,
+                                         size_t descriptor,
                                          double startTime,
                                          double duration);
 

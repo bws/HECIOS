@@ -23,7 +23,7 @@
 class cMessage;
 class FSClient;
 class spfsLookupPathResponse;
-class spfsMPIFileUpdateTimeRequest;
+class spfsMPIFileStatRequest;
 
 /**
  * Class responsible for performing client-side file stat operations
@@ -33,15 +33,23 @@ class FSStat
 public:
 
     /** Constructor */
-    FSStat(FSClient* client, spfsMPIFileUpdateTimeRequest* statReq);
+    FSStat(FSClient* client, spfsMPIFileStatRequest* statReq);
     
     /** Handle MPI-Open Message */
     void handleMessage(cMessage* msg);
 
 protected:
-    /** Send message setting the utime attribute */
-    void getStatus();
+    /** Send message to retrieve the metadata attributes */
+    void getMetaDataAttributes();
 
+    /** Send messages to retrieve the data attributes */
+    void getDataAttributes();
+
+    /**
+     * @return true if all of the data attribute responses have been received
+     */
+    bool processResponse(cMessage* getAttrResponse);
+    
     /** Send final client response */
     void finish();
     
@@ -61,8 +69,8 @@ private:
     /** The filesystem client module */
     FSClient* client_;
 
-    /** The originating MPI update time request */
-    spfsMPIFileUpdateTimeRequest* statReq_;
+    /** The originating MPI Stat request */
+    spfsMPIFileStatRequest* statReq_;
 };
 
 #endif

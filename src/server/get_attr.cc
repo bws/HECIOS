@@ -96,17 +96,32 @@ void GetAttr::enterReadAttr()
 
 void GetAttr::enterFinish()
 {
-    // Lookup the number of handles for this file
-    FSHandle metaHandle = getAttrReq_->getHandle();
-    size_t numHandles = FileBuilder::instance().getNumDataObjects(metaHandle);
-    size_t handleArrayBytes = 8 * numHandles;
+    // Calculate the size of the response
+    size_t responseSize = 0;
+    if (SPFS_METADATA_OBJECT == getAttrReq_->getObjectType())
+    {
+        // Lookup the number of handles for this file
+        FSHandle metaHandle = getAttrReq_->getHandle();
+        size_t numHandles =
+            FileBuilder::instance().getNumDataObjects(metaHandle);
+        size_t handleArrayBytes = 8 * numHandles;
+        responseSize = FSServer::METADATA_ATTRIBUTES_BYTE_SIZE +
+            handleArrayBytes;
+    }
+    else if (SPFS_DIRECTORY_OBJECT == getAttrReq_->getObjectType())
+    {
+        responseSize = FSServer::DIRECTORY_ATTRIBUTES_BYTE_SIZE;
+    }
+    else
+    {
+        responseSize = FSServer::DATAFILE_ATTRIBUTES_BYTE_SIZE;
+    }
     
     // Send the final response
     spfsGetAttrResponse* resp = new spfsGetAttrResponse(
         0, SPFS_GET_ATTR_RESPONSE);
     resp->setContextPointer(getAttrReq_);
-    resp->setByteLength(FSServer::METADATA_ATTRIBUTES_BYTE_SIZE +
-                        handleArrayBytes);
+    resp->setByteLength(responseSize);
 
     // Add processing delay for processing
     module_->sendDelayed(resp, FSServer::getAttrProcessingDelay());

@@ -26,6 +26,8 @@ simple FSClient
         useCollectiveGetAttr: bool,
         useCollectiveRemove: bool,
         directoryCreateProcessingDelaySecs: numeric const,
+        directoryReadProcessingDelaySecs: numeric const,
+        directoryRemoveProcessingDelaySecs: numeric const,
         fileCloseProcessingDelaySecs: numeric const,
         fileOpenProcessingDelaySecs: numeric const,
         fileReadProcessingDelaySecs: numeric const,

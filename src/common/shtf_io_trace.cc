@@ -137,6 +137,12 @@ IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
     {
         rec = createCpuPhaseRecord(startTime, duration);
     }
+    else if ("FCNTL" == token)
+    {
+        cerr << __FILE__ <<":" << __LINE__
+             << ": Converting FCNTL into CPU_PHASE\n";
+        rec = createCpuPhaseRecord(startTime, duration);
+    }
     else if ("MKDIR" == token)
     {
         string filename, perms;
@@ -160,10 +166,16 @@ IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
     }
     else if ("READDIR" == token)
     {
-        string filename;
-        recordStream >> filename;
-        //rec = createReadRecord(descriptor, offset, extent,
-        //                       startTime, duration);
+        int descriptor;
+        size_t count;
+        recordStream >> descriptor >> count;
+        rec = createReadDirRecord(descriptor, count, startTime, duration);
+    }
+    else if ("RMDIR" == token)
+    {
+        string dirName;
+        recordStream >> dirName;
+        rec = createRmDirRecord(dirName, startTime, duration);
     }
     else if ("STAT" == token)
     {
@@ -193,7 +205,7 @@ IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
         rec = createWriteRecord(descriptor, offset, extent,
                                 startTime, duration);
     }
-
+    
     return rec;
 }
 
@@ -319,19 +331,22 @@ IOTrace::Record* SHTFIOTrace::createReadRecord(int descriptor,
     return rec;
 }
 
-IOTrace::Record* SHTFIOTrace::createReadDirRecord(const string& dirName,
-                                                  double startTime,
-                                                  double duration)
+IOTrace::Record* SHTFIOTrace::createReadDirRecord(int descriptor,
+                                                size_t count,
+                                                double startTime,
+                                                double duration)
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::READDIR,
                                                startTime, duration);
-    rec->filename(dirName);
+    rec->fileId(descriptor);
+    rec->filename(getFilename(descriptor));
+    rec->count(count);
     return rec;
 }
 
 IOTrace::Record* SHTFIOTrace::createRmDirRecord(const string& dirName,
-                                                double startTime,
-                                                double duration)
+                                                  double startTime,
+                                                  double duration)
 {
     IOTrace::Record* rec = new IOTrace::Record(IOTrace::RMDIR,
                                                startTime, duration);

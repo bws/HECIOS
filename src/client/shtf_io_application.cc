@@ -110,7 +110,7 @@ cMessage* SHTFIOApplication::createMessage(IOTrace::Record* rec)
     switch(rec->opType()) {
         case IOTrace::ACCESS:
         {
-            mpiMsg = createGetAModeMessage(rec);
+            mpiMsg = createStatMessage(rec);
             break;
         }
         case IOTrace::CLOSE:
@@ -128,19 +128,34 @@ cMessage* SHTFIOApplication::createMessage(IOTrace::Record* rec)
             mpiMsg = createOpenMessage(rec);
             break;
         }
-        case IOTrace::READ_AT:
-        {
-            mpiMsg = createReadAtMessage(rec);
-            break;
-        }
         case IOTrace::READ:
         {
             mpiMsg = createReadMessage(rec);
             break;
         }
+        case IOTrace::READ_AT:
+        {
+            mpiMsg = createReadAtMessage(rec);
+            break;
+        }
+        case IOTrace::READDIR:
+        {
+            mpiMsg = createDirectoryReadMessage(rec);
+            break;
+        }
+        case IOTrace::RMDIR:
+        {
+            mpiMsg = createDirectoryRemoveMessage(rec);
+            break;
+        }
         case IOTrace::STAT:
         {
-            mpiMsg = createGetSizeMessage(rec);
+            mpiMsg = createStatMessage(rec);
+            break;
+        }
+        case IOTrace::UNLINK:
+        {
+            mpiMsg = createDeleteMessage(rec);
             break;
         }
         case IOTrace::UTIME:
@@ -167,7 +182,7 @@ cMessage* SHTFIOApplication::createMessage(IOTrace::Record* rec)
             break;
         }
         default:
-            cerr << "Ignored IO OpType for MPI Application: " << rec->opType()
+            cerr << "Ignored IO OpType for SHTF Application: " << rec->opType()
                  << endl;
             break;
     }
@@ -191,6 +206,30 @@ spfsMPIDirectoryCreateRequest* SHTFIOApplication::createDirectoryCreateMessage(
     return createDir;
 }
 
+spfsMPIDirectoryReadRequest* SHTFIOApplication::createDirectoryReadMessage(
+    const IOTrace::Record* readDirRecord)
+{
+    assert(IOTrace::READDIR == readDirRecord->opType());
+    spfsMPIDirectoryReadRequest* readDir =
+        new spfsMPIDirectoryReadRequest(0, SPFS_MPI_DIRECTORY_READ_REQUEST);
+
+    FileDescriptor* fd = getDescriptor(readDirRecord->fileId());
+    readDir->setFileDes(fd);
+    readDir->setCount(readDirRecord->count());
+    return readDir;
+}
+
+spfsMPIDirectoryRemoveRequest* SHTFIOApplication::createDirectoryRemoveMessage(
+    const IOTrace::Record* rmDirRecord)
+{
+    assert(IOTrace::RMDIR == rmDirRecord->opType());
+    
+    spfsMPIDirectoryRemoveRequest* removeDir =
+        new spfsMPIDirectoryRemoveRequest(0, SPFS_MPI_DIRECTORY_REMOVE_REQUEST);
+    removeDir->setDirName(rmDirRecord->filename().c_str());
+    return removeDir;
+}
+
 spfsMPIFileCloseRequest* SHTFIOApplication::createCloseMessage(
     const IOTrace::Record* closeRecord)
 {
@@ -205,26 +244,29 @@ spfsMPIFileCloseRequest* SHTFIOApplication::createCloseMessage(
     return close;
 }
 
+spfsMPIFileDeleteRequest* SHTFIOApplication::createDeleteMessage(
+    const IOTrace::Record* unlinkRecord)
+{
+    assert(IOTrace::UNLINK == unlinkRecord->opType());
+
+    spfsMPIFileDeleteRequest* deleteFile = new spfsMPIFileDeleteRequest(
+        0, SPFS_MPI_FILE_DELETE_REQUEST);
+    deleteFile->setFileName(unlinkRecord->filename().c_str());
+    return deleteFile;
+}
+
 spfsMPIFileGetAModeRequest* SHTFIOApplication::createGetAModeMessage(
     const IOTrace::Record* accessRecord)
 {
     assert(IOTrace::ACCESS == accessRecord->opType());
-
-    spfsMPIFileGetAModeRequest* getAMode = new spfsMPIFileGetAModeRequest(
-        0, SPFS_MPI_FILE_GET_AMODE_REQUEST);
-    getAMode->setFileName(accessRecord->filename().c_str());
-    return getAMode;
+    return 0;
 }
 
 spfsMPIFileGetSizeRequest* SHTFIOApplication::createGetSizeMessage(
     const IOTrace::Record* statRecord)
 {
     assert(IOTrace::STAT == statRecord->opType());
-
-    spfsMPIFileGetSizeRequest* getSize = new spfsMPIFileGetSizeRequest(
-        0, SPFS_MPI_FILE_GET_SIZE_REQUEST);
-    getSize->setFileName(statRecord->filename().c_str());
-    return getSize;
+    return 0;
 }
 
 spfsMPIFileOpenRequest* SHTFIOApplication::createOpenMessage(
@@ -308,6 +350,25 @@ spfsMPIFileReadAtRequest* SHTFIOApplication::createReadAtMessage(
     return read;
 }
 
+spfsMPIFileStatRequest* SHTFIOApplication::createStatMessage(
+    const IOTrace::Record* statRecord)
+{
+    spfsMPIFileStatRequest* stat = new spfsMPIFileStatRequest(
+        0, SPFS_MPI_FILE_STAT_REQUEST);
+    stat->setFileName(statRecord->filename().c_str());
+
+    if (IOTrace::ACCESS == statRecord->opType())
+    {
+        stat->setDetermineFileSize(false);
+    }
+    else
+    {
+        assert(IOTrace::STAT == statRecord->opType());
+        stat->setDetermineFileSize(true);
+    }
+    return stat;
+}
+
 spfsMPIFileUpdateTimeRequest* SHTFIOApplication::createUpdateTimeMessage(
     const IOTrace::Record* utimeRecord)
 {
@@ -318,7 +379,6 @@ spfsMPIFileUpdateTimeRequest* SHTFIOApplication::createUpdateTimeMessage(
     utime->setFileName(utimeRecord->filename().c_str());
     return utime;
 }
-
 
 spfsMPIFileWriteAtRequest* SHTFIOApplication::createWriteAtMessage(
     const IOTrace::Record* writeAtRecord)

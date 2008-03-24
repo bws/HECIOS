@@ -95,8 +95,14 @@ enum mpiMessageKind
     // MPI Extensions for our simulator
     SPFS_MPI_DIRECTORY_CREATE_REQUEST = 200;
     SPFS_MPI_DIRECTORY_CREATE_RESPONSE = 201;
-    SPFS_MPI_FILE_UPDATE_TIME_REQUEST = 202;
-    SPFS_MPI_FILE_UPDATE_TIME_RESPONSE = 203;
+    SPFS_MPI_DIRECTORY_READ_REQUEST = 202;
+    SPFS_MPI_DIRECTORY_READ_RESPONSE = 203;
+    SPFS_MPI_DIRECTORY_REMOVE_REQUEST = 204;
+    SPFS_MPI_DIRECTORY_REMOVE_RESPONSE = 205;
+    SPFS_MPI_FILE_STAT_REQUEST = 206;
+    SPFS_MPI_FILE_STAT_RESPONSE = 207;
+    SPFS_MPI_FILE_UPDATE_TIME_REQUEST = 208;
+    SPFS_MPI_FILE_UPDATE_TIME_RESPONSE = 209;
 };
 
 // The abstract base class for all MPI message requests
@@ -204,7 +210,7 @@ message spfsMPIFilePreallocateResponse extends spfsMPIResponse
 message spfsMPIFileGetAModeRequest extends spfsMPIRequest
 {
     fields:
-        string fileName;
+        FileDescriptorPtr fileDes;
 };
 
 // Get file access mode response
@@ -218,7 +224,7 @@ message spfsMPIFileGetAModeResponse extends spfsMPIResponse
 message spfsMPIFileGetSizeRequest extends spfsMPIRequest
 {
     fields:
-        string fileName;
+        FileDescriptorPtr fileDes;
 };
 
 // Get file size response
@@ -333,6 +339,55 @@ message spfsMPIDirectoryCreateRequest extends spfsMPIRequest
 // Directory creation response
 message spfsMPIDirectoryCreateResponse extends spfsMPIResponse
 {
+};
+
+// Request to read a directory
+message spfsMPIDirectoryReadRequest extends spfsMPIRequest
+{
+    fields:
+        FileDescriptorPtr fileDes;
+        unsigned long count;
+
+        // internal fields
+        unsigned int numResolvedSegments = 1;
+};
+
+// Directory remove response
+message spfsMPIDirectoryReadResponse extends spfsMPIResponse
+{
+};
+
+// Request to remove a directory
+message spfsMPIDirectoryRemoveRequest extends spfsMPIRequest
+{
+    fields:
+        string dirName;
+
+        // internal fields
+        unsigned int numResolvedSegments = 1;
+};
+
+// Directory remove response
+message spfsMPIDirectoryRemoveResponse extends spfsMPIResponse
+{
+};
+
+// Request to stat a file
+message spfsMPIFileStatRequest extends spfsMPIRequest
+{
+    fields:
+        string fileName;
+        bool determineFileSize;
+
+        // internal fields
+        unsigned int numResolvedSegments = 1;
+};
+
+// Response to file stat
+message spfsMPIFileStatResponse extends spfsMPIResponse
+{
+    fields:
+        unsigned long fileSize;
 };
 
 // Request to update a file's atime

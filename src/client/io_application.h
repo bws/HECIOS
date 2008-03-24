@@ -107,10 +107,14 @@ private:
     /** Temporal timing data collections */
     cOutVector cpuPhaseDelay_;
     cOutVector directoryCreateDelay_;
+    cOutVector directoryReadDelay_;
+    cOutVector directoryRemoveDelay_;
+    cOutVector fileDeleteDelay_;
     cOutVector fileOpenDelay_;
     cOutVector fileReadDelay_;
-    cOutVector fileWriteDelay_;
+    cOutVector fileStatDelay_;
     cOutVector fileUpdateTimeDelay_;
+    cOutVector fileWriteDelay_;
 };
 
 #endif

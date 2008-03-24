@@ -9,6 +9,7 @@ SIM_SRC += $(DIR)/client_fs_state.cc \
 	$(DIR)/fs_create_directory.cc \
 	$(DIR)/fs_open.cc \
 	$(DIR)/fs_read.cc \
+	$(DIR)/fs_read_directory.cc \
 	$(DIR)/fs_stat.cc \
 	$(DIR)/fs_update_time.cc \
 	$(DIR)/fs_write.cc \

@@ -72,6 +72,12 @@ public:
         /** Set the file id */
         void fileId(int fileId) { fileId_ = fileId; };
     
+        /** @return read dir count */
+        std::size_t count() const { return count_; };
+
+        /** Set the read dir count */
+        void count(std::size_t count) { count_ = count; };
+        
         /** @return file access offset */
         std::size_t offset() const { return offset_; };
 
@@ -144,6 +150,7 @@ public:
         double duration_;
         std::string filename_;
         int fileId_;
+        std::size_t count_;
         std::size_t offset_;
         std::size_t length_;
         std::string source_;

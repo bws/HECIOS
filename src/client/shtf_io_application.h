@@ -29,11 +29,15 @@ class SHTFIOTrace;
 class UMDIOTrace;
 class spfsCacheInvalidateRequest;
 class spfsMPIDirectoryCreateRequest;
+class spfsMPIDirectoryReadRequest;
+class spfsMPIDirectoryRemoveRequest;
 class spfsMPIFileCloseRequest;
+class spfsMPIFileDeleteRequest;
 class spfsMPIFileGetAModeRequest;
 class spfsMPIFileGetSizeRequest;
 class spfsMPIFileOpenRequest;
 class spfsMPIFileReadAtRequest;
+class spfsMPIFileStatRequest;
 class spfsMPIFileUpdateTimeRequest;
 class spfsMPIFileWriteAtRequest;
 
@@ -79,10 +83,22 @@ private:
     spfsMPIDirectoryCreateRequest* createDirectoryCreateMessage(
         const IOTrace::Record* mkdirRecord);
     
+    /** @return an MPI DirectoryRead request */
+    spfsMPIDirectoryReadRequest* createDirectoryReadMessage(
+        const IOTrace::Record* readDirRecord);
+    
+    /** @return an MPI DirectoryRemove request */
+    spfsMPIDirectoryRemoveRequest* createDirectoryRemoveMessage(
+        const IOTrace::Record* rmDirRecord);
+    
     /** @return an MPI File Close request */
     spfsMPIFileCloseRequest* createCloseMessage(
         const IOTrace::Record* closeRecord);
-    
+
+    /** @return an MPI File Delete request */
+    spfsMPIFileDeleteRequest* createDeleteMessage(
+        const IOTrace::Record* unlinkRecord);
+
     /** @return an MPI File Get AMode request */
     spfsMPIFileGetAModeRequest* createGetAModeMessage(
         const IOTrace::Record* accessRecord);
@@ -99,8 +115,13 @@ private:
     spfsMPIFileReadAtRequest* createReadAtMessage(
         const IOTrace::Record* readAtRecord);
 
+    /** @return an MPI File Read At request */
     spfsMPIFileReadAtRequest* createReadMessage(
         const IOTrace::Record* readRecord);
+    
+    /** @return an MPI File Stat request */
+    spfsMPIFileStatRequest* createStatMessage(
+        const IOTrace::Record* statRecord);
     
     /** @return an MPI File Update Time request */
     spfsMPIFileUpdateTimeRequest* createUpdateTimeMessage(

@@ -23,6 +23,8 @@
 #include "fs_create_directory.h"
 #include "fs_open.h"
 #include "fs_read.h"
+#include "fs_read_directory.h"
+#include "fs_stat.h"
 #include "fs_update_time.h"
 #include "fs_write.h"
 #include "pfs_types.h"
@@ -111,9 +113,23 @@ spfsLookupPathRequest* FSClient::createLookupPathRequest(
 
     // Set the lookup request size (op, creds, fs_id, pathSize, path, handle,
     // attrMask)
-    lookup->setByteLength(4 + FSClient:: CREDENTIALS_SIZE + 4 +
+    lookup->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 +
                           4 + lookupName.str().length() + 8 + 4);
     return lookup;
+}
+
+spfsReadDirRequest* FSClient::createReadDirRequest(const FSHandle& handle,
+                                                   size_t dirEntCount)
+{
+    spfsReadDirRequest* readDir = new spfsReadDirRequest(0,
+                                                         SPFS_READ_DIR_REQUEST);
+    readDir->setHandle(handle);
+    readDir->setDirOffset(0);
+    readDir->setDirEntCount(dirEntCount);
+
+    readDir->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 + 8 + 8 + 8);
+
+    return readDir;
 }
 
 spfsReadRequest* FSClient::createReadRequest(const FSHandle& handle,
@@ -186,7 +202,9 @@ FSClient::FSClient()
       flowDelay_("SPFS Client Flow Delay"),
       getAttrDelay_("SPFS Client GetAttr Roundtrip Delay"),
       lookupPathDelay_("SPFS Client Lookup Path Roundtrip Delay"),
+      readDirDelay_("SPFS Client Read Dir Roundtrip Delay"),
       readDelay_("SPFS Client Read Roundtrip Delay"),
+      removeDelay_("SPFS Client Remove Roundtrip Delay"),
       setAttrDelay_("SPFS Client SetAttr Roundtrip Delay"),
       writeCompleteDelay_("SPFS Client WriteComplete Roundtrip Delay"),
       writeDelay_("SPFS Client Write Roundtrip Delay")
@@ -208,6 +226,8 @@ void FSClient::initialize()
 
     // Retrieve processing delays
     directoryCreateProcessingDelay_ = par("directoryCreateProcessingDelaySecs");
+    directoryReadProcessingDelay_ = par("directoryReadProcessingDelaySecs");
+    directoryRemoveProcessingDelay_ = par("directoryRemoveProcessingDelaySecs");
     fileCloseProcessingDelay_ = par("fileCloseProcessingDelaySecs");
     fileOpenProcessingDelay_ = par("fileOpenProcessingDelaySecs");
     fileReadProcessingDelay_ = par("fileReadProcessingDelaySecs");
@@ -221,6 +241,7 @@ void FSClient::initialize()
     numDCacheHits_ = 0;
     numDCacheMisses_ = 0;
     numDirCreates_ = 0;
+    numDirReads_ = 0;
     numFileCloses_ = 0;
     numFileOpens_ = 0;
     numFileReads_ = 0;
@@ -231,11 +252,13 @@ void FSClient::initialize()
 void FSClient::finish()
 {
     recordScalar("SPFS Dir Creates", numDirCreates_);
+    recordScalar("SPFS Dir Reads", numDirReads_);
     recordScalar("SPFS File Closes", numFileCloses_);
     recordScalar("SPFS File Opens", numFileOpens_);
     recordScalar("SPFS File Reads", numFileReads_);
-    recordScalar("SPFS File Writes", numFileWrites_);
+    recordScalar("SPFS File Stats", numFileStats_);
     recordScalar("SPFS File Utimes", numFileUtimes_);
+    recordScalar("SPFS File Writes", numFileWrites_);
 }
 
 void FSClient::handleMessage(cMessage *msg)
@@ -292,6 +315,18 @@ void FSClient::scheduleRequest(cMessage* request)
             scheduleTime += directoryCreateProcessingDelay_;
             break;
         }
+        case SPFS_MPI_DIRECTORY_READ_REQUEST:
+        {
+            numDirReads_++;
+            scheduleTime += directoryReadProcessingDelay_;
+            break;
+        }
+        case SPFS_MPI_DIRECTORY_REMOVE_REQUEST:
+        {
+            numDirRemoves_++;
+            scheduleTime += directoryRemoveProcessingDelay_;
+            break;
+        }
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
             numFileOpens_++;
@@ -310,6 +345,12 @@ void FSClient::scheduleRequest(cMessage* request)
         {
             numFileReads_++;
             scheduleTime += fileReadProcessingDelay_;
+            break;
+        }
+        case SPFS_MPI_FILE_STAT_REQUEST:
+        {
+            numFileStats_++;
+            scheduleTime += fileStatProcessingDelay_;
             break;
         }
         case SPFS_MPI_FILE_UPDATE_TIME_REQUEST:
@@ -348,6 +389,13 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             dirCreate.handleMessage(msg);
             break;
         }
+        case SPFS_MPI_DIRECTORY_READ_REQUEST:
+        {
+            FSReadDirectory readDir(
+                this, static_cast<spfsMPIDirectoryReadRequest*>(request));
+            readDir.handleMessage(msg);
+            break;
+        }
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
             FSOpen open(this,
@@ -368,6 +416,13 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             FSRead read(this,
                         static_cast<spfsMPIFileReadAtRequest*>(request));
             read.handleMessage(msg);
+            break;
+        }
+        case SPFS_MPI_FILE_STAT_REQUEST:
+        {
+            FSStat stat(
+                this, static_cast<spfsMPIFileStatRequest*>(request));
+            stat.handleMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_UPDATE_TIME_REQUEST:
@@ -474,6 +529,11 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
         case SPFS_LOOKUP_PATH_RESPONSE:
         {
             lookupPathDelay_.record(delay);
+            break;
+        }
+        case SPFS_READ_DIR_RESPONSE:
+        {
+            readDirDelay_.record(delay);
             break;
         }
         case SPFS_READ_RESPONSE:

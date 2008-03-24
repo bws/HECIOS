@@ -45,10 +45,14 @@ IOApplication::IOApplication()
       rank_(-1),
       cpuPhaseDelay_("SPFS CPU Phase Delay"),
       directoryCreateDelay_("SPFS MPI Directory Create Delay"),
+      directoryReadDelay_("SPFS MPI Directory Read Delay"),
+      directoryRemoveDelay_("SPFS MPI Directory Remove Delay"),
+      fileDeleteDelay_("SPFS MPI File Delete Delay"),
       fileOpenDelay_("SPFS MPI File Open Delay"),
       fileReadDelay_("SPFS MPI File Read Delay"),
-      fileWriteDelay_("SPFS MPI File Write Delay"),
-      fileUpdateTimeDelay_("SPFS MPI File Update Time Delay")
+      fileStatDelay_("SPFS MPI File Stat Delay"),
+      fileUpdateTimeDelay_("SPFS MPI File Update Time Delay"),
+      fileWriteDelay_("SPFS MPI File Write Delay")
 {
 }
 
@@ -134,19 +138,30 @@ void IOApplication::handleIOMessage(cMessage* msg)
             directoryCreateDelay_.record(delay);
             break;
         }
+        case SPFS_MPI_DIRECTORY_READ_RESPONSE:
+        {
+            directoryReadDelay_.record(delay);
+            break;
+        }
+        case SPFS_MPI_DIRECTORY_REMOVE_RESPONSE:
+        {
+            directoryRemoveDelay_.record(delay);
+            break;
+        }
         case SPFS_MPI_FILE_CLOSE_RESPONSE:
         {
             break;
         }
         case SPFS_MPI_FILE_DELETE_RESPONSE:
         {
-            break;
-        }
-        case SPFS_MPI_FILE_GET_SIZE_RESPONSE:
-        {
+            fileDeleteDelay_.record(delay);
             break;
         }
         case SPFS_MPI_FILE_GET_INFO_RESPONSE:
+        {
+            break;
+        }
+        case SPFS_MPI_FILE_GET_SIZE_RESPONSE:
         {
             break;
         }
@@ -159,6 +174,13 @@ void IOApplication::handleIOMessage(cMessage* msg)
         {
             break;
         }
+        case SPFS_MPI_FILE_IREAD_RESPONSE:
+        case SPFS_MPI_FILE_READ_AT_RESPONSE:
+        case SPFS_MPI_FILE_READ_RESPONSE:
+        {
+            fileReadDelay_.record(delay);
+            break;
+        }
         case SPFS_MPI_FILE_SET_INFO_RESPONSE:
         {
             break;
@@ -167,11 +189,9 @@ void IOApplication::handleIOMessage(cMessage* msg)
         {
             break;
         }
-        case SPFS_MPI_FILE_IREAD_RESPONSE:
-        case SPFS_MPI_FILE_READ_AT_RESPONSE:
-        case SPFS_MPI_FILE_READ_RESPONSE:
+        case SPFS_MPI_FILE_STAT_RESPONSE:
         {
-            fileReadDelay_.record(delay);
+            fileStatDelay_.record(delay);
             break;
         }
         case SPFS_MPI_FILE_UPDATE_TIME_RESPONSE:
