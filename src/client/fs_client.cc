@@ -42,7 +42,7 @@ spfsCollectiveCreateRequest* FSClient::createCollectiveCreateRequest(
     spfsCollectiveCreateRequest* create =
         new spfsCollectiveCreateRequest(0, SPFS_COLLECTIVE_CREATE_REQUEST);
     create->setHandle(handle);
-    create->setObjectType(SPFS_METADATA_OBJECT);
+    create->setObjectType(SPFS_DIR_ENT_OBJECT);
 
     // Add the data handles
     create->setDataHandlesArraySize(dataHandles.size());
@@ -88,7 +88,7 @@ spfsCollectiveRemoveRequest* FSClient::createCollectiveRemoveRequest(
     spfsCollectiveRemoveRequest* remove =
         new spfsCollectiveRemoveRequest(0, SPFS_COLLECTIVE_REMOVE_REQUEST);
     remove->setHandle(handle);
-    remove->setObjectType(SPFS_METADATA_OBJECT);
+    remove->setObjectType(SPFS_DIR_ENT_OBJECT);
 
     // Add the data handles
     remove->setDataHandlesArraySize(dataHandles.size());

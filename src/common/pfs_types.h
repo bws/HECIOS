@@ -39,6 +39,7 @@ enum FSLookupStatus { SPFS_INVALID_LOOKUP_STATUS = 0,
 /** Parallel file system object types */
 enum FSObjectType { SPFS_INVALID_OBJECT_TYPE = 0,
                     SPFS_DATA_OBJECT,
+                    SPFS_DIR_ENT_OBJECT,
                     SPFS_DIRECTORY_OBJECT,
                     SPFS_METADATA_OBJECT, };
 
