@@ -115,6 +115,7 @@ message spfsMPIRequest
 
         // internal fields
         cFSM state;
+        unsigned int numResolvedSegments = 1;
         int remainingResponses = 0;
         int socketId;
 };
@@ -145,7 +146,6 @@ message spfsMPIFileOpenRequest extends spfsMPIRequest
 
         // internal fields
         FileDescriptorPtr fileDes;
-        unsigned int numResolvedSegments = 1;
 };
 
 // Open file response
@@ -347,9 +347,6 @@ message spfsMPIDirectoryReadRequest extends spfsMPIRequest
     fields:
         FileDescriptorPtr fileDes;
         unsigned long count;
-
-        // internal fields
-        unsigned int numResolvedSegments = 1;
 };
 
 // Directory remove response
@@ -362,9 +359,6 @@ message spfsMPIDirectoryRemoveRequest extends spfsMPIRequest
 {
     fields:
         string dirName;
-
-        // internal fields
-        unsigned int numResolvedSegments = 1;
 };
 
 // Directory remove response
@@ -378,9 +372,6 @@ message spfsMPIFileStatRequest extends spfsMPIRequest
     fields:
         string fileName;
         bool determineFileSize;
-
-        // internal fields
-        unsigned int numResolvedSegments = 1;
 };
 
 // Response to file stat
@@ -395,9 +386,6 @@ message spfsMPIFileUpdateTimeRequest extends spfsMPIRequest
 {
     fields:
         string fileName;
-
-        // internal fields
-        unsigned int numResolvedSegments = 1;
 };
 
 // Response to atime update

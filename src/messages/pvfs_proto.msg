@@ -410,6 +410,34 @@ message spfsCollectiveCreateResponse extends spfsResponse
         FSHandle handle;
 };
 
+// Get attributes a file system object
+message spfsCollectiveGetAttrRequest extends spfsRequest
+{
+    fields:
+        FSObjectType objectType;
+        FSHandle dataHandles[];
+        int numOutstandingRequests;
+};
+
+// Get attributes response a file system object
+message spfsCollectiveGetAttrResponse extends spfsResponse
+{
+};
+
+// Remove a file system object
+message spfsCollectiveRemoveRequest extends spfsRequest
+{
+    fields:
+        FSObjectType objectType;
+        FSHandle dataHandles[];
+        int numOutstandingRequests;
+};
+
+// Remove a file system object
+message spfsCollectiveRemoveResponse extends spfsResponse
+{
+};
+
 //
 // Local variables:
 //  indent-tabs-mode: nil

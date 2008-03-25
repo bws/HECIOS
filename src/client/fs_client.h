@@ -35,6 +35,7 @@ class spfsGetAttrRequest;
 class spfsLookupPathRequest;
 class spfsReadDirRequest;
 class spfsReadRequest;
+class spfsRemoveDirEntRequest;
 class spfsRemoveRequest;
 class spfsSetAttrRequest;
 class spfsWriteRequest;
@@ -58,11 +59,21 @@ public:
         const FSHandle& handle,
         std::vector<FSHandle> dataHandles);
 
+    /** @return a new Collective GetAttr request */
+    static spfsCollectiveGetAttrRequest* createCollectiveGetAttrRequest(
+        const FSHandle& handle,
+        std::vector<FSHandle> dataHandles);
+
+    /** @return a new Collective Remove request */
+    static spfsCollectiveRemoveRequest* createCollectiveRemoveRequest(
+        const FSHandle& handle,
+        std::vector<FSHandle> dataHandles);
+
     /** @return a new Create request */
     static spfsCreateRequest* createCreateRequest(const FSHandle& handle,
                                                   FSObjectType objectType);
 
-    /** @return a new Create request */
+    /** @return a new Create DirEnt request */
     static spfsCreateDirEntRequest* createCreateDirEntRequest(
         const FSHandle& handle, const Filename& entry);
 
@@ -86,6 +97,13 @@ public:
                                               FSOffset offset,
                                               FSSize dataSize,
                                               const FileDistribution& dist);
+
+    /** @return a new Remove DirEnt request */
+    static spfsRemoveDirEntRequest* createRemoveDirEntRequest(
+        const FSHandle& handle, const Filename& entry);
+
+    /** @return a new Remove request */
+    static spfsRemoveRequest* createRemoveRequest(const FSHandle& handle);
 
     /** @return a new SetAttr request */
     static spfsSetAttrRequest* createSetAttrRequest(const FSHandle& handle,
@@ -162,6 +180,9 @@ private:
     /** Client processing delay for file close */
     double fileCloseProcessingDelay_;
 
+    /** Client processing delay for file delete */
+    double fileDeleteProcessingDelay_;
+
     /** Client processing delay for file open */
     double fileOpenProcessingDelay_;
 
@@ -189,6 +210,7 @@ private:
     double numDirReads_;
     double numDirRemoves_;
     double numFileCloses_;
+    double numFileDeletes_;
     double numFileOpens_;
     double numFileReads_;
     double numFileStats_;
@@ -197,6 +219,8 @@ private:
 
     /** Temporal data collection */
     cOutVector collectiveCreateDelay_;
+    cOutVector collectiveGetAttrDelay_;
+    cOutVector collectiveRemoveDelay_;
     cOutVector createDirEntDelay_;
     cOutVector createObjectDelay_;
     cOutVector flowDelay_;
@@ -205,6 +229,7 @@ private:
     cOutVector readDirDelay_;
     cOutVector readDelay_;
     cOutVector removeDelay_;
+    cOutVector removeDirEntDelay_;
     cOutVector setAttrDelay_;
     cOutVector writeCompleteDelay_;
     cOutVector writeDelay_;

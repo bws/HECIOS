@@ -292,7 +292,6 @@ FSLookupStatus FSStat::processLookup(spfsLookupPathResponse* lookupResponse)
         Filename resolvedName = statFile.getSegment(numResolvedSegments - 1);
         const FSMetaData* meta =
             FileBuilder::instance().getMetaData(resolvedName);
-        cerr << "Adding name to cache: " << resolvedName << endl;
         client_->fsState().insertName(resolvedName.str(), meta->handle);
     }
     else if (SPFS_NOTFOUND == lookupStatus)

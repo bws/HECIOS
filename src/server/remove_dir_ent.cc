@@ -55,7 +55,7 @@ void RemoveDirEnt::handleServerMessage(cMessage* msg)
         }
         case FSM_Enter(WRITE_DIR_ENT):
         {
-            assert(0 != dynamic_cast<spfsCreateDirEntRequest*>(msg));
+            assert(0 != dynamic_cast<spfsRemoveDirEntRequest*>(msg));
             writeDirEnt();
             break;
         }

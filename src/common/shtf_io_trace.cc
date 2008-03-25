@@ -139,8 +139,14 @@ IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
     }
     else if ("FCNTL" == token)
     {
-        cerr << __FILE__ <<":" << __LINE__
-             << ": Converting FCNTL into CPU_PHASE\n";
+        // TODO: Find a reasonable thing to do here
+        static bool printWarning = true;
+        if (printWarning)
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "WARNING: Converting FCNTL into CPU_PHASE\n";
+            printWarning = false;
+        }
         rec = createCpuPhaseRecord(startTime, duration);
     }
     else if ("MKDIR" == token)

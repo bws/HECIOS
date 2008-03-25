@@ -21,6 +21,7 @@
 #include <iostream>
 #include "fs_close.h"
 #include "fs_create_directory.h"
+#include "fs_delete.h"
 #include "fs_open.h"
 #include "fs_read.h"
 #include "fs_read_directory.h"
@@ -56,6 +57,52 @@ spfsCollectiveCreateRequest* FSClient::createCollectiveCreateRequest(
         4 + dataHandles.size()*4 + dataHandles.size()*8;
     create->setByteLength(msgSize);
     return create;
+}
+
+spfsCollectiveGetAttrRequest* FSClient::createCollectiveGetAttrRequest(
+    const FSHandle& handle, vector<FSHandle> dataHandles)
+{
+    spfsCollectiveGetAttrRequest* getAttr =
+        new spfsCollectiveGetAttrRequest(0, SPFS_COLLECTIVE_GET_ATTR_REQUEST);
+    getAttr->setHandle(handle);
+    getAttr->setObjectType(SPFS_METADATA_OBJECT);
+
+    // Add the data handles
+    getAttr->setDataHandlesArraySize(dataHandles.size());
+    for (size_t i = 0; i < dataHandles.size(); i++)
+    {
+        getAttr->setDataHandles(i, dataHandles[i]);
+    }
+
+    // Set the collective create request size (op, creds, fs_id, objType,
+    //  metahandle, numExtentArrays, extentArraySizes, extentArrays)
+    long msgSize = 4 + FSClient::CREDENTIALS_SIZE + 4 + 4 + 8 +
+        4 + dataHandles.size()*4 + dataHandles.size()*8;
+    getAttr->setByteLength(msgSize);
+    return getAttr;
+}
+
+spfsCollectiveRemoveRequest* FSClient::createCollectiveRemoveRequest(
+    const FSHandle& handle, vector<FSHandle> dataHandles)
+{
+    spfsCollectiveRemoveRequest* remove =
+        new spfsCollectiveRemoveRequest(0, SPFS_COLLECTIVE_REMOVE_REQUEST);
+    remove->setHandle(handle);
+    remove->setObjectType(SPFS_METADATA_OBJECT);
+
+    // Add the data handles
+    remove->setDataHandlesArraySize(dataHandles.size());
+    for (size_t i = 0; i < dataHandles.size(); i++)
+    {
+        remove->setDataHandles(i, dataHandles[i]);
+    }
+
+    // Set the collective remove request size (op, creds, fs_id, objType,
+    //  metahandle, numExtentArrays, extentArraySizes, extentArrays)
+    long msgSize = 4 + FSClient::CREDENTIALS_SIZE + 4 + 4 + 8 +
+        4 + dataHandles.size()*4 + dataHandles.size()*8;
+    remove->setByteLength(msgSize);
+    return remove;
 }
 
 spfsCreateRequest* FSClient::createCreateRequest(const FSHandle& handle,
@@ -154,6 +201,31 @@ spfsReadRequest* FSClient::createReadRequest(const FSHandle& handle,
                         view.getRepresentationByteLength() +
                         8 + 8);
     return read;
+}
+
+spfsRemoveDirEntRequest* FSClient::createRemoveDirEntRequest(
+    const FSHandle& handle, const Filename& entry)
+{
+    spfsRemoveDirEntRequest* removeDirEnt =
+        new spfsRemoveDirEntRequest(0, SPFS_REMOVE_DIR_ENT_REQUEST);
+    removeDirEnt->setHandle(handle);
+    removeDirEnt->setEntry(entry.c_str());
+
+    // Set the remove dirent request size (op, creds, fs_id, entry,
+    // parentHandle)
+    removeDirEnt->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 +
+                                entry.str().length() + 1 + 8);
+    return removeDirEnt;
+}
+
+spfsRemoveRequest* FSClient::createRemoveRequest(const FSHandle& handle)
+{
+    spfsRemoveRequest* remove = new spfsRemoveRequest(0, SPFS_REMOVE_REQUEST);
+    remove->setHandle(handle);
+
+    // Set the remove request size (op, creds, fs_id, Handle)
+    remove->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 + 8);
+    return remove;
 }
 
 spfsSetAttrRequest* FSClient::createSetAttrRequest(const FSHandle& handle,
@@ -339,6 +411,12 @@ void FSClient::scheduleRequest(cMessage* request)
             scheduleTime += fileCloseProcessingDelay_;
             break;
         }
+        case SPFS_MPI_FILE_DELETE_REQUEST :
+        {
+            numFileDeletes_++;
+            scheduleTime += fileDeleteProcessingDelay_;
+            break;
+        }
         case SPFS_MPI_FILE_READ_AT_REQUEST:
         case SPFS_MPI_FILE_READ_REQUEST:
         case SPFS_MPI_FILE_IREAD_REQUEST:
@@ -396,6 +474,15 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             readDir.handleMessage(msg);
             break;
         }
+        case SPFS_MPI_DIRECTORY_REMOVE_REQUEST:
+        {
+            FSDelete removeDir(
+                this,
+                static_cast<spfsMPIDirectoryRemoveRequest*>(request),
+                false);
+            removeDir.handleMessage(msg);
+            break;
+        }
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
             FSOpen open(this,
@@ -409,6 +496,14 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             FSClose close(this,
                           static_cast<spfsMPIFileCloseRequest*>(request));
             close.handleMessage(msg);
+            break;
+        }
+        case SPFS_MPI_FILE_DELETE_REQUEST :
+        {
+            FSDelete del(this,
+                         static_cast<spfsMPIFileDeleteRequest*>(request),
+                         useCollectiveRemove_);
+            del.handleMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_READ_AT_REQUEST:
@@ -471,19 +566,20 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             send(writemsg, appOutGateId_);
             break;
         }
-        case SPFS_MPI_FILE_DELETE_REQUEST:
         case SPFS_MPI_FILE_SET_SIZE_REQUEST :
         case SPFS_MPI_FILE_PREALLOCATE_REQUEST :
         case SPFS_MPI_FILE_GET_SIZE_REQUEST :
         {
-            cerr << "ERROR FSClient: Unsupported client request type: "
+            cerr << __FILE__ << ":" << __LINE__ <<
+                "ERROR: Unsupported client request type: "
                  << request->kind()
                  << endl;
             break;
         }
         default:
         {
-            cerr << "FSClient: Unknown Message: " << request->kind()
+            cerr << __FILE__ << ":" << __LINE__ <<
+                ": Unknown Message: " << request->kind()
                  << " " << request->info() << endl;
             break;
         }
@@ -539,6 +635,16 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
         case SPFS_READ_RESPONSE:
         {
             readDelay_.record(delay);
+            break;
+        }
+        case SPFS_REMOVE_DIR_ENT_RESPONSE:
+        {
+            removeDirEntDelay_.record(delay);
+            break;
+        }
+        case SPFS_REMOVE_RESPONSE:
+        {
+            removeDelay_.record(delay);
             break;
         }
         case SPFS_SET_ATTR_RESPONSE:
