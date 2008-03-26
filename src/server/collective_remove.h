@@ -34,30 +34,28 @@ public:
     /** Constructor */
     CollectiveRemove(FSServer* module, spfsCollectiveRemoveRequest* removeReq);
 
-    /**
-     * Handle message as part of the creation process
-     */
+    /** Handle message as part of the remove process */
     void handleServerMessage(cMessage* msg);
 
 protected:
-    /**
-     * Send the file remove message to the OS
-     */
+    void sendRemoveMeta();
+
+    void removeDirEnt();
+    
+    /** Send the file remove message to the OS */
     void removeObject();
 
     /** Send the child collective create requests for this node */
     void sendCollectiveRequests();
     
     /**
-     *Process responses from servers and OS
+     * Process responses from servers and OS
      *
      * @return true if no more outstanding responses exist
      */
     bool processResponse(cMessage* response);
     
-    /**
-     * Send the final response to the client
-     */
+    /** Send the final response to the client */
     void enterFinish();
     
 private:

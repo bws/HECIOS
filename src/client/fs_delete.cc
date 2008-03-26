@@ -213,7 +213,6 @@ void FSDelete::collectiveMessageProcessor(cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            assert(0 != dynamic_cast<spfsMPIFileOpenRequest*>(msg));
             bool nameCached = isParentNameCached();
             if (nameCached)
             {
@@ -471,7 +470,7 @@ void FSDelete::collectiveRemove()
     assert(0 != parentMeta);
     
     spfsCollectiveRemoveRequest* req = FSClient::createCollectiveRemoveRequest(
-        parentMeta->handle, meta->handle, meta->dataHandles);
+        parentMeta->dataHandles[0], meta->handle, meta->dataHandles);
     req->setContextPointer(clientReq_);
     client_->send(req, client_->getNetOutGate());
 }

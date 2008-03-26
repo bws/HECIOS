@@ -308,6 +308,13 @@ void FSServer::processRequest(spfsRequest* request, cMessage* msg)
             collGetAttr.handleServerMessage(msg);
             break;
         }
+        case SPFS_COLLECTIVE_REMOVE_REQUEST:
+        {
+            CollectiveRemove collRemove(
+                this, static_cast<spfsCollectiveRemoveRequest*>(request));
+            collRemove.handleServerMessage(msg);
+            break;
+        }
        case SPFS_CREATE_REQUEST:
         {
             Create create(this, static_cast<spfsCreateRequest*>(request));

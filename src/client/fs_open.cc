@@ -598,7 +598,7 @@ void FSOpen::collectiveCreate()
     assert(0 != parentMeta);
 
     spfsCollectiveCreateRequest* req = FSClient::createCollectiveCreateRequest(
-        parentMeta->handle, meta->handle, meta->dataHandles);
+        parentMeta->dataHandles[0], meta->handle, meta->dataHandles);
     req->setContextPointer(openReq_);
     client_->send(req, client_->getNetOutGate());
 }

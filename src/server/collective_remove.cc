@@ -42,23 +42,28 @@ void CollectiveRemove::handleServerMessage(cMessage* msg)
     // Server remove states
     enum {
         INIT = 0,
-        REMOVE_META = FSM_Transient(1),
-        REMOVE_DFILE = FSM_Transient(2),
-        REMOVE_DIR_ENT = FSM_Transient(2),
-        SEND_REQUESTS = FSM_Transient(3),
-        WAIT_FOR_RESPONSE = FSM_Steady(4),
-        FINISH = FSM_Steady(5),
+        SEND_META = FSM_Steady(1),
+        REMOVE_META = FSM_Steady(2),
+        REMOVE_DFILE = FSM_Transient(3),
+        SEND_REQUESTS = FSM_Transient(4),
+        WAIT_FOR_RESPONSE = FSM_Steady(5),
+        REMOVE_DIRENT = FSM_Steady(6),
+        FINISH = FSM_Steady(7),
     };
 
     FSM_Switch(currentState)
     {
         case FSM_Exit(INIT):
         {
-            assert(0 != dynamic_cast<spfsCollectiveCreateRequest*>(msg));
+            assert(0 != dynamic_cast<spfsCollectiveRemoveRequest*>(msg));
             module_->recordCollectiveCreate();
             removeReq_->setNumOutstandingRequests(0);
             FSObjectType objectType = removeReq_->getObjectType();
-            if (SPFS_METADATA_OBJECT == objectType)
+            if (SPFS_DIR_ENT_OBJECT == objectType)
+            {
+                FSM_Goto(currentState, SEND_META);
+            }
+            else if (SPFS_METADATA_OBJECT == objectType)
             {
                 FSM_Goto(currentState, REMOVE_META);
             }
@@ -69,6 +74,17 @@ void CollectiveRemove::handleServerMessage(cMessage* msg)
             }
             break;
         }
+        case FSM_Enter(SEND_META):
+        {
+            assert(0 != dynamic_cast<spfsCollectiveRemoveRequest*>(msg));
+            sendRemoveMeta();
+            break;
+        }
+        case FSM_Exit(SEND_META):
+        {
+            FSM_Goto(currentState, SEND_REQUESTS);
+            break;
+        }
         case FSM_Enter(REMOVE_META):
         {
             assert(0 != dynamic_cast<spfsCollectiveRemoveRequest*>(msg));
@@ -77,12 +93,12 @@ void CollectiveRemove::handleServerMessage(cMessage* msg)
         }
         case FSM_Exit(REMOVE_META):
         {
-            FSM_Goto(currentState, SEND_REQUESTS);
+            FSM_Goto(currentState, FINISH);
             break;
         }
         case FSM_Enter(REMOVE_DFILE):
         {
-            assert(0 != dynamic_cast<spfsCollectiveCreateRequest*>(msg));
+            assert(0 != dynamic_cast<spfsCollectiveRemoveRequest*>(msg));
             removeObject();
             break;
         }
@@ -110,12 +126,30 @@ void CollectiveRemove::handleServerMessage(cMessage* msg)
             bool isFinished = processResponse(msg);
             if (isFinished)
             {
-                FSM_Goto(currentState, FINISH);
+                FSObjectType objectType = removeReq_->getObjectType();
+                if (SPFS_DIR_ENT_OBJECT == objectType)
+                {
+                    FSM_Goto(currentState, REMOVE_DIRENT);
+                }
+                else
+                {
+                    FSM_Goto(currentState, FINISH);
+                }
             }
             else
             {
                 FSM_Goto(currentState, WAIT_FOR_RESPONSE);
             }
+            break;
+        }
+        case FSM_Enter(REMOVE_DIRENT):
+        {
+            removeDirEnt();
+            break;
+        }
+        case FSM_Exit(REMOVE_DIRENT):
+        {
+            FSM_Goto(currentState, FINISH);
             break;
         }
         case FSM_Enter(FINISH):
@@ -127,6 +161,17 @@ void CollectiveRemove::handleServerMessage(cMessage* msg)
 
     // Store the state in the request
     removeReq_->setState(currentState);
+}
+
+void CollectiveRemove::sendRemoveMeta()
+{
+    spfsCollectiveRemoveRequest* childRemove =
+        new spfsCollectiveRemoveRequest(0, SPFS_COLLECTIVE_REMOVE_REQUEST);
+    childRemove->setObjectType(SPFS_METADATA_OBJECT);
+    childRemove->setHandle(removeReq_->getMetaHandle());
+    childRemove->setContextPointer(removeReq_);
+    childRemove->setByteLength(4 + 16 + 4 + 8);
+    module_->send(childRemove);
 }
 
 void CollectiveRemove::removeObject()
@@ -146,6 +191,24 @@ void CollectiveRemove::removeObject()
     // Increment the number of outstanding requests
     int numOutstanding = removeReq_->getNumOutstandingRequests() + 1;
     removeReq_->setNumOutstandingRequests(numOutstanding);
+}
+
+void CollectiveRemove::removeDirEnt()
+{
+    // Convert the handle into a local file name
+    Filename filename(removeReq_->getHandle());
+
+    // Create the file write request
+    spfsOSFileWriteRequest* fileWrite = new spfsOSFileWriteRequest();
+    fileWrite->setContextPointer(removeReq_);
+    fileWrite->setFilename(filename.c_str());
+    fileWrite->setOffsetArraySize(1);
+    fileWrite->setExtentArraySize(1);
+    fileWrite->setOffset(0, 0);
+    fileWrite->setExtent(0, module_->getDirectoryEntrySize());
+    
+    // Send the write request
+    module_->send(fileWrite);
 }
 
 void CollectiveRemove::sendCollectiveRequests()
@@ -198,6 +261,23 @@ void CollectiveRemove::enterFinish()
 
     // Determine the processing delay
     simtime_t delay = 0.0;
+    if (SPFS_DATA_OBJECT == removeReq_->getObjectType())
+    {
+        delay = FSServer::removeObjectProcessingDelay();
+    }
+    else if (SPFS_DIRECTORY_OBJECT == removeReq_->getObjectType())
+    {
+        delay = FSServer::removeObjectProcessingDelay();
+    }
+    else if (SPFS_METADATA_OBJECT == removeReq_->getObjectType())
+    {
+        delay = FSServer::removeObjectProcessingDelay();
+    }
+    else
+    {
+        assert(SPFS_DIR_ENT_OBJECT == removeReq_->getObjectType());
+        delay = FSServer::removeDirEntProcessingDelay();
+    }
 
     // Send the message after calculated delay
     module_->sendDelayed(resp, delay);

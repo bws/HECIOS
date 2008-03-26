@@ -546,7 +546,8 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_FILE_READ_REQUEST:
         {
-            cerr << "ERROR: Illegal read message!" << endl;
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "ERROR: Illegal read message!" << endl;
             break;
         }
         case SPFS_MPI_FILE_IREAD_REQUEST:
@@ -562,7 +563,8 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_FILE_WRITE_REQUEST:
         {
-            cerr << "ERROR: Illegal write message!" << endl;
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "ERROR: Illegal write message!" << endl;
             break;
         }
         case SPFS_MPI_FILE_IWRITE_REQUEST:
