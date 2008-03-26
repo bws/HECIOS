@@ -589,12 +589,16 @@ void FSOpen::finish()
 
 void FSOpen::collectiveCreate()
 {
-    // Get the parent handle
-    FileDescriptor* fd = openReq_->getFileDes();
-    FSMetaData* meta = FileBuilder::instance().getMetaData(fd->getFilename());
+    // Get the file and it's parent metadata
+    Filename openName(openReq_->getFileName());
+    FSMetaData* meta = FileBuilder::instance().getMetaData(openName);
+    Filename parent = openName.getParent();
+    FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parent);
+    assert(0 != meta);
+    assert(0 != parentMeta);
 
     spfsCollectiveCreateRequest* req = FSClient::createCollectiveCreateRequest(
-        meta->handle, meta->dataHandles);
+        parentMeta->handle, meta->handle, meta->dataHandles);
     req->setContextPointer(openReq_);
     client_->send(req, client_->getNetOutGate());
 }

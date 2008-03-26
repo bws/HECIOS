@@ -40,25 +40,26 @@ public:
     void handleServerMessage(cMessage* msg);
 
 protected:
-
-    /**
-     * Send the file creation message to the OS
-     */
+    /** Send the collective metadata creation message */
+    void sendMeta();
+    
+    /** Send the file creation message to the OS */
     void enterCreate();
 
+    /** Send the file write message to the OS */
+    void createDirEnt();
+    
     /** Send the child collective create requests for this node */
     void sendCollectiveRequests();
     
     /**
-     *Process responses from servers and OS
+     * Process responses from servers and OS
      *
      * @return true if no more outstanding responses exist
      */
     bool processResponse(cMessage* response);
     
-    /**
-     * Send the final response to the client
-     */
+    /** Send the final response to the client */
     void enterFinish();
     
 private:

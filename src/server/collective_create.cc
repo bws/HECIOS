@@ -42,11 +42,13 @@ void CollectiveCreate::handleServerMessage(cMessage* msg)
     // Server create states
     enum {
         INIT = 0,
-        CREATE_META = FSM_Transient(1),
-        CREATE_DFILE = FSM_Transient(2),
-        SEND_REQUESTS = FSM_Transient(3),
-        WAIT_FOR_RESPONSE = FSM_Steady(4),
-        FINISH = FSM_Steady(5),
+        SEND_META = FSM_Steady(1),
+        CREATE_META = FSM_Steady(2),
+        CREATE_DFILE = FSM_Transient(3),
+        SEND_REQUESTS = FSM_Transient(4),
+        WAIT_FOR_RESPONSE = FSM_Steady(5),
+        CREATE_DIR_ENT = FSM_Steady(6),
+        FINISH = FSM_Steady(7),
     };
 
     FSM_Switch(currentState)
@@ -57,7 +59,11 @@ void CollectiveCreate::handleServerMessage(cMessage* msg)
             module_->recordCollectiveCreate();
             createReq_->setNumOutstandingRequests(0);
             FSObjectType objectType = createReq_->getObjectType();
-            if (SPFS_METADATA_OBJECT == objectType)
+            if (SPFS_DIR_ENT_OBJECT == objectType)
+            {
+                FSM_Goto(currentState, SEND_META);
+            }
+            else if (SPFS_METADATA_OBJECT == objectType)
             {
                 FSM_Goto(currentState, CREATE_META);
             }
@@ -68,6 +74,17 @@ void CollectiveCreate::handleServerMessage(cMessage* msg)
             }
             break;
         }
+        case FSM_Enter(SEND_META):
+        {
+            assert(0 != dynamic_cast<spfsCollectiveCreateRequest*>(msg));
+            sendMeta();
+            break;
+        }
+        case FSM_Exit(SEND_META):
+        {
+            FSM_Goto(currentState, SEND_REQUESTS);
+            break;
+        }
         case FSM_Enter(CREATE_META):
         {
             assert(0 != dynamic_cast<spfsCollectiveCreateRequest*>(msg));
@@ -76,7 +93,7 @@ void CollectiveCreate::handleServerMessage(cMessage* msg)
         }
         case FSM_Exit(CREATE_META):
         {
-            FSM_Goto(currentState, SEND_REQUESTS);
+            FSM_Goto(currentState, FINISH);
             break;
         }
         case FSM_Enter(CREATE_DFILE):
@@ -109,12 +126,30 @@ void CollectiveCreate::handleServerMessage(cMessage* msg)
             bool isFinished = processResponse(msg);
             if (isFinished)
             {
-                FSM_Goto(currentState, FINISH);
+                FSObjectType objectType = createReq_->getObjectType();
+                if (SPFS_DIR_ENT_OBJECT == objectType)
+                {
+                    FSM_Goto(currentState, CREATE_DIR_ENT);
+                }
+                else
+                {
+                    FSM_Goto(currentState, FINISH);
+                }
             }
             else
             {
                 FSM_Goto(currentState, WAIT_FOR_RESPONSE);
             }
+            break;
+        }
+        case FSM_Enter(CREATE_DIR_ENT):
+        {
+            createDirEnt();
+            break;
+        }
+        case FSM_Exit(CREATE_DIR_ENT):
+        {
+            FSM_Goto(currentState, FINISH);
             break;
         }
         case FSM_Enter(FINISH):
@@ -126,6 +161,19 @@ void CollectiveCreate::handleServerMessage(cMessage* msg)
 
     // Store the state in the request
     createReq_->setState(currentState);
+}
+
+void CollectiveCreate::sendMeta()
+{
+    spfsCollectiveCreateRequest* childCreate =
+        new spfsCollectiveCreateRequest(0, SPFS_COLLECTIVE_CREATE_REQUEST);
+    childCreate->setContextPointer(createReq_);
+    childCreate->setObjectType(SPFS_METADATA_OBJECT);
+
+    // The first child handle is used for addressing
+    childCreate->setHandle(createReq_->getMetaHandle());
+    childCreate->setByteLength(4 + 16 + 4 + 8);
+    module_->send(childCreate);
 }
 
 void CollectiveCreate::enterCreate()
@@ -146,6 +194,24 @@ void CollectiveCreate::enterCreate()
     // Increment the number of outstanding requests
     int numOutstanding = createReq_->getNumOutstandingRequests() + 1;
     createReq_->setNumOutstandingRequests(numOutstanding);
+}
+
+void CollectiveCreate::createDirEnt()
+{
+    // Convert the handle into a local file name
+    Filename filename(createReq_->getHandle());
+
+    // Create the file write request
+    spfsOSFileWriteRequest* fileWrite = new spfsOSFileWriteRequest();
+    fileWrite->setContextPointer(createReq_);
+    fileWrite->setFilename(filename.c_str());
+    fileWrite->setOffsetArraySize(1);
+    fileWrite->setExtentArraySize(1);
+    fileWrite->setOffset(0, 0);
+    fileWrite->setExtent(0, module_->getDirectoryEntrySize());
+    
+    // Send the write request
+    module_->send(fileWrite);
 }
 
 void CollectiveCreate::sendCollectiveRequests()
@@ -206,10 +272,14 @@ void CollectiveCreate::enterFinish()
     {
         delay = FSServer::createDirectoryProcessingDelay();
     }
+    else if (SPFS_METADATA_OBJECT == createReq_->getObjectType())
+    {
+        delay = FSServer::createMetadataProcessingDelay();
+    }
     else
     {
-        assert(SPFS_METADATA_OBJECT == createReq_->getObjectType());
-        delay = FSServer::createMetadataProcessingDelay();
+        assert(SPFS_DIR_ENT_OBJECT == createReq_->getObjectType());
+        delay = FSServer::createDirEntProcessingDelay();
     }
 
     // Send the message after calculated delay

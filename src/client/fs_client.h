@@ -56,17 +56,19 @@ public:
 
     /** @return a new Collective File Create request */
     static spfsCollectiveCreateRequest* createCollectiveCreateRequest(
-        const FSHandle& handle,
+        const FSHandle& parentHandle,
+        const FSHandle& metaHandle,
         std::vector<FSHandle> dataHandles);
 
     /** @return a new Collective GetAttr request */
     static spfsCollectiveGetAttrRequest* createCollectiveGetAttrRequest(
-        const FSHandle& handle,
+        const FSHandle& metaHandle,
         std::vector<FSHandle> dataHandles);
 
     /** @return a new Collective Remove request */
     static spfsCollectiveRemoveRequest* createCollectiveRemoveRequest(
-        const FSHandle& handle,
+        const FSHandle& parentHandle,
+        const FSHandle& metaHandle,
         std::vector<FSHandle> dataHandles);
 
     /** @return a new Create request */

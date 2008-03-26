@@ -464,10 +464,14 @@ void FSDelete::finish()
 void FSDelete::collectiveRemove()
 {
     // Get the metadata handle
+    Filename parentName = deleteName_.getParent();
     FSMetaData* meta = FileBuilder::instance().getMetaData(deleteName_);
-
+    FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parentName);
+    assert(0 != meta);
+    assert(0 != parentMeta);
+    
     spfsCollectiveRemoveRequest* req = FSClient::createCollectiveRemoveRequest(
-        meta->handle, meta->dataHandles);
+        parentMeta->handle, meta->handle, meta->dataHandles);
     req->setContextPointer(clientReq_);
     client_->send(req, client_->getNetOutGate());
 }

@@ -399,6 +399,7 @@ message spfsCollectiveCreateRequest extends spfsRequest
 {
     fields:
         FSObjectType objectType;
+        FSHandle metaHandle;
         FSHandle dataHandles[];
         int numOutstandingRequests;
 };
@@ -429,6 +430,7 @@ message spfsCollectiveRemoveRequest extends spfsRequest
 {
     fields:
         FSObjectType objectType;
+        FSHandle metaHandle;
         FSHandle dataHandles[];
         int numOutstandingRequests;
 };

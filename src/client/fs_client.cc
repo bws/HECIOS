@@ -37,13 +37,18 @@ using namespace std;
 Define_Module(FSClient);
 
 spfsCollectiveCreateRequest* FSClient::createCollectiveCreateRequest(
-    const FSHandle& handle, vector<FSHandle> dataHandles)
+    const FSHandle& parentHandle,
+    const FSHandle& metaHandle,
+    vector<FSHandle> dataHandles)
 {
     spfsCollectiveCreateRequest* create =
         new spfsCollectiveCreateRequest(0, SPFS_COLLECTIVE_CREATE_REQUEST);
-    create->setHandle(handle);
+    create->setHandle(parentHandle);
     create->setObjectType(SPFS_DIR_ENT_OBJECT);
 
+    // Add the metadata handle
+    create->setMetaHandle(metaHandle);
+    
     // Add the data handles
     create->setDataHandlesArraySize(dataHandles.size());
     for (size_t i = 0; i < dataHandles.size(); i++)
@@ -83,12 +88,15 @@ spfsCollectiveGetAttrRequest* FSClient::createCollectiveGetAttrRequest(
 }
 
 spfsCollectiveRemoveRequest* FSClient::createCollectiveRemoveRequest(
-    const FSHandle& handle, vector<FSHandle> dataHandles)
+    const FSHandle& parentHandle,
+    const FSHandle& metaHandle,
+    vector<FSHandle> dataHandles)
 {
     spfsCollectiveRemoveRequest* remove =
         new spfsCollectiveRemoveRequest(0, SPFS_COLLECTIVE_REMOVE_REQUEST);
-    remove->setHandle(handle);
+    remove->setHandle(parentHandle);
     remove->setObjectType(SPFS_DIR_ENT_OBJECT);
+    remove->setMetaHandle(metaHandle);
 
     // Add the data handles
     remove->setDataHandlesArraySize(dataHandles.size());
