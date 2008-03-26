@@ -515,15 +515,17 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_FILE_STAT_REQUEST:
         {
-            FSStat stat(
-                this, static_cast<spfsMPIFileStatRequest*>(request));
+            FSStat stat(this,
+                        static_cast<spfsMPIFileStatRequest*>(request),
+                        useCollectiveGetAttr_);
             stat.handleMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_UPDATE_TIME_REQUEST:
         {
             FSUpdateTime utime(
-                this, static_cast<spfsMPIFileUpdateTimeRequest*>(request));
+                this,
+                static_cast<spfsMPIFileUpdateTimeRequest*>(request));
             utime.handleMessage(msg);
             break;
         }
@@ -600,6 +602,16 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
         case SPFS_COLLECTIVE_CREATE_RESPONSE:
         {
             collectiveCreateDelay_.record(delay);
+            break;
+        }
+        case SPFS_COLLECTIVE_GET_ATTR_RESPONSE:
+        {
+            collectiveGetAttrDelay_.record(delay);
+            break;
+        }
+        case SPFS_COLLECTIVE_REMOVE_RESPONSE:
+        {
+            collectiveRemoveDelay_.record(delay);
             break;
         }
         case SPFS_CREATE_DIR_ENT_RESPONSE:

@@ -29,16 +29,31 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSStat::FSStat(FSClient* client, spfsMPIFileStatRequest* statReq)
+FSStat::FSStat(FSClient* client,
+               spfsMPIFileStatRequest* statReq,
+               bool useCollectiveCommunication)
     : client_(client),
-      statReq_(statReq)
+      statReq_(statReq),
+      useCollectiveCommunication_(useCollectiveCommunication)
 {
     assert(0 != client_);
     assert(0 != statReq_);
 }
 
-// Processing that occurs upon receipt of an MPI-IO UpdateTime request
 void FSStat::handleMessage(cMessage* msg)
+{
+    if (useCollectiveCommunication_ &&
+        true == statReq_->getDetermineFileSize())
+    {
+        collectiveMessageProcessor(msg);
+    }
+    else
+    {
+        serialMessageProcessor(msg);
+    }
+}
+
+void FSStat::serialMessageProcessor(cMessage* msg)
 {
     // Restore the existing state for this request
     cFSM currentState = statReq_->getState();
@@ -168,6 +183,100 @@ void FSStat::handleMessage(cMessage* msg)
     }
 
     // Store current state
+    statReq_->setState(currentState);
+}
+
+void FSStat::collectiveMessageProcessor(cMessage* msg)
+{
+    /** Restore the existing state for this Open Request */
+    cFSM currentState = statReq_->getState();
+
+    /** File system open state machine states */
+    enum {
+        INIT = 0,
+        LOOKUP_PARENT_HANDLE = FSM_Steady(1),
+        GET_PARENT_ATTRIBUTES = FSM_Steady(2),
+        COLLECTIVE_STAT = FSM_Steady(5),
+        FINISH = FSM_Steady(10)
+    };
+
+    FSM_Switch(currentState)
+    {
+        case FSM_Exit(INIT):
+        {
+            assert(0 != dynamic_cast<spfsMPIFileStatRequest*>(msg));
+            bool nameCached = isParentNameCached();
+            if (nameCached)
+            {
+                bool attrCached = isParentAttrCached();
+                if (attrCached)
+                {
+                    FSM_Goto(currentState, COLLECTIVE_STAT);
+                }
+                else
+                {
+                    FSM_Goto(currentState, GET_PARENT_ATTRIBUTES);
+                }
+            }
+            else
+            {
+                FSM_Goto(currentState, LOOKUP_PARENT_HANDLE);
+            }
+            break;
+        }
+        case FSM_Enter(LOOKUP_PARENT_HANDLE):
+        {
+            lookupParentOnServer();
+            break;
+        }
+        case FSM_Exit(LOOKUP_PARENT_HANDLE):
+        {
+            assert(0 != dynamic_cast<spfsLookupPathResponse*>(msg));
+            FSLookupStatus status = processLookup(
+                static_cast<spfsLookupPathResponse*>(msg));
+            if (SPFS_FOUND == status)
+                FSM_Goto(currentState, GET_PARENT_ATTRIBUTES);
+            else if (SPFS_PARTIAL == status)
+                FSM_Goto(currentState, LOOKUP_PARENT_HANDLE);
+            else if (SPFS_NOTFOUND == status)
+                FSM_Goto(currentState, FINISH);
+            else
+            {
+                cerr << __FILE__ << ":" << __LINE__ << ":"
+                     << "ERROR: Dir does not exist during creation." << endl;
+            }
+            break;
+        }
+        case FSM_Enter(GET_PARENT_ATTRIBUTES):
+        {
+            getParentAttributes();
+            break;
+        }
+        case FSM_Exit(GET_PARENT_ATTRIBUTES):
+        {
+            cacheParentAttributes();
+            FSM_Goto(currentState, COLLECTIVE_STAT);
+            break;
+        }
+        case FSM_Enter(COLLECTIVE_STAT):
+        {    
+            collectiveStat();
+            break;
+        }
+        case FSM_Exit(COLLECTIVE_STAT):
+        {
+            assert(0 != dynamic_cast<spfsCollectiveGetAttrResponse*>(msg));
+            FSM_Goto(currentState, FINISH);
+            break;
+        }
+        case FSM_Enter(FINISH):
+        {
+            finish();
+            break;
+        }
+    }
+
+    // Store state
     statReq_->setState(currentState);
 }
 
@@ -352,11 +461,23 @@ bool FSStat::processResponse(cMessage* getAttrResponse)
     return isComplete;
 }
 
+void FSStat::collectiveStat()
+{
+    // Get the parent handle
+    Filename statName(statReq_->getFileName());
+    FSMetaData* meta = FileBuilder::instance().getMetaData(statName);
+
+    spfsCollectiveGetAttrRequest* req =
+        FSClient::createCollectiveGetAttrRequest(meta->handle,
+                                                 meta->dataHandles);
+    req->setContextPointer(statReq_);
+    client_->send(req, client_->getNetOutGate());
+}
+
 void FSStat::finish()
 {
-    spfsMPIFileUpdateTimeResponse* mpiResp =
-        new spfsMPIFileUpdateTimeResponse(0,
-                                          SPFS_MPI_FILE_UPDATE_TIME_RESPONSE);
+    spfsMPIFileStatResponse* mpiResp =
+        new spfsMPIFileStatResponse(0, SPFS_MPI_FILE_STAT_RESPONSE);
     mpiResp->setContextPointer(statReq_);
     mpiResp->setIsSuccessful(true);
     client_->send(mpiResp, client_->getAppOutGate());

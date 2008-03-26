@@ -33,12 +33,20 @@ class FSStat
 public:
 
     /** Constructor */
-    FSStat(FSClient* client, spfsMPIFileStatRequest* statReq);
+    FSStat(FSClient* client,
+           spfsMPIFileStatRequest* statReq,
+           bool useCollectiveCommunication);
     
     /** Handle MPI-Open Message */
     void handleMessage(cMessage* msg);
 
 protected:
+    /** Perform stat processing for a serial get attr */
+    void serialMessageProcessor(cMessage* msg);
+
+    /** Perform stat processing for a collective get attr */
+    void collectiveMessageProcessor(cMessage* msg);
+    
     /** Send message to retrieve the metadata attributes */
     void getMetaDataAttributes();
 
@@ -49,6 +57,9 @@ protected:
      * @return true if all of the data attribute responses have been received
      */
     bool processResponse(cMessage* getAttrResponse);
+
+    /** Send message to perform collective get attr */
+    void collectiveStat();
     
     /** Send final client response */
     void finish();
@@ -71,6 +82,9 @@ private:
 
     /** The originating MPI Stat request */
     spfsMPIFileStatRequest* statReq_;
+
+    /** Collective communication flag */
+    bool useCollectiveCommunication_;
 };
 
 #endif

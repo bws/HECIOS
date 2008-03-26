@@ -24,6 +24,8 @@
 #include <iostream>
 #include "change_dir_ent.h"
 #include "collective_create.h"
+#include "collective_get_attr.h"
+#include "collective_remove.h"
 #include "create.h"
 #include "create_dir_ent.h"
 #include "data_flow.h"
@@ -299,7 +301,14 @@ void FSServer::processRequest(spfsRequest* request, cMessage* msg)
             collCreate.handleServerMessage(msg);
             break;
         }
-        case SPFS_CREATE_REQUEST:
+        case SPFS_COLLECTIVE_GET_ATTR_REQUEST:
+        {
+            CollectiveGetAttr collGetAttr(
+                this, static_cast<spfsCollectiveGetAttrRequest*>(request));
+            collGetAttr.handleServerMessage(msg);
+            break;
+        }
+       case SPFS_CREATE_REQUEST:
         {
             Create create(this, static_cast<spfsCreateRequest*>(request));
             create.handleServerMessage(msg);
