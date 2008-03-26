@@ -60,9 +60,6 @@ protected:
 
     virtual bool scheduleNextMessage();
 
-    /** FIXME: broken abstraction */
-    virtual cMessage* createMessage(void *){return NULL;};
-
     /** Create a cMessage from an IOTrace::Record */
     virtual cMessage* createMessage(IOTrace::Record* rec);
     

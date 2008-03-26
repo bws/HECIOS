@@ -249,7 +249,7 @@ void IOApplication::handleMessage(cMessage* msg)
     if (!msgScheduled_)
     {
         cerr << "Rank " << rank_ << " IOApplication Time: " << simTime()
-             << ": No more messages to post." << endl;
+             << ": No more messages to post or blocked." << endl;
         applicationCompletionTime_ = simTime();
     }
 }

@@ -22,6 +22,8 @@
 
 #include <omnetpp.h>
 #include "io_application.h"
+#include "phtf_io_trace.h"
+
 class FileDescriptor;
 class PHTFTrace;
 class PHTFEvent;
@@ -55,7 +57,6 @@ protected:
     virtual bool scheduleNextMessage();
 
     /** Create a cMessage from an IOTrace::Record */
-    virtual cMessage* createMessage(void *){return NULL;};
     virtual cMessage* createMessage(PHTFEventRecord* rec);
 
     virtual void handleIOMessage(cMessage* msg);
@@ -67,7 +68,7 @@ private:
 
     void scheduleCPUMessage(cMessage *msg);
 
-    void handleBarrier(cMessage *msg);
+    void handleBarrier(cMessage *msg, bool active = false);
 
     cMessage* createBarrierMessage(
         const PHTFEventRecord* barrierRecord);
@@ -110,10 +111,13 @@ private:
         const PHTFEventRecord* writeRecord);
 
     PHTFEvent * phtfEvent_;
-
+    PHTFEventRecord phtfRecord_;
+    
     long waitReqId_;
 
     cMessage * context_;
+
+    bool noGetNext_;
 
     int counter_;
     int sum_;

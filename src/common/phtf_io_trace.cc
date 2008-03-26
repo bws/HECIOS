@@ -18,6 +18,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
+#include <stdlib.h>
 #include "phtf_io_trace.h"
 
 using namespace std;
@@ -25,6 +26,8 @@ using namespace std;
 std::map<std::string, PHTFOperation>  PHTFEventRecord::_opmap;
 std::string PHTFTrace::eventFileNamePrefix = string("event.");
 std::string PHTFTrace::runtimeFileNamePrefix = string("runtime.");
+std::string PHTFTrace::fsFileName = string("fs.ini");
+std::string PHTFFs::fsSecName = string("FileSystem");
 PHTFTrace* PHTFTrace::_trace = NULL;
 
 
@@ -406,6 +409,10 @@ PHTFTrace::PHTFTrace(std::string dirpath)
 {
     dirPath(dirpath);
     buildEvents();
+
+    stringstream ss("");
+    ss << dirPath() << PHTFTrace::fsFileName;
+    _fsfile = new PHTFFs(ss.str());
 }
 
 /** Build the event object vector */
@@ -451,6 +458,10 @@ PHTFEvent * PHTFTrace::getEvent(long pid)
         }
 }
 
+PHTFFs * PHTFTrace::getFs()
+{
+    return _fsfile;
+}
 
 /** @return The string that contains the path to the trace directory */
 std::string PHTFTrace::dirPath()
@@ -597,6 +608,88 @@ void PHTFIni::iniValue(string section, string field, string value)
 
     (*data_[section])[field] = value;
     writeIni();
+}
+
+PHTFIniItem* PHTFIni::iniSection(string section)
+{
+    if(!exist(section))
+        return NULL;
+    else
+        return data_[section];
+}
+
+PHTFFs::PHTFFs(string filepath)
+{
+    _fsini = new PHTFIni(filepath);
+}
+
+int PHTFFs::fileNum()
+{
+    if(_fsini->exist(PHTFFs::fsSecName))
+    {
+        PHTFIniItem * section = _fsini->iniSection(PHTFFs::fsSecName);
+        return section->size();
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void PHTFFs::addFile(string filename, string filesize)
+{
+    _fsini->iniValue(PHTFFs::fsSecName, filename, filesize);
+}
+
+
+PHTFIniItem::iterator PHTFFs::item(int id)
+{
+    if(id >= fileNum())
+        return NULL;
+    else
+    {
+        int i = 0;
+        PHTFIniItem::iterator it = 0;
+        PHTFIniItem* sec = _fsini->iniSection(PHTFFs::fsSecName);
+        for(it = sec->begin(); it != sec->end(); it++, i ++)
+        {
+            if(i == id)
+            {
+                break;
+            }
+        }
+        return it;
+    }
+}
+
+string PHTFFs::fileName(int id)
+{
+    if(id >= fileNum())
+        return "";
+    else
+        return item(id)->first;
+}
+
+int PHTFFs::fileSize(int id)
+{
+    if(id >= fileNum())
+        return -1;
+    else
+    {
+        string size = item(id)->second;
+        return (int)strtol(size.c_str(), NULL, 10);
+    }
+}
+
+int PHTFFs::fileSize(string filename)
+{
+    if(!_fsini->exist(PHTFFs::fsSecName, filename))
+        return -1;
+    else
+    {
+        string size = _fsini->iniValue(PHTFFs::fsSecName, filename);
+        return (int)strtol(size.c_str(), NULL, 10);
+    }
 }
 
 /*

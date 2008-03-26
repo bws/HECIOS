@@ -234,6 +234,7 @@ public:
     bool exist(std::string section, std::string field);
     std::string iniValue(std::string section, std::string field);
     void iniValue(std::string section, std::string field, std::string value);
+    PHTFIniItem * iniSection(std::string section);
 };
 
 /**
@@ -249,6 +250,24 @@ class PHTFArch
  */
 class PHTFFs
 {
+public:
+
+    static std::string fsSecName;
+    
+    PHTFFs(std::string filepath);
+    PHTFFs(){};
+    ~PHTFFs(){};
+
+    void addFile(std::string filename, std::string filesize);
+    std::string fileName(int id);
+    int fileSize(int id);
+    int fileSize(std::string filename);
+    int fileNum();
+
+protected:
+    PHTFIniItem::iterator item(int id);
+private:
+    PHTFIni *_fsini;
 };
 
 
@@ -259,6 +278,7 @@ class PHTFTrace
 {
     static std::string eventFileNamePrefix;
     static std::string runtimeFileNamePrefix;
+    static std::string fsFileName;
 
 protected:
     /**
@@ -272,7 +292,7 @@ protected:
 public:
     static PHTFTrace * getInstance(std::string dirpath);
     /** Destructor */
-    ~PHTFTrace(){destroyEvents();};
+    ~PHTFTrace(){destroyEvents();delete _fsfile;};
 
 public:
     /**
@@ -280,6 +300,8 @@ public:
      * @param pid The process id
      */
     PHTFEvent * getEvent(long pid);
+
+    PHTFFs *getFs();
 
     /** Build the event object vector */
     void buildEvents();
@@ -293,8 +315,8 @@ public:
 private:
     std::string _dirpath;
     std::vector<PHTFEvent *> _events;
-    PHTFArch _archfile;
-    PHTFFs _fsfile;
+    PHTFArch *_archfile;
+    PHTFFs *_fsfile;
     static PHTFTrace *_trace;
 };
 
