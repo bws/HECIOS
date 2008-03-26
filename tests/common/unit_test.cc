@@ -31,7 +31,7 @@
 #include "umd_io_trace_test.h"
 #include "vector_data_type_test.h"
 #include "phtf_io_trace_test.h"
-//#include "comm_man_test.h"
+#include "comm_man_test.h"
 
 /**
  * Unit test driver for common subsystem module
@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 
     // Add all of the requisite tests
 
-    //runner.addTest( CommManTest::suite() );
+    runner.addTest( CommManTest::suite() );
     runner.addTest( PHTFIOTraceTest::suite() );
 
 
