@@ -42,8 +42,8 @@ void CollectiveGetAttr::handleServerMessage(cMessage* msg)
     // Server create states
     enum {
         INIT = 0,
-        CREATE_META = FSM_Transient(1),
-        CREATE_DFILE = FSM_Transient(2),
+        GET_META_ATTR = FSM_Transient(1),
+        GET_DFILE_ATTR = FSM_Transient(2),
         SEND_REQUESTS = FSM_Transient(3),
         WAIT_FOR_RESPONSE = FSM_Steady(4),
         FINISH = FSM_Steady(5),
@@ -59,33 +59,33 @@ void CollectiveGetAttr::handleServerMessage(cMessage* msg)
             FSObjectType objectType = getAttrReq_->getObjectType();
             if (SPFS_METADATA_OBJECT == objectType)
             {
-                FSM_Goto(currentState, CREATE_META);
+                FSM_Goto(currentState, GET_META_ATTR);
             }
             else
             {
                 assert(SPFS_DATA_OBJECT == objectType);
-                FSM_Goto(currentState, CREATE_DFILE);
+                FSM_Goto(currentState, GET_DFILE_ATTR);
             }
             break;
         }
-        case FSM_Enter(CREATE_META):
+        case FSM_Enter(GET_META_ATTR):
         {
             assert(0 != dynamic_cast<spfsCollectiveGetAttrRequest*>(msg));
             getLocalAttributes();
             break;
         }
-        case FSM_Exit(CREATE_META):
+        case FSM_Exit(GET_META_ATTR):
         {
             FSM_Goto(currentState, SEND_REQUESTS);
             break;
         }
-        case FSM_Enter(CREATE_DFILE):
+        case FSM_Enter(GET_DFILE_ATTR):
         {
             assert(0 != dynamic_cast<spfsCollectiveGetAttrRequest*>(msg));
             getLocalAttributes();
             break;
         }
-        case FSM_Exit(CREATE_DFILE):
+        case FSM_Exit(GET_DFILE_ATTR):
         {
             FSM_Goto(currentState, SEND_REQUESTS);
             break;
@@ -130,18 +130,22 @@ void CollectiveGetAttr::handleServerMessage(cMessage* msg)
 
 void CollectiveGetAttr::getLocalAttributes()
 {
-    // Create the file system object
-    spfsOSFileOpenRequest* openRequest =
-        new spfsOSFileOpenRequest(0, SPFS_OS_FILE_OPEN_REQUEST);
-    openRequest->setContextPointer(getAttrReq_);
-
     // Extract the handle as the file name
     Filename f(getAttrReq_->getHandle());
-    openRequest->setFilename(f.c_str());
-    openRequest->setIsCreate(true);
+
+    // Create the file system object
+    spfsOSFileReadRequest* readRequest = new spfsOSFileReadRequest();
+    readRequest->setContextPointer(getAttrReq_);
+
+    // Set read parameters to accomplish a get attr
+    readRequest->setFilename(f.c_str());
+    readRequest->setOffsetArraySize(1);
+    readRequest->setExtentArraySize(1);
+    readRequest->setOffset(0, 0);
+    readRequest->setExtent(0, module_->getDefaultAttrSize());
     
     // Send the request to the storage layer
-    module_->send(openRequest);
+    module_->send(readRequest);
 
     // Increment the number of outstanding requests
     int numOutstanding = getAttrReq_->getNumOutstandingRequests() + 1;
@@ -160,11 +164,11 @@ void CollectiveGetAttr::sendCollectiveRequests()
         int splitIdx = numRemainingHandles / 2;
         int numChildHandles = numRemainingHandles - splitIdx;
 
-        // Send the child collective create call
-        spfsCollectiveGetAttrRequest* childCreate =
+        // Send the child collective get attr call
+        spfsCollectiveGetAttrRequest* childGetAttr =
             createChildCollectiveRequest(splitIdx, numChildHandles);
-        childCreate->setContextPointer(getAttrReq_);
-        module_->send(childCreate);
+        childGetAttr->setContextPointer(getAttrReq_);
+        module_->send(childGetAttr);
 
         // Increment the number of outstanding requests
         int numOutstanding = getAttrReq_->getNumOutstandingRequests() + 1;

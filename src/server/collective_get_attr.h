@@ -35,14 +35,14 @@ public:
     CollectiveGetAttr(FSServer* module, spfsCollectiveGetAttrRequest* getAttrReq);
 
     /**
-     * Handle message as part of the creation process
+     * Handle message as part of the get attributes process
      */
     void handleServerMessage(cMessage* msg);
 
 protected:
 
     /**
-     * Send the file creation message to the OS
+     * Send the get attributes message to the OS
      */
     void getLocalAttributes();
 
