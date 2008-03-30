@@ -426,8 +426,6 @@ void FSClient::scheduleRequest(cMessage* request)
             break;
         }
         case SPFS_MPI_FILE_READ_AT_REQUEST:
-        case SPFS_MPI_FILE_READ_REQUEST:
-        case SPFS_MPI_FILE_IREAD_REQUEST:
         {
             numFileReads_++;
             scheduleTime += fileReadProcessingDelay_;
@@ -446,8 +444,6 @@ void FSClient::scheduleRequest(cMessage* request)
             break;
         }
         case SPFS_MPI_FILE_WRITE_AT_REQUEST:
-        case SPFS_MPI_FILE_WRITE_REQUEST:
-        case SPFS_MPI_FILE_IWRITE_REQUEST:
         {
             numFileWrites_++;
             scheduleTime += fileWriteProcessingDelay_;
@@ -550,32 +546,10 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
                  << "ERROR: Illegal read message!" << endl;
             break;
         }
-        case SPFS_MPI_FILE_IREAD_REQUEST:
-        {
-            FSRead read(this,
-                        static_cast<spfsMPIFileReadAtRequest*>(request));
-            read.handleMessage(msg);
-            spfsMPIFileReadResponse *readmsg = new spfsMPIFileReadResponse(
-                0, SPFS_MPI_FILE_IREAD_RESPONSE);
-            readmsg->setContextPointer(request->dup());
-            send(readmsg, appOutGateId_);                                                                           
-            break;
-        }
         case SPFS_MPI_FILE_WRITE_REQUEST:
         {
             cerr << __FILE__ << ":" << __LINE__ << ":"
                  << "ERROR: Illegal write message!" << endl;
-            break;
-        }
-        case SPFS_MPI_FILE_IWRITE_REQUEST:
-        {
-            FSWrite write(this,
-                          static_cast<spfsMPIFileWriteAtRequest*>(request));
-            write.handleMessage(msg);
-            spfsMPIFileWriteResponse *writemsg = new spfsMPIFileWriteResponse(
-                0, SPFS_MPI_FILE_IWRITE_RESPONSE);
-            writemsg->setContextPointer(request->dup());
-            send(writemsg, appOutGateId_);
             break;
         }
         case SPFS_MPI_FILE_SET_SIZE_REQUEST :

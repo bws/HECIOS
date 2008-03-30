@@ -18,6 +18,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "comm_man.h"
+#include "phtf_io_trace.h"
 
 using namespace std;
 
@@ -50,12 +51,12 @@ bool CommMan::exist(int comm, int rank)
 
 int CommMan::joinComm(int comm, int wrank)
 {
-    if(comm == MPI_COMM_SELF)return 0;
+    if(comm == commSelf())return 0;
     
     if(!exist(comm))
         communicators_[comm] = new RankPair;
 
-    if(comm == MPI_COMM_WORLD)
+    if(comm == commWorld())
     {
         int size = commSize(comm);
         (*communicators_[comm])[size] = size;
@@ -76,7 +77,7 @@ int CommMan::joinComm(int comm, int wrank)
 
 int CommMan::commSize(int comm)
 {
-    if(comm == MPI_COMM_SELF)return 1;
+    if(comm == commSelf())return 1;
     
     if(exist(comm))
         return (int)communicators_[comm]->size();
@@ -87,9 +88,9 @@ int CommMan::commRank(int comm, int wrank)
 {
     RankPair::iterator it;
 
-    if(comm == MPI_COMM_SELF)return 0;
+    if(comm == commSelf())return 0;
 
-    if(comm == MPI_COMM_WORLD)return wrank;
+    if(comm == commWorld())return wrank;
 
     if(!exist(comm))return -1;
 
@@ -103,11 +104,11 @@ int CommMan::commRank(int comm, int wrank)
 
 int CommMan::commTrans(int comm, int grank, int comm2)
 {
-    if(comm == MPI_COMM_SELF)return -1;
+    if(comm == commSelf())return -1;
         
     int wrank = grank;
 
-    if(comm != MPI_COMM_WORLD)
+    if(comm != commWorld())
     {
         if(!exist(comm))return -1;
 
@@ -115,6 +116,26 @@ int CommMan::commTrans(int comm, int grank, int comm2)
     }
 
     return commRank(comm2, wrank);
+}
+
+int CommMan::commWorld()
+{
+    return commWorld_;
+}
+
+void CommMan::commWorld(int world)
+{
+    commWorld_ = world;
+}
+
+int CommMan::commSelf()
+{
+    return commSelf_;
+}
+
+void CommMan::commSelf(int self)
+{
+    commSelf_ = self;
 }
 
 

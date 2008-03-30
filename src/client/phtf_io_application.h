@@ -21,6 +21,7 @@
 //
 
 #include <omnetpp.h>
+#include <map>
 #include "io_application.h"
 #include "phtf_io_trace.h"
 
@@ -61,7 +62,7 @@ protected:
 
     virtual void handleIOMessage(cMessage* msg);
     virtual void handleMPIMessage(cMessage* msg);
-    
+
 private:
     /** Create the file system files for this trace */
     void populateFileSystem();
@@ -112,13 +113,17 @@ private:
 
     PHTFEvent * phtfEvent_;
     PHTFEventRecord phtfRecord_;
-    
+
+    std::map<long, cMessage*> nonBlockingReq_;
     long waitReqId_;
 
     cMessage * context_;
+    long desc_;
+    int group_;
 
     bool noGetNext_;
-
+    bool blocked_;
+    
     int counter_;
     int sum_;
 };

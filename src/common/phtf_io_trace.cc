@@ -28,6 +28,7 @@ std::string PHTFTrace::eventFileNamePrefix = string("event.");
 std::string PHTFTrace::runtimeFileNamePrefix = string("runtime.");
 std::string PHTFTrace::fsFileName = string("fs.ini");
 std::string PHTFFs::fsSecName = string("FileSystem");
+std::string PHTFFs::fsConst = string("Const");
 PHTFTrace* PHTFTrace::_trace = NULL;
 
 
@@ -660,6 +661,19 @@ PHTFIniItem::iterator PHTFFs::item(int id)
         }
         return it;
     }
+}
+
+string PHTFFs::consts(string constName)
+{
+    if(!_fsini->exist(PHTFFs::fsConst, constName))
+        return "";
+    else
+        return _fsini->iniValue(PHTFFs::fsConst, constName);
+}
+
+void PHTFFs::consts(string constName, string constValue)
+{
+    _fsini->iniValue(PHTFFs::fsConst, constName, constValue);
 }
 
 string PHTFFs::fileName(int id)

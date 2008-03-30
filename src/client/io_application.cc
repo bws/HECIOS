@@ -174,9 +174,7 @@ void IOApplication::handleIOMessage(cMessage* msg)
         {
             break;
         }
-        case SPFS_MPI_FILE_IREAD_RESPONSE:
         case SPFS_MPI_FILE_READ_AT_RESPONSE:
-        case SPFS_MPI_FILE_READ_RESPONSE:
         {
             fileReadDelay_.record(delay);
             break;
@@ -199,9 +197,7 @@ void IOApplication::handleIOMessage(cMessage* msg)
             fileUpdateTimeDelay_.record(delay);
             break;
         }
-        case SPFS_MPI_FILE_IWRITE_RESPONSE:
         case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
-        case SPFS_MPI_FILE_WRITE_RESPONSE:
         {
             fileWriteDelay_.record(delay);
             break;

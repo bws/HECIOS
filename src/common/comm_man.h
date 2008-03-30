@@ -22,10 +22,10 @@
 
 #include <map>
 
-#define MPI_COMM_WORLD 91
-#define MPI_COMM_SELF 92
-
 typedef std::map<int, int> RankPair;
+
+#define MPI_COMM_WORLD CommMan::getInstance()->commWorld()
+#define MPI_COMM_SELF CommMan::getInstance()->commSelf()
 
 class CommMan
 {
@@ -33,7 +33,7 @@ protected:
     std::map<int, RankPair *> communicators_;
     bool exist(int comm);
     bool exist(int comm, int rank);
-    CommMan(){};
+    CommMan(){commWorld_ = 1; commSelf_ = 0;};
     static CommMan * commman_;
 
 public:
@@ -44,6 +44,16 @@ public:
     int commSize(int comm);
     int commRank(int comm, int wrank);
     int commTrans(int comm, int grank, int comm2);
+
+    int commWorld();
+    void commWorld(int world);
+
+    int commSelf();
+    void commSelf(int self);
+
+private:
+    int commWorld_;
+    int commSelf_;
 };
 
 #endif

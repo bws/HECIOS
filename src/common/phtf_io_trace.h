@@ -253,6 +253,7 @@ class PHTFFs
 public:
 
     static std::string fsSecName;
+    static std::string fsConst;
     
     PHTFFs(std::string filepath);
     PHTFFs(){};
@@ -263,6 +264,9 @@ public:
     int fileSize(int id);
     int fileSize(std::string filename);
     int fileNum();
+
+    std::string consts(std::string constName);
+    void consts(std::string constName, std::string constValue);
 
 protected:
     PHTFIniItem::iterator item(int id);
