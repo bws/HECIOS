@@ -47,7 +47,8 @@ Define_Module(PHTFIOApplication);
 void PHTFIOApplication::initialize()
 {
     string dirStr = par("dirPHTF").stringValue();
-        
+
+    // set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration in fs.ini
     CommMan::getInstance()->commWorld(
         (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_WORLD").c_str(),
                     0, 10));
@@ -56,15 +57,17 @@ void PHTFIOApplication::initialize()
         (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_SELF").c_str(),
                     0, 10));
 
+    // parent class initilization, set rank_ and stuff
     IOApplication::initialize();
 
+    // get event file for this ioapp
     phtfEvent_ = PHTFTrace::getInstance(dirStr)->getEvent(rank_);
     phtfEvent_->open();
     PHTFEventRecord::buildOpMap();
 
+    // init some variable
     context_ = 0;
-    counter_ = 0;
-    sum_ = 0;
+    barrierCounter_ = 0;
     blocked_ = false;
     noGetNext_ = false;
     
@@ -83,6 +86,7 @@ void PHTFIOApplication::finish()
     phtfEvent_->close();
 }
 
+/** @param acitve - whether bcast barrier msg */
 void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
 {
     if(active)
@@ -90,19 +94,22 @@ void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
         spfsMPIBcastRequest *req =
             new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
                 
-        req->setRoot(rank_);
-        req->setCommunicator(MPI_COMM_WORLD);
+        req->setRoot(
+            CommMan::getInstance()->commRank(
+                dynamic_cast<spfsMPIMidBarrierRequest*>(msg)->getCommunicator()
+                ,rank_));
+
+        req->setCommunicator(
+            dynamic_cast<spfsMPIMidBarrierRequest*>(msg)->getCommunicator());
         req->encapsulate(msg);
         send(req, mpiOutGate_);
     }
 
-    counter_ ++;
-    cerr << rank_ << " barrier " << counter_ << endl;
+    barrierCounter_ --;
 
-    if(counter_ == sum_)
+    if(barrierCounter_ == 0)
     {
         cerr << rank_ << " break barrier!" << endl;
-        counter_ = 0;
         scheduleAt(simTime(), new cMessage());
     }
 }
@@ -132,18 +139,24 @@ bool PHTFIOApplication::scheduleNextMessage()
                 case WAIT:
                     delete msg;
                     break;
+                case SEEK:
+                    scheduleAt(simTime(), msg);
+                    break;
                 case OPEN:
-                    if(!noGetNext_)
+                    if(CommMan::getInstance()->commSize(group_) != 0)
                     {
-                        noGetNext_ = true;
-                        delete msg;
-                        // barrier
-                        PHTFEventRecord re;
-                        stringstream ss("");
-                        ss << MPI_COMM_WORLD;
-                        re.params(ss.str());
-                        handleBarrier(createBarrierMessage(&re), true);
-                        break;
+                        if(!noGetNext_)
+                        {
+                            noGetNext_ = true;
+                            delete msg;
+                            // barrier
+                            PHTFEventRecord re;
+                            stringstream ss("");
+                            ss << group_;
+                            re.params(ss.str());
+                            handleBarrier(createBarrierMessage(&re), true);
+                            break;
+                        }
                     }
 
                     if(CommMan::getInstance()->commRank(group_, rank_) == 0)
@@ -271,6 +284,9 @@ cMessage* PHTFIOApplication::createMessage(PHTFEventRecord* rec)
         case WAIT:
             mpiMsg = createWaitMessage(rec);
             break;
+        case SEEK:
+            mpiMsg = createSeekMessage(rec);
+            break;
         default:
             break;
         }
@@ -297,7 +313,7 @@ cMessage* PHTFIOApplication::createBarrierMessage(
 {
     string str = const_cast<PHTFEventRecord*>(barrierRecord)->paramAt(0);
     int comm = (int)strtol(str.c_str(), NULL, 10);
-    sum_ = CommMan::getInstance()->commSize(comm);
+    barrierCounter_ = CommMan::getInstance()->commSize(comm);
     spfsMPIMidBarrierRequest *mpimsg = new spfsMPIMidBarrierRequest(0, SPFS_MPIMID_BARRIER_REQUEST);
     mpimsg->setCommunicator(comm);
     return mpimsg;
@@ -417,7 +433,7 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadMessage(
     read->setOffset(fd->getFilePointer());
     read->setReqId(-1);
 
-    fd->setFilePointer(fd->getFilePointer() + count);
+    fd->moveFilePointer(count);
     
     return read;
 }
@@ -474,7 +490,7 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
     write->setReqId(-1);
     write->setFileDes(fd);
 
-    fd->setFilePointer(fd->getFilePointer() + count);
+    fd->moveFilePointer(count);
     
     return write;
 }
@@ -490,6 +506,38 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createIWriteMessage(
 
     nonBlockingReq_[reqid] = iwrite;
     return iwrite;
+}
+
+cMessage * PHTFIOApplication::createSeekMessage(
+    const PHTFEventRecord* seekRecord)
+{
+    string dirStr = par("dirPHTF").stringValue();
+    
+    string hstr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(0);
+    long handle = strtol(hstr.c_str(), NULL, 16);
+
+    string ostr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(1);
+    long offset = strtol(ostr.c_str(), NULL, 16);
+
+    string wstr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(3);
+    int whence = (int)strtol(wstr.c_str(), NULL, 10);
+
+    FileDescriptor* fd = getDescriptor(handle);
+
+    if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_SET").c_str(), 0, 10))
+    {
+        fd->setFilePointer(offset);
+    }
+    else if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_CUR").c_str(), 0, 10))
+    {
+        fd->moveFilePointer(offset);
+    }
+    else if(whence ==     (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_END").c_str(), 0, 10))
+    {
+        fd->setFilePointer(fd->getMetaData()->size + offset);
+    }
+
+    return new cMessage("seek");
 }
 
 /*

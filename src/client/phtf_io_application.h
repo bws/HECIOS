@@ -55,11 +55,13 @@ protected:
     /** Implementation of finish */
     virtual void finish();
 
+    /** Override ioApplication scheduleNextMessage() */
     virtual bool scheduleNextMessage();
 
     /** Create a cMessage from an IOTrace::Record */
     virtual cMessage* createMessage(PHTFEventRecord* rec);
 
+    /** Override ioApplication message handler */
     virtual void handleIOMessage(cMessage* msg);
     virtual void handleMPIMessage(cMessage* msg);
 
@@ -67,17 +69,27 @@ private:
     /** Create the file system files for this trace */
     void populateFileSystem();
 
+    /** Schedule a self message as a trigger after CPU_PHASE */
     void scheduleCPUMessage(cMessage *msg);
 
+    /** Dealing with barrier message */
     void handleBarrier(cMessage *msg, bool active = false);
 
+    /** @return an Barrier inform message */
     cMessage* createBarrierMessage(
         const PHTFEventRecord* barrierRecord);
 
+    /** @return an CPU Phase Message */
     cMessage* createCPUPhaseMessage(
         const PHTFEventRecord* cpuRecord);
+
+    /** @return an MPIO_Wait Message */
     cMessage* createWaitMessage(
         const PHTFEventRecord* waitRecord);
+
+    /** @return an MPI File Seek Message */
+    cMessage* createSeekMessage(
+        const PHTFEventRecord* seekRecord);
        
     /** @return an MPI File Close request */
     spfsMPIFileCloseRequest* createCloseMessage(
@@ -99,33 +111,47 @@ private:
     spfsMPIFileWriteAtRequest* createWriteAtMessage(
         const PHTFEventRecord* writeAtRecord);
 
+    /** @return an MPI File Read request */
     spfsMPIFileReadAtRequest * createReadMessage(
         const PHTFEventRecord* readRecord);
 
+    /** @return an MPI File Write request */
     spfsMPIFileWriteAtRequest * createWriteMessage(
         const PHTFEventRecord* writeRecord);
 
+    /** @return an MPI File IRead request */
     spfsMPIFileReadAtRequest * createIReadMessage(
         const PHTFEventRecord* readRecord);
 
+    /** @return an MPI File IWrite request */
     spfsMPIFileWriteAtRequest * createIWriteMessage(
         const PHTFEventRecord* writeRecord);
 
+    /** PHTF Event File */
     PHTFEvent * phtfEvent_;
+
+    /** PHTF Record, holding current record */
     PHTFEventRecord phtfRecord_;
 
+    /** non-blocking IO request map */
     std::map<long, cMessage*> nonBlockingReq_;
+    /** request id that MPIO_Wait is waiting for */
     long waitReqId_;
 
+    /** Message Pointer, holding open request context for collective open */
     cMessage * context_;
+    /** File descirptor, for collective open */
     long desc_;
+    /** Communicator, for collective open */
     int group_;
 
+    /** flag, indicates whether get next record, for collective open */
     bool noGetNext_;
+    /** flag, indicates whether ioapp blocked, for MPIO_Wait */
     bool blocked_;
-    
-    int counter_;
-    int sum_;
+
+    /** barrier counter, for barrier */
+    int barrierCounter_;
 };
 
 #endif
