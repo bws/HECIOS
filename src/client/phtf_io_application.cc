@@ -107,6 +107,8 @@ void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
 
     barrierCounter_ --;
 
+    cerr << rank_ << " barrier: " << barrierCounter_ << endl;
+
     if(barrierCounter_ == 0)
     {
         cerr << rank_ << " break barrier!" << endl;
@@ -170,6 +172,7 @@ bool PHTFIOApplication::scheduleNextMessage()
                     noGetNext_ = false;
                     break;        
                 default:
+                    cerr << rank_ << " send msg " << msg->kind() << endl;
                     send(msg, ioOutGate_);
                     msgScheduled = true;
                     break;
@@ -313,7 +316,7 @@ cMessage* PHTFIOApplication::createBarrierMessage(
 {
     string str = const_cast<PHTFEventRecord*>(barrierRecord)->paramAt(0);
     int comm = (int)strtol(str.c_str(), NULL, 10);
-    barrierCounter_ = CommMan::getInstance()->commSize(comm);
+    barrierCounter_ += CommMan::getInstance()->commSize(comm);
     spfsMPIMidBarrierRequest *mpimsg = new spfsMPIMidBarrierRequest(0, SPFS_MPIMID_BARRIER_REQUEST);
     mpimsg->setCommunicator(comm);
     return mpimsg;
