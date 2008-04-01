@@ -105,7 +105,8 @@ public:
         const FSHandle& handle, const Filename& entry);
 
     /** @return a new Remove request */
-    static spfsRemoveRequest* createRemoveRequest(const FSHandle& handle);
+    static spfsRemoveRequest* createRemoveRequest(const FSHandle& handle,
+                                                  FSObjectType objectType);
 
     /** @return a new SetAttr request */
     static spfsSetAttrRequest* createSetAttrRequest(const FSHandle& handle,
@@ -169,6 +170,9 @@ private:
     
     /** Enable collective file remove optimization */
     bool useCollectiveRemove_;
+
+    /** Delay associated with client processing */
+    double clientOverheadDelay_;
     
     /** Client processing delay for directory creation */
     double directoryCreateProcessingDelay_;

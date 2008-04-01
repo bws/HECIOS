@@ -25,6 +25,7 @@ simple FSClient
         useCollectiveCreate: bool,
         useCollectiveGetAttr: bool,
         useCollectiveRemove: bool,
+        clientOverheadDelaySecs: numeric const,
         directoryCreateProcessingDelaySecs: numeric const,
         directoryReadProcessingDelaySecs: numeric const,
         directoryRemoveProcessingDelaySecs: numeric const,

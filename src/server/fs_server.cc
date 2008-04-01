@@ -56,8 +56,10 @@ simtime_t FSServer::getAttrProcessingDelay_ = 0.0;
 simtime_t FSServer::lookupPathProcessingDelay_ = 0.0;
 simtime_t FSServer::readDirProcessingDelay_ = 0.0;
 simtime_t FSServer::removeDirEntProcessingDelay_ = 0.0;
+simtime_t FSServer::removeMetaProcessingDelay_ = 0.0;
 simtime_t FSServer::removeObjectProcessingDelay_ = 0.0;
 simtime_t FSServer::setAttrProcessingDelay_ = 0.0;
+simtime_t FSServer::serverOverheadDelay_ = 0.0;
 bool FSServer::collectDiskData_ = false;
 
 size_t FSServer::getDefaultAttrSize()
@@ -160,6 +162,16 @@ simtime_t FSServer::removeDirEntProcessingDelay()
     return removeDirEntProcessingDelay_;
 }
 
+void FSServer::setRemoveMetaProcessingDelay(simtime_t removeMetaDelay)
+{
+    removeMetaProcessingDelay_ = removeMetaDelay;
+}
+
+simtime_t FSServer::removeMetaProcessingDelay()
+{
+    return removeMetaProcessingDelay_;
+}
+
 void FSServer::setRemoveObjectProcessingDelay(simtime_t removeObjectDelay)
 {
     removeObjectProcessingDelay_ = removeObjectDelay;
@@ -178,6 +190,16 @@ void FSServer::setSetAttrProcessingDelay(simtime_t setAttrDelay)
 simtime_t FSServer::setAttrProcessingDelay()
 {
     return setAttrProcessingDelay_;
+}
+
+void FSServer::setServerOverheadDelay(simtime_t serverOverheadDelay)
+{
+    serverOverheadDelay_ = serverOverheadDelay;
+}
+
+void FSServer::setCollectDiskData(bool collectFlag)
+{
+    collectDiskData_ = collectFlag;
 }
 
 FSServer::FSServer()
@@ -255,11 +277,6 @@ void FSServer::setNumber(size_t number)
     stringstream s;
     s << serverNumber_;
     serverName_ = "server" + s.str();    
-}
-
-void FSServer::setCollectDiskData(bool doesCollect)
-{
-    collectDiskData_ = doesCollect;
 }
 
 void FSServer::handleMessage(cMessage* msg)
@@ -395,7 +412,7 @@ void FSServer::send(cMessage* msg)
 
 void FSServer::sendDelayed(cMessage* msg, simtime_t delay)
 {
-    cSimpleModule::sendDelayed(msg, delay, outGateId_);
+    cSimpleModule::sendDelayed(msg, delay + serverOverheadDelay_, outGateId_);
 }
 
 void FSServer::recordChangeDirEnt()

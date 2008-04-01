@@ -92,10 +92,22 @@ void Remove::unlinkFile()
 
 void Remove::finish()
 {
+    
     spfsRemoveResponse* resp = new spfsRemoveResponse(0, SPFS_REMOVE_RESPONSE);
     resp->setContextPointer(removeReq_);
     resp->setByteLength(4);
-    module_->sendDelayed(resp, FSServer::removeObjectProcessingDelay());
+
+    simtime_t processingDelay = 0.0;
+    if (SPFS_DATA_OBJECT == removeReq_->getObjectType())
+    {
+        processingDelay = FSServer::removeObjectProcessingDelay();
+    }
+    else
+    {
+        assert(SPFS_METADATA_OBJECT == removeReq_->getObjectType());
+        processingDelay = FSServer::removeMetaProcessingDelay();
+    }
+    module_->sendDelayed(resp, processingDelay);
 }
 
 /*

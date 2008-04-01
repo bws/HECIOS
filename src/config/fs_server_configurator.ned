@@ -35,8 +35,10 @@ simple FSServerConfigurator
         lookupPathProcessingDelaySecs: numeric const,
         readDirProcessingDelaySecs: numeric const,
         removeDirEntProcessingDelaySecs: numeric const,
+        removeMetaProcessingDelaySecs: numeric const,
         removeObjectProcessingDelaySecs: numeric const,
         setAttrProcessingDelaySecs: numeric const,
+        serverOverheadDelaySecs: numeric const,
         collectDiskData: bool;
 
 endsimple

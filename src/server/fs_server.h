@@ -112,6 +112,12 @@ public:
     /** @return the server processing delay for removing a directory entry */
     static simtime_t removeDirEntProcessingDelay();
     
+    /** Set the remove metadata processing delay */
+    static void setRemoveMetaProcessingDelay(simtime_t removeMetaDelay);
+
+    /** @return the server processing delay for removing metadata */
+    static simtime_t removeMetaProcessingDelay();
+    
     /** Set the remove object processing delay */
     static void setRemoveObjectProcessingDelay(simtime_t removeObjectDelay);
 
@@ -124,6 +130,9 @@ public:
     /** @return the server processing delay for setting object attributes */
     static simtime_t setAttrProcessingDelay();
     
+    /** Set the server overhead delay */
+    static void setServerOverheadDelay(simtime_t serverOverheadDelay);
+
     /** Set disk data collection on or off */
     static void setCollectDiskData(bool collectFlag);
     
@@ -277,8 +286,14 @@ private:
     /** Remove Object server processing delay */
     static simtime_t removeObjectProcessingDelay_;
     
+    /** Remove metadata server processing delay */
+    static simtime_t removeMetaProcessingDelay_;
+    
     /** Set Attributes server processing delay */
     static simtime_t setAttrProcessingDelay_;
+    
+    /** Server overhead delay */
+    static simtime_t serverOverheadDelay_;
     
     /** Data collection flag */
     static bool collectDiskData_;

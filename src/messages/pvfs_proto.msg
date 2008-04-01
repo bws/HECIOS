@@ -133,6 +133,7 @@ message spfsCreateResponse extends spfsResponse
 message spfsRemoveRequest extends spfsRequest
 {
     fields:
+        FSObjectType objectType;
 };
 
 // Remove a file system object

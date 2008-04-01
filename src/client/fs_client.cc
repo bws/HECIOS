@@ -226,10 +226,12 @@ spfsRemoveDirEntRequest* FSClient::createRemoveDirEntRequest(
     return removeDirEnt;
 }
 
-spfsRemoveRequest* FSClient::createRemoveRequest(const FSHandle& handle)
+spfsRemoveRequest* FSClient::createRemoveRequest(const FSHandle& handle,
+                                                 FSObjectType objectType)
 {
     spfsRemoveRequest* remove = new spfsRemoveRequest(0, SPFS_REMOVE_REQUEST);
     remove->setHandle(handle);
+    remove->setObjectType(objectType);
 
     // Set the remove request size (op, creds, fs_id, Handle)
     remove->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 + 8);
@@ -285,6 +287,7 @@ FSClient::FSClient()
       readDirDelay_("SPFS Client Read Dir Roundtrip Delay"),
       readDelay_("SPFS Client Read Roundtrip Delay"),
       removeDelay_("SPFS Client Remove Roundtrip Delay"),
+      removeDirEntDelay_("SPFS Client Remove DirEnt Roundtrip Delay"),
       setAttrDelay_("SPFS Client SetAttr Roundtrip Delay"),
       writeCompleteDelay_("SPFS Client WriteComplete Roundtrip Delay"),
       writeDelay_("SPFS Client Write Roundtrip Delay")
@@ -305,6 +308,7 @@ void FSClient::initialize()
     useCollectiveRemove_ = par("useCollectiveRemove");
 
     // Retrieve processing delays
+    clientOverheadDelay_ = par("clientOverheadDelaySecs");
     directoryCreateProcessingDelay_ = par("directoryCreateProcessingDelaySecs");
     directoryReadProcessingDelay_ = par("directoryReadProcessingDelaySecs");
     directoryRemoveProcessingDelay_ = par("directoryRemoveProcessingDelaySecs");
@@ -386,7 +390,10 @@ void FSClient::handleMessage(cMessage *msg)
 
 void FSClient::scheduleRequest(cMessage* request)
 {
-    simtime_t scheduleTime = simTime();
+    // Account for the general client message overhead
+    simtime_t scheduleTime = simTime() + clientOverheadDelay_;
+
+    // Add additional delay for individual message processing
     switch(request->kind())
     {
         case SPFS_MPI_DIRECTORY_CREATE_REQUEST:

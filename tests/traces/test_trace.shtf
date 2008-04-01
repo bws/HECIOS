@@ -1,13 +1,24 @@
 # Serial HECIOS Trace Format Version 0.0.0.0
-4 7
-/linux-2.6.9/topology.h 128
-/linux-2.6.9/shmparam.h 154
-/linux-2.6.9/include/cpu-multi32.h 1531
-/linux-2.6.9/include/suspend.h 66
-0.007911 0.000066 MKDIR /linux-2.6.9 0775
-0.008237 0.000038 OPEN /linux-2.6.9/topology.h O_WRONLY|O_CREAT|O_EXCL 4 
-0.008309 0.000026 WRITE 4 0 7680 
-0.008403 0.000018 WRITE 4 7680 1477 
-0.008448 0.000006 READ 4 0 3200 
-0.008448 0.000006 CLOSE 4 0 
-0.008474 0.000013 UTIME /linux-2.6.9/topology.h "2008/01/16-16:12:37, 2004/10/18-17:53:05" 
+8 14
+/dir1 0
+/dir2 0
+/dir3 0
+/dir4 0
+/dir1/file1 4096
+/dir1/file2 8192
+/dir1/file3 8192
+/dir1/file4 8192
+0.1 0.1 MKDIR /dir2 0775
+0.2 0.1 RMDIR /dir4 10 
+0.3 0.1 STAT /dir1/file1  
+0.4 0.1 UTIME /dir1/file1 "2008/01/16-16:12:37, 2004/10/18-17:53:05" 
+0.5 0.1 OPEN /dir1 O_WRONLY|O_EXCL 4
+0.6 0.1 READDIR 4 10
+0.7 0.1 CLOSE 4
+0.8 0.1 OPEN /dir1/file2 O_WRONLY|O_EXCL 5
+0.9 0.1 CLOSE 5
+1.0 0.1 OPEN /dir1/file3 O_WRONLY|O_CREAT|O_EXCL 6 
+1.1 0.1 WRITE 6 0 7680 
+1.2 0.1 WRITE 6 7680 1477 
+1.3 0.1 READ 6 0 3200 
+1.4 0.1 CLOSE 6 0 

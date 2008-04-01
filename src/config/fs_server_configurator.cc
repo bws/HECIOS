@@ -106,11 +106,17 @@ void FSServerConfigurator::initialize(int stage)
         double removeDirEntDelay = par("removeDirEntProcessingDelaySecs");
         FSServer::setRemoveDirEntProcessingDelay(removeDirEntDelay);
         
+        double removeMetaDelay = par("removeMetaProcessingDelaySecs");
+        FSServer::setRemoveMetaProcessingDelay(removeMetaDelay);
+        
         double removeObjectDelay = par("removeObjectProcessingDelaySecs");
         FSServer::setRemoveObjectProcessingDelay(removeObjectDelay);
         
         double setAttrDelay = par("setAttrProcessingDelaySecs");
         FSServer::setSetAttrProcessingDelay(setAttrDelay);
+
+        double serverOverheadDelay = par("serverOverheadDelaySecs");
+        FSServer::setServerOverheadDelay(serverOverheadDelay);
 
         // Get the flag controlling disk data collection
         bool collectDiskData = par("collectDiskData");

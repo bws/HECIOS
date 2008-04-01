@@ -405,7 +405,8 @@ void FSDelete::removeMeta()
 {
     FSMetaData* meta = FileBuilder::instance().getMetaData(deleteName_);
 
-    spfsRemoveRequest* remove = FSClient::createRemoveRequest(meta->handle);
+    spfsRemoveRequest* remove =
+        FSClient::createRemoveRequest(meta->handle, SPFS_METADATA_OBJECT);
     remove->setContextPointer(clientReq_);
     client_->send(remove, client_->getNetOutGate());
 }
@@ -418,7 +419,8 @@ void FSDelete::removeData()
     for (size_t i = 0; i < meta->dataHandles.size(); i++)
     {
         spfsRemoveRequest* remove =
-            FSClient::createRemoveRequest(meta->dataHandles[i]);
+            FSClient::createRemoveRequest(meta->dataHandles[i],
+                                          SPFS_DATA_OBJECT);
         remove->setContextPointer(clientReq_);
         client_->send(remove, client_->getNetOutGate());
     }
