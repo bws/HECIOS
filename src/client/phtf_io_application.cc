@@ -96,8 +96,8 @@ void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
                 
         req->setRoot(
             CommMan::getInstance()->commRank(
-                dynamic_cast<spfsMPIMidBarrierRequest*>(msg)->getCommunicator()
-                ,rank_));
+                dynamic_cast<spfsMPIMidBarrierRequest*>(msg)->getCommunicator(),
+                rank_));
 
         req->setCommunicator(
             dynamic_cast<spfsMPIMidBarrierRequest*>(msg)->getCommunicator());
@@ -362,9 +362,17 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
 {
     spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
         0, SPFS_MPI_FILE_OPEN_REQUEST);
+
+    stringstream ss("");
+    string hpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(4);
+
+    cerr << const_cast<PHTFEventRecord*>(openRecord)->params() << " ";
     
-    string hpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(5);
-    string hstr = phtfEvent_->memValue("Pointer", hpt);
+    ss << hpt << "@" << const_cast<PHTFEventRecord*>(openRecord)->recordId();
+
+    cerr << ss.str() << endl;
+    
+    string hstr = phtfEvent_->memValue("Pointer", ss.str());
     
     long handle = strtol(hstr.c_str(), NULL, 16);
     
@@ -535,7 +543,7 @@ cMessage * PHTFIOApplication::createSeekMessage(
     {
         fd->moveFilePointer(offset);
     }
-    else if(whence ==     (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_END").c_str(), 0, 10))
+    else if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_END").c_str(), 0, 10))
     {
         fd->setFilePointer(fd->getMetaData()->size + offset);
     }

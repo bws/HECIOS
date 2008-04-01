@@ -178,7 +178,7 @@ void PHTFEventRecord::params(std::string parastr)
     string pa;
 
     _parameters.resize(0);
-    while(ss.peek() != EOF)
+    while(!ss.eof())
         {
             ss >> pa;
             _parameters.push_back(pa);
@@ -301,12 +301,12 @@ void PHTFEventRecord::buildRecordFields()
 
     ss >> _id >> opstr >> _sttime >> _duration >> _ret;
 
-    _parameters.clear();
-    while(ss.peek() != EOF)
-        {
-            ss >> pa;
-            _parameters.push_back(pa);
-        }
+    _parameters.resize(0);
+    while(!ss.eof())
+    {
+        ss >> pa;
+        _parameters.push_back(pa);
+    }
 
     _opid = strToOp(opstr);
 }
