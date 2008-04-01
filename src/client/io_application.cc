@@ -29,6 +29,7 @@
 #include "file_descriptor.h"
 #include "io_trace.h"
 #include "mpi_proto_m.h"
+#include "mpi_mid_m.h"
 #include "pfs_utils.h"
 #include "shtf_io_trace.h"
 #include "storage_layout_manager.h"
@@ -221,7 +222,15 @@ void IOApplication::handleIOMessage(cMessage* msg)
 
 void IOApplication::handleMPIMessage(cMessage* msg)
 {
-// override in subclass
+    switch(msg->kind())
+    {
+        case SPFS_MPIMID_RANK_REQUEST:
+            spfsMPIMidRankResponse * rmsg = new spfsMPIMidRankResponse("", SPFS_MPIMID_RANK_RESPONSE);
+            rmsg->setRank(rank_);
+            send(rmsg, mpiOutGate_);
+            delete msg;
+            break;
+    }
 }
 
 /**

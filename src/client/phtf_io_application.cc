@@ -194,10 +194,10 @@ void PHTFIOApplication::handleMPIMessage(cMessage* msg)
     else if(msg->kind() == SPFS_MPIMID_BARRIER_REQUEST)
     {
         handleBarrier(msg);
+        delete msg;
     }
-    else if(msg->kind() == SPFS_MPI_BCAST_RESPONSE)
-    {
-    }
+
+    else IOApplication::handleMPIMessage(msg);
 }
 
 void PHTFIOApplication::handleIOMessage(cMessage* msg)

@@ -33,10 +33,6 @@ using namespace std;
 // OMNet Registriation Method
 Define_Module(MpiMiddleware);
 
-// TODO: better way to assign rank
-static int rankSeed = 0;
-
-
 void MpiMiddleware::initialize()
 {
     appInGate_        = findGate("appIn");
@@ -45,13 +41,14 @@ void MpiMiddleware::initialize()
     netServerOutGate_ = findGate("netServerOut");
     netClientInGate_  = findGate("netClientIn");
     netClientOutGate_ = findGate("netClientOut");
-    rank_ = rankSeed++;
-    cerr << "middleware: " << rank_ << " initialize"<< endl;
+
+    spfsMPIMidRankRequest * rmsg = new spfsMPIMidRankRequest("", SPFS_MPIMID_RANK_REQUEST);
+    send(rmsg, appOutGate_);
 }
 
 void MpiMiddleware::finish()
 {
-    rankSeed = 0;
+
 }
 
 // handle other incoming messages (forwarding and processing)
@@ -62,6 +59,10 @@ void MpiMiddleware::handleMessage(cMessage* msg)
     {
         switch(msg->kind())
         {
+            case SPFS_MPIMID_RANK_RESPONSE:
+                rank_ = dynamic_cast<spfsMPIMidRankResponse*>(msg)->getRank();
+                cerr << "middleware: " << rank_ << " initialize"<< endl;
+                break;
             case SPFS_MPI_BCAST_REQUEST:
                 spfsMPIMidBcastRequest *req = new spfsMPIMidBcastRequest(0, SPFS_MPIMID_BCAST_REQUEST);
                 req->setRoot(dynamic_cast<spfsMPIBcastRequest *>(msg)->getRoot());
