@@ -257,15 +257,30 @@ void FSServer::initialize()
 
 void FSServer::finish()
 {
+    double totalNumOps =
+        numCollectiveCreates_ + numCollectiveGetAttrs_ + numCollectiveRemoves_
+        + numChangeDirEnts_ + numCreateDirEnts_ + numCreateObjects_
+        + numGetAttrs_
+        + numLookups_
+        + numReadDirs_ + numReads_ + numRemoveObjects_ + numRemoveDirEnts_
+        + numSetAttrs_ + numWrites_;
+
+    recordScalar("SPFS Server Operation Total", totalNumOps);
     recordScalar("SPFS Server Collective Creates", numCollectiveCreates_);
+    recordScalar("SPFS Server Collective GetAttrs", numCollectiveGetAttrs_);
+    recordScalar("SPFS Server Collective Removes", numCollectiveRemoves_);
+    recordScalar("SPFS Server ChDirEnts", numChangeDirEnts_);
     recordScalar("SPFS Server CrDirEnts", numCreateDirEnts_);
     recordScalar("SPFS Server CreateObjects", numCreateObjects_);
     recordScalar("SPFS Server GetAttrs", numGetAttrs_);
     recordScalar("SPFS Server Lookups", numLookups_);
     recordScalar("SPFS Server ReadDirs", numReadDirs_);
     recordScalar("SPFS Server Reads", numReads_);
+    recordScalar("SPFS Server Removes", numRemoveObjects_);
+    recordScalar("SPFS Server RmDirEnts", numRemoveDirEnts_);
     recordScalar("SPFS Server SetAttrs", numSetAttrs_);
     recordScalar("SPFS Server Writes", numWrites_);
+
 }
 
 void FSServer::setNumber(size_t number)
