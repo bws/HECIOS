@@ -88,7 +88,7 @@ void ReadDir::readDir()
     fileRead->setOffsetArraySize(1);
     fileRead->setExtentArraySize(1);
     fileRead->setOffset(0, readDirReq_->getDirOffset());
-    fileRead->setExtent(0, readDirReq_->getDirEntCount());
+    fileRead->setExtent(0, readDirReq_->getDirEntCount() * (8 + 64));
     
     // Send the write request
     module_->send(fileRead);
@@ -101,7 +101,7 @@ void ReadDir::finish()
     resp->setContextPointer(readDirReq_);
 
     // Calculate the response size
-    resp->setByteLength(readDirReq_->getDirEntCount() * (8 + 256));
+    resp->setByteLength(readDirReq_->getDirEntCount() * (8 + 64));
     module_->sendDelayed(resp, FSServer::readDirProcessingDelay());
 }
 

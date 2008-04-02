@@ -113,7 +113,7 @@ void IOApplication::handleSelfMessage(cMessage* msg)
         // Determine the request response roundtrip time
         simtime_t phaseBeginTime = msg->creationTime();
         simtime_t phaseEndTime = simTime();
-        simtime_t delay = phaseBeginTime - phaseEndTime;
+        simtime_t delay = phaseEndTime - phaseBeginTime;
         cpuPhaseDelay_.record(delay);
         totalCpuPhaseTime_ += delay;
     }

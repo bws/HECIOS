@@ -198,13 +198,18 @@ void CollectiveGetAttr::enterFinish()
     spfsCollectiveGetAttrResponse* resp =
         new spfsCollectiveGetAttrResponse(0, SPFS_COLLECTIVE_GET_ATTR_RESPONSE);
     resp->setContextPointer(getAttrReq_);
-    resp->setByteLength(4);
 
-    // Determine the processing delay
-    simtime_t delay = 0.0;
+    // Determine the number of attributes sets being sent back
+    int respSize = 4 + getAttrReq_->getDataHandlesArraySize() * (8 + 4);
+    if (SPFS_METADATA_OBJECT == getAttrReq_->getObjectType())
+    {
+        respSize += FSServer::METADATA_ATTRIBUTES_BYTE_SIZE;
+        respSize += getAttrReq_->getDataHandlesArraySize() * 8;
+    }
+    resp->setByteLength(respSize);
 
     // Send the message after calculated delay
-    module_->sendDelayed(resp, delay);
+    module_->sendDelayed(resp, FSServer::getAttrProcessingDelay());
 }
 
 spfsCollectiveGetAttrRequest*
