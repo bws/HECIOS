@@ -35,6 +35,7 @@ MPIMidBcastSM::MPIMidBcastSM(MpiMiddleware *mpi_mid)
     rspCounter_ = 0;
     childNum_ = 0;
     parentWRank_ = -1;
+    finished_ = false;
 }
 
 void MPIMidBcastSM::handleMessage(cMessage* msg)
@@ -51,28 +52,28 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     {
         case FSM_Enter(INIT):
             {
-//                cerr << mpiMiddleware_->getRank() << "enter INIT" << endl;
+//                cerr << mpiMiddleware_->getRank() << " " << this << "enter INIT" << msg->kind() << endl;
                 rspCounter_ = 0;
                 childNum_ = 0;
                 parentWRank_ = -1;
+                finished_ = true;
                 break;
             }
         case FSM_Exit(INIT):
             {
-//                cerr << mpiMiddleware_->getRank() << "exit INIT" << endl;
+//                cerr << mpiMiddleware_->getRank() << " " << this << "exit INIT " << msg->kind() << endl;
                 if(msg->kind() == SPFS_MPIMID_BCAST_REQUEST)
                     if(spfsMPIMidBcastRequest* req = dynamic_cast<spfsMPIMidBcastRequest*>(msg))
                     {
                         req = 0;
                         FSM_Goto(currentState_, BCAST);
                     }
-            
                 break;
             }
     
         case FSM_Enter(BCAST):
             {
-//                cerr << mpiMiddleware_->getRank() << "enter BCAST" << endl;
+//                cerr << mpiMiddleware_->getRank() << "enter BCAST" << msg->kind() << endl;
                 if(msg->kind() == SPFS_MPIMID_BCAST_REQUEST)
                     if(spfsMPIMidBcastRequest* req = dynamic_cast<spfsMPIMidBcastRequest*> (msg))
                         enterBcast(req);
@@ -82,7 +83,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     
         case FSM_Exit(BCAST):
             {
-//                cerr << mpiMiddleware_->getRank() << "exit BCAST" << endl;
+//                cerr << mpiMiddleware_->getRank() << "exit BCAST" << msg->kind() << endl;
                 if(childNum_ != 0)
                     FSM_Goto(currentState_, WAIT);
                 else
@@ -92,7 +93,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     
         case FSM_Enter(WAIT):
             {
-//                cerr << mpiMiddleware_->getRank() << "enter WAIT" << endl;
+//                cerr << mpiMiddleware_->getRank() << "enter WAIT" << msg->kind() << endl;
                 if(msg->kind() == SPFS_MPIMID_BCAST_RESPONSE)
                     if(spfsMPIMidBcastResponse* rsp = dynamic_cast<spfsMPIMidBcastResponse*> (msg))
                         enterWait(rsp);
@@ -110,13 +111,14 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     
         case FSM_Enter(RSP):
             {
-//                cerr << mpiMiddleware_->getRank() << "enter RSP" << endl;
+//                cerr << mpiMiddleware_->getRank() << "enter RSP" << msg->kind() << endl;
                 enterRsp();
                 break;
             }
         case FSM_Exit(RSP):
             {
-//                cerr << mpiMiddleware_->getRank() << "exit RSP" << endl;
+//                cerr << mpiMiddleware_->getRank() << "exit RSP" << msg->kind() << endl;
+                finished_ = true;
                 FSM_Goto(currentState_, INIT);
                 break;
             }
@@ -126,6 +128,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
             break;
         }
     }
+    delete msg;
 }
 
 void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
@@ -167,16 +170,11 @@ void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
         int child_rank = (rank + (0x1 << i)) % (0x1 << steps);
         if(child_rank < size)
         {
-//            cerr << root << ":" << rank << " sends to " << child_rank << endl;
-            
             spfsMPISendRequest* req = new spfsMPISendRequest();
             cMessage* dupMsg = static_cast<cMessage*>(msg->dup());
 
-            dupMsg->decapsulate();
-
-            dupMsg->encapsulate((cMessage*)msg->encapsulatedMsg()->dup());
-
             dynamic_cast<spfsMPIMidBcastRequest*>(dupMsg)->setParent(rank);
+            dynamic_cast<spfsMPIMidBcastRequest*>(dupMsg)->setContextPointer(this);
 
             int child_wrank = CommMan::getInstance()->
                 commTrans(msg->getCommunicator(),
@@ -192,13 +190,11 @@ void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
     }
 
     delete msg->decapsulate();
-    delete msg;
 }
 
 void MPIMidBcastSM::enterWait(spfsMPIMidBcastResponse* msg)
 {
     rspCounter_++;
-    if(msg)delete msg;
 }
 
 void MPIMidBcastSM::enterRsp()

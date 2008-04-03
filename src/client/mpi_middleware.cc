@@ -70,8 +70,13 @@ void MpiMiddleware::handleMessage(cMessage* msg)
                 req->setCommunicator(dynamic_cast<spfsMPIBcastRequest *>(msg)->getCommunicator());
                 req->encapsulate(msg->decapsulate());
                 MPIMidBcastSM * sm = new MPIMidBcastSM(this);
-                req->setContextPointer(sm);
+                req->setContextPointer(NULL);
                 sm->handleMessage(req);
+                if(sm->finished())
+                {
+                    delete sm;
+                }
+                
                 break;
             default:
                 cerr << "mpi middleware handleMessage received unknown msg: " << msg->kind() << endl;
@@ -91,15 +96,22 @@ void MpiMiddleware::handleMessage(cMessage* msg)
             case SPFS_MPIMID_BCAST_REQUEST:
             {
                 MPIMidBcastSM * sm = new MPIMidBcastSM(this);
-                ebdMsg->setContextPointer(sm);
                 sm->handleMessage(ebdMsg);
+                if(sm->finished())
+                {
+                    delete sm;
+                }
                 break;
             }
             
             case SPFS_MPIMID_BCAST_RESPONSE:
             {
                 MPIMidBcastSM * sm = static_cast<MPIMidBcastSM*>(ebdMsg->contextPointer());
-                sm->handleMessage(ebdMsg);                
+                sm->handleMessage(ebdMsg);
+                if(sm->finished())
+                {
+                    delete sm;
+                }
                 break;
             }
         }

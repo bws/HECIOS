@@ -45,7 +45,9 @@ public:
     /** Handle MPI-mid-bcast Msg */
     void handleMessage(cMessage* msg);
 
-    ~MPIMidBcastSM() {};
+    bool finished() {return finished_;};
+
+    int state() {return currentState_.state();};
 
 protected:
     /** enter bcast state */
@@ -64,6 +66,7 @@ private:
     int childNum_;
     int parentWRank_;
     void *parentSM_;
+    bool finished_;
 };
 
 

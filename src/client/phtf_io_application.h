@@ -140,10 +140,9 @@ private:
 
     /** Message Pointer, holding open request context for collective open */
     cMessage * context_;
-    /** File descirptor, for collective open */
-    long desc_;
+
     /** Communicator, for collective open */
-    int group_;
+    int mostRecentGroup_;
 
     /** flag, indicates whether get next record, for collective open */
     bool noGetNext_;

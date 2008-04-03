@@ -109,7 +109,7 @@ void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
 
     cerr << rank_ << " barrier: " << barrierCounter_ << endl;
 
-    if(barrierCounter_ == 0)
+    if(barrierCounter_ == 0 || (active && barrierCounter_ < 0))
     {
         cerr << rank_ << " break barrier!" << endl;
         scheduleAt(simTime(), new cMessage());
@@ -145,7 +145,7 @@ bool PHTFIOApplication::scheduleNextMessage()
                     scheduleAt(simTime(), msg);
                     break;
                 case OPEN:
-                    if(CommMan::getInstance()->commSize(group_) != 0)
+                    if(CommMan::getInstance()->commSize(mostRecentGroup_) != 0)
                     {
                         if(!noGetNext_)
                         {
@@ -154,14 +154,14 @@ bool PHTFIOApplication::scheduleNextMessage()
                             // barrier
                             PHTFEventRecord re;
                             stringstream ss("");
-                            ss << group_;
+                            ss << mostRecentGroup_;
                             re.params(ss.str());
                             handleBarrier(createBarrierMessage(&re), true);
                             break;
                         }
                     }
 
-                    if(CommMan::getInstance()->commRank(group_, rank_) == 0)
+                    if(CommMan::getInstance()->commRank(mostRecentGroup_, rank_) == 0)
                     {
                         send(msg, ioOutGate_);
                     }
@@ -188,7 +188,6 @@ void PHTFIOApplication::handleMPIMessage(cMessage* msg)
     if(msg->kind() == SPFS_MPI_FILE_OPEN_RESPONSE)
     {
         msg->setContextPointer(context_);
-        setDescriptor(desc_, dynamic_cast<spfsMPIFileOpenResponse*>(msg)->getFileDes());
         IOApplication::handleIOMessage(msg);
     }
     else if(msg->kind() == SPFS_MPIMID_BARRIER_REQUEST)
@@ -197,7 +196,10 @@ void PHTFIOApplication::handleMPIMessage(cMessage* msg)
         delete msg;
     }
 
-    else IOApplication::handleMPIMessage(msg);
+    else
+    {
+        IOApplication::handleMPIMessage(msg);
+    }
 }
 
 void PHTFIOApplication::handleIOMessage(cMessage* msg)
@@ -233,13 +235,13 @@ void PHTFIOApplication::handleIOMessage(cMessage* msg)
     if(orgMsg != 0 && orgMsg->kind() == SPFS_MPI_FILE_OPEN_REQUEST)
     {
         // bcast open response
-        if(CommMan::getInstance()->commSize(group_) > 1)
+        if(CommMan::getInstance()->commSize(mostRecentGroup_) > 1)
         {
             spfsMPIBcastRequest *req =
                 new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
 
-            req->setRoot(CommMan::getInstance()->commRank(group_, rank_));
-            req->setCommunicator(group_);
+            req->setRoot(CommMan::getInstance()->commRank(mostRecentGroup_, rank_));
+            req->setCommunicator(mostRecentGroup_);
             req->encapsulate((cMessage*)msg->dup());
             send(req, mpiOutGate_);
         }
@@ -334,7 +336,9 @@ cMessage* PHTFIOApplication::createWaitMessage(
         return new cMessage("wait");
     }
     else
+    {
         return NULL;
+    }
 }
 
 cMessage* PHTFIOApplication::createCPUPhaseMessage(
@@ -366,12 +370,8 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
     stringstream ss("");
     string hpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(4);
 
-    cerr << const_cast<PHTFEventRecord*>(openRecord)->params() << " ";
-    
     ss << hpt << "@" << const_cast<PHTFEventRecord*>(openRecord)->recordId();
 
-    cerr << ss.str() << endl;
-    
     string hstr = phtfEvent_->memValue("Pointer", ss.str());
     
     long handle = strtol(hstr.c_str(), NULL, 16);
@@ -387,11 +387,9 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
     // Associate the file id with a file descriptor
     setDescriptor(handle, fd);
 
-    desc_ = handle;
-
     string gstr = const_cast<PHTFEventRecord*>(openRecord)->paramAt(0);
     int group = (int)strtol(gstr.c_str(), NULL, 10);
-    group_ = group;
+    mostRecentGroup_ = group;
     
     if(CommMan::getInstance()->commRank(group, rank_) == 0)
     {

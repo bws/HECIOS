@@ -228,9 +228,9 @@ void IOApplication::handleMPIMessage(cMessage* msg)
             spfsMPIMidRankResponse * rmsg = new spfsMPIMidRankResponse("", SPFS_MPIMID_RANK_RESPONSE);
             rmsg->setRank(rank_);
             send(rmsg, mpiOutGate_);
-            delete msg;
             break;
     }
+    delete msg;
 }
 
 /**
