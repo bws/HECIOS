@@ -1,5 +1,6 @@
-\documentclass[9pt]{article}
-\title{The Definition of PHTF (Parallel Hecios Trace Format)}
+\documentclass{article}
+\usepackage{times}
+\title{The Definition of PHTF \\(Parallel Hecios Trace Format)}
 \author{Yang Wu}
 
 \begin{document}
@@ -8,22 +9,25 @@
 \section{Instrduction}
 \label{sec:Instrduction}
 
-HTF consists of three parts:
+PHTF consists of four parts:
 \begin{enumerate}
-	\item Machine Archetecture (Meta)
-	\item File System State (Meta)
-	\item Record of Events (Data)
+\item Machine Archetecture (Meta)
+\item File System State (Meta)
+\item Record of Events (Data)
+\item Record of Runtime Info (Data)
 \end{enumerate}
 
 All files from one trace reside in one folder, should look like:
 \begin{verbatim}
-[.] [..] arch.ini fs.ini event.0 ... event.n
+[.] [..] arch.ini fs.ini event.0 
+runtime.0 ... event.n runtime.n
 \end{verbatim}
 
 \begin{description}
-	\item[arch.ini - the machine archtecture description file] 
-	\item[fs.ini - the file system state description file]
-	\item[event.k - the events record file, k denotes the id of process.]
+\item[arch.ini - the machine archtecture description file] 
+\item[fs.ini - the file system state description file]
+\item[event.k - the events record file, k denotes the id of process]
+\item[runtime.k - the runtime record file, k denotes the id of process]
 \end{description}
 
 \section{The arch.ini File}
@@ -48,79 +52,154 @@ Network Arch=...
 \end{verbatim}
 
 \subsection{Section List}
-\label{sec:SectionList}
+\label{sec:ArchSectionList}
 
 \subsubsection{Cluster}
 \label{sec:Cluster}
-\begin{center}
-	\begin{tabular}{l | c | l}
-		Field & Data Type & Description\\\hline
-		Comp Num & long & Number of compute nodes\\
-		I/O Num & long & Number of I/O nodes\\
-		Network Arch & string & Interconnection network architecture (flat, tree, etc)\\
-	\end{tabular}
-\end{center}
+\begin{flushleft}
+  \begin{tabular}{l | c | l}
+    Field & Data Type & Description\\\hline
+    Comp Num & long & Number of compute nodes\\
+    I/O Num & long & Number of I/O nodes\\
+    Network Arch & string & Interconnection network architecture (flat, tree, etc)\\
+  \end{tabular}
+\end{flushleft}
 
 \subsubsection{Compute Node}
 \label{sec:ComputeNode}
-\begin{center}
-	\begin{tabular}{l | c | l}
-		Field & Data Type & Description\\\hline
-		Host OS & string & Operating system\\
-		CPU & string & \\
-		RAM & long & RAM (MB)\\
-		Network Arch & string & ...\\
-		Msg Cap & long & Simultaneous messaging capability\\		
-	\end{tabular}
-\end{center}
+\begin{flushleft}
+  \begin{tabular}{l | c | l}
+    Field & Data Type & Description\\\hline
+    Host OS & string & Operating system\\
+    CPU & string & \\
+    RAM & long & RAM (MB)\\
+    Network Arch & string & ...\\
+    Msg Cap & long & Simultaneous messaging capability\\		
+  \end{tabular}
+\end{flushleft}
 
 \subsubsection{I/O Node}
 \label{sec:IONode}
-\begin{center}
-	\begin{tabular}{l | c | l}
-		Field & Data Type & Description\\\hline
-		Host OS & string & Operating system\\
-		CPU & string & \\
-		RAM & long & RAM (MB) \\
-		Network Arch & string & ...\\
-		Msg Cap & long & Simultaneous messaging capability\\
-	\end{tabular}
-\end{center}
+\begin{flushleft}
+  \begin{tabular}{l | c | l}
+    Field & Data Type & Description\\\hline
+    Host OS & string & Operating system\\
+    CPU & string & \\
+    RAM & long & RAM (MB) \\
+    Network Arch & string & ...\\
+    Msg Cap & long & Simultaneous messaging capability\\
+  \end{tabular}
+\end{flushleft}
 
 \subsubsection{Storage}
 \label{sec:Storage}
-\begin{center}
-	\begin{tabular}{l | c | l}
-		Field & Data Type & Description\\\hline
-		Throuput & long & ... \\
-		Latency & long & ... \\
-		Interface & string & (scsi, fibre, sata, etc.)\\
-		Reducdancy & long & ...\\
-		Paral FS & string & Resident parallel file system in use\\
-		Native FS & string & Resident native file system in use \\
-		Cache & string & disk, os \\
-	\end{tabular}
-\end{center}
+\begin{flushleft}
+  \begin{tabular}{l | c | l}
+    Field & Data Type & Description\\\hline
+    Throuput & long & ... \\
+    Latency & long & ... \\
+    Interface & string & (scsi, fibre, sata, etc.)\\
+    Reducdancy & long & ...\\
+    Paral FS & string & Resident parallel file system in use\\
+    Native FS & string & Resident native file system in use \\
+    Cache & string & disk, os \\
+  \end{tabular}
+\end{flushleft}
 
 \subsubsection{Disk}
 \label{sec:Disk}
-\begin{center}
-	\begin{tabular}{l | c | l}
-		Field & Data Type & Description\\\hline
-		RPM & long & ...\\
-		Cache & long & (MB)\\
-		Settle Time & long & ...\\
-		Accel & long & Acceleration in sectors\\
-		Time to Max & long & Time to max rpm \\
-		Cylinders & long & ...\\
-		Tracks & long & ...\\
-		Sectors & long & ...\\
-	\end{tabular}
-\end{center}
+\begin{flushleft}
+  \begin{tabular}{l | c | l}
+    Field & Data Type & Description\\\hline
+    RPM & long & ...\\
+    Cache & long & (MB)\\
+    Settle Time & long & ...\\
+    Accel & long & Acceleration in sectors\\
+    Time to Max & long & Time to max rpm \\
+    Cylinders & long & ...\\
+    Tracks & long & ...\\
+    Sectors & long & ...\\
+  \end{tabular}
+\end{flushleft}
 
 \section{The fs.ini File}
 \label{sec:TheFsIniFile}
-TODO: Add content
+The fs file contains a description of filesystem and software system information. This file adopts the '.ini' file syntax, which consists many sections and fields.
+
+\subsection{Sample}
+\label{sec:SampleFS}
+\begin{verbatim}
+[Const]
+MPI_COMM_SELF=92
+MPI_COMM_WORLD=91
+MPI_SEEK_CUR=602
+MPI_SEEK_END=604
+MPI_SEEK_SET=600
+
+[FileSystem]
+/etc/hosts=1
+/net/scratch1/nobody/OUTPUT.11=1
+...
+\end{verbatim}
+
+\subsection{Section List}
+\label{sec:FSSectionList}
+
+\subsubsection{FileSystem}
+\label{sec:FileSystem}
+\begin{flushleft}
+  \begin{tabular}{l | c | l}
+    Field & Data Type & Description\\\hline
+    \{any filename\} & long & File size\\
+  \end{tabular}
+\end{flushleft}
+
+\subsubsection{Const: constant numbers}
+\label{sec:Const}
+\begin{flushleft}
+  \begin{tabular}{l | c | l}
+    Field & Data Type & Description\\\hline
+    \{any constant\} & long & Const value\\
+  \end{tabular}
+\end{flushleft}
+
+\section{The runtime.k File}
+\label{sec:TheRuntimeKFile}
+The runtime file contains runtime information of a process, including strings, pointers and datatypes. This file adopts '.ini' format.
+
+\subsection{Sample}
+\label{sec:SampleRuntime}
+\begin{verbatim}
+[Pointer]
+0xbff85770@5=0x8079160
+0xbff85770@7727=0x80791e8
+
+[String]
+0x8078fc0=/net/scratch1/nobody/OUTPUT.11
+0x8079110=/net/scratch1/nobody/OUTPUT.11
+...
+\end{verbatim}
+
+\subsection{Section List}
+\label{sec:RuntimeSectionList}
+
+\subsubsection{Pointer}
+\label{sec:Pointer}
+\begin{flushleft}
+  \begin{tabular}{l | c | l}
+    Field & Data Type & Description\\\hline
+    \{any pointer\} & long & Destination address\\
+  \end{tabular}
+\end{flushleft}
+
+\subsubsection{String}
+\label{sec:String}
+\begin{flushleft}
+  \begin{tabular}{l | c | l}
+    Field & Data Type & Description\\\hline
+    \{any string address\} & string & String content\\
+  \end{tabular}
+\end{flushleft}
 
 \section{The event.k File}
 \label{sec:TheEventKFile}
@@ -129,13 +208,16 @@ Generally speaking, the event file is a set of plain text files, each denotes a 
 \label{sec:TheSyntax}
 \begin{verbatim}
 <event file> ::= <record> | <record><record>
-<record> ::= <id> <op> <start time> <duration> <return value> <parameters> <eol>
+<record> ::= <id> <op> <start time> <duration> 
+             <return value> <parameters> <eol>
 <id> ::= <number>
 <op> ::= <mpi calls> | <special calls>
 <start time> ::= <number>
 <duration> ::= <number>
-<return value> ::= NULL | <string> <return value> | <number> <return value>
-<parameters> ::= NULL | <string> <parameters> | <number> <parameters>
+<return value> ::= NULL | <string> <return value>
+                   | <number> <return value>
+<parameters> ::= NULL | <string> <parameters> 
+                 | <number> <parameters>
 <eol> ::= "\r\n"
 <mpi calls> ::= {MPI-I/Os}
 <special calls> ::= CPU_PHASE call
@@ -148,13 +230,13 @@ Generally speaking, the event file is a set of plain text files, each denotes a 
 \subsection{Description}
 \label{sec:Description}
 \begin{description}
-	\item[record - one event that happened on current process]\footnote{The process that this file denotes}
-	\item[id - denotes the sequence of execution]
-	\item[op - type of operation(MPI-I/O calls or CPU\_PHASE call)]\footnote{A PAUSE call ask the process to pause for a certain time}
-	\item[start time - the start time of the original operation for reference]
-	\item[duration - the duration of the original operation for reference]
-        \item[return value - the return value of the original operation]
-	\item[parameters - the parameters of the original operation]\footnote{Certain data type as point to string would be translated into data it points to}
+\item[record - one event that happened on current process]\footnote{The process that this file denotes}
+\item[id - denotes the sequence of execution]
+\item[op - type of operation(MPI-I/O calls or CPU\_PHASE call)]\footnote{A PAUSE call ask the process to pause for a certain time}
+\item[start time - the start time of the original operation for reference]
+\item[duration - the duration of the original operation for reference]
+\item[return value - the return value of the original operation]
+\item[parameters - the parameters of the original operation]\footnote{Certain data type as point to string would be translated into data it points to}
 \end{description}
 
 \subsection{Sample}
@@ -171,7 +253,8 @@ Generally speaking, the event file is a set of plain text files, each denotes a 
 \label{sec:CPUPHASECall}
 \begin{verbatim}
 Event:
- CPU_PHASE <l_start_time> <l_duration>
+ CPU_PHASE 
+  <l_start_time> <l_duration>
 \end{verbatim}
 
 \subsection{MPI-I/O List}
@@ -181,545 +264,652 @@ Event:
 \label{sec:MPIFILEOPEN}
 \begin{verbatim}
 Prototype: 
- int MPI_FILE_OPEN(IN comm, IN filename, IN amode, IN info, OUT fh)
+ int MPI_FILE_OPEN
+  (IN comm, IN filename, IN amode, IN info, OUT fh)
+
 Event: 
- MPI_FILE_READ <l_start_time> <l_duration> <l_return> 
-               <l_comm_id> <str_fn> <l_amode> 
-               <ptr_info> <ptr_fh>
+ MPI_FILE_READ 
+  <l_start_time> <l_duration> <l_return> 
+  <l_comm_id> <str_fn> <l_amode> 
+  <ptr_info> <ptr_fh>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_CLOSE}
 \label{sec:MPIFILECLOSE}
 \begin{verbatim}
 Prototype: 
- int MPI_FILE_CLOSE(INOUT fh)
+ int MPI_FILE_CLOSE
+  (INOUT fh)
 Event: 
- MPI_FILE_CLOSE <l_start_time> <l_duration> <l_return> 
-                <ptr_fh>
+ MPI_FILE_CLOSE 
+  <l_start_time> <l_duration> <l_return> 
+  <ptr_fh>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_DELETE}
 \label{sec:MPIFILEDELETE}
 \begin{verbatim}
 Prototype: 
- int MPI_FILE_DELETE(IN filename)
+ int MPI_FILE_DELETE
+  (IN filename)
 Event: 
- MPI_FILE_DELETE <l_start_time> <l_duration> <l_return>
-                 <str_fn>
+ MPI_FILE_DELETE 
+  <l_start_time> <l_duration> <l_return>
+  <str_fn>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_SET\_SIZE}
 \label{sec:MPIFILESETSIZE}
 \begin{verbatim}
 Prototype: 
- int MPI_FILE_SET_SIZE(INOUT fh, IN size)
+ int MPI_FILE_SET_SIZE
+  (INOUT fh, IN size)
 Event: 
- MPI_FILE_SET_SIZE <l_start_time> <l_duration> <l_return>
-                   <ptr_fh> <l_size>
+ MPI_FILE_SET_SIZE 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_size>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_PREALLOCATE}
 \label{sec:MPIFILEPREALLOCATE}
 \begin{verbatim}
 Prototype: 
- int MPI_FILE_PREALLOCATE(INOUT fh, IN size)
+ int MPI_FILE_PREALLOCATE
+  (INOUT fh, IN size)
 Event: 
- MPI_FILE_PREALLOCATE <l_start_time> <l_duration> <l_return>
-                      <ptr_fh> <l_size>
+ MPI_FILE_PREALLOCATE 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_size>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_GET\_SIZE}
 \label{sec:MPIFILEGETSIZE}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_GET_SIZE(IN fh, OUT size)
+ int MPI_FILE_GET_SIZE
+  (IN fh, OUT size)
 Event:
- MPI_FILE_GET_SIZE <l_start_time> <l_duration> <l_return>
-                   <ptr_fh> <l_size>
+ MPI_FILE_GET_SIZE 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_size>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_GET\_GROUP}
 \label{sec:MPIFILEGETGROUP}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_GET_GROUP(IN fh, OUT group)
+ int MPI_FILE_GET_GROUP
+  (IN fh, OUT group)
 Event:
- MPI_FILE_GET_GROUP <l_start_time> <l_duration> <l_return>
-                    <ptr_fh> <ptr_grp>
+ MPI_FILE_GET_GROUP 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_grp>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_GET\_AMODE}
 \label{sec:MPIFILEGETAMODE}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_GET_AMODE(IN fh, OUT amode)
+ int MPI_FILE_GET_AMODE
+  (IN fh, OUT amode)
 Event:
- MPI_FILE_GET_AMODE <l_start_time> <l_duration> <l_return>
-                    <ptr_fh> <l_amode>
+ MPI_FILE_GET_AMODE 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_amode>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_SET\_INFO}
 \label{sec:MPIFILESETINFO}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_SET_INFO(IN fh, IN info)
+ int MPI_FILE_SET_INFO
+  (IN fh, IN info)
 Event:
- MPI_FILE_SET_INFO <l_start_time> <l_duration> <l_return>
-                   <ptr_fh> <ptr_info>
+ MPI_FILE_SET_INFO 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_info>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_GET\_INFO}
 \label{sec:MPIFILEGETINFO}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_GET_INFO(IN fh, OUT info)
+ int MPI_FILE_GET_INFO
+  (IN fh, OUT info)
 Event:
- MPI_FILE_GET_INFO <l_start_time> <l_duration> <l_return>
-                   <ptr_fh> <ptr_info>
+ MPI_FILE_GET_INFO 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_info>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_SET\_VIEW}
 \label{sec:MPIFILESETVIEW}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_SET_VIEW(INOUT fh, IN disp, IN etype, IN filetype, 
-                   IN datarep, IN info)
+ int MPI_FILE_SET_VIEW
+  (INOUT fh, IN disp, IN etype, IN filetype, 
+   IN datarep, IN info)
 Event:
- MPI_FILE_SET_VIEW <l_start_time> <l_duration> <l_return>
-                   <ptr_fh> <l_disp> <ptr_et> 
-                   <ptr_ft> <str_dr> <ptr_info>
+ MPI_FILE_SET_VIEW 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_disp> <ptr_et> 
+  <ptr_ft> <str_dr> <ptr_info>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_AT}
 \label{sec:MPIFILEREADAT}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_AT(IN fh, IN offset, OUT buf, IN count, 
-                  IN datatype, OUT status)
+ int MPI_FILE_READ_AT
+  (IN fh, IN offset, OUT buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_READ_AT <l_start_time> <l_duration> <l_return>
-                  <ptr_fh> <l_offset> <ptr_buf>
-                  <l_count> <ptr_dt> <ptr_st>
+ MPI_FILE_READ_AT 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset> <ptr_buf>
+  <l_count> <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_AT\_ALL}
 \label{sec:MPIFILEREADATALL}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_AT_ALL(IN fh, IN offset, OUT buf, IN count, 
-                      IN datatype, OUT status)
+ int MPI_FILE_READ_AT_ALL
+  (IN fh, IN offset, OUT buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_READ_AT_ALL <l_start_time> <l_duration> <l_return>
-                      <ptr_fh> <l_offset> <ptr_buf>
-                      <l_count> <ptr_dt> <ptr_st>
+ MPI_FILE_READ_AT_ALL 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset> <ptr_buf>
+  <l_count> <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_AT}
 \label{sec:MPIFILEWRITEAT}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_AT(IN fh, IN offset, IN buf, IN count, 
-                   IN datatype, OUT status)
+ int MPI_FILE_WRITE_AT
+  (IN fh, IN offset, IN buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_WRITE_AT <l_start_time> <l_duration> <l_return>
-                   <ptr_fh> <l_offset> <ptr_buf>
-                   <l_count> <ptr_dt> <ptr_st>
+ MPI_FILE_WRITE_AT 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset> <ptr_buf>
+  <l_count> <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_AT\_ALL}
 \label{sec:MPIFILEWRITEATALL}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_AT_ALL(IN fh, IN offset, IN buf, IN count, 
-                       IN datatype, OUT status)
+ int MPI_FILE_WRITE_AT_ALL
+  (IN fh, IN offset, IN buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_WRITE_AT_ALL <l_start_time> <l_duration> <l_return>
-                       <ptr_fh> <l_offset> <ptr_buf>
-                       <l_count> <ptr_dt> <ptr_st>
+ MPI_FILE_WRITE_AT_ALL 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset> <ptr_buf>
+  <l_count> <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_IREAD\_AT}
 \label{sec:MPIFILEIREADAT}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_IREAD_AT(IN fh, IN offset, OUT buf, IN count, 
-                   IN datatype, OUT status)
+ int MPI_FILE_IREAD_AT
+  (IN fh, IN offset, OUT buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_IREAD_AT <l_start_time> <l_duration> <l_return>
-                   <ptr_fh> <l_offset> <ptr_buf>
-                   <l_count> <ptr_dt> <ptr_st>
+ MPI_FILE_IREAD_AT 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset> <ptr_buf>
+  <l_count> <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_IWRITE\_AT}
 \label{sec:MPIFILEIWRITEAT}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_IWRITE_AT(IN fh, IN offset, IN buf, IN count, 
-                    IN datatype, OUT status)
+ int MPI_FILE_IWRITE_AT
+  (IN fh, IN offset, IN buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_IWRITE_AT <l_start_time> <l_duration> <l_return>
-                    <ptr_fh> <l_offset> <ptr_buf>
-                    <l_count> <ptr_dt> <ptr_st>
+ MPI_FILE_IWRITE_AT 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset> <ptr_buf>
+  <l_count> <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ}
 \label{sec:MPIFILEREAD}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ(INOUT fh, OUT buf, IN count, IN datatype, 
-               OUT status)
+ int MPI_FILE_READ
+  (INOUT fh, OUT buf, IN count, IN datatype, 
+   OUT status)
 Event:
- MPI_FILE_READ <l_start_time> <l_duration> <l_return>
-               <ptr_fh> <ptr_buf> <l_count>
-               <ptr_dt> <ptr_st>
+ MPI_FILE_READ 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_ALL}
 \label{sec:MPIFILEREADALL}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_ALL(INOUT fh, OUT buf, IN count, IN datatype, 
-                   OUT status)
+ int MPI_FILE_READ_ALL
+  (INOUT fh, OUT buf, IN count, IN datatype, 
+   OUT status)
 Event:
- MPI_FILE_READ_ALL <l_start_time> <l_duration> <l_return>
-                   <ptr_fh> <ptr_buf> <l_count>
-                   <ptr_dt> <ptr_st>
+ MPI_FILE_READ_ALL 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE}
 \label{sec:MPIFILEWRITE}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE(INOUT fh, IN buf, IN count, IN datatype, 
-                OUT status)
+ int MPI_FILE_WRITE
+  (INOUT fh, IN buf, IN count, IN datatype, 
+   OUT status)
 Event:
- MPI_FILE_WRITE <l_start_time> <l_duration> <l_return>
-                <ptr_fh> <ptr_buf> <l_count>
-                <ptr_dt> <ptr_st>
+ MPI_FILE_WRITE 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_ALL}
 \label{sec:MPIFILEWRITEALL}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_ALL(INOUT fh, IN buf, IN count, IN datatype, 
-                    OUT status)
+ int MPI_FILE_WRITE_ALL
+  (INOUT fh, IN buf, IN count, IN datatype, 
+   OUT status)
 Event:
- MPI_FILE_WRITE_ALL <l_start_time> <l_duration> <l_return>
-                    <ptr_fh> <ptr_buf> <l_count>
-                    <ptr_dt> <ptr_st>
+ MPI_FILE_WRITE_ALL 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_IREAD}
 \label{sec:MPIFILEIREAD}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_IREAD(INOUT fh, OUT buf, IN count, IN datatype, 
-                OUT status)
+ int MPI_FILE_IREAD
+  (INOUT fh, OUT buf, IN count, IN datatype, 
+   OUT status)
 Event:
- MPI_FILE_IREAD <l_start_time> <l_duration> <l_return>
-                <ptr_fh> <ptr_buf> <l_count>
-                <ptr_dt> <ptr_st>
+ MPI_FILE_IREAD 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_IWRITE}
 \label{sec:MPIFILEIWRITE}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_IWRITE(INOUT fh, IN buf, IN count, IN datatype, 
-                 OUT status)
+ int MPI_FILE_IWRITE
+  (INOUT fh, IN buf, IN count, IN datatype, 
+   OUT status)
 Event:
- MPI_FILE_IWRITE <l_start_time> <l_duration> <l_return>
-                 <ptr_fh> <ptr_buf> <l_count>
-                 <ptr_dt> <ptr_st>
+ MPI_FILE_IWRITE 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_SEEK}
 \label{sec:MPIFILESEEK}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_SEEK(INOUT fh, IN offset, IN whence)
+ int MPI_FILE_SEEK
+  (INOUT fh, IN offset, IN whence)
 Event:
- MPI_FILE_SEEK <l_start_time> <l_duration> <l_return>
-               <ptr_fh> <l_offset> <l_whence>
+ MPI_FILE_SEEK 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset> <l_whence>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_GET\_POSITION}
 \label{sec:MPIFILEGETPOSITION}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_GET_POSITION(IN fh, OUT offset)
+ int MPI_FILE_GET_POSITION
+  (IN fh, OUT offset)
 Event:
- MPI_FILE_GET_POSITION <l_start_time> <l_duration> <l_return>
-                       <ptr_fh> <l_offset>
+ MPI_FILE_GET_POSITION 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_GET\_BYTE\_OFFSET}
 \label{sec:MPIFILEGETBYTEOFFSET}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_GET_BYTE_OFFSET(IN fh, IN offset, OUT disp)
+ int MPI_FILE_GET_BYTE_OFFSET
+  (IN fh, IN offset, OUT disp)
 Event:
- MPI_FILE_GET_BYTE_OFFSET <l_start_time> <l_duration> <l_return>
-                          <ptr_fh> <l_offset>
+ MPI_FILE_GET_BYTE_OFFSET 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_SHARED}
 \label{sec:MPIFILEREADSHARED}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_SHARED(INOUT fh, OUT buf, IN count, 
-                      IN datatype, OUT status)
+ int MPI_FILE_READ_SHARED
+  (INOUT fh, OUT buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_READ_SHARED <l_start_time> <l_duration> <l_return>
-                      <ptr_fh> <ptr_buf> <l_count>
-                      <ptr_dt> <ptr_st>
+ MPI_FILE_READ_SHARED 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_SHARED}
 \label{sec:MPIFILEWRITESHARED}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_SHARED(INOUT fh, IN buf, IN count, 
-                       IN datatype, OUT status)
+ int MPI_FILE_WRITE_SHARED
+  (INOUT fh, IN buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_WRITE_SHARED <l_start_time> <l_duration> <l_return>
-                       <ptr_fh> <ptr_buf> <l_count>
-                       <ptr_dt> <ptr_st>
+ MPI_FILE_WRITE_SHARED 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_IREAD\_SHARED}
 \label{sec:MPIFILEIREADSHARED}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_IREAD_SHARED(INOUT fh, OUT buf, IN count, 
-                       IN datatype, OUT status)
+ int MPI_FILE_IREAD_SHARED
+  (INOUT fh, OUT buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_IREAD_SHARED <l_start_time> <l_duration> <l_return>
-                       <ptr_fh> <ptr_buf> <l_count>
-                       <ptr_dt> <ptr_st>
+ MPI_FILE_IREAD_SHARED 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_IWRITE\_SHARED}
 \label{sec:MPIFILEIWRITESHARED}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_IWRITE_SHARED(INOUT fh, IN buf, IN count, 
-                        IN datatype, OUT status)
+ int MPI_FILE_IWRITE_SHARED
+  (INOUT fh, IN buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_IWRITE_SHARED <l_start_time> <l_duration> <l_return>
-                        <ptr_fh> <ptr_buf> <l_count>
-                        <ptr_dt> <ptr_st>
+ MPI_FILE_IWRITE_SHARED 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_ORDERED}
 \label{sec:MPIFILEREADORDERED}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_ORDERED(INOUT fh, OUT buf, IN count, 
-                       IN datatype, OUT status)
+ int MPI_FILE_READ_ORDERED
+  (INOUT fh, OUT buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_READ_ORDERED <l_start_time> <l_duration> <l_return>
-                       <ptr_fh> <ptr_buf> <l_count>
-                       <ptr_dt> <ptr_st>
+ MPI_FILE_READ_ORDERED 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_ORDERED}
 \label{sec:MPIFILEWRITEORDERED}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_ORDERED(INOUT fh, IN buf, IN count, 
-                        IN datatype, OUT status)
+ int MPI_FILE_WRITE_ORDERED
+  (INOUT fh, IN buf, IN count, 
+   IN datatype, OUT status)
 Event:
- MPI_FILE_WRITE_ORDERED <l_start_time> <l_duration> <l_return>
-                        <ptr_fh> <ptr_buf> <l_count>
-                        <ptr_dt> <ptr_st>
+ MPI_FILE_WRITE_ORDERED 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_SEEK\_SHARED}
 \label{sec:MPIFILESEEKSHARED}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_SEEK_SHARED(INOUT fh, IN offset, IN whence)
+ int MPI_FILE_SEEK_SHARED
+  (INOUT fh, IN offset, IN whence)
 Event:
- MPI_FILE_SEEK_SHARED <l_start_time> <l_duration> <l_return>
-                      <ptr_fh> <l_offset> <l_whence>
+ MPI_FILE_SEEK_SHARED 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset> <l_whence>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_GET\_POSITION\_SHARED}
 \label{sec:MPIFILEGETPOSITIONSHARED}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_GET_POSITION_SHARED(IN fh, OUT offset)
+ int MPI_FILE_GET_POSITION_SHARED
+  (IN fh, OUT offset)
 Event:
- MPI_FILE_GET_POSITION_SHARED <l_start_time> <l_duration> <l_return>
-                              <ptr_fh> <l_offset>
+ MPI_FILE_GET_POSITION_SHARED 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_AT\_ALL\_BEGIN}
 \label{sec:MPIFILEREADATALLBEGIN}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_AT_ALL_BEGIN(IN fh, IN offset, OUT buf, IN count, IN datatype)
+ int MPI_FILE_READ_AT_ALL_BEGIN
+  (IN fh, IN offset, OUT buf, 
+   IN count, IN datatype)
 Event:
- MPI_FILE_READ_AT_ALL_BEGIN <l_start_time> <l_duration> <l_return>
-                            <ptr_fh> <l_offset> <l_count>
-                            <ptr_dt>
+ MPI_FILE_READ_AT_ALL_BEGIN 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset> <l_count>
+  <ptr_dt>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_AT\_ALL\_END}
 \label{sec:MPIFILEREADATALLEND}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_AT_ALL_END(IN fh, OUT buf, OUT status)
+ int MPI_FILE_READ_AT_ALL_END
+  (IN fh, OUT buf, OUT status)
 Event:
- MPI_FILE_READ_AT_ALL_END <l_start_time> <l_duration> <l_return>
-                          <ptr_fh> <ptr_buf> <ptr_st>
+ MPI_FILE_READ_AT_ALL_END 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_AT\_ALL\_BEGIN}
 \label{sec:MPIFILEWRITEATALLBEGIN}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_AT_ALL_BEGIN(INOUT fh, IN offset, IN buf, IN count, IN datatype)
+ int MPI_FILE_WRITE_AT_ALL_BEGIN
+  (INOUT fh, IN offset, IN buf, 
+   IN count, IN datatype)
 Event:
- MPI_FILE_WRITE_AT_ALL_BEGIN <l_start_time> <l_duration> <l_return>
-                             <ptr_fh> <l_offset> <l_count>
-                             <ptr_dt>
+ MPI_FILE_WRITE_AT_ALL_BEGIN 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <l_offset> <l_count>
+  <ptr_dt>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_AT\_ALL\_END}
 \label{sec:MPIFILEWRITEATALLEND}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_AT_ALL_END(INOUT fh, IN buf, OUT status)
+ int MPI_FILE_WRITE_AT_ALL_END
+  (INOUT fh, IN buf, OUT status)
 Event:
- MPI_FILE_WRITE_AT_ALL_END <l_start_time> <l_duration> <l_return>
-                           <ptr_fh> <ptr_buf> <ptr_st>
+ MPI_FILE_WRITE_AT_ALL_END 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_ALL\_BEGIN}
 \label{sec:MPIFILEREADALLBEGIN}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_ALL_BEGIN(INOUT fh, OUT buf, IN count, IN datatype)
+ int MPI_FILE_READ_ALL_BEGIN
+  (INOUT fh, OUT buf, IN count, 
+   IN datatype)
 Event:
- MPI_FILE_READ_ALL_BEGIN <l_start_time> <l_duration> <l_return>
-                         <ptr_fh> <ptr_buf> <l_count>
-                         <ptr_dt>
+ MPI_FILE_READ_ALL_BEGIN 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_ALL\_END}
 \label{sec:MPIFILEREADALLEND}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_ALL_END(INOUT fh, OUT buf, OUT status)
+ int MPI_FILE_READ_ALL_END
+  (INOUT fh, OUT buf, OUT status)
 Event:
- MPI_FILE_READ_ALL_END <l_start_time> <l_duration> <l_return>
-                       <ptf_fh> <ptr_buf> <ptr_st>
+ MPI_FILE_READ_ALL_END 
+  <l_start_time> <l_duration> <l_return>
+  <ptf_fh> <ptr_buf> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_ALL\_BEGIN}
 \label{sec:MPIFILEWRITEALLBEGIN}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_ALL_BEGIN(INOUT fh, IN buf, IN count, IN datatype)
+ int MPI_FILE_WRITE_ALL_BEGIN
+  (INOUT fh, IN buf, IN count, 
+   IN datatype)
 Event:
- MPI_FILE_WRITE_ALL_BEGIN <l_start_time> <l_duration> <l_return>
-                          <ptr_fh> <ptr_buf> <l_count>
-                          <ptr_dt>
+ MPI_FILE_WRITE_ALL_BEGIN 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_ALL\_END}
 \label{sec:MPIFILEWRITEALLEND}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_ALL_END(INOUT fh, IN buf, OUT status)
+ int MPI_FILE_WRITE_ALL_END
+  (INOUT fh, IN buf, OUT status)
 Event:
- MPI_FILE_WRITE_ALL_END <l_start_time> <l_duration> <l_return>
-                        <ptf_fh> <ptr_buf> <ptr_st>
+ MPI_FILE_WRITE_ALL_END 
+  <l_start_time> <l_duration> <l_return>
+  <ptf_fh> <ptr_buf> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_ORDERED\_BEGIN}
 \label{sec:MPIFILEREADORDEREDBEGIN}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_ORDERED_BEGIN(INOUT fh, OUT buf, IN count, IN datatype)
+ int MPI_FILE_READ_ORDERED_BEGIN
+  (INOUT fh, OUT buf, IN count, 
+   IN datatype)
 Event:
- MPI_FILE_READ_ORDERED_BEGIN <l_start_time> <l_duration> <l_return>
-                             <ptr_fh> <ptr_buf> <l_count>
-                             <ptr_dt>
+ MPI_FILE_READ_ORDERED_BEGIN 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_READ\_ORDERED\_END}
 \label{sec:MPIFILEREADORDEREDEND}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_READ_ORDERED_END(INOUT fh, OUT buf, OUT status)
+ int MPI_FILE_READ_ORDERED_END
+  (INOUT fh, OUT buf, OUT status)
 Event:
- MPI_FILE_READ_ORDERED_END <l_start_time> <l_duration> <l_return>
-                           <ptf_fh> <ptr_buf> <ptr_st>
+ MPI_FILE_READ_ORDERED_END 
+  <l_start_time> <l_duration> <l_return>
+  <ptf_fh> <ptr_buf> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_ORDERED\_BEGIN}
 \label{sec:MPIFILEWRITEORDEREDBEGIN}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_ORDERED_BEGIN(INOUT fh, IN buf, IN count, IN datatype)
+ int MPI_FILE_WRITE_ORDERED_BEGIN
+  (INOUT fh, IN buf, 
+   IN count, IN datatype)
 Event:
- MPI_FILE_WRITE_ORDERED_BEGIN <l_start_time> <l_duration> <l_return>
-                              <ptr_fh> <ptr_buf> <l_count>
-                              <ptr_dt>
+ MPI_FILE_WRITE_ORDERED_BEGIN 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_buf> <l_count>
+  <ptr_dt>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_WRITE\_ORDERED\_END}
 \label{sec:MPIFILEWRITEORDEREDEND}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_WRITE_ORDERED_END(INOUT fh, IN buf, OUT status)
+ int MPI_FILE_WRITE_ORDERED_END
+  (INOUT fh, IN buf, OUT status)
 Event:
- MPI_FILE_WRITE_ORDERED_END <l_start_time> <l_duration> <l_return>
-                            <ptf_fh> <ptr_buf> <ptr_st>
+ MPI_FILE_WRITE_ORDERED_END 
+  <l_start_time> <l_duration> <l_return>
+  <ptf_fh> <ptr_buf> <ptr_st>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_GET\_TYPE\_EXTENT}
 \label{sec:MPIFILEGETTYPEEXTENT}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_GET_TYPE_EXTENT(IN fh, IN datatype, OUT extent)
+ int MPI_FILE_GET_TYPE_EXTENT
+  (IN fh, IN datatype, OUT extent)
 Event:
- MPI_FILE_GET_TYPE_EXTENT <l_start_time> <l_duration> <l_return>
-                          <ptr_fh> <ptr_dt> <l_ext>
+ MPI_FILE_GET_TYPE_EXTENT 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <ptr_dt> <l_ext>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_SET\_ATOMICITY}
 \label{sec:MPIFILESETATOMICITY}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_SET_ATOMICITY(IN fh, IN flag)
+ int MPI_FILE_SET_ATOMICITY
+  (IN fh, IN flag)
 Event:
- MPI_FILE_SET_ATOMICITY <l_start_time> <l_duration> <l_return>
-                        <ptr_fh> <b_flg>
+ MPI_FILE_SET_ATOMICITY 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <b_flg>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_GET\_ATOMICITY}
 \label{sec:MPIFILEGETATOMICITY}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_GET_ATOMICITY(IN fh, OUT flag)
+ int MPI_FILE_GET_ATOMICITY
+  (IN fh, OUT flag)
 Event:
- MPI_FILE_GET_ATOMICITY <l_start_time> <l_duration> <l_return>
-                        <ptr_fh> <b_flg>
+ MPI_FILE_GET_ATOMICITY 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh> <b_flg>
 \end{verbatim}
 
 \subsubsection{MPI\_FILE\_SYNC}
 \label{sec:MPIFILESYNC}
 \begin{verbatim}
 Prototype:
- int MPI_FILE_SYNC(INOUT fh)
+ int MPI_FILE_SYNC
+  (INOUT fh)
 Event:
- MPI_FILE_SYNC <l_start_time> <l_duration> <l_return>
-               <ptr_fh>
+ MPI_FILE_SYNC 
+  <l_start_time> <l_duration> <l_return>
+  <ptr_fh>
 \end{verbatim}
 
 \end{document}
