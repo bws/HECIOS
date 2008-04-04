@@ -1,13 +1,13 @@
 # Serial HECIOS Trace Format Version 0.0.0.0
 8 14
-/dir1 0
-/dir2 0
-/dir3 0
-/dir4 0
-/dir1/file1 4096
-/dir1/file2 8192
-/dir1/file3 8192
-/dir1/file4 8192
+/dir1 D 4
+/dir2 D 0
+/dir3 D 0
+/dir4 D 0
+/dir1/file1 F 4096
+/dir1/file2 F 8192
+/dir1/file3 F 8192
+/dir1/file4 F 8192
 0.1 0.1 MKDIR /dir2 0775
 0.2 0.1 RMDIR /dir4 10 
 0.3 0.1 STAT /dir1/file1  

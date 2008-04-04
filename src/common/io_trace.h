@@ -179,9 +179,15 @@ public:
     /** @return the next IOTraceRecord */
     virtual Record* nextRecord() = 0;
 
+    /** Register a directory and number of entries in this traces file system */
+    void registerDirectory(const std::string& dirname, std::size_t numEntries);
+
     /** Register a file and its size that exists in this traces file system */
     void registerFile(const std::string& filename, std::size_t fileSize);
 
+    /** @return a pointer to directories in this trace's file system */
+    const FileSystemMap* getDirectories() const;
+    
     /** @return a pointer to files in this trace's file system */
     const FileSystemMap* getFiles() const;
     
@@ -198,6 +204,9 @@ private:
 
     /** Map unique file ids to a filename */
     std::map<int, std::string> filenamesById_;
+
+    /** Map of all file system directories to their number of entries */
+    FileSystemMap entriesByDirectory_;
 
     /** Map of all file system files to their sizes */
     FileSystemMap fileSizesByName_;

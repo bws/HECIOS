@@ -46,6 +46,9 @@ protected:
     /** Send the file creation message to the OS */
     void enterCreate();
 
+    /** Send a message to set the attributes */
+    void setAttributes();
+    
     /** Send the file write message to the OS */
     void createDirEnt();
     

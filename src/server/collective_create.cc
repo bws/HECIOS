@@ -47,8 +47,9 @@ void CollectiveCreate::handleServerMessage(cMessage* msg)
         CREATE_DFILE = FSM_Transient(3),
         SEND_REQUESTS = FSM_Transient(4),
         WAIT_FOR_RESPONSE = FSM_Steady(5),
-        CREATE_DIR_ENT = FSM_Steady(6),
-        FINISH = FSM_Steady(7),
+        SET_ATTR = FSM_Steady(6),
+        CREATE_DIR_ENT = FSM_Steady(7),
+        FINISH = FSM_Steady(8),
     };
 
     FSM_Switch(currentState)
@@ -129,7 +130,7 @@ void CollectiveCreate::handleServerMessage(cMessage* msg)
                 FSObjectType objectType = createReq_->getObjectType();
                 if (SPFS_DIR_ENT_OBJECT == objectType)
                 {
-                    FSM_Goto(currentState, CREATE_DIR_ENT);
+                    FSM_Goto(currentState, SET_ATTR);
                 }
                 else
                 {
@@ -140,6 +141,16 @@ void CollectiveCreate::handleServerMessage(cMessage* msg)
             {
                 FSM_Goto(currentState, WAIT_FOR_RESPONSE);
             }
+            break;
+        }
+        case FSM_Enter(SET_ATTR):
+        {
+            setAttributes();
+            break;
+        }
+        case FSM_Exit(SET_ATTR):
+        {
+            FSM_Goto(currentState, CREATE_DIR_ENT);
             break;
         }
         case FSM_Enter(CREATE_DIR_ENT):
@@ -194,6 +205,19 @@ void CollectiveCreate::enterCreate()
     // Increment the number of outstanding requests
     int numOutstanding = createReq_->getNumOutstandingRequests() + 1;
     createReq_->setNumOutstandingRequests(numOutstanding);
+}
+
+void CollectiveCreate::setAttributes()
+{
+    spfsSetAttrRequest* setAttr =
+        new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
+    setAttr->setContextPointer(createReq_);
+    
+    // The meta handle is used for addressing
+    setAttr->setHandle(createReq_->getMetaHandle());
+    setAttr->setObjectType(SPFS_METADATA_OBJECT);
+    setAttr->setByteLength(4 + 16 + 4 + 8 + 4 + 4 + 64);
+    module_->sendDelayed(setAttr, 0.0);
 }
 
 void CollectiveCreate::createDirEnt()

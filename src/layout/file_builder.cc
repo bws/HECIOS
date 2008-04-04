@@ -281,6 +281,56 @@ void FileBuilder::populateFileSystem(const FileSystemMap& traceFS)
     }
 }
 
+void FileBuilder::populateFileSystem(const FileSystemMap& traceDirs,
+                                     const FileSystemMap& traceFiles)
+{
+    StorageLayoutManager layoutManager;
+    size_t totalCount = 0;
+    
+    // First build the directories
+    FileSystemMap::const_iterator dirIter = traceDirs.begin();
+    cerr << "DIAGNOSTIC: Trace file system contains: "
+         << traceDirs.size() << " directories\n";
+    for (size_t i = 0; i < traceDirs.size(); i++)
+    {
+        // Determine the meta server using a round robin scheme
+        size_t metaIdx = totalCount++ % metaServers_.size();
+
+        Filename dirName(dirIter->first);
+        //size_t numEntries(dirIter->second);
+
+        // Create the directory
+        createDirectory(dirName, metaServers_[metaIdx], layoutManager);
+        
+        // Increment to next directory
+        ++dirIter;
+    }
+
+    FileSystemMap::const_iterator fileIter = traceFiles.begin();
+    cerr << "DIAGNOSTIC: Trace file system contains: "
+         << traceFiles.size() << " files\n";
+    for (size_t i = 0; i < traceFiles.size(); i++)
+    {
+        // Determine the meta server using a round robin scheme
+        size_t metaIdx = totalCount++ % metaServers_.size();
+
+        Filename filename(fileIter->first);
+        FSSize fileSize(fileIter->second);
+
+        // Create the file
+        createFile(filename,
+                   fileSize,
+                   metaServers_[metaIdx],
+                   getNumDataServers(),
+                   layoutManager);
+        
+        // Increment to next file
+        ++fileIter;
+    }
+
+    
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

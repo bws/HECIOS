@@ -51,14 +51,27 @@ SHTFIOTrace::SHTFIOTrace(const string& traceFileName)
         traceFile_ >> numFiles_;
         traceFile_ >> numRecords_;
 
-        // Read the file names
+        // Read the file and directory names
         for (int i = 0; i < numFiles_; i++)
         {
             string filename;
-            size_t length;
-            traceFile_ >> filename >> length;
-            registerFile(filename, length);
+            string type;
+            traceFile_ >> filename >> type;
 
+            if ("F" == type)
+            {
+                size_t size;
+                traceFile_ >> size;
+                registerFile(filename, size);
+            }
+            else
+            {
+                assert("D" == type);
+                size_t numEntries;
+                traceFile_ >> numEntries;
+                registerDirectory(filename, numEntries);
+            }
+            
             // Discard the trailing \n
             string tmp;
             getline(traceFile_, tmp);

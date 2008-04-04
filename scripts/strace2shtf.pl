@@ -29,6 +29,7 @@ my %g_descriptorToFilename;
 my %g_descriptorToFilePointer;
 my %g_filenameToSize;
 my %g_ignoredDescriptors;
+my %g_dirnameToEntries;
 
 #
 # Invoke Main
@@ -107,6 +108,18 @@ sub addFilename
 }
 
 #
+# Add the directory name to the global data
+#
+sub addDirectory
+{
+    my $dirName = shift;
+    if (!$g_dirnameToEntries{$dirName})
+    {
+        $g_dirnameToEntries{$dirName} = 0;
+    }
+}
+
+#
 # Add the filename and descriptor to the data structures
 #
 sub addFilenameAndDescriptor
@@ -145,6 +158,23 @@ sub updateFileSize
     {
         $g_filenameToSize{$filename} = $newSize;
     }
+}
+
+#
+# Update the number of directory entries
+#
+sub updateDirectoryEntries
+{
+    my $fd = shift;
+    my $numEntries = shift;
+
+    my $dirName = $g_descriptorToFilename{$fd};
+    #print "Diag: For $dirName adding $numEntries entries\n";
+    if ($g_dirnameToEntries{$dirName})
+    {
+        addDirectory($dirName);
+    }
+    $g_dirnameToEntries{$dirName} += $numEntries;
 }
 
 #
@@ -202,7 +232,7 @@ sub fixRelativePath
 {
     my $filename = shift;
 
-    # If the path is relative, prepend the current directory
+    # Process out special path characters /., /.., ., and ..
     if ("." eq $filename)
     {
         $filename = $g_currentDir;
@@ -213,7 +243,21 @@ sub fixRelativePath
         #print "On receiving .. changing: $filename -> $upOneDir\n";
         $filename = dirname($g_currentDir);
     }
-    elsif ("/" ne substr($filename, 0, 1))
+    elsif ($filename =~ m/.*\/\.$/)
+    {
+        my $oldName = $filename;
+        $filename =~ s/\/\.$//;
+        #print "Caught a trailing dot: $oldName $filename\n";
+    }
+    elsif ($filename =~ m/.*\/\.\.$/)
+    {
+        my $oldName = $filename;
+        $filename =~ s/\/[^\/]+\/\.\.$//;
+        #print "Caught a double trailing dot: $oldName $filename \n";
+    }
+    
+    # If the path is relative, prepend the current directory
+    if ("/" ne substr($filename, 0, 1))
     {
         $filename = $g_currentDir . "/" . $filename;
     }
@@ -221,14 +265,19 @@ sub fixRelativePath
 }
 
 #
-#
+# Remove the mount point from the beginning of the path
 #
 sub fixPFSPath
 {
     my $filename = shift;
 
     # Replace the PFS mount volume with a simple root directory
-    my $pfsFilename = "/" . substr($filename, length($g_mountDir) + 1); 
+    #print stderr "Fixng PFS path: $filename $g_mountDir\n";
+    my $pfsFilename = "/";
+    if ($filename ne $g_mountDir)
+    {
+        $pfsFilename .= substr($filename, length($g_mountDir) + 1);
+    }
     return $pfsFilename;
 }
 
@@ -269,7 +318,7 @@ sub parseAccessCall
 }
 
 #
-# Parse a chdir call.  This one isn't like the reset.  It changes the parser
+# Parse a chdir call.  This one isn't like the rest.  It changes the parser
 # state, and then emits a CPU PHASE record.
 #
 sub parseChdirCall
@@ -292,6 +341,7 @@ sub parseChdirCall
 
     # Add the directory
     addFilename($filename);
+    addDirectory($filename);
 
     # Update the current working directory
     $g_currentDir = $filename;
@@ -349,6 +399,9 @@ sub parseFchdirCall
     # Update the current working directory
     $g_currentDir = $g_descriptorToFilename{$descriptor};
     #print "WARNING: Set the current working dir to $g_currentDir\n";
+    
+    # Add the direcotry to the metadata
+    addDirectory($g_currentDir);
 
     return getCPUPhaseRecord();
 }
@@ -444,6 +497,7 @@ sub parseMkdirCall
 
     # Update meta data
     addFilename($filename);
+    addDirectory($filename);
 
     return "MKDIR $filename $perms"
 }
@@ -526,7 +580,10 @@ sub parseReaddirCall
 
     my $cmd = uc($stuff[0]);
     my $descriptor = $args[0];
-    my $count = $args[4];
+    my $count = $args[4] / 1048576;
+
+    # Update the number of directory entries
+    updateDirectoryEntries($descriptor, $count);
 
     return "READDIR $descriptor $count $rc";
 }
@@ -554,6 +611,7 @@ sub parseRmdirCall
 
     # Update meta data
     addFilename($filename);
+    addDirectory($filename);
 
     return "RMDIR $filename $rc";
 }
@@ -917,26 +975,45 @@ sub emitTraceMetaData
 {
     my $outFile = shift;
 
-    # Write out the format metadata
-    print $outFile "# Serial HECIOS Trace Format Version 0.0.0.0\n";
+    # Array to hold the meta entries
+    my @metaEntries;
     
-    ## Write out the mount point
-    #print $outFile "Mount: $g_mountDir\n";
+    # Extract the directories and the number of entries
+    my $dirName;
+    foreach $dirName (keys %g_dirnameToEntries)
+    {
+        my $numEntries = $g_dirnameToEntries{$dirName};
+        my $pfsDirName = fixPFSPath($dirName);
+        push(@metaEntries, "$pfsDirName D $numEntries\n");
+    }
 
-    # Write out the number of files and records
-    my $numFiles = scalar(keys %g_filenameToSize);
-    print $outFile "$numFiles $g_recordCount\n";
-
-    # Write out the file names and their sizes
+    #  Extract the file names and their sizes
     my $i = 0;
     my $filename;
     foreach $filename (keys %g_filenameToSize)
     {
-        my $fileSize = $g_filenameToSize{$filename};
-        my $pfsFilename = fixPFSPath($filename);
-	print $outFile "$pfsFilename $fileSize\n";
-        $i++;
-    }    
+        if (!$g_dirnameToEntries{$filename})
+        {
+            my $fileSize = $g_filenameToSize{$filename};
+            my $pfsFilename = fixPFSPath($filename);
+        
+            push(@metaEntries, "$pfsFilename F $fileSize\n");
+        }
+    }
+
+    # Write out the format metadata
+    print $outFile "# Serial HECIOS Trace Format Version 0.0.1.0\n";
+    
+    # Write the metadata header to file
+    my $numMetaEntries = @metaEntries;
+    print $outFile "$numMetaEntries $g_recordCount\n";
+    
+    # Write the metadata entries to file
+    my $entryLine;
+    foreach $entryLine (@metaEntries)
+    {
+        print $outFile $entryLine;
+    }
 }
 
 #

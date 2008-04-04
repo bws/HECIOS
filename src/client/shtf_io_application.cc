@@ -192,8 +192,9 @@ cMessage* SHTFIOApplication::createMessage(IOTrace::Record* rec)
 void SHTFIOApplication::populateFileSystem()
 {
     assert(0 != trace_);
-    const FileSystemMap* traceFS = trace_->getFiles();
-    FileBuilder::instance().populateFileSystem(*traceFS);
+    const FileSystemMap* traceDirs = trace_->getDirectories();
+    const FileSystemMap* traceFiles = trace_->getFiles();
+    FileBuilder::instance().populateFileSystem(*traceDirs, *traceFiles);
 }
 
 spfsMPIDirectoryCreateRequest* SHTFIOApplication::createDirectoryCreateMessage(

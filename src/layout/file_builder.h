@@ -89,6 +89,13 @@ public:
     /** Populate the file system with the files described in the IOTrace */
     void populateFileSystem(const FileSystemMap& traceFS);
     
+    /**
+     * Populate the file system with the directories and files described
+     * in the IOTrace
+     */
+    void populateFileSystem(const FileSystemMap& traceDirs,
+                            const FileSystemMap& traceFiles);
+    
 private:
 
     /** Default constructor */

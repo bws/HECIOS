@@ -71,9 +71,19 @@ IOTrace::~IOTrace()
 {
 }
 
+void IOTrace::registerDirectory(const string& dirname, size_t numEntries)
+{
+    entriesByDirectory_[dirname] = numEntries;
+}
+
 void IOTrace::registerFile(const string& filename, size_t fileSize)
 {
     fileSizesByName_[filename] = fileSize;
+}
+
+const FileSystemMap* IOTrace::getDirectories() const
+{
+    return &entriesByDirectory_;
 }
 
 const FileSystemMap* IOTrace::getFiles() const

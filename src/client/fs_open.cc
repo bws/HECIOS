@@ -489,6 +489,8 @@ bool FSOpen::checkFileCreateFlags()
 {
     if (openReq_->getMode() & MPI_MODE_CREATE)
     {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "DIAGNOSTIC: Creating file\n";
         return true;
     }
     else
