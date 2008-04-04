@@ -980,7 +980,7 @@ sub emitTraceMetaData
     
     # Extract the directories and the number of entries
     my $dirName;
-    foreach $dirName (keys %g_dirnameToEntries)
+    foreach $dirName (sort(keys %g_dirnameToEntries))
     {
         my $numEntries = $g_dirnameToEntries{$dirName};
         my $pfsDirName = fixPFSPath($dirName);
@@ -990,7 +990,7 @@ sub emitTraceMetaData
     #  Extract the file names and their sizes
     my $i = 0;
     my $filename;
-    foreach $filename (keys %g_filenameToSize)
+    foreach $filename (sort(keys %g_filenameToSize))
     {
         if (!$g_dirnameToEntries{$filename})
         {
