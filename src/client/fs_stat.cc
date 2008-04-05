@@ -464,6 +464,7 @@ void FSStat::collectiveStat()
 {
     // Get the parent handle
     Filename statName(statReq_->getFileName());
+    cerr << __FILE__ << ":" << __LINE__ << ": Stating file: " << statName << endl;
     FSMetaData* meta = FileBuilder::instance().getMetaData(statName);
 
     spfsCollectiveGetAttrRequest* req =

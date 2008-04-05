@@ -61,7 +61,7 @@ void SHTFIOApplication::initialize()
     
     // Send the kick start message
     cMessage* kickStart = new cMessage();
-    scheduleAt(1.0, kickStart);
+    scheduleAt(0.0, kickStart);
 }
 
 /**
@@ -368,8 +368,6 @@ spfsMPIFileStatRequest* SHTFIOApplication::createStatMessage(
         assert(IOTrace::STAT == statRecord->opType());
         stat->setDetermineFileSize(true);
     }
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Creating app. stat message: " << stat->getFileName() << endl;
     return stat;
 }
 
