@@ -327,8 +327,6 @@ void FSStat::lookupParentOnServer()
         FileBuilder::instance().getMetaData(resolvedName)->handle;
     
     // Create the lookup request
-    cerr << "Stat: " << statFile << endl;
-    cerr << "Client looking up: " << resolvedName << " " << resolvedHandle << endl;
     spfsLookupPathRequest* req = new spfsLookupPathRequest(
         0, SPFS_LOOKUP_PATH_REQUEST);
     req->setContextPointer(statReq_);
@@ -417,6 +415,7 @@ FSLookupStatus FSStat::processLookup(spfsLookupPathResponse* lookupResponse)
 void FSStat::getMetaDataAttributes()
 {
     Filename statName(statReq_->getFileName());
+    cerr << __FILE__ << ":" << __LINE__ << ": Stating file: " << statName << endl;
     const FSMetaData* meta = FileBuilder::instance().getMetaData(statName);
     spfsGetAttrRequest* req = FSClient::createGetAttrRequest(
         meta->handle, SPFS_METADATA_OBJECT);

@@ -23,7 +23,6 @@
 #include <omnetpp.h>
 #include "io_trace.h"
 class FileDescriptor;
-class spfsCacheInvalidateRequest;
 class spfsMPIDirectoryCreateRequest;
 class spfsMPIFileCloseRequest;
 class spfsMPIFileOpenRequest;
@@ -57,13 +56,6 @@ protected:
      */
     FileDescriptor* removeDescriptor(int FileId);
     
-    /** Send out the required cache invalidation messages */
-    void invalidateCaches(spfsMPIFileWriteAtRequest* writeAt);
-    
-    /** Create a cache invalidation message for sending to peers */
-    spfsCacheInvalidateRequest* createCacheInvalidationMessage(
-                                spfsMPIFileWriteAtRequest* writeAt);
-
     /** Create the file system files for this trace */
     virtual void populateFileSystem() = 0;
 

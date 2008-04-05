@@ -23,19 +23,13 @@
 #include <sstream>
 #include <string>
 #include "basic_data_type.h"
-#include "cache_proto_m.h"
 #include "filename.h"
 #include "file_builder.h"
 #include "file_descriptor.h"
 #include "io_trace.h"
 #include "mpi_proto_m.h"
-#include "mpi_mid_m.h"
 #include "pfs_utils.h"
-#include "shtf_io_trace.h"
 #include "storage_layout_manager.h"
-#include "umd_io_trace.h"
-#include "phtf_io_trace.h"
-#include "comm_man.h"
 
 using namespace std;
 
@@ -71,8 +65,10 @@ void IOApplication::initialize()
     msgScheduled_ = false;
 
     // Set the process rank
+    /** BWS does not belong here
     rank_ = CommMan::getInstance()->joinComm(MPI_COMM_WORLD, 0);
-
+    */
+    
     // Initialize scalar data collection values
     totalCpuPhaseTime_ = 0.0;
     applicationCompletionTime_ = 0.0;
@@ -222,6 +218,10 @@ void IOApplication::handleIOMessage(cMessage* msg)
 
 void IOApplication::handleMPIMessage(cMessage* msg)
 {
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "This default implementation must fail" << endl;
+    assert(false);
+/* BWS Does not belong here
     switch(msg->kind())
     {
         case SPFS_MPIMID_RANK_REQUEST:
@@ -231,13 +231,14 @@ void IOApplication::handleMPIMessage(cMessage* msg)
             break;
     }
     delete msg;
+*/
 }
 
 /**
  * Handle MPI-IO Response messages
  */
 void IOApplication::handleMessage(cMessage* msg)
-{   
+{
     if (msg->isSelfMessage())
     {
         handleSelfMessage(msg);
@@ -286,8 +287,9 @@ FileDescriptor* IOApplication::getDescriptor(int fileId) const
     return descriptor;
 }
 
-void IOApplication::invalidateCaches(spfsMPIFileWriteAtRequest* writeAt)
-{
+//void IOApplication::invalidateCaches(spfsMPIFileWriteAtRequest* writeAt)
+//{
+    /*
     // send msg to mpiOut, encapsulating spfsCacheInvalidateRequest
     cMessage* inval = createCacheInvalidationMessage(writeAt);
     spfsMPIBcastRequest* req =
@@ -297,21 +299,23 @@ void IOApplication::invalidateCaches(spfsMPIFileWriteAtRequest* writeAt)
     req->setCommunicator(MPI_COMM_WORLD);
     req->encapsulate(inval);
     send(req, mpiOutGate_);
-}
+    */
+//}
 
-spfsCacheInvalidateRequest* IOApplication::createCacheInvalidationMessage(
-    spfsMPIFileWriteAtRequest* writeAt)
-{
-    spfsCacheInvalidateRequest* invalidator = new spfsCacheInvalidateRequest();
+//spfsCacheInvalidateRequest* IOApplication::createCacheInvalidationMessage(
+//    spfsMPIFileWriteAtRequest* writeAt)
+//{
     /*
+    spfsCacheInvalidateRequest* invalidator = new spfsCacheInvalidateRequest();
     FSHandle handle = writeAt->getFileDes()->metaData->handle;
     invalidator->setHandle(handle);
     invalidator->setOffset(writeAt->getOffset());
     invalidator->setDataType(writeAt->getDataType());
     invalidator->setCount(writeAt->getCount());
-    */
     return invalidator;
-}
+    */
+//    return 0;
+//}
 
 
 /*

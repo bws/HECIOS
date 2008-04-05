@@ -42,8 +42,11 @@ void MpiMiddleware::initialize()
     netClientInGate_  = findGate("netClientIn");
     netClientOutGate_ = findGate("netClientOut");
 
-    spfsMPIMidRankRequest * rmsg = new spfsMPIMidRankRequest("", SPFS_MPIMID_RANK_REQUEST);
-    send(rmsg, appOutGate_);
+    // BWS
+    // This does not need to be a message -- just use a function call
+    // SHTF applications cannot support this call
+    //spfsMPIMidRankRequest * rmsg = new spfsMPIMidRankRequest("", SPFS_MPIMID_RANK_REQUEST);
+    //send(rmsg, appOutGate_);
 }
 
 void MpiMiddleware::finish()
@@ -54,7 +57,7 @@ void MpiMiddleware::finish()
 // handle other incoming messages (forwarding and processing)
 void MpiMiddleware::handleMessage(cMessage* msg)
 {
-    // Message from application
+/*    // Message from application
     if(msg->arrivalGateId() == appInGate_)
     {
         switch(msg->kind())
@@ -117,6 +120,7 @@ void MpiMiddleware::handleMessage(cMessage* msg)
         }
     }
     delete msg;
+*/
 }
 
 int MpiMiddleware::getRank()

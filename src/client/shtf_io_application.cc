@@ -51,6 +51,7 @@ SHTFIOApplication::SHTFIOApplication()
  */
 void SHTFIOApplication::initialize()
 {
+    cerr << __FILE__ << ":" << __LINE__ << "CHECK THIS OUT\n";
     IOApplication::initialize();
 
     // Get the trace file name and perform the rank substitution
@@ -367,6 +368,8 @@ spfsMPIFileStatRequest* SHTFIOApplication::createStatMessage(
         assert(IOTrace::STAT == statRecord->opType());
         stat->setDetermineFileSize(true);
     }
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Creating app. stat message: " << stat->getFileName() << endl;
     return stat;
 }
 
