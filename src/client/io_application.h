@@ -45,6 +45,8 @@ public:
     /** @return the MPI application's canonical process rank */
     int getRank() const {return rank_;};
 
+    void initRank();
+    
 protected:
     /** Associate the fileId with a file descriptor */
     void setDescriptor(int fileId, FileDescriptor* descriptor);

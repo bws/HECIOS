@@ -30,6 +30,7 @@
 #include "mpi_proto_m.h"
 #include "pfs_utils.h"
 #include "storage_layout_manager.h"
+#include "comm_man.h"
 
 using namespace std;
 
@@ -64,11 +65,6 @@ void IOApplication::initialize()
 
     msgScheduled_ = false;
 
-    // Set the process rank
-    /** BWS does not belong here
-    rank_ = CommMan::getInstance()->joinComm(MPI_COMM_WORLD, 0);
-    */
-    
     // Initialize scalar data collection values
     totalCpuPhaseTime_ = 0.0;
     applicationCompletionTime_ = 0.0;
@@ -221,17 +217,13 @@ void IOApplication::handleMPIMessage(cMessage* msg)
     cerr << __FILE__ << ":" << __LINE__ << ":"
          << "This default implementation must fail" << endl;
     assert(false);
-/* BWS Does not belong here
-    switch(msg->kind())
-    {
-        case SPFS_MPIMID_RANK_REQUEST:
-            spfsMPIMidRankResponse * rmsg = new spfsMPIMidRankResponse("", SPFS_MPIMID_RANK_RESPONSE);
-            rmsg->setRank(rank_);
-            send(rmsg, mpiOutGate_);
-            break;
-    }
-    delete msg;
-*/
+}
+
+void IOApplication::initRank()
+{
+    cerr << "init ";
+    rank_ = CommMan::getInstance()->joinComm(MPI_COMM_WORLD, 0);
+    cerr << "rank: " << rank_ << endl;
 }
 
 /**

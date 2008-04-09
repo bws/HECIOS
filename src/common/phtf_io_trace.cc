@@ -180,8 +180,12 @@ void PHTFEventRecord::params(std::string parastr)
     _parameters.resize(0);
     while(!ss.eof())
         {
+            pa = "";
             ss >> pa;
-            _parameters.push_back(pa);
+            if(pa != "")
+            {
+                _parameters.push_back(pa);
+            }
         }
 }
 
@@ -304,8 +308,12 @@ void PHTFEventRecord::buildRecordFields()
     _parameters.resize(0);
     while(!ss.eof())
     {
+        pa = "";
         ss >> pa;
-        _parameters.push_back(pa);
+        if(pa != "")
+        {
+            _parameters.push_back(pa);
+        }
     }
 
     _opid = strToOp(opstr);
@@ -319,6 +327,15 @@ PHTFEvent::PHTFEvent(string filepath, string runtimepath)
 {
     filePath(filepath);
     _runtime = new PHTFIni(runtimepath);
+}
+
+PHTFEvent::~PHTFEvent()
+{
+    if(_runtime)
+    {
+        delete _runtime;
+        _runtime = 0;
+    }
 }
 
 string PHTFEvent::memValue(string type, string pointer)
@@ -496,6 +513,15 @@ PHTFTrace* PHTFTrace::getInstance(string dirpath)
 PHTFIni::PHTFIni(string filename)
 {
     fileName_ = filename;
+}
+
+PHTFIni::~PHTFIni()
+{
+    std::map<std::string, PHTFIniItem *>::iterator iter;
+    for(iter = data_.begin(); iter != data_.end(); iter ++)
+    {
+        delete iter->second;
+    }
 }
 
 void PHTFIni::readIni()

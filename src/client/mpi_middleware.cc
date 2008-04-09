@@ -42,11 +42,7 @@ void MpiMiddleware::initialize()
     netClientInGate_  = findGate("netClientIn");
     netClientOutGate_ = findGate("netClientOut");
 
-    // BWS
-    // This does not need to be a message -- just use a function call
-    // SHTF applications cannot support this call
-    //spfsMPIMidRankRequest * rmsg = new spfsMPIMidRankRequest("", SPFS_MPIMID_RANK_REQUEST);
-    //send(rmsg, appOutGate_);
+    cerr << "middleware: " << rank_ << " initialize"<< endl;
 }
 
 void MpiMiddleware::finish()
@@ -57,16 +53,11 @@ void MpiMiddleware::finish()
 // handle other incoming messages (forwarding and processing)
 void MpiMiddleware::handleMessage(cMessage* msg)
 {
-/*    // Message from application
     if(msg->arrivalGateId() == appInGate_)
     {
         switch(msg->kind())
         {
-            case SPFS_MPIMID_RANK_RESPONSE:
-                rank_ = dynamic_cast<spfsMPIMidRankResponse*>(msg)->getRank();
-                cerr << "middleware: " << rank_ << " initialize"<< endl;
-                break;
-            case SPFS_MPI_BCAST_REQUEST:
+             case SPFS_MPI_BCAST_REQUEST:
                 spfsMPIMidBcastRequest *req = new spfsMPIMidBcastRequest(0, SPFS_MPIMID_BCAST_REQUEST);
                 req->setRoot(dynamic_cast<spfsMPIBcastRequest *>(msg)->getRoot());
                 req->setParent(dynamic_cast<spfsMPIBcastRequest *>(msg)->getRoot());
@@ -120,7 +111,6 @@ void MpiMiddleware::handleMessage(cMessage* msg)
         }
     }
     delete msg;
-*/
 }
 
 int MpiMiddleware::getRank()

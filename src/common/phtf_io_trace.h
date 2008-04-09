@@ -176,11 +176,11 @@ public:
     /**
      * Constructor
      */
-    PHTFEvent() {};
+    PHTFEvent() {_runtime = 0;};
     /**
      * Destrucor
      */
-    ~PHTFEvent() {};
+    ~PHTFEvent();
 
     /** @return The string that contains the file path */
     std::string filePath();
@@ -230,6 +230,7 @@ private:
     
 public:
     PHTFIni(std::string filename);
+    ~PHTFIni();
     bool exist(std::string section);
     bool exist(std::string section, std::string field);
     std::string iniValue(std::string section, std::string field);

@@ -41,6 +41,8 @@ public:
     /** @return The Rank of this node */
     int getRank();
 
+    void setRank(int r){rank_ = r;};
+
     /** Sends Message to net out gate */
     void sendNet(cMessage *msg);
 

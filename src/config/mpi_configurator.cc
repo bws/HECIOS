@@ -24,6 +24,7 @@
 #include "IPv4InterfaceData.h"
 #include "IPvXAddress.h"
 #include "io_application.h"
+#include "mpi_middleware.h"
 #include "pfs_types.h"
 #include "pfs_utils.h"
 #include <omnetpp.h>
@@ -94,6 +95,12 @@ void MPIConfigurator::initialize(int stage)
             IOApplication* ioApp =
                 dynamic_cast<IOApplication*>(mpiProcess->submodule("app"));
             assert(0 != ioApp);
+            ioApp->initRank();
+
+            MpiMiddleware* mpiMid =
+                dynamic_cast<MpiMiddleware*>(mpiProcess->submodule("mpiMiddleware"));
+            assert(0 != mpiMid);
+            mpiMid->setRank(ioApp->getRank());
 
             // Register the IP for the this process rank
             IPvXAddress* addr = getComputeNodeIP(cpun);

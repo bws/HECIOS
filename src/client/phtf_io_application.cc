@@ -60,9 +60,6 @@ void PHTFIOApplication::initialize()
     // parent class initilization, set rank_ and stuff
     IOApplication::initialize();
 
-    // get event file for this ioapp
-    phtfEvent_ = PHTFTrace::getInstance(dirStr)->getEvent(rank_);
-    phtfEvent_->open();
     PHTFEventRecord::buildOpMap();
 
     // init some variable
@@ -118,6 +115,14 @@ void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
 
 bool PHTFIOApplication::scheduleNextMessage()
 {
+    if(!phtfEvent_)
+    {
+        string dirStr = par("dirPHTF").stringValue();
+        // get event file for this ioapp
+        phtfEvent_ = PHTFTrace::getInstance(dirStr)->getEvent(rank_);
+        phtfEvent_->open();
+    }
+    
     cMessage * msg = 0;
 
     bool msgScheduled = false;
@@ -195,10 +200,9 @@ void PHTFIOApplication::handleMPIMessage(cMessage* msg)
         handleBarrier(msg);
         delete msg;
     }
-
     else
     {
-        IOApplication::handleMPIMessage(msg);
+        delete msg;
     }
 }
 

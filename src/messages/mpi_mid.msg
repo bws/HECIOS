@@ -27,7 +27,6 @@ enum mpiMiddlewareRequestKind
     SPFS_MPIMID_REQUEST = 701;
     SPFS_MPIMID_BCAST_REQUEST = 702;
     SPFS_MPIMID_BARRIER_REQUEST = 703;
-    SPFS_MPIMID_RANK_REQUEST = 704;
 };
 
 enum mpiMiddlewareResponseKind
@@ -35,7 +34,6 @@ enum mpiMiddlewareResponseKind
     SPFS_MPIMID_RESPONSE = 801;
     SPFS_MPIMID_BCAST_RESPONSE = 802;
     SPFS_MPIMID_BARRIER_RESPONSE = 803;
-    SPFS_MPIMID_RANK_RESPONSE = 804;
 };
 
 message spfsMPIMidRequest
@@ -67,18 +65,6 @@ message spfsMPIMidBarrierRequest extends spfsMPIMidRequest
     fields:
         int communicator;
 }
-
-message spfsMPIMidRankRequest extends spfsMPIMidRequest
-{
-    fields:
-}
-
-message spfsMPIMidRankResponse extends spfsMPIMidResponse
-{
-    fields:
-        int rank;
-}
-
 //
 // Local variables:
 //  c-indent-level: 4

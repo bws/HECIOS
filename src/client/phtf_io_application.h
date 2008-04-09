@@ -46,7 +46,7 @@ class PHTFIOApplication : public IOApplication
 {
 public:
     /** Constructor */
-    PHTFIOApplication() :IOApplication()  {waitReqId_ = -1;};
+    PHTFIOApplication() :IOApplication()  {waitReqId_ = -1; phtfEvent_ = NULL;};
     
 protected:
     /** Implementation of initialize */
