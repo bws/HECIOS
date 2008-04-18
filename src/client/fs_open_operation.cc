@@ -17,21 +17,16 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-//#define FSM_DEBUG  // Enable FSM Debug output
 #include "fs_open_operation.h"
 #include <iostream>
 #include <omnetpp.h>
-#include "client_fs_state.h"
 #include "filename.h"
-#include "file_builder.h"
 #include "fs_client.h"
 #include "fs_collective_create_sm.h"
 #include "fs_create_sm.h"
 #include "fs_get_attributes_sm.h"
 #include "fs_lookup_name_sm.h"
 #include "mpi_proto_m.h"
-#include "pfs_utils.h"
-#include "pvfs_proto_m.h"
 using namespace std;
 
 FSOpenOperation::FSOpenOperation(FSClient* client,
@@ -54,7 +49,7 @@ void FSOpenOperation::registerStateMachines()
     addStateMachine(new FSLookupNameSM(parentDir, openReq_, client_));
 
     // Second - Lookup parent attributes
-    addStateMachine(new FSGetAttributesSM(parentDir, openReq_, client_));
+    addStateMachine(new FSGetAttributesSM(parentDir, false, openReq_, client_));
     
     // Finally - Perform open/create
     if (isFileCreate())

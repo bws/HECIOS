@@ -28,17 +28,16 @@
 using namespace std;
 
 FSGetAttributesSM::FSGetAttributesSM(const Filename& filename,
+                                     bool calculateSize,
                                      spfsMPIRequest* mpiRequest,
                                      FSClient* client)
     : handle_(FileBuilder::instance().getMetaData(filename)->handle),
-      attributesType_(SPFS_METADATA_OBJECT),
+      calculateSize_(calculateSize),
       mpiReq_(mpiRequest),
       client_(client)
 {
     assert(0 != client_);
     assert(0 != mpiReq_);
-
-    
 }
 
 bool FSGetAttributesSM::updateState(cFSM& currentState, cMessage* msg)
@@ -46,8 +45,10 @@ bool FSGetAttributesSM::updateState(cFSM& currentState, cMessage* msg)
     // File system get attributes state machine states
     enum {
         INIT = 0,
-        GET_ATTRIBUTES = FSM_Steady(1),
-        FINISH = FSM_Steady(2),
+        GET_META_ATTR = FSM_Steady(1),
+        GET_DATA_ATTR = FSM_Transient(2),
+        COUNT_RESPONSES = FSM_Steady(3),
+        FINISH = FSM_Steady(4),
     };
 
     bool isComplete = false;
@@ -56,28 +57,55 @@ bool FSGetAttributesSM::updateState(cFSM& currentState, cMessage* msg)
         case FSM_Exit(INIT):
         {
             bool isCached = isAttrCached();
-            if (isCached)
+            if (isCached && !calculateSize_)
             {
                 FSM_Goto(currentState, FINISH);
             }
             else
             {
-                FSM_Goto(currentState, GET_ATTRIBUTES);
+                FSM_Goto(currentState, GET_META_ATTR);
             }
             break;
         }
-        case FSM_Enter(GET_ATTRIBUTES):
+        case FSM_Enter(GET_META_ATTR):
         {
-            getAttributes();
+            getMetadata();
             break;
         }
-        case FSM_Exit(GET_ATTRIBUTES):
+        case FSM_Exit(GET_META_ATTR):
+        {
+            if (calculateSize_)
+            {
+                FSM_Goto(currentState, GET_DATA_ATTR);
+            }
+            else
+            {
+                FSM_Goto(currentState, FINISH);
+            }
+            break;
+        }
+        case FSM_Enter(GET_DATA_ATTR):
+        {
+            getDataAttributes();
+            break;
+        }
+        case FSM_Exit(GET_DATA_ATTR):
+        {
+            FSM_Goto(currentState, COUNT_RESPONSES);
+            break;
+        }
+        case FSM_Exit(COUNT_RESPONSES):
+        {
+            bool isFinished = countResponse();
+            if (isFinished)
+                FSM_Goto(currentState, FINISH);
+            else
+                FSM_Goto(currentState, COUNT_RESPONSES);
+            break;
+        }        
+         case FSM_Enter(FINISH):
         {
             cacheAttributes();
-            FSM_Goto(currentState, FINISH);
-        }
-        case FSM_Enter(FINISH):
-        {
             isComplete = true;
             break;
         }
@@ -95,19 +123,47 @@ bool FSGetAttributesSM::isAttrCached()
     return false;
 }
 
+void FSGetAttributesSM::getMetadata()
+{
+    // Construct the request
+    spfsGetAttrRequest *req =
+        FSClient::createGetAttrRequest(handle_, SPFS_METADATA_OBJECT);
+    req->setContextPointer(mpiReq_);
+    client_->send(req, client_->getNetOutGate());
+}
+
+void FSGetAttributesSM::getDataAttributes()
+{
+    const FSMetaData* meta = FileBuilder::instance().getMetaData(handle_);
+
+    for (size_t i = 0; i < meta->dataHandles.size(); i++)
+    {
+        spfsGetAttrRequest* req = FSClient::createGetAttrRequest(
+            meta->dataHandles[i], SPFS_DATA_OBJECT);
+        req->setContextPointer(mpiReq_);
+        client_->send(req, client_->getNetOutGate());
+    }
+
+    mpiReq_->setRemainingResponses(meta->dataHandles.size());
+}
+
+bool FSGetAttributesSM::countResponse()
+{
+    bool isComplete = false;
+
+    int numOutstanding = mpiReq_->getRemainingResponses() - 1;
+    mpiReq_->setRemainingResponses(numOutstanding);
+    if (0 == numOutstanding)
+    {
+        isComplete = true;
+    }
+    return isComplete;
+}
+
 void FSGetAttributesSM::cacheAttributes()
 {
     const FSMetaData* attr = FileBuilder::instance().getMetaData(handle_);
     client_->fsState().insertAttr(handle_, *attr);
-}
-
-void FSGetAttributesSM::getAttributes()
-{
-    // Construct the request
-    spfsGetAttrRequest *req = FSClient::createGetAttrRequest(handle_,
-                                                             attributesType_);
-    req->setContextPointer(mpiReq_);
-    client_->send(req, client_->getNetOutGate());
 }
 
 /*

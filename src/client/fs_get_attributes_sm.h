@@ -34,13 +34,8 @@ class FSGetAttributesSM : public FSStateMachine
 {
 public:
     /** Constructor for get attribute state machine */
-    FSGetAttributesSM(const FSHandle& handle,
-                      const FSObjectType& objectType,
-                      spfsMPIRequest* mpiRequest,
-                      FSClient* client);
-    
-    /** Constructor to locate a file's metadata attributes */
     FSGetAttributesSM(const Filename& filename,
+                      bool calculateSize,
                       spfsMPIRequest* mpiRequest,
                       FSClient* client);
     
@@ -52,17 +47,23 @@ private:
     /** @return true if the lookup name is cached */
     bool isAttrCached();
 
-    /** @return true if the lookup name is cached */
-    void cacheAttributes();
+    /** Send the request to file's metadata attributes */
+    void getMetadata();
 
-    /** Send the request to file's attributes */
-    void getAttributes();
+    /** Send the requests to get the data attributes */
+    void getDataAttributes();
+
+    /** @return true when all the data attributes responses have been recvd */
+    bool countResponse();
+    
+    /** @return Cache the file's attributes */
+    void cacheAttributes();
 
     /** Handle to retrieve the attributes */
     FSHandle handle_;
 
-    /** The type of file attributes to retrieve */
-    FSObjectType attributesType_;
+    /** Flag to indicate whether the file size needs to be calculated */
+    bool calculateSize_;
     
     /** The originating MPI request */
     spfsMPIRequest* mpiReq_;

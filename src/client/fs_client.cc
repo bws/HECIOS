@@ -21,11 +21,11 @@
 #include <iostream>
 #include "fs_close_operation.h"
 #include "fs_create_directory.h"
-#include "fs_delete.h"
+#include "fs_delete_operation.h"
 #include "fs_open_operation.h"
 #include "fs_read.h"
 #include "fs_read_directory.h"
-#include "fs_stat.h"
+#include "fs_stat_operation.h"
 #include "fs_update_time.h"
 #include "fs_write.h"
 #include "pfs_types.h"
@@ -488,20 +488,15 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_DIRECTORY_REMOVE_REQUEST:
         {
-            FSDelete removeDir(
+            FSDeleteOperation removeDir(
                 this,
                 static_cast<spfsMPIDirectoryRemoveRequest*>(request),
                 false);
-            removeDir.handleMessage(msg);
+            removeDir.processMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
-            //FSOpen open(this,
-            //            static_cast<spfsMPIFileOpenRequest*>(request),
-            //            useCollectiveCreate_);
-            //open.handleMessage(msg);
-
             FSOpenOperation open(this,
                                  static_cast<spfsMPIFileOpenRequest*>(request),
                                  useCollectiveCreate_);
@@ -517,10 +512,11 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_FILE_DELETE_REQUEST :
         {
-            FSDelete del(this,
-                         static_cast<spfsMPIFileDeleteRequest*>(request),
-                         useCollectiveRemove_);
-            del.handleMessage(msg);
+            FSDeleteOperation remove(
+                this,
+                static_cast<spfsMPIFileDeleteRequest*>(request),
+                useCollectiveRemove_);
+            remove.processMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_READ_AT_REQUEST:
@@ -532,10 +528,10 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_FILE_STAT_REQUEST:
         {
-            FSStat stat(this,
-                        static_cast<spfsMPIFileStatRequest*>(request),
-                        useCollectiveGetAttr_);
-            stat.handleMessage(msg);
+            FSStatOperation stat(this,
+                                 static_cast<spfsMPIFileStatRequest*>(request),
+                                 useCollectiveGetAttr_);
+            stat.processMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_UPDATE_TIME_REQUEST:

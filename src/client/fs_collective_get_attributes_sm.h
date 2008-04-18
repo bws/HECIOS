@@ -1,5 +1,5 @@
-#ifndef FS_COLLECTIVE_CREATE_SM_H
-#define FS_COLLECTIVE_CREATE_SM_H
+#ifndef FS_COLLECTIVE_GET_ATTRIBUTES_SM_H
+#define FS_COLLECTIVE_GET_ATTRIBUTES_SM_H
 //
 // This file is part of Hecios
 //
@@ -21,32 +21,43 @@
 //
 #include "filename.h"
 #include "fs_state_machine.h"
+#include "pfs_types.h"
 class cFSM;
 class cMessage;
 class FSClient;
 class spfsMPIRequest;
 
 /**
- * Class performing client side file collective create processing
+ * Class responsible for getting the attributes for a handle collectively
  */
-class FSCollectiveCreateSM : public FSStateMachine
+class FSCollectiveGetAttributesSM : public FSStateMachine
 {
 public:
-    /** Construct collective create state machine */
-    FSCollectiveCreateSM(const Filename& filename,
-                         spfsMPIRequest* mpiReq,
-                         FSClient* client);
-
+    /** Constructor for get attribute state machine */
+    FSCollectiveGetAttributesSM(const Filename& filename,
+                                bool calculateSize,
+                                spfsMPIRequest* mpiRequest,
+                                FSClient* client);
+    
 protected:
-    /** Message processing for collective creates */
+    /** Message processing for client name lookup*/
     virtual bool updateState(cFSM& currentState, cMessage* msg);
-
+    
 private:
-    /** Send the collective creation message */
-    void collectiveCreate();
+    /** @return true if the attributes are in the client cache */
+    bool isAttrCached();
+    
+    /** Send the requests to get the data attributes */
+    void getAttributesCollective();
 
-    /** The name of the file to create */
-    Filename createFilename_;
+    /** @return Cache the file's attributes */
+    void cacheAttributes();
+
+    /** Handle to retrieve the attributes */
+    FSHandle handle_;
+
+    /** Flag to indicate whether the file size needs to be calculated */
+    bool calculateSize_;
     
     /** The originating MPI request */
     spfsMPIRequest* mpiReq_;

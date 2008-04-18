@@ -38,7 +38,7 @@ public:
                FSClient* client);
 
 protected:
-    /** Message processing for collective creates */
+    /** Message processing for serial creates */
     virtual bool updateState(cFSM& currentState, cMessage* msg);
 
 private:

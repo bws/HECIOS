@@ -120,6 +120,7 @@ bool FSCreateSM::updateState(cFSM& currentState, cMessage* msg)
         {
             addAttributesToCache();
             isComplete = true;
+            break;
         }
     }
 

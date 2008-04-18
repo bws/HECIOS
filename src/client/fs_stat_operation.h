@@ -1,5 +1,5 @@
-#ifndef FS_COLLECTIVE_CREATE_SM_H
-#define FS_COLLECTIVE_CREATE_SM_H
+#ifndef FS_STAT_OPERATION_H
+#define FS_STAT_OPERATION_H
 //
 // This file is part of Hecios
 //
@@ -19,40 +19,40 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "filename.h"
-#include "fs_state_machine.h"
+#include "fs_client_operation.h"
 class cFSM;
 class cMessage;
 class FSClient;
-class spfsMPIRequest;
+class spfsMPIFileStatRequest;
 
 /**
- * Class performing client side file collective create processing
+ * Class responsible for performing a file stat
  */
-class FSCollectiveCreateSM : public FSStateMachine
+class FSStatOperation : public FSClientOperation
 {
 public:
-    /** Construct collective create state machine */
-    FSCollectiveCreateSM(const Filename& filename,
-                         spfsMPIRequest* mpiReq,
-                         FSClient* client);
-
+    /** Construct FS Stat processor for a file */
+    FSStatOperation(FSClient* client,
+                    spfsMPIFileStatRequest* deleteReq,
+                    bool useCollectiveCommunication);
+    
 protected:
-    /** Message processing for collective creates */
-    virtual bool updateState(cFSM& currentState, cMessage* msg);
+    /** Register the state machines to perform a file stat */
+    virtual void registerStateMachines();
+    
+    /** Send final response */
+    virtual void sendFinalResponse();
 
 private:
-    /** Send the collective creation message */
-    void collectiveCreate();
-
-    /** The name of the file to create */
-    Filename createFilename_;
     
-    /** The originating MPI request */
-    spfsMPIRequest* mpiReq_;
-
     /** The filesystem client module */
     FSClient* client_;
+
+    /** The originating MPI stat request */
+    spfsMPIFileStatRequest* statReq_;
+    
+    /** Use server to server based collectives to delete file */
+    bool useCollectiveCommunication_;
 };
 
 #endif

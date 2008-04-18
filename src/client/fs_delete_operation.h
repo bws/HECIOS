@@ -1,5 +1,5 @@
-#ifndef FS_COLLECTIVE_CREATE_SM_H
-#define FS_COLLECTIVE_CREATE_SM_H
+#ifndef FS_DELETE_OPERATION_H
+#define FS_DELETE_OPERATION_H
 //
 // This file is part of Hecios
 //
@@ -20,39 +20,49 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "filename.h"
-#include "fs_state_machine.h"
+#include "fs_client_operation.h"
 class cFSM;
 class cMessage;
 class FSClient;
-class spfsMPIRequest;
+class spfsMPIFileDeleteRequest;
+class spfsMPIDirectoryRemoveRequest;
 
 /**
- * Class performing client side file collective create processing
+ * Class responsible for deleting a file
  */
-class FSCollectiveCreateSM : public FSStateMachine
+class FSDeleteOperation : public FSClientOperation
 {
 public:
-    /** Construct collective create state machine */
-    FSCollectiveCreateSM(const Filename& filename,
-                         spfsMPIRequest* mpiReq,
-                         FSClient* client);
-
+    /** Construct FS Delete processor for a file */
+    FSDeleteOperation(FSClient* client,
+                      spfsMPIFileDeleteRequest* deleteReq,
+                      bool useCollectiveCommunication);
+    
+    /** Construct FS Delete processor for a file */
+    FSDeleteOperation(FSClient* client,
+                      spfsMPIDirectoryRemoveRequest* rmDirReq,
+                      bool useCollectiveCommunication);
+    
 protected:
-    /** Message processing for collective creates */
-    virtual bool updateState(cFSM& currentState, cMessage* msg);
+    /** Register the state machines to perform a file deletion */
+    virtual void registerStateMachines();
+    
+    /** Send final response */
+    virtual void sendFinalResponse();
 
 private:
-    /** Send the collective creation message */
-    void collectiveCreate();
-
-    /** The name of the file to create */
-    Filename createFilename_;
     
-    /** The originating MPI request */
-    spfsMPIRequest* mpiReq_;
-
     /** The filesystem client module */
     FSClient* client_;
+
+    /** The originating MPI delete/remove request */
+    spfsMPIRequest* deleteReq_;
+    
+    /** Use server to server based collectives to delete file */
+    bool useCollectiveCommunication_;
+
+    /** The name to delete */
+    Filename deleteName_;
 };
 
 #endif

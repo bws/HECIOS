@@ -1,5 +1,5 @@
-#ifndef FS_COLLECTIVE_CREATE_SM_H
-#define FS_COLLECTIVE_CREATE_SM_H
+#ifndef FS_CREATE_SM_H
+#define FS_CREATE_SM_H
 //
 // This file is part of Hecios
 //
@@ -27,26 +27,38 @@ class FSClient;
 class spfsMPIRequest;
 
 /**
- * Class performing client side file collective create processing
+ * Class responsible for removing a file
  */
-class FSCollectiveCreateSM : public FSStateMachine
+class FSRemoveSM : public FSStateMachine
 {
 public:
-    /** Construct collective create state machine */
-    FSCollectiveCreateSM(const Filename& filename,
-                         spfsMPIRequest* mpiReq,
-                         FSClient* client);
+    /** Construct the file remove state machine */
+    FSRemoveSM(const Filename& filename,
+               spfsMPIRequest* mpiReq,
+               FSClient* client);
 
 protected:
-    /** Message processing for collective creates */
+    /** Message processing for removes */
     virtual bool updateState(cFSM& currentState, cMessage* msg);
 
 private:
-    /** Send the collective creation message */
-    void collectiveCreate();
+    /** Send the directory entry remove message */
+    void removeDirEnt();
+    
+    /** Send the metadata remove message */
+    void removeMeta();
 
-    /** The name of the file to create */
-    Filename createFilename_;
+    /** Send the data object remove messages */
+    void removeDataObjects();
+
+    /** @return true if all the data objects have been create */
+    bool countDataRemoveResponse();
+
+    /** Remove entries from the client cache */
+    void removeNameAndAttributesFromCache();
+
+    /** The name of the file to remove */
+    Filename removeName_;
     
     /** The originating MPI request */
     spfsMPIRequest* mpiReq_;

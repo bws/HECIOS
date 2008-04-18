@@ -18,7 +18,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //#define FSM_DEBUG  // Enable FSM Debug output
-#include "fs_collective_create_sm.h"
+#include "fs_collective_remove_sm.h"
 #include <omnetpp.h>
 #include "file_builder.h"
 #include "fs_client.h"
@@ -26,21 +26,21 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSCollectiveCreateSM::FSCollectiveCreateSM(const Filename& filename,
+FSCollectiveRemoveSM::FSCollectiveRemoveSM(const Filename& filename,
                                            spfsMPIRequest* mpiReq,
                                            FSClient* client)
-    : createFilename_(filename),
+    : removeFilename_(filename),
       mpiReq_(mpiReq),
       client_(client)
 {
 }
 
-bool FSCollectiveCreateSM::updateState(cFSM& currentState, cMessage* msg)
+bool FSCollectiveRemoveSM::updateState(cFSM& currentState, cMessage* msg)
 {
     // File system collective create state machine states
     enum {
         INIT = 0,
-        COLLECTIVE_CREATE = FSM_Steady(1),
+        COLLECTIVE_REMOVE = FSM_Steady(1),
         FINISH = FSM_Steady(2),
     };
 
@@ -50,18 +50,18 @@ bool FSCollectiveCreateSM::updateState(cFSM& currentState, cMessage* msg)
         case FSM_Exit(INIT):
         {
             cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "DIAGNOSTIC: Using collective create\n";
-            FSM_Goto(currentState, COLLECTIVE_CREATE);
+                 << "DIAGNOSTIC: Using collective remove\n";
+            FSM_Goto(currentState, COLLECTIVE_REMOVE);
             break;
         }
-        case FSM_Enter(COLLECTIVE_CREATE):
+        case FSM_Enter(COLLECTIVE_REMOVE):
         {    
-            collectiveCreate();
+            collectiveRemove();
             break;
         }
-        case FSM_Exit(COLLECTIVE_CREATE):
+        case FSM_Exit(COLLECTIVE_REMOVE):
         {
-            assert(0 != dynamic_cast<spfsCollectiveCreateResponse*>(msg));
+            assert(0 != dynamic_cast<spfsCollectiveRemoveResponse*>(msg));
             FSM_Goto(currentState, FINISH);
             break;
         }
@@ -75,16 +75,16 @@ bool FSCollectiveCreateSM::updateState(cFSM& currentState, cMessage* msg)
     return isComplete;
 }
 
-void FSCollectiveCreateSM::collectiveCreate()
+void FSCollectiveRemoveSM::collectiveRemove()
 {
-    // Get the file and it's parent metadata
-    FSMetaData* meta = FileBuilder::instance().getMetaData(createFilename_);
-    Filename parent = createFilename_.getParent();
-    FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parent);
+    // Get the metadata handle
+    Filename parentName = removeFilename_.getParent();
+    FSMetaData* meta = FileBuilder::instance().getMetaData(removeFilename_);
+    FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parentName);
     assert(0 != meta);
     assert(0 != parentMeta);
-
-    spfsCollectiveCreateRequest* req = FSClient::createCollectiveCreateRequest(
+    
+    spfsCollectiveRemoveRequest* req = FSClient::createCollectiveRemoveRequest(
         parentMeta->dataHandles[0], meta->handle, meta->dataHandles);
     req->setContextPointer(mpiReq_);
     client_->send(req, client_->getNetOutGate());
