@@ -9,6 +9,9 @@ SIM_SRC += $(DIR)/basic_data_type.cc \
 	$(DIR)/file_descriptor.cc \
 	$(DIR)/file_view.cc \
 	$(DIR)/filename.cc \
+	$(DIR)/fs_operation.cc \
+	$(DIR)/fs_operation_state.cc \
+	$(DIR)/fs_state_machine.cc \
 	$(DIR)/io_trace.cc \
 	$(DIR)/ip_socket_map.cc \
 	$(DIR)/pfs_utils.cc \

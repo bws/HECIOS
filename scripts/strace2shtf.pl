@@ -101,7 +101,7 @@ sub addFilename
     my $filename = shift;
 
     # If the filename hasn't already been opened, set it's size to 0
-    if (!$g_filenameToSize{$filename})
+    if (!(exists $g_filenameToSize{$filename}))
     {
         $g_filenameToSize{$filename} = 0;
     }    
@@ -113,7 +113,7 @@ sub addFilename
 sub addDirectory
 {
     my $dirName = shift;
-    if (!$g_dirnameToEntries{$dirName})
+    if (!(exists $g_dirnameToEntries{$dirName}))
     {
         $g_dirnameToEntries{$dirName} = 0;
     }
@@ -992,7 +992,7 @@ sub emitTraceMetaData
     my $filename;
     foreach $filename (sort(keys %g_filenameToSize))
     {
-        if (!$g_dirnameToEntries{$filename})
+        if (!(exists $g_dirnameToEntries{$filename}))
         {
             my $fileSize = $g_filenameToSize{$filename};
             my $pfsFilename = fixPFSPath($filename);

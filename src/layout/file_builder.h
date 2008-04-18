@@ -57,6 +57,9 @@ public:
     size_t getNumDataServers() const {return nextServerNumber_;};
     
     /** @return Metadata for a PFS file */
+    FSMetaData* getMetaData(const FSHandle& handle) const;
+
+    /** @return Metadata for a PFS file */
     FSMetaData* getMetaData(const Filename& fileName) const;
 
     /** @return Descriptor for a PFS file */
@@ -81,7 +84,7 @@ public:
                     StorageLayoutManagerIFace& layoutManager);
 
     /** @return the number of data objects for a metadata handle */
-    size_t getNumDataObjects( const FSHandle& metaHandle) const;
+    size_t getNumDataObjects(const FSHandle& metaHandle) const;
     
     /** @return the list of blocks for a file handle */
     std::vector<int> getDiskBlocks(const FSHandle& dataHandle) const;

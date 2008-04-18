@@ -415,7 +415,6 @@ FSLookupStatus FSStat::processLookup(spfsLookupPathResponse* lookupResponse)
 void FSStat::getMetaDataAttributes()
 {
     Filename statName(statReq_->getFileName());
-    cerr << __FILE__ << ":" << __LINE__ << ": Stating file: " << statName << endl;
     const FSMetaData* meta = FileBuilder::instance().getMetaData(statName);
     spfsGetAttrRequest* req = FSClient::createGetAttrRequest(
         meta->handle, SPFS_METADATA_OBJECT);
@@ -464,7 +463,6 @@ void FSStat::collectiveStat()
 {
     // Get the parent handle
     Filename statName(statReq_->getFileName());
-    cerr << __FILE__ << ":" << __LINE__ << ": Stating file: " << statName << endl;
     FSMetaData* meta = FileBuilder::instance().getMetaData(statName);
 
     spfsCollectiveGetAttrRequest* req =

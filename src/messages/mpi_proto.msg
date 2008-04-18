@@ -26,6 +26,7 @@
 cplusplus {{
 #include <data_type.h>
 #include <file_descriptor.h>
+#include <fs_operation_state.h>
 #include <pfs_types.h>
 
 typedef DataType* DataTypePtr;
@@ -36,8 +37,9 @@ typedef DataTypePtr MPIDataType;
 }}
 
 class cFSM;
-class noncobject MPIDataType;  // this is an int type
+class noncobject MPIDataType;
 class noncobject FileDescriptorPtr;
+class noncobject FSOperationState;
 
 enum mpiAccessMode
 {
@@ -111,9 +113,10 @@ message spfsMPIRequest
 
         // internal fields
         cFSM state;
+        FSOperationState opState;
         unsigned int numResolvedSegments = 1;
         int remainingResponses = 0;
-        int socketId;
+        int socketId = -1;
 };
 
 // The abstract base class for all MPI message responses
@@ -141,7 +144,7 @@ message spfsMPIFileOpenRequest extends spfsMPIRequest
         int mode;
 
         // internal fields
-        FileDescriptorPtr fileDes;
+        FileDescriptorPtr fileDes = 0;
 };
 
 // Open file response
@@ -266,7 +269,7 @@ message spfsMPIFileReadRequest extends spfsMPIRequest
 	MPIDataType dataType;
 
         // Internal fields used during processing
-        int remainingFlows;
+        int remainingFlows = 0;
 };
 
 // File read response
@@ -298,8 +301,8 @@ message spfsMPIFileWriteRequest extends spfsMPIRequest
         MPIDataType dataType;
 
         // Internal fields used during processing
-        int remainingFlows;
-        int remainingCompletions;
+        int remainingFlows = 0;
+        int remainingCompletions = 0;
 };
 
 // File write response

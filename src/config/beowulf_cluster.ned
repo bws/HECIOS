@@ -29,7 +29,7 @@ import
 channel FastE
     delay 0.0   // sec
     error 0.0
-    datarate 100000000  // bit/sec
+    datarate 100000000   // bit/sec
 endchannel
 
 channel GigE
@@ -75,11 +75,15 @@ module BeowulfCluster
         for i = 0..numCPUNodes-1 do
             cpun[i].ethOut --> FastE --> switch.in++;
             cpun[i].ethIn <-- FastE <-- switch.out++;
+            //cpun[i].ethOut --> GigE --> switch.in++;
+            //cpun[i].ethIn <-- GigE <-- switch.out++;
         endfor;
 
         for i = 0..numIONodes - 1 do
             ion[i].ethOut --> FastE --> switch.in++;
             ion[i].ethIn <-- FastE <-- switch.out++;
+            //ion[i].ethOut --> GigE --> switch.in++;
+            //ion[i].ethIn <-- GigE <-- switch.out++;
         endfor;
 
     display: "o=white"; // affects background

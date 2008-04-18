@@ -288,7 +288,6 @@ spfsMPIFileOpenRequest* SHTFIOApplication::createOpenMessage(
     spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
         0, SPFS_MPI_FILE_OPEN_REQUEST);
     open->setFileName(openFile.str().c_str());
-    
     open->setFileDes(fd);
 
     // Create the open access mode

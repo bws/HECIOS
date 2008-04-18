@@ -19,10 +19,10 @@
 //
 #include "fs_client.h"
 #include <iostream>
-#include "fs_close.h"
+#include "fs_close_operation.h"
 #include "fs_create_directory.h"
 #include "fs_delete.h"
-#include "fs_open.h"
+#include "fs_open_operation.h"
 #include "fs_read.h"
 #include "fs_read_directory.h"
 #include "fs_stat.h"
@@ -329,8 +329,9 @@ void FSClient::initialize()
     numFileCloses_ = 0;
     numFileOpens_ = 0;
     numFileReads_ = 0;
-    numFileWrites_ = 0;
+    numFileStats_ = 0;
     numFileUtimes_ = 0;
+    numFileWrites_ = 0;
 }
 
 void FSClient::finish()
@@ -496,17 +497,22 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
-            FSOpen open(this,
-                        static_cast<spfsMPIFileOpenRequest*>(request),
-                        useCollectiveCreate_);
-            open.handleMessage(msg);
+            //FSOpen open(this,
+            //            static_cast<spfsMPIFileOpenRequest*>(request),
+            //            useCollectiveCreate_);
+            //open.handleMessage(msg);
+
+            FSOpenOperation open(this,
+                                 static_cast<spfsMPIFileOpenRequest*>(request),
+                                 useCollectiveCreate_);
+            open.processMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_CLOSE_REQUEST :
         {
-            FSClose close(this,
-                          static_cast<spfsMPIFileCloseRequest*>(request));
-            close.handleMessage(msg);
+            FSCloseOperation close(
+                this, static_cast<spfsMPIFileCloseRequest*>(request));
+            close.processMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_DELETE_REQUEST :

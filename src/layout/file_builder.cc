@@ -107,6 +107,19 @@ FSMetaData* FileBuilder::getMetaData(const Filename& fileName) const
     return md;
 }
 
+FSMetaData* FileBuilder::getMetaData(const FSHandle& handle) const
+{
+    FSMetaData* md = 0;
+
+    std::map<FSHandle, FSMetaData*>::const_iterator iter;
+    iter = handleToMetaMap_.find(handle);
+    if (handleToMetaMap_.end() != iter)
+    {
+        md = iter->second;
+    }
+    return md;
+}
+
 FileDescriptor* FileBuilder::getDescriptor(const Filename& fileName) const
 {
     FileDescriptor* descriptor = 0;

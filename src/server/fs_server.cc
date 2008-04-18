@@ -245,12 +245,17 @@ void FSServer::initialize()
 
     // Initialize scalar data
     numCollectiveCreates_ = 0;
+    numCollectiveGetAttrs_ = 0;
+    numCollectiveRemoves_ = 0;
+    numChangeDirEnts_ = 0;
     numCreateDirEnts_ = 0;
     numCreateObjects_ = 0;
     numGetAttrs_ = 0;
     numLookups_ = 0;
     numReadDirs_ = 0;
     numReads_ = 0;
+    numRemoveObjects_ = 0;
+    numRemoveDirEnts_ = 0;
     numSetAttrs_ = 0;
     numWrites_ = 0;
 }
