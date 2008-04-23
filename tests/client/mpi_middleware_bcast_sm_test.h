@@ -5,7 +5,7 @@
 #include "mpi_middleware_bcast_sm.h"
 #include "mpi_middleware.h"
 #include "mpi_mid_m.h"
-#incldue "comm_man.h"
+#include "comm_man.h"
 
 class MPIMiddlewareBcastSmTest : public CppUnit::TestFixture
 {
