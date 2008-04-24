@@ -22,7 +22,6 @@
 #include <iomanip>
 #include <sstream>
 #include "filename.h"
-#include "pfs_utils.h"
 #include "spfs_exceptions.h"
 using namespace std;
 

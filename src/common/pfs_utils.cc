@@ -85,18 +85,30 @@ IPvXAddress* PFSUtils::getServerIP(const FSHandle& handle) const
     return ip;
 }
 
-void PFSUtils::registerRankIP(int rank, IPvXAddress* ip)
+void PFSUtils::registerRankConnectionDescriptor(int rank,
+                                                const ConnectionDescriptor& cd)
 {
-    ipsByRank_[rank] = ip;
+    connectionsByRank_[rank] = cd;
+}
+
+PFSUtils::ConnectionDescriptor
+PFSUtils::getRankConnectionDescriptor(int rank) const
+{
+    ConnectionDescriptor cp(0,0);
+    map<int, ConnectionDescriptor>::const_iterator iter =
+        connectionsByRank_.find(rank);
+    assert(iter != connectionsByRank_.end());
+    return iter->second;
 }
 
 IPvXAddress* PFSUtils::getRankIP(int rank) const
 {
     IPvXAddress* addr = 0;
-    map<int, IPvXAddress*>::const_iterator iter = ipsByRank_.find(rank);
-    if (iter != ipsByRank_.end())
+    map<int, ConnectionDescriptor>::const_iterator iter =
+        connectionsByRank_.find(rank);
+    if (iter != connectionsByRank_.end())
     {
-        addr = iter->second;
+        addr = iter->second.first;
     }
     return addr;
 }
@@ -104,32 +116,18 @@ IPvXAddress* PFSUtils::getRankIP(int rank) const
 std::vector<IPvXAddress*> PFSUtils::getAllRankIP() const
 {
     vector<IPvXAddress*> addrs;
-    map<int, IPvXAddress*>::const_iterator iter;
-    for (iter = ipsByRank_.begin(); iter != ipsByRank_.end(); ++iter)
+    map<int, ConnectionDescriptor>::const_iterator iter, end;
+    end = connectionsByRank_.end();
+    for (iter = connectionsByRank_.begin(); iter != end; ++iter)
     {
-        addrs.push_back(iter->second);
+        addrs.push_back(iter->second.first);
     }
     return addrs;
 }
 
 /*
-void PFSUtils::parsePath(FSOpenFile* descriptor) const
-{
-    int size, seg;
-    std::string::size_type index;
-    size = descriptor->path.size();
-    index = 0;
-    for (seg = 0; index != std::string::npos && seg < MAXSEG; seg++)
-    {
-        index = descriptor->path.find_first_not_of('/', index);
-        descriptor->segstart[seg] = index;
-        descriptor->seglen[seg] = size - index;
-    }
-}
-*/
-
-/*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

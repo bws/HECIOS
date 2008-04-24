@@ -39,7 +39,6 @@
 #include "set_attr.h"
 #include "write.h"
 #include "pvfs_proto_m.h"
-#include "pfs_utils.h"
 #include "fs_server.h"
 using namespace std;
 

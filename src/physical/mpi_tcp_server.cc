@@ -51,7 +51,6 @@ protected:
                                    bool urgent);
     
 private:
-
     /** The port to listen on */
     int listenPort_;
 

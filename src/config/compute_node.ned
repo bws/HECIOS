@@ -18,21 +18,19 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-import
-    "job_process", 
-    "bmi_enhanced_host";
-
 //
 // Ethernet based compute node
 //
 module ComputeNode
+    parameters:
+        numProcs: numeric const;
 
     gates:
         in: ethIn;
         out: ethOut;
 
     submodules:
-        job: JobProcess;
+        process: JobProcess[numProcs];
             display: "p=100,180;i=block/process,blue";
 
         // Note:  Statically, we are only able to construct TCPApps of a
@@ -43,16 +41,15 @@ module ComputeNode
         // 2.  MPITcpServer
         hca: EnhancedHost;
         parameters:
-            numTcpApps = 3,
+            numTcpApps = 3*numProcs,
             tcpAppType = "BMITcpClient";
         display: "p=100,80;i=block/rxtx,medium purple";
 
     connections:
-
-        // Connect process to network transport
-        for i=0..2 do
-            job.out++ --> hca.bmiIn++;
-            job.in++ <-- hca.bmiOut++;
+        // Connect processes to network transport
+        for i=0..numProcs-1, j=0..2 do
+            process[i].out++ --> hca.bmiIn++;
+            process[i].in++ <-- hca.bmiOut++;
         endfor
 
         // Connect forwarding gates
@@ -63,9 +60,10 @@ endmodule
 
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:
 //
-// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+// vim: ts=4 sts=4 sw=4 expandtab
 //

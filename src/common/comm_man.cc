@@ -18,8 +18,8 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "comm_man.h"
+#include <cassert>
 #include "phtf_io_trace.h"
-
 using namespace std;
 
 CommMan* CommMan::commman_ = NULL;
@@ -86,6 +86,8 @@ int CommMan::commSize(int comm)
 
 int CommMan::commRank(int comm, int wrank)
 {
+    assert(exist(comm));
+    
     RankPair::iterator it;
 
     if(comm == commSelf())return 0;

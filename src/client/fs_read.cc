@@ -20,7 +20,7 @@
 #include "fs_read.h"
 #include <iostream>
 #include <numeric>
-#define FSM_DEBUG  // Enable FSM Debug output
+//#define FSM_DEBUG  // Enable FSM Debug output
 #include <omnetpp.h>
 #include "data_flow.h"
 #include "data_type_layout.h"
@@ -28,7 +28,6 @@
 #include "file_distribution.h"
 #include "fs_client.h"
 #include "mpi_proto_m.h"
-#include "pfs_utils.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 

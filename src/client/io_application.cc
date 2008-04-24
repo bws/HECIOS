@@ -28,7 +28,6 @@
 #include "file_descriptor.h"
 #include "io_trace.h"
 #include "mpi_proto_m.h"
-#include "pfs_utils.h"
 #include "storage_layout_manager.h"
 #include "comm_man.h"
 

@@ -29,7 +29,6 @@
 #include "file_distribution.h"
 #include "fs_client.h"
 #include "mpi_proto_m.h"
-#include "pfs_utils.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 

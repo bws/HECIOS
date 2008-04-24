@@ -30,7 +30,9 @@ class FSDescriptor;
 class PFSUtils
 {
 public:
-
+    /** Typedef to for data that a sockets use to connect */
+    typedef std::pair<IPvXAddress*, std::size_t> ConnectionDescriptor;
+    
     /** Singleton accessor */
     static PFSUtils& instance();
 
@@ -40,29 +42,35 @@ public:
     /** Register a mapping between an IP address and a range of handles */
     void registerServerIP(IPvXAddress* ip, HandleRange range);
     
+    /** Register a mapping between a process rank and a ConnectionDescriptor */
+    void registerRankConnectionDescriptor(int rank,
+                                          const ConnectionDescriptor& cd);
+    
+    /** @return the Server IP address for handle */
+    ConnectionDescriptor getRankConnectionDescriptor(int rank) const;
+
     /** @return the Server IP address for handle */
     IPvXAddress* getServerIP(const FSHandle& handle) const;
 
-    /** Register a mapping between a process rank and an IP */
-    void registerRankIP(int rank, IPvXAddress* ip);
-    
     /** @return the Server IP address for handle */
     IPvXAddress* getRankIP(int rank) const;
 
-    /** @return all server IPs */
+    /** @return IPs for every rank */
     std::vector<IPvXAddress*> getAllRankIP() const;
     
-    /** Not sure what this does yet */
-    void parsePath(FSDescriptor* descriptor) const;
-
 private:
-
     /** Default constructor */
     PFSUtils();
     
     /** Disabled copy constructor */
     PFSUtils(const PFSUtils& other);
 
+    /** Disabled assignment operator */
+    PFSUtils& operator=(const PFSUtils& other);
+    
+    /** Register a mapping between a process rank and an IP */
+    void registerRankIP(int rank, IPvXAddress* ip);
+    
     /** Singleton instance */
     static PFSUtils* instance_;
 
@@ -72,7 +80,8 @@ private:
      */
     std::map<HandleRange, IPvXAddress*> handleIPMap_;
 
-    std::map<int, IPvXAddress*> ipsByRank_;
+    /** Map of rank to ConnectionDescriptors */
+    std::map<int, ConnectionDescriptor> connectionsByRank_;
     
 };
 

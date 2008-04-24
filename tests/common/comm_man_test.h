@@ -23,7 +23,8 @@ void CommManTest::testJoinComm()
     CommMan& cm = *CommMan::getInstance();
     CPPUNIT_ASSERT_EQUAL(cm.commSize(MPI_COMM_WORLD), 0);
     CPPUNIT_ASSERT_EQUAL(cm.joinComm(MPI_COMM_WORLD, 0), 0);
-    CPPUNIT_ASSERT_EQUAL(cm.commSize(MPI_COMM_WORLD), 1);
+    CPPUNIT_ASSERT_EQUAL(cm.joinComm(MPI_COMM_WORLD, 0), 1);
+    CPPUNIT_ASSERT_EQUAL(cm.commSize(MPI_COMM_WORLD), 2);
     CPPUNIT_ASSERT_EQUAL(cm.commSize(MPI_COMM_SELF), 1);
 }
 

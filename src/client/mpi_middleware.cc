@@ -20,7 +20,6 @@
 #include "mpi_middleware.h"
 #include "cache_proto_m.h"
 #include "mpi_proto_m.h"
-#include "pfs_utils.h"
 #include "storage_layout_manager.h"
 #include "mpi_mid_m.h"
 #include "mpi_middleware_bcast_sm.h"

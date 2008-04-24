@@ -52,15 +52,11 @@ protected:
     void socketDataArrived(int, void *, cMessage *msg, bool);
     
 private:
-
     /** @return a socket with an open connection to the server */
     TCPSocket* getConnectedSocket(int rank);
 
-    /** The server port to connect to */
-    int connectPort_;
-
-    /** Mapping of Server IP's to connected server sockets */
-    IPSocketMap serverConnectionMap_;
+    /** Mapping from a remote rank to the sending socket */
+    std::map<int,TCPSocket*> rankToSocketMap_;
 
     /** Map containing all connected sockets (for message handling) */
     TCPSocketMap socketMap_;
@@ -77,7 +73,6 @@ Define_Module(MPITcpClient);
  */
 void MPITcpClient::initialize()
 {
-    connectPort_ = par("connectPort").longValue();
     appOutGateId_ = gate("appOut")->id();
 }
 
@@ -117,25 +112,35 @@ void MPITcpClient::handleMessage(cMessage* msg)
 
 TCPSocket* MPITcpClient::getConnectedSocket(int rank)
 {
-    IPvXAddress* ip = PFSUtils::instance().getRankIP(rank);
-    TCPSocket* sock = serverConnectionMap_.getSocket(ip->str());
-
+    TCPSocket* socket = 0;
+    map<int,TCPSocket*>::const_iterator iter = rankToSocketMap_.find(rank);
+    
     // If a connected socket does not exist, create it
-    if (0 == sock)
+    if (iter == rankToSocketMap_.end())
     {
-        sock = new TCPSocket();
-        sock->setOutputGate(gate("tcpOut"));
-        sock->setCallbackObject(this, NULL);
-        sock->connect(ip->get4(), connectPort_);
+        // COnstruct the socket
+        socket = new TCPSocket();
+        socket->setOutputGate(gate("tcpOut"));
+        socket->setCallbackObject(this, NULL);
+
+        // Set the connection destination
+        PFSUtils::ConnectionDescriptor cd =
+            PFSUtils::instance().getRankConnectionDescriptor(rank);
+        IPvXAddress* ip = cd.first;
+        size_t connectPort = cd.second;
+        socket->connect(ip->get4(), connectPort);
 
         // Add open socket for use in later communication
-        serverConnectionMap_.addSocket(ip->str(), sock);
+        rankToSocketMap_[rank] = socket;
 
         // Add open socket to TCPSocketMap for handling later TCP messages
-        socketMap_.addSocket(sock);
+        socketMap_.addSocket(socket);
     }
-
-    return sock;
+    else
+    {
+        socket = iter->second;
+    }
+    return socket;
 }
 
 //

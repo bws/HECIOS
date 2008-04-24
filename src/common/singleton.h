@@ -3,7 +3,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008 Brad Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,24 +20,53 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
+/**
+ * Template that provides standard singleton access to a class.  To use this
+ * template, inherit from the template specialized on the derived class.
+ *
+ * E.g.
+ *
+ * class UniqueFactory : public Singleton<UniqueFactory> {};
+ *
+ * Requires a protected default constructor and destructor
+ *
+ */
 template<class T>
 class Singleton
 {
 public:
     /**
-     * Requires a protected default destructor
-     *
      * @return singleton of type T
      *
+     * Requires a protected default constructor
      */
     static T& instance();
+
+    /** Clears the singleton state */
+    static void clearState();
+
+private:
+    /** Singleton pointer */
+    static T* instance_;
 };
+
+template<class T> T* Singleton<T>::instance_ = 0;
 
 template<class T>
 T& Singleton<T>::instance()
 {
-    static T singleInstance;
-    return singleInstance;
+    if (0 == instance_)
+    {
+        instance_ = new T();
+    }
+    return *instance_;
+}
+
+template<class T>
+void Singleton<T>::clearState()
+{
+    delete instance_;
+    instance_ = 0;
 }
 
 #endif
