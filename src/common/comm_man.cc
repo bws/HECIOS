@@ -22,102 +22,154 @@
 #include "phtf_io_trace.h"
 using namespace std;
 
-//CommMan* CommMan::commman_ = NULL;
-
-//CommMan* CommMan::getInstance()
-//{
-//    if(CommMan::commman_ == NULL)
-//        CommMan::commman_ = new CommMan();
-//    return CommMan::commman_;
-//}
-
 bool CommMan::exist(int comm)
 {
-    if(communicators_.find(comm) != communicators_.end())
-        return true;
+    bool result;
+
+    if(comm == MPI_COMM_SELF)
+    {
+        result = true;
+    }
+    else if(communicators_.find(comm) != communicators_.end())
+    {
+        result = true;
+    }
     else
-        return false;
+    {
+        result = false;
+    }
+    return result;
 }
 
 bool CommMan::exist(int comm, int rank)
 {
+    bool result = false;
+    
     if(exist(comm))
     {
         if(communicators_[comm]->find(rank) != communicators_[comm]->end())
-            return true;
+        {
+            result = true;
+        }
     }
-    return false;
+    return result;
 }
 
-int CommMan::joinComm(int comm, int wrank)
+int CommMan::joinComm(int comm, int world_rank)
 {
-    if(comm == commSelf())return 0;
-    
-    if(!exist(comm))
-        communicators_[comm] = new RankPair;
+    int rank;
 
-    if(comm == commWorld())
+    // if join MPI_COMM_SELF, the rank = 0
+    if(comm == MPI_COMM_SELF)
     {
-        int size = commSize(comm);
-        (*communicators_[comm])[size] = size;
-        return size;
+        rank = 0;
     }
 
-    if(commRank(comm, wrank) == -1)
+    else {
+        // create the communicator if not exist
+        if(!exist(comm))
+        {
+            communicators_[comm] = new RankPair;
+        }
+        
+        // if join MPI_COMM_WORLD, assign a new rank
+        if(comm == MPI_COMM_WORLD)
+        {
+            int size = commSize(comm);
+            
+            (*communicators_[comm])[size] = size;
+            rank = size;
+        }
+        
+        // if join other communicators
+        else
+        {
+            assert(exist(MPI_COMM_WORLD, world_rank));        
+            
+            // not a member, assign a new rank
+            if(commRank(comm, world_rank) == -1)
+            {
+                int size = commSize(comm);
+                (*communicators_[comm])[size] = world_rank;
+                rank = size;
+            }
+            
+            // retuan the rank for member
+            else
+            {
+                rank = commRank(comm, world_rank);
+            }
+        }
+    }
+
+    return rank;
+}
+
+size_t CommMan::commSize(int comm)
+{
+    
+    
+    size_t size;
+    
+    if(comm == MPI_COMM_SELF)
     {
-        int size = commSize(comm);
-        (*communicators_[comm])[size] = wrank;
-        return size;
+        size = 1;
+    }
+    else if(!exist(comm))
+    {
+        size = 0;
     }
     else
     {
-        return commRank(comm, wrank);
+        size = communicators_[comm]->size();
     }
-}
-
-int CommMan::commSize(int comm)
-{
-    if(comm == commSelf())return 1;
     
-    if(exist(comm))
-        return (int)communicators_[comm]->size();
-    return 0;
+    return size;
 }
 
-int CommMan::commRank(int comm, int wrank)
+int CommMan::commRank(int comm, int world_rank)
 {
     assert(exist(comm));
     
     RankPair::iterator it;
+    int rank;
 
-    if(comm == commSelf())return 0;
-
-    if(comm == commWorld())return wrank;
-
-    if(!exist(comm))return -1;
-
-    for(it = communicators_[comm]->begin(); it != communicators_[comm]->end(); it ++)
+    if(comm == MPI_COMM_SELF)
     {
-        if(it->second == wrank)return it->first;
+        rank = 0;
     }
-
-    return -1;
+    else if(comm == MPI_COMM_WORLD)
+    {
+        rank = world_rank;
+    }
+    else
+    { // search in the communicator
+        rank = -1; // not found
+        for(it = communicators_[comm]->begin();
+            it != communicators_[comm]->end(); it ++)
+        {
+            if(it->second == world_rank)
+            {
+                rank = it->first;
+            }
+        }
+    }
+    return rank;
 }
 
-int CommMan::commTrans(int comm, int grank, int comm2)
+int CommMan::commTrans(int comm1, int comm1_rank, int comm2)
 {
-    if(comm == commSelf())return -1;
+    assert(comm1 != MPI_COMM_SELF);
+    assert(exist(comm1, comm1_rank));
         
-    int wrank = grank;
+    int world_rank = comm1_rank;
 
-    if(comm != commWorld())
+    if(comm1 != MPI_COMM_WORLD)
     {
-        if(!exist(comm))return -1;
-
-        wrank = (*communicators_[comm])[grank];
+        world_rank = (*communicators_[comm1])[comm1_rank];
     }
 
-    return commRank(comm2, wrank);
+    return commRank(comm2, world_rank);
 }
 
 int CommMan::commWorld()
