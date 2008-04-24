@@ -65,7 +65,7 @@ protected:
     
 private:
     /** No-op on rank changes */
-    virtual void rankChanged(int newRank) {};
+    virtual void rankChanged(int oldRank) {};
     
     /** Create the file system files for this trace */
     virtual void populateFileSystem();

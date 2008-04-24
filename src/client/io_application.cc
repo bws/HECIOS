@@ -53,8 +53,9 @@ IOApplication::IOApplication()
 
 void IOApplication::setRank(int rank)
 {
+    int oldRank = rank_;
     rank_ = rank;
-    rankChanged(rank_);
+    rankChanged(oldRank);
 }
 
 /**

@@ -83,7 +83,7 @@ protected:
 
 private:
     /** Invoked when the rank has been changed */
-    virtual void rankChanged(int newRank) = 0;
+    virtual void rankChanged(int oldRank) = 0;
     
     /** @return true if the next message was able to be scheduled */
     virtual bool scheduleNextMessage() = 0;

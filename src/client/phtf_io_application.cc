@@ -262,11 +262,11 @@ void PHTFIOApplication::scheduleCPUMessage(cMessage *msg)
     scheduleAt(schTime , msg);
 }
 
-void PHTFIOApplication::rankChanged(int newRank)
+void PHTFIOApplication::rankChanged(int oldRank)
 {
-    // Add safeguard to ensure this isn't invoked more than once
-    assert(-1 == getRank());
-
+    // Ensure we only join the communicator once
+    assert(-1 == oldRank);
+    
     // Join the world communicator on rank initialization
     CommMan::instance().joinComm(MPI_COMM_WORLD, 0);
 }
