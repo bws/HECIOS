@@ -268,7 +268,7 @@ void PHTFIOApplication::rankChanged(int oldRank)
     assert(-1 == oldRank);
     
     // Join the world communicator on rank initialization
-    CommMan::instance().joinComm(MPI_COMM_WORLD, 0);
+    CommMan::instance().joinComm(MPI_COMM_WORLD, getRank());
 }
 
 cMessage* PHTFIOApplication::createMessage(PHTFEventRecord* rec)

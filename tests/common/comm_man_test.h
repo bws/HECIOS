@@ -10,17 +10,28 @@ class CommManTest : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE_END();
 
 public:
-    void setUp(){};
-    void tearDown(){};
+    /** Pre test code */
+    void setUp();
+
+    /** Post test code */
+    void tearDown();
     
     void testJoinComm();
     void testCommRank();
     void testCommTrans();
 };
 
-void CommManTest::testJoinComm()
+void CommManTest::setUp()
+{
+}
+
+void CommManTest::tearDown()
 {
     CommMan::clearState();
+}
+
+void CommManTest::testJoinComm()
+{
     CommMan& cm = CommMan::instance();
 
     // 1st node join, rank should be 0
@@ -55,7 +66,6 @@ void CommManTest::testJoinComm()
 
 void CommManTest::testCommRank()
 {
-    CommMan::clearState();
     CommMan& cm = CommMan::instance();
 
     int id = 13213;
@@ -73,7 +83,6 @@ void CommManTest::testCommRank()
 
 void CommManTest::testCommTrans()
 {
-    CommMan::clearState();
     CommMan& cm = CommMan::instance();
 
     int id = 1123;

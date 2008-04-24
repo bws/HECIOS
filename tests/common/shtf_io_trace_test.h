@@ -126,7 +126,7 @@ void SHTFIOTraceTest::testNextRecord()
     //
     IOTrace::Record* rec2 = test1.nextRecord();
     CPPUNIT_ASSERT(0 != rec2);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::OPEN, rec2->opType());
+    CPPUNIT_ASSERT_EQUAL(IOTrace::RMDIR, rec2->opType());
     delete rec2;
 
     //
@@ -134,7 +134,7 @@ void SHTFIOTraceTest::testNextRecord()
     //
     IOTrace::Record* rec3 = test1.nextRecord();
     CPPUNIT_ASSERT(0 != rec3);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::WRITE, rec3->opType());
+    CPPUNIT_ASSERT_EQUAL(IOTrace::STAT, rec3->opType());
     delete rec3;
 
     //
@@ -142,7 +142,7 @@ void SHTFIOTraceTest::testNextRecord()
     //
     IOTrace::Record* rec4 = test1.nextRecord();
     CPPUNIT_ASSERT(0 != rec4);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::WRITE, rec4->opType());
+    CPPUNIT_ASSERT_EQUAL(IOTrace::UTIME, rec4->opType());
     delete rec4;
 
     //
@@ -150,7 +150,7 @@ void SHTFIOTraceTest::testNextRecord()
     //
     IOTrace::Record* rec6 = test1.nextRecord();
     CPPUNIT_ASSERT(0 != rec6);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::READ, rec6->opType());
+    CPPUNIT_ASSERT_EQUAL(IOTrace::OPEN, rec6->opType());
     delete rec6;
 
     //
@@ -158,7 +158,7 @@ void SHTFIOTraceTest::testNextRecord()
     //
     IOTrace::Record* rec7 = test1.nextRecord();
     CPPUNIT_ASSERT(0 != rec7);
-    CPPUNIT_ASSERT_EQUAL(IOTrace::CLOSE, rec7->opType());
+    CPPUNIT_ASSERT_EQUAL(IOTrace::READDIR, rec7->opType());
     delete rec7;
 }
 

@@ -91,7 +91,7 @@ tests_all: $(TEST_EXES)
 #
 # Cleanup test subsystem
 #
-testsclean:
+tests_clean:
 	@echo "Removing test subsytem derived objects."
 	$(RM) $(SIM_TEST_OBJS)
 	$(RM) $(SIM_TEST_DEPENDS)
