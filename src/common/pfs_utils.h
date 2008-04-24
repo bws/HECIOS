@@ -23,21 +23,25 @@
 #include <map>
 #include <vector>
 #include "basic_types.h"
+#include "singleton.h"
 class IPvXAddress;
 class FSDescriptor;
 
 /** Utility functions for parallel file systems */
-class PFSUtils
+class PFSUtils : public Singleton<PFSUtils>
 {
 public:
+    /** Enable singleton construction */
+    friend class Singleton<PFSUtils>;
+    
     /** Typedef to for data that a sockets use to connect */
     typedef std::pair<IPvXAddress*, std::size_t> ConnectionDescriptor;
     
     /** Singleton accessor */
-    static PFSUtils& instance();
+    //static PFSUtils& instance();
 
     /** Clear all state information */
-    static void clearState();
+    //static void clearState();
     
     /** Register a mapping between an IP address and a range of handles */
     void registerServerIP(IPvXAddress* ip, HandleRange range);

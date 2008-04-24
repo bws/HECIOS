@@ -22,14 +22,14 @@
 #include "phtf_io_trace.h"
 using namespace std;
 
-CommMan* CommMan::commman_ = NULL;
+//CommMan* CommMan::commman_ = NULL;
 
-CommMan* CommMan::getInstance()
-{
-    if(CommMan::commman_ == NULL)
-        CommMan::commman_ = new CommMan();
-    return CommMan::commman_;
-}
+//CommMan* CommMan::getInstance()
+//{
+//    if(CommMan::commman_ == NULL)
+//        CommMan::commman_ = new CommMan();
+//    return CommMan::commman_;
+//}
 
 bool CommMan::exist(int comm)
 {

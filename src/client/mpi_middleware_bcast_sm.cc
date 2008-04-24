@@ -133,10 +133,10 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
 
 void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
 {
-    int size = CommMan::getInstance()->commSize(msg->getCommunicator());
+    int size = CommMan::instance().commSize(msg->getCommunicator());
     int parent = msg->getParent();
     int root = msg->getRoot();
-    int rank = CommMan::getInstance()->commRank(msg->getCommunicator(),
+    int rank = CommMan::instance().commRank(msg->getCommunicator(),
                                                 mpiMiddleware_->getRank());
 
     parentSM_ = msg->contextPointer();
@@ -161,7 +161,7 @@ void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
         if(enmsg)mpiMiddleware_->sendApp(enmsg);
     }
 
-    parentWRank_ = CommMan::getInstance()->commTrans(msg->getCommunicator(),
+    parentWRank_ = CommMan::instance().commTrans(msg->getCommunicator(),
                                                      parent, MPI_COMM_WORLD);
     
     for(int i = mystep; i < steps; i ++)
@@ -176,9 +176,8 @@ void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
             dynamic_cast<spfsMPIMidBcastRequest*>(dupMsg)->setParent(rank);
             dynamic_cast<spfsMPIMidBcastRequest*>(dupMsg)->setContextPointer(this);
 
-            int child_wrank = CommMan::getInstance()->
-                commTrans(msg->getCommunicator(),
-                          child_rank, MPI_COMM_WORLD);
+            int child_wrank = CommMan::instance().commTrans(
+                msg->getCommunicator(), child_rank, MPI_COMM_WORLD);
             
             req->setRank(child_wrank);
             req->encapsulate(dupMsg);

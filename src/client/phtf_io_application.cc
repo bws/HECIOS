@@ -48,11 +48,11 @@ void PHTFIOApplication::initialize()
     string dirStr = par("dirPHTF").stringValue();
 
     // set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration in fs.ini
-    CommMan::getInstance()->commWorld(
+    CommMan::instance().commWorld(
         (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_WORLD").c_str(),
                     0, 10));
     
-    CommMan::getInstance()->commSelf(
+    CommMan::instance().commSelf(
         (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_SELF").c_str(),
                     0, 10));
 
@@ -91,7 +91,7 @@ void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
             new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
                 
         req->setRoot(
-            CommMan::getInstance()->commRank(
+            CommMan::instance().commRank(
                 dynamic_cast<spfsMPIMidBarrierRequest*>(msg)->getCommunicator(),
                 rank_));
 
@@ -149,7 +149,7 @@ bool PHTFIOApplication::scheduleNextMessage()
                     scheduleAt(simTime(), msg);
                     break;
                 case OPEN:
-                    if(CommMan::getInstance()->commSize(mostRecentGroup_) != 0)
+                    if(CommMan::instance().commSize(mostRecentGroup_) != 0)
                     {
                         if(!noGetNext_)
                         {
@@ -165,7 +165,7 @@ bool PHTFIOApplication::scheduleNextMessage()
                         }
                     }
 
-                    if(CommMan::getInstance()->commRank(mostRecentGroup_, rank_) == 0)
+                    if(CommMan::instance().commRank(mostRecentGroup_, rank_) == 0)
                     {
                         send(msg, ioOutGate_);
                     }
@@ -238,12 +238,12 @@ void PHTFIOApplication::handleIOMessage(cMessage* msg)
     if(orgMsg != 0 && orgMsg->kind() == SPFS_MPI_FILE_OPEN_REQUEST)
     {
         // bcast open response
-        if(CommMan::getInstance()->commSize(mostRecentGroup_) > 1)
+        if(CommMan::instance().commSize(mostRecentGroup_) > 1)
         {
             spfsMPIBcastRequest *req =
                 new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
 
-            req->setRoot(CommMan::getInstance()->commRank(mostRecentGroup_, rank_));
+            req->setRoot(CommMan::instance().commRank(mostRecentGroup_, rank_));
             req->setCommunicator(mostRecentGroup_);
             req->encapsulate((cMessage*)msg->dup());
             send(req, mpiOutGate_);
@@ -321,7 +321,7 @@ cMessage* PHTFIOApplication::createBarrierMessage(
 {
     string str = const_cast<PHTFEventRecord*>(barrierRecord)->paramAt(0);
     int comm = (int)strtol(str.c_str(), NULL, 10);
-    barrierCounter_ += CommMan::getInstance()->commSize(comm);
+    barrierCounter_ += CommMan::instance().commSize(comm);
     spfsMPIMidBarrierRequest *mpimsg = new spfsMPIMidBarrierRequest(0, SPFS_MPIMID_BARRIER_REQUEST);
     mpimsg->setCommunicator(comm);
     return mpimsg;
@@ -394,7 +394,7 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
     int group = (int)strtol(gstr.c_str(), NULL, 10);
     mostRecentGroup_ = group;
     
-    if(CommMan::getInstance()->commRank(group, rank_) == 0)
+    if(CommMan::instance().commRank(group, rank_) == 0)
     {
         int mode = (int)strtol(const_cast<PHTFEventRecord*>(openRecord)->paramAt(2).c_str(), NULL, 10);
         

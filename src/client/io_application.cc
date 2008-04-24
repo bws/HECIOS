@@ -221,7 +221,7 @@ void IOApplication::handleMPIMessage(cMessage* msg)
 void IOApplication::initRank()
 {
     cerr << "init ";
-    rank_ = CommMan::getInstance()->joinComm(MPI_COMM_WORLD, 0);
+    rank_ = CommMan::instance().joinComm(MPI_COMM_WORLD, 0);
     cerr << "rank: " << rank_ << endl;
 }
 

@@ -21,23 +21,19 @@
 //
 
 #include <map>
-
+#include "singleton.h"
 typedef std::map<int, int> RankPair;
 
-#define MPI_COMM_WORLD CommMan::getInstance()->commWorld()
-#define MPI_COMM_SELF CommMan::getInstance()->commSelf()
+#define MPI_COMM_WORLD CommMan::instance().commWorld()
+#define MPI_COMM_SELF CommMan::instance().commSelf()
 
-class CommMan
+class CommMan : public Singleton<CommMan>
 {
-protected:
-    std::map<int, RankPair *> communicators_;
-    bool exist(int comm);
-    bool exist(int comm, int rank);
-    CommMan(){commWorld_ = 1; commSelf_ = 0;};
-    static CommMan * commman_;
-
 public:
-    static CommMan * getInstance();
+    /** Enable singleton construction */
+    friend class Singleton<CommMan>;
+    
+    //static CommMan * getInstance();
 
     int joinComm(int comm, int wrank);
     
@@ -50,6 +46,13 @@ public:
 
     int commSelf();
     void commSelf(int self);
+
+protected:
+    std::map<int, RankPair *> communicators_;
+    bool exist(int comm);
+    bool exist(int comm, int rank);
+    CommMan(){commWorld_ = 1; commSelf_ = 0;};
+    //static CommMan * commman_;
 
 private:
     int commWorld_;

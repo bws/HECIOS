@@ -24,22 +24,26 @@
 #include <vector>
 #include "io_trace.h"
 #include "pfs_types.h"
+#include "singleton.h"
 class FileDescriptor;
 class Filename;
 class StorageLayoutManagerIFace;
 
 /** Builder functions for creating pre-existing parallel file system files */
-class FileBuilder
+class FileBuilder : public Singleton<FileBuilder>
 {
 public:
+    /** Allow singleton construction */
+    friend class Singleton<FileBuilder>;
+    
     /** Default size for a PFS directory */
     static const std::size_t DEFAULT_DIRECTORY_SIZE = 8192;
     
     /** Singleton accessor */
-    static FileBuilder& instance();
+    //static FileBuilder& instance();
     
     /** Clear all state information */
-    static void clearState();
+    //static void clearState();
 
     /** Set the default meta data size */
     void setDefaultMetaDataSize(std::size_t metaDataSize);
@@ -98,20 +102,22 @@ public:
      */
     void populateFileSystem(const FileSystemMap& traceDirs,
                             const FileSystemMap& traceFiles);
-    
-private:
 
+private:
     /** Default constructor */
     FileBuilder();
+    
+    /** Destructor */
+    ~FileBuilder();
     
     /** Disabled copy constructor */
     FileBuilder(const FileBuilder& other);
 
-    /** Hidden destructor */
-    ~FileBuilder();
+    /** Disabled assignment operator */
+    FileBuilder& operator=(const FileBuilder& other);
     
     /** Singleton instance */
-    static FileBuilder* instance_;
+    //static FileBuilder* instance_;
 
     /** Size of metadata entries */
     std::size_t defaultMetaDataSize_;
