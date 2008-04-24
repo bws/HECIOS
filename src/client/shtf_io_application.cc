@@ -50,10 +50,10 @@ SHTFIOApplication::SHTFIOApplication()
  */
 void SHTFIOApplication::initialize()
 {
-    cerr << __FILE__ << ":" << __LINE__ << "CHECK THIS OUT\n";
+    // Initialize the parent
     IOApplication::initialize();
 
-    // Get the trace file name and perform the rank substitution
+    // Get the trace file name
     string traceName = par("traceFile").stringValue();
     trace_ = createIOTrace(traceName);
     assert(0 != trace_);
@@ -68,12 +68,12 @@ void SHTFIOApplication::initialize()
  */
 void SHTFIOApplication::finish()
 {
-    IOApplication::finish();
-
     // Delete open trace
     delete trace_;
     trace_ = 0;
 
+    // Finalize the parent
+    IOApplication::finish();
 }
 
 bool SHTFIOApplication::scheduleNextMessage()
@@ -423,7 +423,8 @@ IOTrace* SHTFIOApplication::createIOTrace(const string& traceFilename)
     }
     else if ("trace" == extension)
     {
-        trace = createUMDIOTrace(traceFilename);
+        assert(false);
+        //trace = createUMDIOTrace(traceFilename);
     }
     else
     {
@@ -433,21 +434,21 @@ IOTrace* SHTFIOApplication::createIOTrace(const string& traceFilename)
     return trace;
 }
 
-UMDIOTrace* SHTFIOApplication::createUMDIOTrace(string traceFilename)
-{
+//UMDIOTrace* SHTFIOApplication::createUMDIOTrace(string traceFilename)
+//{
     // Perform %r subsititution if neccesary
-    long numTraceProcs = par("numTraceProcs").longValue();
-    string::size_type replaceIdx = traceFilename.find("%r");
-    if (string::npos != replaceIdx)
-    {
-        long fileRank = rank_ % numTraceProcs;
-        stringstream rankStr;
-        rankStr << fileRank;
-        traceFilename.replace(replaceIdx, 2, rankStr.str());
-    }
-
-    return new UMDIOTrace(numTraceProcs, traceFilename);
-}
+    //long numTraceProcs = par("numTraceProcs").longValue();
+    //string::size_type replaceIdx = traceFilename.find("%r");
+    //if (string::npos != replaceIdx)
+    //{
+    //    long fileRank = rank_ % numTraceProcs;
+    //    stringstream rankStr;
+    //    rankStr << fileRank;
+    //    traceFilename.replace(replaceIdx, 2, rankStr.str());
+    //}
+//
+//    return new UMDIOTrace(numTraceProcs, traceFilename);
+//}
 
 SHTFIOTrace* SHTFIOApplication::createSHTFIOTrace(const string& traceFilename)
 {

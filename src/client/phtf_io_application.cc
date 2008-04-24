@@ -85,6 +85,7 @@ void PHTFIOApplication::finish()
 /** @param acitve - whether bcast barrier msg */
 void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
 {
+    int rank = getRank();
     if(active)
     {
         spfsMPIBcastRequest *req =
@@ -93,7 +94,7 @@ void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
         req->setRoot(
             CommMan::instance().commRank(
                 dynamic_cast<spfsMPIMidBarrierRequest*>(msg)->getCommunicator(),
-                rank_));
+                rank));
 
         req->setCommunicator(
             dynamic_cast<spfsMPIMidBarrierRequest*>(msg)->getCommunicator());
@@ -103,11 +104,11 @@ void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
 
     barrierCounter_ --;
 
-    cerr << rank_ << " barrier: " << barrierCounter_ << endl;
+    cerr << rank << " barrier: " << barrierCounter_ << endl;
 
     if(barrierCounter_ == 0 || (active && barrierCounter_ < 0))
     {
-        cerr << rank_ << " break barrier!" << endl;
+        cerr << rank << " break barrier!" << endl;
         scheduleAt(simTime(), new cMessage());
     }
 }
@@ -118,7 +119,7 @@ bool PHTFIOApplication::scheduleNextMessage()
     {
         string dirStr = par("dirPHTF").stringValue();
         // get event file for this ioapp
-        phtfEvent_ = PHTFTrace::getInstance(dirStr)->getEvent(rank_);
+        phtfEvent_ = PHTFTrace::getInstance(dirStr)->getEvent(getRank());
         phtfEvent_->open();
     }
     
@@ -133,7 +134,7 @@ bool PHTFIOApplication::scheduleNextMessage()
             if(!noGetNext_)*phtfEvent_ >> phtfRecord_;
             msg = createMessage(&phtfRecord_);
             if(!msg) continue;
-            cerr << "Rank " << rank_ << " IOApplication Time: " << simTime() << ": " << phtfRecord_.recordStr() << endl;
+            cerr << "Rank " << getRank() << " IOApplication Time: " << simTime() << ": " << phtfRecord_.recordStr() << endl;
             switch(phtfRecord_.recordOp())
             {
                 case CPU_PHASE:
@@ -165,7 +166,8 @@ bool PHTFIOApplication::scheduleNextMessage()
                         }
                     }
 
-                    if(CommMan::instance().commRank(mostRecentGroup_, rank_) == 0)
+                    int rank = getRank();
+                    if(CommMan::instance().commRank(mostRecentGroup_, rank) == 0)
                     {
                         send(msg, ioOutGate_);
                     }
@@ -176,7 +178,7 @@ bool PHTFIOApplication::scheduleNextMessage()
                     noGetNext_ = false;
                     break;        
                 default:
-                    cerr << rank_ << " send msg " << msg->kind() << endl;
+                    cerr << getRank() << " send msg " << msg->kind() << endl;
                     send(msg, ioOutGate_);
                     msgScheduled = true;
                     break;
@@ -243,7 +245,8 @@ void PHTFIOApplication::handleIOMessage(cMessage* msg)
             spfsMPIBcastRequest *req =
                 new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
 
-            req->setRoot(CommMan::instance().commRank(mostRecentGroup_, rank_));
+            req->setRoot(CommMan::instance().commRank(mostRecentGroup_,
+                                                      getRank()));
             req->setCommunicator(mostRecentGroup_);
             req->encapsulate((cMessage*)msg->dup());
             send(req, mpiOutGate_);
@@ -257,6 +260,15 @@ void PHTFIOApplication::scheduleCPUMessage(cMessage *msg)
 {
     double schTime = simTime() + msg->par("Delay").doubleValue();
     scheduleAt(schTime , msg);
+}
+
+void PHTFIOApplication::rankChanged(int newRank)
+{
+    // Add safeguard to ensure this isn't invoked more than once
+    assert(-1 == getRank());
+
+    // Join the world communicator on rank initialization
+    CommMan::instance().joinComm(MPI_COMM_WORLD, 0);
 }
 
 cMessage* PHTFIOApplication::createMessage(PHTFEventRecord* rec)
@@ -394,7 +406,7 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
     int group = (int)strtol(gstr.c_str(), NULL, 10);
     mostRecentGroup_ = group;
     
-    if(CommMan::instance().commRank(group, rank_) == 0)
+    if(CommMan::instance().commRank(group, getRank()) == 0)
     {
         int mode = (int)strtol(const_cast<PHTFEventRecord*>(openRecord)->paramAt(2).c_str(), NULL, 10);
         

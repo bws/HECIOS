@@ -51,6 +51,12 @@ IOApplication::IOApplication()
 {
 }
 
+void IOApplication::setRank(int rank)
+{
+    rank_ = rank;
+    rankChanged(rank_);
+}
+
 /**
  * Construct an I/O trace using configuration supplied tracefile(s)
  */
@@ -218,12 +224,12 @@ void IOApplication::handleMPIMessage(cMessage* msg)
     assert(false);
 }
 
-void IOApplication::initRank()
-{
-    cerr << "init ";
-    rank_ = CommMan::instance().joinComm(MPI_COMM_WORLD, 0);
-    cerr << "rank: " << rank_ << endl;
-}
+//void IOApplication::initRank()
+//{
+//    cerr << "init ";
+//    rank_ = CommMan::instance().joinComm(MPI_COMM_WORLD, 0);
+//    cerr << "rank: " << rank_ << endl;
+//}
 
 /**
  * Handle MPI-IO Response messages
@@ -277,37 +283,6 @@ FileDescriptor* IOApplication::getDescriptor(int fileId) const
     }
     return descriptor;
 }
-
-//void IOApplication::invalidateCaches(spfsMPIFileWriteAtRequest* writeAt)
-//{
-    /*
-    // send msg to mpiOut, encapsulating spfsCacheInvalidateRequest
-    cMessage* inval = createCacheInvalidationMessage(writeAt);
-    spfsMPIBcastRequest* req =
-        new spfsMPIBcastRequest("MPI_BCAST", SPFS_MPI_BCAST_REQUEST);
-
-    req->setRoot(this->rank_);
-    req->setCommunicator(MPI_COMM_WORLD);
-    req->encapsulate(inval);
-    send(req, mpiOutGate_);
-    */
-//}
-
-//spfsCacheInvalidateRequest* IOApplication::createCacheInvalidationMessage(
-//    spfsMPIFileWriteAtRequest* writeAt)
-//{
-    /*
-    spfsCacheInvalidateRequest* invalidator = new spfsCacheInvalidateRequest();
-    FSHandle handle = writeAt->getFileDes()->metaData->handle;
-    invalidator->setHandle(handle);
-    invalidator->setOffset(writeAt->getOffset());
-    invalidator->setDataType(writeAt->getDataType());
-    invalidator->setCount(writeAt->getCount());
-    return invalidator;
-    */
-//    return 0;
-//}
-
 
 /*
  * Local variables:

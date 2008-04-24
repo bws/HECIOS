@@ -66,6 +66,9 @@ protected:
     virtual void handleMPIMessage(cMessage* msg);
 
 private:
+    /** No-op on rank changes */
+    virtual void rankChanged(int newRank);
+
     /** Create the file system files for this trace */
     void populateFileSystem();
 

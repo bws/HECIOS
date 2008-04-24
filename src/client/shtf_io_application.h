@@ -64,6 +64,9 @@ protected:
     virtual cMessage* createMessage(IOTrace::Record* rec);
     
 private:
+    /** No-op on rank changes */
+    virtual void rankChanged(int newRank) {};
+    
     /** Create the file system files for this trace */
     virtual void populateFileSystem();
     

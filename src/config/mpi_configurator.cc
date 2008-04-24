@@ -73,6 +73,9 @@ private:
 
     /** The next port to assign for an MPI server to listen on */
     size_t nextPortToAssign_;
+
+    /** The next process rank to assign to an MPI process */
+    size_t nextProcessRank_;
 };
 
 // OMNet Registriation Method
@@ -92,6 +95,9 @@ void MPIConfigurator::initialize(int stage)
         nextPortToAssign_ = minListenPort_;
         cerr << "DIAGNOSTIC: Max number of MPI processes is: "
              << maxListenPort_ - minListenPort_ << endl;
+
+        // Initializae the next rank to 0
+        nextProcessRank_ = 0;
     }
     else if (3 == stage)
     {
@@ -127,12 +133,8 @@ void MPIConfigurator::initialize(int stage)
                 assert(0 != ioApp);
 
                 // Set the rank for the IO Application
-                ioApp->initRank();
-                size_t rank = ioApp->getRank();
-
-                // FIXME: fix initRank - this workaround is heinous
-                static int rankSeed = 0;
-                rank = rankSeed++;
+                size_t rank = nextProcessRank_++;
+                ioApp->setRank(rank);
 
                 // Alter the TcpApps to be of correct MPI types and determine
                 // the ports for this process

@@ -23,12 +23,6 @@
 #include <omnetpp.h>
 #include "io_trace.h"
 class FileDescriptor;
-class spfsMPIDirectoryCreateRequest;
-class spfsMPIFileCloseRequest;
-class spfsMPIFileOpenRequest;
-class spfsMPIFileReadAtRequest;
-class spfsMPIFileUpdateTimeRequest;
-class spfsMPIFileWriteAtRequest;
 
 /**
  * Model of an application process.
@@ -42,10 +36,11 @@ public:
     /** @return the file descriptor for a file id */
     FileDescriptor* getDescriptor(int fileId) const;
 
+    /** Set the process rank for this application */
+    void setRank(int rank);
+    
     /** @return the MPI application's canonical process rank */
-    int getRank() const {return rank_;};
-
-    void initRank();
+    int getRank() const { return rank_; };
     
 protected:
     /** Associate the fileId with a file descriptor */
@@ -70,12 +65,14 @@ protected:
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
 
+    /** Perform processing for self messages */
     virtual void handleSelfMessage(cMessage* msg);
-    virtual void handleIOMessage(cMessage* msg);
-    virtual void handleMPIMessage(cMessage* msg);
 
-    /** process rank */
-    int rank_;
+    /** Perform processing for messages from the IO gates */
+    virtual void handleIOMessage(cMessage* msg);
+
+    /** Perform processing for messages from the MPI gates */
+    virtual void handleMPIMessage(cMessage* msg);
 
     /** gate ids */
     int ioInGate_;
@@ -85,8 +82,14 @@ protected:
     bool msgScheduled_;
 
 private:
+    /** Invoked when the rank has been changed */
+    virtual void rankChanged(int newRank) = 0;
+    
     /** @return true if the next message was able to be scheduled */
     virtual bool scheduleNextMessage() = 0;
+    
+    /** process rank */
+    int rank_;
 
     /** Map of file descriptors keyed by descriptor ID */
     std::map<int, FileDescriptor*> descriptorById_;
