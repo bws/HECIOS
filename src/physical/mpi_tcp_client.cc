@@ -118,7 +118,9 @@ TCPSocket* MPITcpClient::getConnectedSocket(int rank)
     // If a connected socket does not exist, create it
     if (iter == rankToSocketMap_.end())
     {
-        // COnstruct the socket
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "creating socket to communicate to rank" << rank << endl;
+        // Construct the socket
         socket = new TCPSocket();
         socket->setOutputGate(gate("tcpOut"));
         socket->setCallbackObject(this, NULL);
@@ -138,6 +140,8 @@ TCPSocket* MPITcpClient::getConnectedSocket(int rank)
     }
     else
     {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "Using existing socket to communicate with rank: " << rank << endl;
         socket = iter->second;
     }
     return socket;

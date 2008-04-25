@@ -39,6 +39,7 @@ enum mpiMiddlewareResponseKind
 message spfsMPIMidRequest
 {
     fields:
+        int communicator;
 };
 
 message spfsMPIMidResponse
@@ -50,7 +51,6 @@ message spfsMPIMidResponse
 message spfsMPIMidBcastRequest extends spfsMPIMidRequest
 {
     fields:
-        int communicator;
         int root;
         int parent;
 };
@@ -63,13 +63,14 @@ message spfsMPIMidBcastResponse extends spfsMPIMidResponse
 message spfsMPIMidBarrierRequest extends spfsMPIMidRequest
 {
     fields:
-        int communicator;
 }
+
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:
 //
-// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+// vim: ts=4 sts=4 sw=4 expandtab
 //

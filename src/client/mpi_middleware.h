@@ -19,36 +19,38 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 #include <omnetpp.h>
-
+#include "mpi_communication_helper.h"
 class spfsCacheInvalidateRequest;
-class spfsMPIMidBcastRequest;
 class spfsMPIBcastRequest;
-class MPIMidBcastSM;
-
+class spfsMPIBcastResponse;
+class spfsMPIRequest;
 using namespace std;
 
 /**
  * Model of the MPI middleware
  */
-class MpiMiddleware : public cSimpleModule
+class MpiMiddleware : public cSimpleModule, MPICommunicationUserIF
 {
 public:
     /** Constructor */
-    MpiMiddleware() : cSimpleModule(), rank_(-1) {};
+    MpiMiddleware();
 
-    /** @return The Rank of this node */
-    int getRank();
+    /** Set the rank for the middleware */
+    void setRank(int r);
 
-    void setRank(int r){rank_ = r;};
+    /** @return the rank of this node */
+    int rank() const;
 
     /** Sends Message to net out gate */
     void sendNet(cMessage *msg);
 
     /** Sends Message to app out gate */
     void sendApp(cMessage *msg);
-  
+
+    /** Callback for when a communication completes */
+    void completeCommunicationCB(spfsMPIRequest* request);
+    
 protected:
     /** Implementation of initialize */
     virtual void initialize();
@@ -60,14 +62,24 @@ protected:
     virtual void handleMessage(cMessage* msg);
 
 private:
+    /** @return the completion response for the bcast */
+    spfsMPIBcastResponse* createBcastResponse(
+        spfsMPIBcastRequest* request) const;
+    
+    /** Gate to recv messages from application on */
     int appInGate_;
+
+    /** Gate to send messages to the application on */
     int appOutGate_;
+
+    /** Network communication gates */
     int netServerInGate_;
     int netClientInGate_;
     int netServerOutGate_;
     int netClientOutGate_;
+
+    /** Process rank for this MPI middleware */
     int rank_;
-    
 };
 
 
@@ -75,6 +87,7 @@ private:
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

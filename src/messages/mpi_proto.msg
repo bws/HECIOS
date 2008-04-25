@@ -59,8 +59,10 @@ enum mpiMessageKind
     // MPI message passing messages
     SPFS_MPI_SEND_REQUEST = 10;
     SPFS_MPI_SEND_RESPONSE = 11;
-    SPFS_MPI_BCAST_REQUEST = 12;
-    SPFS_MPI_BCAST_RESPONSE = 13;
+    SPFS_MPI_BARRIER_REQUEST = 12;
+    SPFS_MPI_BARRIER_RESPONSE = 13;
+    SPFS_MPI_BCAST_REQUEST = 14;
+    SPFS_MPI_BCAST_RESPONSE = 15;
 
     // MPI I/O Messages
     SPFS_MPI_FILE_OPEN_REQUEST = 100;
@@ -126,14 +128,20 @@ message spfsMPIResponse
         bool isSuccessful;
 };
 
-// Simple MPI Send request
-message spfsMPISendRequest extends spfsMPIRequest
+// The abstract base class for all MPI collective message requests
+message spfsMPICollectiveRequest extends spfsMPIRequest
 {
+    fields:
+        bool isCollective = false;
+        int rank;
+        int communicator;
 };
 
-// Simple MPI Send response
-message spfsMPISendResponse extends spfsMPIResponse
+// The abstract base class for all MPI collective message responses
+message spfsMPICollectiveResponse extends spfsMPIResponse
 {
+    fields:
+        bool isSuccessful;
 };
 
 // Request to open a file 
@@ -392,16 +400,25 @@ message spfsMPIFileUpdateTimeResponse extends spfsMPIResponse
 {
 };
 
+// Simple MPI Send request
+message spfsMPISendRequest extends spfsMPIRequest
+{
+};
+
+// Simple MPI Send response
+message spfsMPISendResponse extends spfsMPIResponse
+{
+};
+
 // Broadcast request
-message spfsMPIBcastRequest extends spfsMPIRequest
+message spfsMPIBcastRequest extends spfsMPICollectiveRequest
 {
     fields:	
         int root;
-        int communicator;
 };
 
 // Broadcast response
-message spfsMPIBcastResponse extends spfsMPIResponse
+message spfsMPIBcastResponse extends spfsMPICollectiveResponse
 {
 };
 

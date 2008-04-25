@@ -2,6 +2,7 @@
 // This file is part of Hecios
 //
 // Copyright (C) 2007 Yang Wu
+// Copyright (C) 2008 Yang Wu, Brad Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -18,19 +19,58 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "mpi_middleware.h"
-#include "cache_proto_m.h"
-#include "mpi_proto_m.h"
-#include "storage_layout_manager.h"
-#include "mpi_mid_m.h"
-#include "mpi_middleware_bcast_sm.h"
-#include <math.h>
-#include <iostream>
+#include <cmath>
 #include <cassert>
-
+#include <iostream>
+#include "mpi_communication_helper.h"
+#include "mpi_proto_m.h"
+//#include "mpi_mid_m.h"
+//#include "mpi_middleware_bcast_sm.h"
 using namespace std;
 
 // OMNet Registriation Method
 Define_Module(MpiMiddleware);
+
+MpiMiddleware::MpiMiddleware()
+    : cSimpleModule(),
+      rank_(-1)
+{
+}
+
+void MpiMiddleware::setRank(int r)
+{
+    assert(-1 == rank_);
+    rank_ = r;
+}
+
+int MpiMiddleware::rank() const
+{
+    assert(rank_ >= 0);
+    return rank_;
+}
+
+void MpiMiddleware::completeCommunicationCB(spfsMPIRequest* request)
+{
+    spfsMPIResponse* response = 0;
+
+    // Create the response based on the message kind
+    switch(request->kind())
+    {
+        case SPFS_MPI_BCAST_REQUEST:
+        {
+            response = createBcastResponse(
+                dynamic_cast<spfsMPIBcastRequest*>(request));
+            break;
+        }
+        default:
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":ERROR "
+                 << "Invalid MPI message kind: " << request->kind() << endl;
+        }
+    }
+    assert(0 != response);
+    send(response, appOutGate_);
+}
 
 void MpiMiddleware::initialize()
 {
@@ -40,15 +80,51 @@ void MpiMiddleware::initialize()
     netServerOutGate_ = findGate("netServerOut");
     netClientInGate_  = findGate("netClientIn");
     netClientOutGate_ = findGate("netClientOut");
-
-    cerr << "middleware: " << rank_ << " initialize"<< endl;
 }
 
 void MpiMiddleware::finish()
 {
-
 }
 
+void MpiMiddleware::handleMessage(cMessage* msg)
+{
+    if (msg->arrivalGateId() == appInGate_)
+    {
+        if (spfsMPICollectiveRequest* coll =
+            dynamic_cast<spfsMPICollectiveRequest*>(msg))
+        {
+            MPICommunicationHelper::instance().performCollective(this, coll);
+        }
+        else if (spfsMPIRequest* req = dynamic_cast<spfsMPIRequest*>(msg))
+        {
+            MPICommunicationHelper::instance().performCommunication(this,
+                                                                    req,
+                                                                    0);
+        }
+        else
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":ERROR: "
+                 << "Unknown application request\n";
+            assert(false);
+        }
+    }
+    else
+    {
+        cerr << __FILE__ << ":" << __LINE__ << ":ERROR: "
+             << "MPI Networking simulation is not currently available.\n";
+        assert(false);
+    }
+}
+
+spfsMPIBcastResponse* MpiMiddleware::createBcastResponse(spfsMPIBcastRequest* request) const
+{
+    spfsMPIBcastResponse* resp =
+        new spfsMPIBcastResponse(0, SPFS_MPI_BCAST_RESPONSE);
+    resp->setContextPointer(request);
+    return resp;
+}
+
+/*
 // handle other incoming messages (forwarding and processing)
 void MpiMiddleware::handleMessage(cMessage* msg)
 {
@@ -111,11 +187,7 @@ void MpiMiddleware::handleMessage(cMessage* msg)
     }
     delete msg;
 }
-
-int MpiMiddleware::getRank()
-{
-    return rank_;
-}
+*/
 
 void MpiMiddleware::sendNet(cMessage *msg)
 {

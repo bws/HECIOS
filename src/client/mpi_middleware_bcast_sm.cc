@@ -52,7 +52,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     {
         case FSM_Enter(INIT):
             {
-//                cerr << mpiMiddleware_->getRank() << " " << this << "enter INIT" << msg->kind() << endl;
+//                cerr << mpiMiddleware_->rank() << " " << this << "enter INIT" << msg->kind() << endl;
                 rspCounter_ = 0;
                 childNum_ = 0;
                 parentWRank_ = -1;
@@ -61,7 +61,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
             }
         case FSM_Exit(INIT):
             {
-//                cerr << mpiMiddleware_->getRank() << " " << this << "exit INIT " << msg->kind() << endl;
+//                cerr << mpiMiddleware_->rank() << " " << this << "exit INIT " << msg->kind() << endl;
                 if(msg->kind() == SPFS_MPIMID_BCAST_REQUEST)
                     if(spfsMPIMidBcastRequest* req = dynamic_cast<spfsMPIMidBcastRequest*>(msg))
                     {
@@ -73,7 +73,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     
         case FSM_Enter(BCAST):
             {
-//                cerr << mpiMiddleware_->getRank() << "enter BCAST" << msg->kind() << endl;
+//                cerr << mpiMiddleware_->rank() << "enter BCAST" << msg->kind() << endl;
                 if(msg->kind() == SPFS_MPIMID_BCAST_REQUEST)
                     if(spfsMPIMidBcastRequest* req = dynamic_cast<spfsMPIMidBcastRequest*> (msg))
                         enterBcast(req);
@@ -83,7 +83,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     
         case FSM_Exit(BCAST):
             {
-//                cerr << mpiMiddleware_->getRank() << "exit BCAST" << msg->kind() << endl;
+//                cerr << mpiMiddleware_->rank() << "exit BCAST" << msg->kind() << endl;
                 if(childNum_ != 0)
                     FSM_Goto(currentState_, WAIT);
                 else
@@ -93,7 +93,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     
         case FSM_Enter(WAIT):
             {
-//                cerr << mpiMiddleware_->getRank() << "enter WAIT" << msg->kind() << endl;
+//                cerr << mpiMiddleware_->rank() << "enter WAIT" << msg->kind() << endl;
                 if(msg->kind() == SPFS_MPIMID_BCAST_RESPONSE)
                     if(spfsMPIMidBcastResponse* rsp = dynamic_cast<spfsMPIMidBcastResponse*> (msg))
                         enterWait(rsp);
@@ -102,7 +102,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     
         case FSM_Exit(WAIT):
             {
-//                cerr << mpiMiddleware_->getRank() << "exit WAIT" << rspCounter_ << ":" << childNum_ << endl;
+//                cerr << mpiMiddleware_->rank() << "exit WAIT" << rspCounter_ << ":" << childNum_ << endl;
                 if(msg->kind() == SPFS_MPIMID_BCAST_RESPONSE)
                     if(rspCounter_ == childNum_ - 1)
                         FSM_Goto(currentState_, RSP);
@@ -111,13 +111,13 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
     
         case FSM_Enter(RSP):
             {
-//                cerr << mpiMiddleware_->getRank() << "enter RSP" << msg->kind() << endl;
+//                cerr << mpiMiddleware_->rank() << "enter RSP" << msg->kind() << endl;
                 enterRsp();
                 break;
             }
         case FSM_Exit(RSP):
             {
-//                cerr << mpiMiddleware_->getRank() << "exit RSP" << msg->kind() << endl;
+//                cerr << mpiMiddleware_->rank() << "exit RSP" << msg->kind() << endl;
                 finished_ = true;
                 FSM_Goto(currentState_, INIT);
                 break;
@@ -137,7 +137,7 @@ void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
     int parent = msg->getParent();
     int root = msg->getRoot();
     int rank = CommMan::instance().commRank(msg->getCommunicator(),
-                                                mpiMiddleware_->getRank());
+                                                mpiMiddleware_->rank());
 
     parentSM_ = msg->contextPointer();
     // calculate number of tree levels    
@@ -198,7 +198,7 @@ void MPIMidBcastSM::enterWait(spfsMPIMidBcastResponse* msg)
 
 void MPIMidBcastSM::enterRsp()
 {
-    if(parentWRank_ == mpiMiddleware_->getRank())
+    if(parentWRank_ == mpiMiddleware_->rank())
     {
         // response to app
         spfsMPIBcastResponse *msg = new spfsMPIBcastResponse("bcast rsp", SPFS_MPI_BCAST_RESPONSE);
