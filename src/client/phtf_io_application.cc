@@ -29,7 +29,7 @@
 #include "file_builder.h"
 #include "file_descriptor.h"
 #include "mpi_proto_m.h"
-#include "mpi_mid_m.h"
+//#include "mpi_mid_m.h"
 #include "storage_layout_manager.h"
 #include "phtf_io_trace.h"
 #include "comm_man.h"
@@ -39,12 +39,20 @@ using namespace std;
 // OMNet Registriation Method
 Define_Module(PHTFIOApplication);
 
+PHTFIOApplication::PHTFIOApplication()
+    : IOApplication(),
+      phtfEvent_(0)
+{
+}
 
 /**
  * Construct an I/O trace using configuration supplied tracefile(s)
  */
 void PHTFIOApplication::initialize()
 {
+    // Parent class initilization
+    IOApplication::initialize();
+
     string dirStr = par("dirPHTF").stringValue();
 
     // set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration in fs.ini
@@ -56,20 +64,11 @@ void PHTFIOApplication::initialize()
         (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_SELF").c_str(),
                     0, 10));
 
-    // parent class initilization, set rank_ and stuff
-    IOApplication::initialize();
-
     PHTFEventRecord::buildOpMap();
 
-    // init some variable
-    context_ = 0;
-    barrierCounter_ = 0;
-    blocked_ = false;
-    noGetNext_ = false;
-    
-    // Send the kick start message
+    // Schedule the kick start message
     cMessage* kickStart = new cMessage();
-    scheduleAt(1.0, kickStart);
+    scheduleAt(0.0, kickStart);
 }
 
 /**
@@ -82,34 +81,19 @@ void PHTFIOApplication::finish()
     phtfEvent_->close();
 }
 
-/** @param acitve - whether bcast barrier msg */
-void PHTFIOApplication::handleBarrier(cMessage* msg, bool active)
+void PHTFIOApplication::handleMessage(cMessage* msg)
 {
-    int rank = getRank();
-    if(active)
+    // Add code to allow opens to finish by broadcasting result
+    if (SPFS_MPI_FILE_OPEN_RESPONSE == msg->kind())
     {
-        spfsMPIBcastRequest *req =
-            new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
-                
-        req->setRoot(
-            CommMan::instance().commRank(
-                dynamic_cast<spfsMPIMidBarrierRequest*>(msg)->getCommunicator(),
-                rank));
-
-        req->setCommunicator(
-            dynamic_cast<spfsMPIMidBarrierRequest*>(msg)->getCommunicator());
-        req->encapsulate(msg);
-        send(req, mpiOutGate_);
+        // Broadcast result
+        int commId = MPI_COMM_WORLD;
+        cMessage* msg = createBcastRequest(commId);
+        send(msg, mpiOutGate_);
     }
-
-    barrierCounter_ --;
-
-    cerr << rank << " barrier: " << barrierCounter_ << endl;
-
-    if(barrierCounter_ == 0 || (active && barrierCounter_ < 0))
+    else
     {
-        cerr << rank << " break barrier!" << endl;
-        scheduleAt(simTime(), new cMessage());
+        IOApplication::handleMessage(msg);
     }
 }
 
@@ -123,67 +107,86 @@ bool PHTFIOApplication::scheduleNextMessage()
         phtfEvent_->open();
     }
     
-    cMessage * msg = 0;
-
     bool msgScheduled = false;
-
-    if(!blocked_)
+    if (!phtfEvent_->eof())
     {
-        while(!phtfEvent_->eof())
-        {
-            if(!noGetNext_)*phtfEvent_ >> phtfRecord_;
-            msg = createMessage(&phtfRecord_);
-            if(!msg) continue;
-            cerr << "Rank " << getRank() << " IOApplication Time: " << simTime() << ": " << phtfRecord_.recordStr() << endl;
-            switch(phtfRecord_.recordOp())
-            {
-                case CPU_PHASE:
-                    scheduleCPUMessage(msg);
-                    break;
-                case BARRIER:
-                    handleBarrier(msg, true);
-                    break;
-                case WAIT:
-                    delete msg;
-                    break;
-                case SEEK:
-                    scheduleAt(simTime(), msg);
-                    break;
-                case OPEN:
-                    if(CommMan::instance().commSize(mostRecentGroup_) != 0)
-                    {
-                        if(!noGetNext_)
-                        {
-                            noGetNext_ = true;
-                            delete msg;
-                            // barrier
-                            PHTFEventRecord re;
-                            stringstream ss("");
-                            ss << mostRecentGroup_;
-                            re.params(ss.str());
-                            handleBarrier(createBarrierMessage(&re), true);
-                            break;
-                        }
-                    }
+        PHTFEventRecord eventRecord;
+        *phtfEvent_ >> eventRecord;
 
-                    int rank = getRank();
-                    if(CommMan::instance().commRank(mostRecentGroup_, rank) == 0)
-                    {
-                        send(msg, ioOutGate_);
-                    }
-                    else
-                    {
-                        context_ = msg;
-                    }
-                    noGetNext_ = false;
-                    break;        
-                default:
-                    cerr << getRank() << " send msg " << msg->kind() << endl;
-                    send(msg, ioOutGate_);
-                    msgScheduled = true;
-                    break;
+        int opcode = eventRecord.recordOp();
+        if (CPU_PHASE == opcode)
+        {
+            cMessage* msg = createCPUPhaseMessage(&eventRecord);
+            scheduleCPUMessage(msg);
+            msgScheduled = true;
+        }
+        else if (WAIT == opcode)
+        {
+            // Perform wait operation
+            bool waitIsComplete = false;
+            performWaitProcessing(&eventRecord, waitIsComplete);
+            
+            // If the wait operation completes immediately, schedule the
+            // next message now, otherwise just wait on the response
+            if (waitIsComplete)
+            {
+                msgScheduled = scheduleNextMessage();
             }
-            break;
+            else
+            {
+                msgScheduled = true;
+            }
+        }
+        else if (SEEK == opcode)
+        {
+            // Perform seek operation
+            performSeekProcessing(&eventRecord);
+            
+            // Retrieve the next operation, as this one is local
+            msgScheduled = scheduleNextMessage();
+        }
+        else if (OPEN == opcode)
+        {
+            // Perform the open processing
+            int commId = -1;
+            performOpenProcessing(&eventRecord, commId);
+            assert(commId != -1);
+
+            // FIXME
+            // Determine if this is first rank for the communicator
+            if (0 == getRank())
+            {
+                cMessage* msg = createRequest(&eventRecord);
+                send(msg, ioOutGate_);
+            }
+            else
+            {
+                cMessage* msg = createBcastRequest(commId);
+                send(msg, mpiOutGate_);
+            }
+            msgScheduled = true;
+        }
+        else if (BARRIER == opcode)
+        {
+            cMessage* msg = createRequest(&eventRecord);
+            send(msg, mpiOutGate_);
+            msgScheduled = true;
+        }
+        else
+        {
+            // Start the non-blocking operation
+            cMessage* msg = createRequest(&eventRecord);
+            send(msg, ioOutGate_);
+
+            // Handle non-blocking operations by scheduling another request
+            if (IREAD == opcode || IWRITE == opcode)
+            {
+                msgScheduled = scheduleNextMessage();
+            }
+            else
+            {
+                msgScheduled = true;
+            }
         }
     }
     return msgScheduled;
@@ -191,68 +194,33 @@ bool PHTFIOApplication::scheduleNextMessage()
 
 void PHTFIOApplication::handleMPIMessage(cMessage* msg)
 {
-    if(msg->kind() == SPFS_MPI_FILE_OPEN_RESPONSE)
-    {
-        msg->setContextPointer(context_);
-        IOApplication::handleIOMessage(msg);
-    }
-    else if(msg->kind() == SPFS_MPIMID_BARRIER_REQUEST)
-    {
-        handleBarrier(msg);
-        delete msg;
-    }
-    else
-    {
-        delete msg;
-    }
+    // Cleanup the message
+    cMessage* originatingRequest =
+        static_cast<cMessage*>(msg->contextPointer());
+    delete originatingRequest;
+    delete msg;
 }
 
 void PHTFIOApplication::handleIOMessage(cMessage* msg)
 {
-    cMessage * orgMsg = (cMessage*)msg->contextPointer();
+    cMessage* originatingRequest = (cMessage*)msg->contextPointer();
+    assert(0 != originatingRequest);
 
-    if(orgMsg != 0)
+
+    if (originatingRequest->kind() == SPFS_MPI_FILE_WRITE_AT_REQUEST)
     {
-        long req = -1;
-        if(orgMsg->kind() == SPFS_MPI_FILE_WRITE_AT_REQUEST)
-        {
-            req = dynamic_cast<spfsMPIFileWriteAtRequest*>(orgMsg)->getReqId();
-        }
-        else if(orgMsg->kind() == SPFS_MPI_FILE_READ_AT_REQUEST)
-        {
-            req = dynamic_cast<spfsMPIFileReadAtRequest*>(orgMsg)->getReqId();
-        }
-
-        if(req != -1)
-        {
-            if(nonBlockingReq_.count(req))
-            {
-                nonBlockingReq_.erase(req);
-            }
-            if(waitReqId_ == req)
-            {
-                waitReqId_ = -1;
-                blocked_ = false;
-            }
-        }        
+        int requestId = static_cast<spfsMPIFileWriteAtRequest*>(
+            originatingRequest)->getReqId();
+        pendingRequestsById_.erase(requestId);
+    }
+    else if(originatingRequest->kind() == SPFS_MPI_FILE_READ_AT_REQUEST)
+    {
+        int requestId = dynamic_cast<spfsMPIFileReadAtRequest*>(
+            originatingRequest)->getReqId();
+        pendingRequestsById_.erase(requestId);
     }
 
-    if(orgMsg != 0 && orgMsg->kind() == SPFS_MPI_FILE_OPEN_REQUEST)
-    {
-        // bcast open response
-        if(CommMan::instance().commSize(mostRecentGroup_) > 1)
-        {
-            spfsMPIBcastRequest *req =
-                new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
-
-            req->setRoot(CommMan::instance().commRank(mostRecentGroup_,
-                                                      getRank()));
-            req->setCommunicator(mostRecentGroup_);
-            req->encapsulate((cMessage*)msg->dup());
-            send(req, mpiOutGate_);
-        }
-    }
-
+    // Let the IOApplication finish handling the message
     IOApplication::handleIOMessage(msg);
 }
 
@@ -271,17 +239,17 @@ void PHTFIOApplication::rankChanged(int oldRank)
     CommMan::instance().joinComm(MPI_COMM_WORLD, getRank());
 }
 
-cMessage* PHTFIOApplication::createMessage(PHTFEventRecord* rec)
+spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
 {
-    cMessage* mpiMsg = 0;
+    assert(rec->recordOp() != CPU_PHASE);
+    assert(rec->recordOp() != SEEK);
+    assert(rec->recordOp() != WAIT);
+    spfsMPIRequest* mpiMsg = 0;
 
     switch(rec->recordOp())
     {
         case BARRIER:
             mpiMsg = createBarrierMessage(rec);
-            break;
-        case CPU_PHASE:
-            mpiMsg = createCPUPhaseMessage(rec);
             break;
         case OPEN:
             mpiMsg = createOpenMessage(rec);
@@ -301,15 +269,10 @@ cMessage* PHTFIOApplication::createMessage(PHTFEventRecord* rec)
         case IWRITE:
             mpiMsg = createIWriteMessage(rec);
             break;
-        case WAIT:
-            mpiMsg = createWaitMessage(rec);
-            break;
-        case SEEK:
-            mpiMsg = createSeekMessage(rec);
-            break;
         default:
+            assert(false);
             break;
-        }
+    }
     return mpiMsg;
 }
 
@@ -328,32 +291,95 @@ void PHTFIOApplication::populateFileSystem()
     cerr << "Done." << endl;
 }
 
-cMessage* PHTFIOApplication::createBarrierMessage(
+void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
+                                              int& outCommunicatorId)
+{
+    // Extract the descriptor number from the event record
+    stringstream ss("");
+    string hpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(4);
+    ss << hpt << "@" << const_cast<PHTFEventRecord*>(openRecord)->recordId();
+    string hstr = phtfEvent_->memValue("Pointer", ss.str());
+    int fileId = strtol(hstr.c_str(), NULL, 16);
+
+    // Extract the file name from the event record
+    string fpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(1);
+    Filename fn(phtfEvent_->memValue("String", fpt));
+
+    // Construct a file descriptor for use in simulaiton
+    FileDescriptor* fd = FileBuilder::instance().getDescriptor(fn);    
+    assert(0 != fd);
+
+    // Associate the file id with a file descriptor
+    setDescriptor(fileId, fd);
+
+    // Extract the communicator id
+    string gstr = const_cast<PHTFEventRecord*>(openRecord)->paramAt(0);
+    outCommunicatorId = (int)strtol(gstr.c_str(), NULL, 10);    
+}
+
+void PHTFIOApplication::performSeekProcessing(PHTFEventRecord* seekRecord)
+{
+    string dirStr = par("dirPHTF").stringValue();
+    
+    string hstr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(0);
+    long handle = strtol(hstr.c_str(), NULL, 16);
+
+    string ostr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(1);
+    long offset = strtol(ostr.c_str(), NULL, 16);
+
+    string wstr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(3);
+    int whence = (int)strtol(wstr.c_str(), NULL, 10);
+
+    FileDescriptor* fd = getDescriptor(handle);
+
+    if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_SET").c_str(), 0, 10))
+    {
+        fd->setFilePointer(offset);
+    }
+    else if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_CUR").c_str(), 0, 10))
+    {
+        fd->moveFilePointer(offset);
+    }
+    else if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_END").c_str(), 0, 10))
+    {
+        fd->setFilePointer(fd->getMetaData()->size + offset);
+    }
+}
+
+void PHTFIOApplication::performWaitProcessing(PHTFEventRecord* waitRecord,
+                                              bool& outWaitIsComplete)
+{
+    // Extract the request id
+    string str = waitRecord->paramAt(0);
+    long requestId = strtol(str.c_str(), NULL, 16);
+
+    // Determine if the operation being waiting on is pending
+    outWaitIsComplete = false;
+    if (0 == pendingRequestsById_.count(requestId))
+    {
+        outWaitIsComplete = true;
+    }
+}
+
+spfsMPIBarrierRequest* PHTFIOApplication::createBarrierMessage(
     const PHTFEventRecord* barrierRecord)
 {
     string str = const_cast<PHTFEventRecord*>(barrierRecord)->paramAt(0);
     int comm = (int)strtol(str.c_str(), NULL, 10);
-    barrierCounter_ += CommMan::instance().commSize(comm);
-    spfsMPIMidBarrierRequest *mpimsg = new spfsMPIMidBarrierRequest(0, SPFS_MPIMID_BARRIER_REQUEST);
-    mpimsg->setCommunicator(comm);
-    return mpimsg;
+    //barrierCounter_ += CommMan::instance().commSize(comm);
+    spfsMPIBarrierRequest* barrier =
+        new spfsMPIBarrierRequest(0, SPFS_MPI_BARRIER_REQUEST);
+    barrier->setCommunicator(comm);
+    return barrier;
 }
 
-cMessage* PHTFIOApplication::createWaitMessage(
-    const PHTFEventRecord* waitRecord)
+spfsMPIBcastRequest* PHTFIOApplication::createBcastRequest(
+    int communicatorId)
 {
-    string str = const_cast<PHTFEventRecord*>(waitRecord)->paramAt(0);
-    long reqid = strtol(str.c_str(), NULL, 16);
-    waitReqId_ = reqid;
-    if(nonBlockingReq_.count(reqid))
-    {
-        blocked_ = true;
-        return new cMessage("wait");
-    }
-    else
-    {
-        return NULL;
-    }
+    spfsMPIBcastRequest* bcast =
+        new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
+    bcast->setCommunicator(communicatorId);
+    return bcast;
 }
 
 cMessage* PHTFIOApplication::createCPUPhaseMessage(
@@ -379,42 +405,27 @@ spfsMPIFileCloseRequest* PHTFIOApplication::createCloseMessage(
 spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
     const PHTFEventRecord* openRecord)
 {
-    spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
-        0, SPFS_MPI_FILE_OPEN_REQUEST);
-
+    // Extract the descriptor id
     stringstream ss("");
     string hpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(4);
-
     ss << hpt << "@" << const_cast<PHTFEventRecord*>(openRecord)->recordId();
-
     string hstr = phtfEvent_->memValue("Pointer", ss.str());
-    
-    long handle = strtol(hstr.c_str(), NULL, 16);
-    
-    string fpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(1);
-    Filename fn(phtfEvent_->memValue("String", fpt));
+    int fileId = strtol(hstr.c_str(), NULL, 16);
 
-    // Construct a file descriptor for use in simulaiton
-    FileDescriptor* fd = FileBuilder::instance().getDescriptor(fn);
-    
+    // Retrieve the descriptor
+    FileDescriptor* fd = getDescriptor(fileId);
     assert(0 != fd);
 
-    // Associate the file id with a file descriptor
-    setDescriptor(handle, fd);
+    // Extract the open mode
+    int mode = (int)strtol(
+        const_cast<PHTFEventRecord*>(openRecord)->paramAt(2).c_str(), NULL, 10);
 
-    string gstr = const_cast<PHTFEventRecord*>(openRecord)->paramAt(0);
-    int group = (int)strtol(gstr.c_str(), NULL, 10);
-    mostRecentGroup_ = group;
-    
-    if(CommMan::instance().commRank(group, getRank()) == 0)
-    {
-        int mode = (int)strtol(const_cast<PHTFEventRecord*>(openRecord)->paramAt(2).c_str(), NULL, 10);
-        
-        open->setFileName(fn.str().c_str());
-        open->setFileDes(fd);
-        open->setMode(mode);
-    }
-    
+    // Fill out the open request
+    spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
+        0, SPFS_MPI_FILE_OPEN_REQUEST);
+    open->setFileName(fd->getFilename().c_str());
+    open->setFileDes(fd);
+    open->setMode(mode);
     return open;
 }
 
@@ -471,7 +482,8 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createIReadMessage(
     spfsMPIFileReadAtRequest* iread = createReadMessage(readRecord);
     iread->setReqId(reqid);
 
-    nonBlockingReq_[reqid] = iread;
+    // Update the list of non-blocking operations still pending
+    pendingRequestsById_[reqid] = iread;
     return iread;
 }
 
@@ -528,40 +540,9 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createIWriteMessage(
     spfsMPIFileWriteAtRequest* iwrite = createWriteMessage(writeRecord);
     iwrite->setReqId(reqid);
 
-    nonBlockingReq_[reqid] = iwrite;
+    // Update the list of non-blocking operations still pending
+    pendingRequestsById_[reqid] = iwrite;
     return iwrite;
-}
-
-cMessage * PHTFIOApplication::createSeekMessage(
-    const PHTFEventRecord* seekRecord)
-{
-    string dirStr = par("dirPHTF").stringValue();
-    
-    string hstr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(0);
-    long handle = strtol(hstr.c_str(), NULL, 16);
-
-    string ostr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(1);
-    long offset = strtol(ostr.c_str(), NULL, 16);
-
-    string wstr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(3);
-    int whence = (int)strtol(wstr.c_str(), NULL, 10);
-
-    FileDescriptor* fd = getDescriptor(handle);
-
-    if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_SET").c_str(), 0, 10))
-    {
-        fd->setFilePointer(offset);
-    }
-    else if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_CUR").c_str(), 0, 10))
-    {
-        fd->moveFilePointer(offset);
-    }
-    else if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_END").c_str(), 0, 10))
-    {
-        fd->setFilePointer(fd->getMetaData()->size + offset);
-    }
-
-    return new cMessage("seek");
 }
 
 /*

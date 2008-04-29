@@ -22,6 +22,8 @@
 #include <omnetpp.h>
 #include "mpi_communication_helper.h"
 class spfsCacheInvalidateRequest;
+class spfsMPIBarrierRequest;
+class spfsMPIBarrierResponse;
 class spfsMPIBcastRequest;
 class spfsMPIBcastResponse;
 class spfsMPIRequest;
@@ -62,6 +64,10 @@ protected:
     virtual void handleMessage(cMessage* msg);
 
 private:
+    /** @return the completion response for the barrier */
+    spfsMPIBarrierResponse* createBarrierResponse(
+        spfsMPIBarrierRequest* request) const;
+    
     /** @return the completion response for the bcast */
     spfsMPIBcastResponse* createBcastResponse(
         spfsMPIBcastRequest* request) const;

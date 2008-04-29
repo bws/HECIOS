@@ -410,6 +410,19 @@ message spfsMPISendResponse extends spfsMPIResponse
 {
 };
 
+// Barrier request
+message spfsMPIBarrierRequest extends spfsMPICollectiveRequest
+{
+    fields:	
+        int root;
+};
+
+// Broadcast response
+message spfsMPIBarrierResponse extends spfsMPICollectiveResponse
+{
+};
+
+
 // Broadcast request
 message spfsMPIBcastRequest extends spfsMPICollectiveRequest
 {

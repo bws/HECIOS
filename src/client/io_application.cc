@@ -69,8 +69,6 @@ void IOApplication::initialize()
     mpiOutGate_ = findGate("mpiOut");
     mpiInGate_ = findGate("mpiIn");
 
-    msgScheduled_ = false;
-
     // Initialize scalar data collection values
     totalCpuPhaseTime_ = 0.0;
     applicationCompletionTime_ = 0.0;
@@ -115,9 +113,8 @@ void IOApplication::handleSelfMessage(cMessage* msg)
         cpuPhaseDelay_.record(delay);
         totalCpuPhaseTime_ += delay;
     }
-    
-    // Schedule the next message
-    msgScheduled_ = scheduleNextMessage();
+
+    // Cleanup the message
     delete msg;
 }
 
@@ -208,9 +205,6 @@ void IOApplication::handleIOMessage(cMessage* msg)
             break;
     }
     
-    // Schedule the next message
-    msgScheduled_ = scheduleNextMessage();
-    
     // Delete the originating request
     delete parentRequest;
     
@@ -250,7 +244,8 @@ void IOApplication::handleMessage(cMessage* msg)
         handleMPIMessage(msg);
     }
 
-    if (!msgScheduled_)
+    bool messageScheduled = scheduleNextMessage(); 
+    if (!messageScheduled)
     {
         cerr << "Rank " << rank_ << " IOApplication Time: " << simTime()
              << ": No more messages to post or blocked." << endl;

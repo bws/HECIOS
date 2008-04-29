@@ -56,6 +56,12 @@ void MpiMiddleware::completeCommunicationCB(spfsMPIRequest* request)
     // Create the response based on the message kind
     switch(request->kind())
     {
+        case SPFS_MPI_BARRIER_REQUEST:
+        {
+            response = createBarrierResponse(
+                dynamic_cast<spfsMPIBarrierRequest*>(request));
+            break;
+        }
         case SPFS_MPI_BCAST_REQUEST:
         {
             response = createBcastResponse(
@@ -116,7 +122,17 @@ void MpiMiddleware::handleMessage(cMessage* msg)
     }
 }
 
-spfsMPIBcastResponse* MpiMiddleware::createBcastResponse(spfsMPIBcastRequest* request) const
+spfsMPIBarrierResponse* MpiMiddleware::createBarrierResponse(
+    spfsMPIBarrierRequest* request) const
+{
+    spfsMPIBarrierResponse* resp =
+        new spfsMPIBarrierResponse(0, SPFS_MPI_BARRIER_RESPONSE);
+    resp->setContextPointer(request);
+    return resp;
+}
+
+spfsMPIBcastResponse* MpiMiddleware::createBcastResponse(
+    spfsMPIBcastRequest* request) const
 {
     spfsMPIBcastResponse* resp =
         new spfsMPIBcastResponse(0, SPFS_MPI_BCAST_RESPONSE);

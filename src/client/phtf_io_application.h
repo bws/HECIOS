@@ -24,12 +24,10 @@
 #include <map>
 #include "io_application.h"
 #include "phtf_io_trace.h"
-
 class FileDescriptor;
-class PHTFTrace;
-class PHTFEvent;
-class PHTFEventRecord;
 class spfsCacheInvalidateRequest;
+class spfsMPIBarrierRequest;
+class spfsMPIBcastRequest;
 class spfsMPIDirectoryCreateRequest;
 class spfsMPIFileCloseRequest;
 class spfsMPIFileOpenRequest;
@@ -38,6 +36,7 @@ class spfsMPIFileReadRequest;
 class spfsMPIFileUpdateTimeRequest;
 class spfsMPIFileWriteAtRequest;
 class spfsMPIFileWriteRequest;
+class spfsMPIRequest;
 
 /**
  * Model of an application process.
@@ -46,7 +45,7 @@ class PHTFIOApplication : public IOApplication
 {
 public:
     /** Constructor */
-    PHTFIOApplication() :IOApplication()  {waitReqId_ = -1; phtfEvent_ = NULL;};
+    PHTFIOApplication();
     
 protected:
     /** Implementation of initialize */
@@ -55,11 +54,14 @@ protected:
     /** Implementation of finish */
     virtual void finish();
 
+    /** Override handleMessage to handle Open processing */
+    virtual void handleMessage(cMessage* msg);
+    
     /** Override ioApplication scheduleNextMessage() */
     virtual bool scheduleNextMessage();
 
-    /** Create a cMessage from an IOTrace::Record */
-    virtual cMessage* createMessage(PHTFEventRecord* rec);
+    /** Create a cMessage from a trace record */
+    spfsMPIRequest* createRequest(PHTFEventRecord* rec);
 
     /** Override ioApplication message handler */
     virtual void handleIOMessage(cMessage* msg);
@@ -78,9 +80,23 @@ private:
     /** Dealing with barrier message */
     void handleBarrier(cMessage *msg, bool active = false);
 
-    /** @return an Barrier inform message */
-    cMessage* createBarrierMessage(
+    /** Perform the application processing to do an open */
+    void performOpenProcessing(PHTFEventRecord* openRecord,
+                               int& outCommunicatorId);
+    
+    /** Perform the application processing to simulate a seek */
+    void performSeekProcessing(PHTFEventRecord* seekRecord);
+    
+    /** Perform the application processing to simulate a wait */
+    void performWaitProcessing(PHTFEventRecord* waitRecord,
+                               bool& outWaitIsComplete);
+    
+    /** @return a Barrier request */
+    spfsMPIBarrierRequest* createBarrierMessage(
         const PHTFEventRecord* barrierRecord);
+
+    /** @return a Bcast request */
+    spfsMPIBcastRequest* createBcastRequest(int communicatorId);
 
     /** @return an CPU Phase Message */
     cMessage* createCPUPhaseMessage(
@@ -129,31 +145,12 @@ private:
     /** @return an MPI File IWrite request */
     spfsMPIFileWriteAtRequest * createIWriteMessage(
         const PHTFEventRecord* writeRecord);
-
+    
     /** PHTF Event File */
-    PHTFEvent * phtfEvent_;
+    PHTFEvent* phtfEvent_;
 
-    /** PHTF Record, holding current record */
-    PHTFEventRecord phtfRecord_;
-
-    /** non-blocking IO request map */
-    std::map<long, cMessage*> nonBlockingReq_;
-    /** request id that MPIO_Wait is waiting for */
-    long waitReqId_;
-
-    /** Message Pointer, holding open request context for collective open */
-    cMessage * context_;
-
-    /** Communicator, for collective open */
-    int mostRecentGroup_;
-
-    /** flag, indicates whether get next record, for collective open */
-    bool noGetNext_;
-    /** flag, indicates whether ioapp blocked, for MPIO_Wait */
-    bool blocked_;
-
-    /** barrier counter, for barrier */
-    int barrierCounter_;
+    /** Map of non-blocking IO request that are still pending */
+    std::map<long, cMessage*> pendingRequestsById_;    
 };
 
 #endif

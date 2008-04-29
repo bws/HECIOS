@@ -79,7 +79,6 @@ protected:
     int ioOutGate_;
     int mpiOutGate_;
     int mpiInGate_;
-    bool msgScheduled_;
 
 private:
     /** Invoked when the rank has been changed */
