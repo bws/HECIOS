@@ -24,8 +24,6 @@
 #include <iostream>
 #include "mpi_communication_helper.h"
 #include "mpi_proto_m.h"
-//#include "mpi_mid_m.h"
-//#include "mpi_middleware_bcast_sm.h"
 using namespace std;
 
 // OMNet Registriation Method
@@ -51,6 +49,10 @@ int MpiMiddleware::rank() const
 
 void MpiMiddleware::completeCommunicationCB(spfsMPIRequest* request)
 {
+    // Do some Omnet Magic to allow the simulation to resume right here
+    Enter_Method("Complete MPI Communication");
+    take(request);
+    
     spfsMPIResponse* response = 0;
 
     // Create the response based on the message kind
@@ -139,71 +141,6 @@ spfsMPIBcastResponse* MpiMiddleware::createBcastResponse(
     resp->setContextPointer(request);
     return resp;
 }
-
-/*
-// handle other incoming messages (forwarding and processing)
-void MpiMiddleware::handleMessage(cMessage* msg)
-{
-    if(msg->arrivalGateId() == appInGate_)
-    {
-        switch(msg->kind())
-        {
-             case SPFS_MPI_BCAST_REQUEST:
-                spfsMPIMidBcastRequest *req = new spfsMPIMidBcastRequest(0, SPFS_MPIMID_BCAST_REQUEST);
-                req->setRoot(dynamic_cast<spfsMPIBcastRequest *>(msg)->getRoot());
-                req->setParent(dynamic_cast<spfsMPIBcastRequest *>(msg)->getRoot());
-                req->setCommunicator(dynamic_cast<spfsMPIBcastRequest *>(msg)->getCommunicator());
-                req->encapsulate(msg->decapsulate());
-                MPIMidBcastSM * sm = new MPIMidBcastSM(this);
-                req->setContextPointer(NULL);
-                sm->handleMessage(req);
-                if(sm->finished())
-                {
-                    delete sm;
-                }
-                
-                break;
-            default:
-                cerr << "mpi middleware handleMessage received unknown msg: " << msg->kind() << endl;
-                break;
-        }
-    }
-
-    // Request/Response from other MPI middlewares
-    else if(msg->arrivalGateId() == netServerInGate_)
-    {
-        // handle request / response
-        cMessage * ebdMsg = msg->decapsulate();
-        assert(ebdMsg != 0);
-
-        switch(ebdMsg->kind())
-        {
-            case SPFS_MPIMID_BCAST_REQUEST:
-            {
-                MPIMidBcastSM * sm = new MPIMidBcastSM(this);
-                sm->handleMessage(ebdMsg);
-                if(sm->finished())
-                {
-                    delete sm;
-                }
-                break;
-            }
-            
-            case SPFS_MPIMID_BCAST_RESPONSE:
-            {
-                MPIMidBcastSM * sm = static_cast<MPIMidBcastSM*>(ebdMsg->contextPointer());
-                sm->handleMessage(ebdMsg);
-                if(sm->finished())
-                {
-                    delete sm;
-                }
-                break;
-            }
-        }
-    }
-    delete msg;
-}
-*/
 
 void MpiMiddleware::sendNet(cMessage *msg)
 {

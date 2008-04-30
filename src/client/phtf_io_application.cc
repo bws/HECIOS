@@ -53,17 +53,20 @@ void PHTFIOApplication::initialize()
     // Parent class initilization
     IOApplication::initialize();
 
+    // Retrieve the resource describing the trace location
     string dirStr = par("dirPHTF").stringValue();
 
-    // set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration in fs.ini
-    CommMan::instance().commWorld(
-        (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_WORLD").c_str(),
-                    0, 10));
-    
-    CommMan::instance().commSelf(
-        (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_SELF").c_str(),
-                    0, 10));
+    // Set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration
+    // in fs.ini
+    string commWorldValue =
+        PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_WORLD");
+    CommMan::instance().setCommWorld(strtol(commWorldValue.c_str(), 0, 10));
 
+    string commSelfValue =
+        PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_SELF");
+    CommMan::instance().setCommSelf(strtol(commSelfValue.c_str(), 0, 10));
+
+    // I have no idea what this does???
     PHTFEventRecord::buildOpMap();
 
     // Schedule the kick start message
@@ -86,10 +89,19 @@ void PHTFIOApplication::handleMessage(cMessage* msg)
     // Add code to allow opens to finish by broadcasting result
     if (SPFS_MPI_FILE_OPEN_RESPONSE == msg->kind())
     {
-        // Broadcast result
-        int commId = MPI_COMM_WORLD;
-        cMessage* msg = createBcastRequest(commId);
-        send(msg, mpiOutGate_);
+        // Extract the communicator from the open request
+        spfsMPIFileOpenRequest* openRequest =
+            static_cast<spfsMPIFileOpenRequest*>(msg->contextPointer());
+        assert(0 != openRequest);
+        
+        // Broadcast result to the remainder of the communicator
+        int commId = openRequest->getCommunicator();
+        cMessage* bcast = createBcastRequest(commId);
+        send(bcast, mpiOutGate_);
+
+        // Cleanup the open request and response
+        delete openRequest;
+        delete msg;
     }
     else
     {
@@ -236,7 +248,7 @@ void PHTFIOApplication::rankChanged(int oldRank)
     assert(-1 == oldRank);
     
     // Join the world communicator on rank initialization
-    CommMan::instance().joinComm(MPI_COMM_WORLD, getRank());
+    CommMan::instance().registerRank(getRank());
 }
 
 spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
@@ -366,7 +378,8 @@ spfsMPIBarrierRequest* PHTFIOApplication::createBarrierMessage(
 {
     string str = const_cast<PHTFEventRecord*>(barrierRecord)->paramAt(0);
     int comm = (int)strtol(str.c_str(), NULL, 10);
-    //barrierCounter_ += CommMan::instance().commSize(comm);
+    assert(-1 != comm);
+    
     spfsMPIBarrierRequest* barrier =
         new spfsMPIBarrierRequest(0, SPFS_MPI_BARRIER_REQUEST);
     barrier->setCommunicator(comm);
@@ -376,6 +389,8 @@ spfsMPIBarrierRequest* PHTFIOApplication::createBarrierMessage(
 spfsMPIBcastRequest* PHTFIOApplication::createBcastRequest(
     int communicatorId)
 {
+    assert(-1 != communicatorId);
+    
     spfsMPIBcastRequest* bcast =
         new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
     bcast->setCommunicator(communicatorId);
@@ -420,9 +435,16 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
     int mode = (int)strtol(
         const_cast<PHTFEventRecord*>(openRecord)->paramAt(2).c_str(), NULL, 10);
 
+    // Extract the communicator id
+    string gstr = const_cast<PHTFEventRecord*>(openRecord)->paramAt(0);
+    int communicatorId = (int)strtol(gstr.c_str(), NULL, 10);    
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Opening file with comm: " << communicatorId << endl;
+    
     // Fill out the open request
     spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(
         0, SPFS_MPI_FILE_OPEN_REQUEST);
+    open->setCommunicator(communicatorId);
     open->setFileName(fd->getFilename().c_str());
     open->setFileDes(fd);
     open->setMode(mode);

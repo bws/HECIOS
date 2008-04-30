@@ -19,6 +19,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+#include <map>
+#include <vector>
+#include "pfs_types.h"
 #include "singleton.h"
 class spfsMPICollectiveRequest;
 class spfsMPIRequest;
@@ -67,11 +70,27 @@ protected:
     ~MPICommunicationHelper();
     
 private:
+    typedef std::pair<MPICommunicationUserIF*,
+                      spfsMPICollectiveRequest*> UserCallback;
+    
+    /** Map of the number of collective participants indexed by communicator */
+    typedef std::map<Communicator, std::size_t> CollectiveCountMap;
+    
+    /** Map of the collective participants indexed by communicator */
+    typedef std::map<Communicator,
+                     std::vector<UserCallback> > CollectiveCallbackMap;
+    
     /** Disabled copy constructor */
     MPICommunicationHelper(const MPICommunicationHelper& other);
 
     /** Disabled assignment operator */
     MPICommunicationHelper& operator=(const MPICommunicationHelper& other);
+
+    /** Map of the number collective participants indexed by communicator */
+    CollectiveCountMap numParticipantsByCommunicator_;
+
+    /** Map of callbacks indexed by communicator */
+    CollectiveCallbackMap callbacksByCommunicator_;
 };
     
 #endif

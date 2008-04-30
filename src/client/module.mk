@@ -26,6 +26,5 @@ SIM_SRC += $(DIR)/client_fs_state.cc \
 	$(DIR)/middleware_cache.cc \
 	$(DIR)/mpi_communication_helper.cc \
 	$(DIR)/mpi_middleware.cc \
-	$(DIR)/phtf_io_application.cc\
-	$(DIR)/shtf_io_application.cc\
-	$(DIR)/mpi_middleware_bcast_sm.cc
+	$(DIR)/phtf_io_application.cc \
+	$(DIR)/shtf_io_application.cc

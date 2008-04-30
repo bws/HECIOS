@@ -19,13 +19,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 #include <map>
 #include "singleton.h"
-
-#define MPI_COMM_WORLD CommMan::instance().commWorld()
-#define MPI_COMM_SELF CommMan::instance().commSelf()
-
+#include "pfs_types.h"
 
 /**
  * Communicator Manager (singleton)
@@ -33,28 +29,19 @@
 
 class CommMan : public Singleton<CommMan>
 {
-
-    typedef std::map<int, int> RankPair;
-
 public:
 
     /** Enable singleton construction */
     friend class Singleton<CommMan>;
-    
-    /**
-     * Join a certain communicator
-     * @param comm The communicator id
-     * @param world_rank The rank in MPI_COMM_WORLD
-     * @return The rank in comm
-     */
-    int joinComm(int comm, int world_rank);
 
-    /**
-     * Get group size of a communicator
-     * @param comm The communicator id
-     * @return The size of comm
-     */
-    size_t commSize(int comm);
+    /** @return The communicator id of MPI_COMM_SELF */
+    Communicator commSelf() const;
+
+    /** @return The communicator id of MPI_COMM_WORLD */
+    Communicator commWorld() const;
+
+    /** @return The size of comm */
+    size_t commSize(Communicator comm) const;
 
     /**
      * Get the rank in a certain communicator
@@ -63,7 +50,24 @@ public:
      * @param world_rank The rank in MPI_COMM_WORLD
      * @return The rank in comm
      */
-    int commRank(int comm, int world_rank);
+    int commRank(Communicator comm, int worldRank) const;
+
+    /** Register a process rank with the communicator manager */
+    void registerRank(int rank);
+    
+    /** Set the communicator id of MPI_COMM_SELF */
+    void setCommSelf(Communicator self);
+
+    /** Set the communicator id of MPI_COMM_WORLD */
+    void setCommWorld(Communicator world);
+
+    /**
+     * Join a certain communicator
+     * @param comm The communicator id
+     * @param world_rank The rank in MPI_COMM_WORLD
+     * @return The rank in comm
+     */
+    int joinComm(Communicator comm, int worldRank);
 
     /**
      * Translate rank between two communicators
@@ -75,28 +79,55 @@ public:
      */
     int commTrans(int comm1, int comm1_rank, int comm2);
 
-    /** @return The communicator id of MPI_COMM_WORLD */
-    int commWorld();
-
-    /** Set the communicator id of MPI_COMM_WORLD */
-    void commWorld(int world);
-
-    /** @return The communicator id of MPI_COMM_SELF */
-    int commSelf();
-
-    /** Set the communicator id of MPI_COMM_SELF */
-    void commSelf(int self);
-
 protected:
-    std::map<int, RankPair *> communicators_;// Communicator member map
-    bool exist(int comm); // Test if a communicator exists
-    bool exist(int comm, int rank); // Test if a communicator member exists
-    CommMan(){commWorld_ = 1; commSelf_ = 0;}; // Constructor
+    /** Constructor */
+    CommMan();
+
+    /** @return true if the communicator exists */
+    bool exists(Communicator comm) const;
+
+    /** @return true if the rank exists within the communicator */
+    bool rankExists(Communicator comm, int rank) const;
 
 private:
-    int commWorld_; // Communicator id of MPI_COMM_WORLD
-    int commSelf_; // Communicator id of MPI_COMM_SELF
+     /** Mapping of old ranks to new ranks */
+    typedef std::map<int, int> RankMap;
+    
+    /** Map for communicators to rank mappings */
+    typedef std::map<Communicator, RankMap> CommunicatorMap;
+    
+    /** Copy constructor disabled */
+    CommMan(const CommMan& other);
+
+    /** Assignment operator disabled */
+    CommMan& operator=(const CommMan& other);
+
+    /** @return a reference to the rank mapping for communicator comm */
+    RankMap getRankMap(Communicator comm) const;
+    
+    /**
+     * Add rank to the communicator comm
+     *
+     * @return the rank value used in the joined communicator
+     */
+    int addRank(int rank, Communicator comm);
+
+    /** Rank mappings indexed by the communicator */
+    CommunicatorMap rankMapByCommunicator_;
+    
+     /** Communicator id for the self communicator */
+    Communicator commSelf_;
+
+    /** Communicator id for the all process communicator */
+    Communicator commWorld_;
+
 };
+
+/** Process local communicator */
+static Communicator SPFS_COMM_SELF = CommMan::instance().commSelf();
+
+/** All process communicator */
+static Communicator SPFS_COMM_WORLD = CommMan::instance().commWorld();
 
 #endif
 /*

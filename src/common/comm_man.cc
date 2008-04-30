@@ -19,177 +19,133 @@
 //
 #include "comm_man.h"
 #include <cassert>
-#include "phtf_io_trace.h"
 using namespace std;
 
-bool CommMan::exist(int comm)
+CommMan::CommMan()
+    : commSelf_(-1),
+      commWorld_(-1)
 {
-    bool result;
-
-    if(comm == MPI_COMM_SELF)
-    {
-        result = true;
-    }
-    else if(communicators_.find(comm) != communicators_.end())
-    {
-        result = true;
-    }
-    else
-    {
-        result = false;
-    }
-    return result;
 }
 
-bool CommMan::exist(int comm, int rank)
-{
-    bool result = false;
-    
-    if(exist(comm))
-    {
-        if(communicators_[comm]->find(rank) != communicators_[comm]->end())
-        {
-            result = true;
-        }
-    }
-    return result;
-}
-
-int CommMan::joinComm(int comm, int world_rank)
-{
-    int rank;
-
-    // if join MPI_COMM_SELF, the rank = 0
-    if(comm == MPI_COMM_SELF)
-    {
-        rank = 0;
-    }
-
-    else {
-        // create the communicator if not exist
-        if(!exist(comm))
-        {
-            communicators_[comm] = new RankPair;
-        }
-        
-        // if join MPI_COMM_WORLD, assign a new rank
-        if(comm == MPI_COMM_WORLD)
-        {
-            int size = commSize(comm);
-            
-            (*communicators_[comm])[size] = size;
-            rank = size;
-        }
-        
-        // if join other communicators
-        else
-        {
-            assert(exist(MPI_COMM_WORLD, world_rank));        
-            
-            // not a member, assign a new rank
-            if(commRank(comm, world_rank) == -1)
-            {
-                int size = commSize(comm);
-                (*communicators_[comm])[size] = world_rank;
-                rank = size;
-            }
-            
-            // retuan the rank for member
-            else
-            {
-                rank = commRank(comm, world_rank);
-            }
-        }
-    }
-
-    return rank;
-}
-
-size_t CommMan::commSize(int comm)
-{
-    
-    
-    size_t size;
-    
-    if(comm == MPI_COMM_SELF)
-    {
-        size = 1;
-    }
-    else if(!exist(comm))
-    {
-        size = 0;
-    }
-    else
-    {
-        size = communicators_[comm]->size();
-    }
-    
-    return size;
-}
-
-int CommMan::commRank(int comm, int world_rank)
-{
-    assert(exist(comm));
-    
-    RankPair::iterator it;
-    int rank;
-
-    if(comm == MPI_COMM_SELF)
-    {
-        rank = 0;
-    }
-    else if(comm == MPI_COMM_WORLD)
-    {
-        rank = world_rank;
-    }
-    else
-    { // search in the communicator
-        rank = -1; // not found
-        for(it = communicators_[comm]->begin();
-            it != communicators_[comm]->end(); it ++)
-        {
-            if(it->second == world_rank)
-            {
-                rank = it->first;
-            }
-        }
-    }
-    return rank;
-}
-
-int CommMan::commTrans(int comm1, int comm1_rank, int comm2)
-{
-    assert(comm1 != MPI_COMM_SELF);
-    assert(exist(comm1, comm1_rank));
-        
-    int world_rank = comm1_rank;
-
-    if(comm1 != MPI_COMM_WORLD)
-    {
-        world_rank = (*communicators_[comm1])[comm1_rank];
-    }
-
-    return commRank(comm2, world_rank);
-}
-
-int CommMan::commWorld()
-{
-    return commWorld_;
-}
-
-void CommMan::commWorld(int world)
-{
-    commWorld_ = world;
-}
-
-int CommMan::commSelf()
+Communicator CommMan::commSelf() const
 {
     return commSelf_;
 }
 
-void CommMan::commSelf(int self)
+Communicator CommMan::commWorld() const
 {
+    return commWorld_;
+}
+
+size_t CommMan::commSize(Communicator comm) const
+{
+    size_t size = 1;
+    
+    if (commSelf_ != comm)
+    {
+        assert(exists(comm));
+        const RankMap& rankMap = getRankMap(comm);
+        size = rankMap.size();
+    }
+    return size;
+}
+
+void CommMan::setCommSelf(Communicator self)
+{
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "DIAGNOSTIC: Setting commSelf to: " << self << endl;
     commSelf_ = self;
+    SPFS_COMM_SELF = commSelf_;
+}
+
+void CommMan::setCommWorld(Communicator world)
+{
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "DIAGNOSTIC: Setting commWorld to: " << world << endl;
+    commWorld_ = world;
+    SPFS_COMM_WORLD = commWorld_;
+
+    // Create an empty communicator for commWorld
+    rankMapByCommunicator_[commWorld_];
+}
+
+void CommMan::registerRank(int rank)
+{
+    assert(false == rankExists(commWorld_, rank));
+    // Add the rank to the all process communicator
+    addRank(rank, commWorld_);
+}
+
+bool CommMan::exists(Communicator comm) const
+{
+    bool doesExist = false;
+
+    if(commSelf_ == comm ||
+       0 != rankMapByCommunicator_.count(comm))
+    {
+        doesExist = true;
+    }
+    return doesExist;
+}
+
+bool CommMan::rankExists(Communicator comm, int rank) const
+{
+    assert(exists(comm));
+    
+    bool result = false;
+    const RankMap& rankMap = getRankMap(comm);
+    if (0 != rankMap.count(rank))
+    {
+        result = true;
+    }    
+    return result;
+}
+
+int CommMan::joinComm(Communicator comm, int worldRank)
+{
+    assert(comm != commSelf_);
+    assert(comm != commWorld_);
+
+    return addRank(worldRank, comm);
+}
+
+int CommMan::commRank(Communicator comm, int worldRank) const
+{
+    int rank = -1;
+    if (commSelf_ == comm)
+    {
+        rank = 0;
+    }
+    else if (commWorld_ == comm)
+    {
+        rank = worldRank;
+    }
+    else
+    {
+        assert(exists(comm));
+        assert(rankExists(comm, worldRank));
+        const RankMap& rankMap = getRankMap(comm);
+        RankMap::const_iterator iter = rankMap.find(worldRank);
+        rank = iter->second;
+    }
+    return rank;
+}
+
+CommMan::RankMap CommMan::getRankMap(Communicator comm) const
+{
+    assert(commSelf_ != comm);
+    assert(exists(comm));
+    CommunicatorMap::const_iterator iter = rankMapByCommunicator_.find(comm);
+    assert(iter != rankMapByCommunicator_.end());
+    return iter->second;
+}
+
+int CommMan::addRank(int rank, Communicator comm)
+{
+    assert(commSelf_ != comm);
+    int newRank = rankMapByCommunicator_[comm].size();
+    (rankMapByCommunicator_[comm])[rank] = newRank;
+    return newRank;
 }
 
 

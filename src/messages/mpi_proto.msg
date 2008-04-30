@@ -145,7 +145,7 @@ message spfsMPICollectiveResponse extends spfsMPIResponse
 };
 
 // Request to open a file 
-message spfsMPIFileOpenRequest extends spfsMPIRequest
+message spfsMPIFileOpenRequest extends spfsMPICollectiveRequest
 {
     fields:
         string fileName;
@@ -156,7 +156,7 @@ message spfsMPIFileOpenRequest extends spfsMPIRequest
 };
 
 // Open file response
-message spfsMPIFileOpenResponse extends spfsMPIResponse
+message spfsMPIFileOpenResponse extends spfsMPICollectiveResponse
 {
     fields:
         FileDescriptorPtr fileDes;
