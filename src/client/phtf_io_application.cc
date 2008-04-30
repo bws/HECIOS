@@ -29,7 +29,6 @@
 #include "file_builder.h"
 #include "file_descriptor.h"
 #include "mpi_proto_m.h"
-//#include "mpi_mid_m.h"
 #include "storage_layout_manager.h"
 #include "phtf_io_trace.h"
 #include "comm_man.h"

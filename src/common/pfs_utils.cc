@@ -25,21 +25,6 @@
 #include "pfs_types.h"
 using namespace std;
 
-//PFSUtils* PFSUtils::instance_ = 0;
-//
-//PFSUtils& PFSUtils::instance()
-//{
-//    if (0 == instance_)
-//        instance_ = new PFSUtils();
-//    return *instance_;
-//}
-
-//void PFSUtils::clearState()
-//{
-//    delete instance_;
-//    instance_ = 0;
-//}
-
 PFSUtils::PFSUtils()
 {
 }

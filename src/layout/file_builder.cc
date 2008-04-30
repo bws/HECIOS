@@ -29,21 +29,6 @@
 #include "storage_layout_manager.h"
 using namespace std;
 
-//FileBuilder* FileBuilder::instance_ = 0;
-
-//FileBuilder& FileBuilder::instance()
-//{
-//    if (0 == instance_)
-//        instance_ = new FileBuilder();
-//    return *instance_;
-//}
-
-//void FileBuilder::clearState()
-//{
-//    delete instance_;
-//    instance_ = 0;
-//}
-
 FileBuilder::FileBuilder()
     : defaultMetaDataSize_(0),
       nextServerNumber_(0)
