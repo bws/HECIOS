@@ -17,8 +17,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
-#include <stdlib.h>
+#include <cassert>
+#include <cstdlib>
 #include "phtf_io_trace.h"
 
 using namespace std;
@@ -529,6 +529,14 @@ void PHTFIni::readIni()
     ifstream ifs;
     ifs.open(fileName_.c_str());
 
+    if (!ifs.is_open())
+    {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "ERROR: PHTF Trace file could not be opened: " << fileName_
+             << endl;
+        assert(false);
+    }
+    
     data_.clear();
 
     if(!ifs.is_open())return;
