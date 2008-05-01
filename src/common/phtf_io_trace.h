@@ -261,6 +261,7 @@ public:
     static std::string fsSecName;
     static std::string fsConst;
     
+    PHTFFs(std::string filepath, bool write);
     PHTFFs(std::string filepath);
     PHTFFs(){};
     ~PHTFFs(){};

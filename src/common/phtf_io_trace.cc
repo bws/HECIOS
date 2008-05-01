@@ -716,6 +716,13 @@ PHTFIniItem* PHTFIni::iniSection(string section)
 PHTFFs::PHTFFs(string filepath)
 {
     _fsini = new PHTFIni(filepath);
+    _fsini->init(false);    
+}
+
+PHTFFs::PHTFFs(string filepath, bool write)
+{
+    _fsini = new PHTFIni(filepath);
+    _fsini->init(write);
 }
 
 int PHTFFs::fileNum()
