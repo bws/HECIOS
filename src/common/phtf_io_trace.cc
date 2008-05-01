@@ -390,6 +390,8 @@ bool PHTFEvent::eof()
  */
 int PHTFEvent::open(bool write)
 {
+    _runtime->init(write);
+    
     if(write)
     {
         if(_ofs.is_open())
@@ -523,7 +525,7 @@ std::string PHTFTrace::dirPath()
 }
 
 /** Set the directory path */
-void PHTFTrace::dirPath(std::string dirpath)
+void PHTFTrace::dirPath(string dirpath)
 {
     _dirpath = dirpath;
 }
@@ -546,24 +548,44 @@ PHTFTrace* PHTFTrace::getInstance(string dirpath)
 }
 
 PHTFIni::PHTFIni(string filename)
+    : fileName_(filename)
 {
-    fileName_ = filename;
 }
 
 PHTFIni::~PHTFIni()
 {
+    clear();
+}
+
+void PHTFIni::init(bool write)
+{
+    isWriteOnly_ = write;
+    if(isWriteOnly_)
+    {
+        writeIni();
+    }
+    else
+    {
+        readIni();
+    }
+}
+
+void PHTFIni::clear()
+{
     std::map<std::string, PHTFIniItem *>::iterator iter;
     for(iter = data_.begin(); iter != data_.end(); iter ++)
     {
+        iter->second->clear();
         delete iter->second;
     }
+    data_.clear();
 }
 
 void PHTFIni::readIni()
 {
     ifstream ifs;
     ifs.open(fileName_.c_str());
-
+    
     if (!ifs.is_open())
     {
         cerr << __FILE__ << ":" << __LINE__ << ":"
@@ -572,28 +594,27 @@ void PHTFIni::readIni()
         assert(false);
     }
     
-    data_.clear();
-
-    if(!ifs.is_open())return;
-
+    clear();
+    
     string section;
     string::size_type index;
-
+    
     PHTFIniItem *item = 0;
     while(!ifs.eof())
     {
         string line;
         getline(ifs, line);
         if(line[0] == ';')continue;
-
+        
         if(line[0] == '[')
         {
             index = line.find("]", 1);
             section = line.substr(1, index - 1);
-
+            
             item = new PHTFIniItem;
-
+            
             data_[section] = item;
+            
         }
         else
         {
@@ -602,14 +623,14 @@ void PHTFIni::readIni()
             
             string field = line.substr(0, index);
             string value = line.substr(index + 1, line.length());
-
+            
             if(item)
             {
                 (*item)[field] = value;
             }
         }
     }
-
+    
     ifs.close();
 }
 
@@ -638,8 +659,6 @@ void PHTFIni::writeIni()
 
 bool PHTFIni::exist(string section)
 {
-    readIni();
-
     if(data_.find(section) != data_.end())
         return true;
     else
@@ -648,8 +667,6 @@ bool PHTFIni::exist(string section)
 
 bool PHTFIni::exist(string section, string field)
 {
-    readIni();
-
     if(exist(section))
     {
         if(data_[section]->find(field) != data_[section]->end())
@@ -673,6 +690,14 @@ string PHTFIni::iniValue(string section, string field)
 
 void PHTFIni::iniValue(string section, string field, string value)
 {
+    if(!isWriteOnly_)
+    {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "ERROR: PHTF Trace file in Read Mode, can't write to it"
+             << endl;
+        assert(false);
+    }
+    
     if(!exist(section))
         data_[section] = new PHTFIniItem;
 

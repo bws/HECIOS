@@ -227,15 +227,20 @@ protected:
 
 private:
     std::string fileName_;
+    bool isWriteOnly_;
     
 public:
     PHTFIni(std::string filename);
     ~PHTFIni();
+    
     bool exist(std::string section);
     bool exist(std::string section, std::string field);
     std::string iniValue(std::string section, std::string field);
     void iniValue(std::string section, std::string field, std::string value);
     PHTFIniItem * iniSection(std::string section);
+
+    void init(bool write);
+    void clear();
 };
 
 /**
