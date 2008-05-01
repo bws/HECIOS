@@ -252,6 +252,7 @@ void PHTFIOApplication::rankChanged(int oldRank)
 
 spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
 {
+    assert(0 != rec);
     assert(rec->recordOp() != CPU_PHASE);
     assert(rec->recordOp() != SEEK);
     assert(rec->recordOp() != WAIT);
@@ -281,9 +282,13 @@ spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
             mpiMsg = createIWriteMessage(rec);
             break;
         default:
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "ERROR: Invalid PHTF Record Op: " << rec->recordOp()
+                 << endl;
             assert(false);
             break;
     }
+
     return mpiMsg;
 }
 

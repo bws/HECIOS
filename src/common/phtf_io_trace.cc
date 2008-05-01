@@ -363,6 +363,23 @@ void PHTFEvent::filePath(std::string filepath)
 /** @return Whether event file has reached the end */
 bool PHTFEvent::eof()
 {
+    // We allow the very last line of the file to be an empty line due to
+    // a bug in the trace generator.  Empty lines in the middle of the file
+    // lead to an abort.
+    char c = _ifs.peek();
+    if ('\n' == c)
+    {
+        string empty;
+        getline(_ifs, empty);
+        assert(_ifs.eof());
+        if (false == _ifs.eof())
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "ERROR: Trace is corrupt, it contains an empty line near\n";
+            abort();
+        }
+    }
+    
     return _ifs.eof();
 }
 
@@ -374,19 +391,36 @@ bool PHTFEvent::eof()
 int PHTFEvent::open(bool write)
 {
     if(write)
+    {
+        if(_ofs.is_open())
         {
-            if(_ofs.is_open())_ofs.close();
-            _ofs.open(_filepath.c_str());
-            if(_ofs.is_open())return 0;
-            else return -1;
+            _ofs.close();
         }
+        
+        _ofs.open(_filepath.c_str());
+        if(_ofs.is_open())
+        {
+            return 0;
+        }
+        else return -1;
+    }
     else
+    {
+        if(_ifs.is_open())
         {
-            if(_ifs.is_open())_ifs.close();
-            _ifs.open(_filepath.c_str());
-            if(_ifs.is_open())return 0;
-            else return -1;
+            _ifs.close();
         }
+        _ifs.open(_filepath.c_str());
+
+        if(_ifs.is_open())
+        {
+            return 0;
+        }
+        else
+        {
+            return -1;
+        }
+    }
 }
 
 /** Close the event file */
@@ -400,11 +434,12 @@ void PHTFEvent::close()
 PHTFEvent & PHTFEvent::operator >> (PHTFEventRecord & rec)
 {
     string line;
+
     if(_ifs.is_open())
     {
-            getline(_ifs, line);
-            rec = PHTFEventRecord(line);
-        }
+        getline(_ifs, line);
+        rec = PHTFEventRecord(line);
+    }
     return *this;
 }
 
