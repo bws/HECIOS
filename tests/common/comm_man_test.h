@@ -1,12 +1,31 @@
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2008 Yang Wu, Brad Settlemyer
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
 #include <cppunit/extensions/HelperMacros.h>
 #include "comm_man.h"
 
 class CommManTest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(CommManTest);
+    CPPUNIT_TEST(testCommSize);
     CPPUNIT_TEST(testJoinComm);
     CPPUNIT_TEST(testCommRank);
-    CPPUNIT_TEST(testCommTrans);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -15,14 +34,24 @@ public:
 
     /** Post test code */
     void tearDown();
-    
+
+    void testCommSize();
     void testJoinComm();
     void testCommRank();
-    void testCommTrans();
+    
 };
 
 void CommManTest::setUp()
 {
+    // Register the predefined communicators
+    CommMan::instance().setCommWorld(0);
+    CommMan::instance().setCommSelf(1);
+
+    // Register 4 ranks
+    CommMan::instance().registerRank(1);
+    CommMan::instance().registerRank(2);
+    CommMan::instance().registerRank(3);
+    CommMan::instance().registerRank(4);
 }
 
 void CommManTest::tearDown()
@@ -30,28 +59,19 @@ void CommManTest::tearDown()
     CommMan::clearState();
 }
 
+void CommManTest::testCommSize()
+{
+}
+
 void CommManTest::testJoinComm()
 {
     CommMan& cm = CommMan::instance();
 
-    // 1st node join, rank should be 0
-    CPPUNIT_ASSERT_EQUAL(cm.joinComm(MPI_COMM_WORLD, 0), 0);
-    // size should be 1
-    CPPUNIT_ASSERT_EQUAL(cm.commSize(MPI_COMM_WORLD), (size_t)1);
-    // 2nd node join, rank should be 1
-    CPPUNIT_ASSERT_EQUAL(cm.joinComm(MPI_COMM_WORLD, 0), 1);
-    // size should be 2
-    CPPUNIT_ASSERT_EQUAL(cm.commSize(MPI_COMM_WORLD), (size_t)2);
-
-    // size of MPI_COMM_SELF should always be 1
-    CPPUNIT_ASSERT_EQUAL(cm.commSize(MPI_COMM_SELF), (size_t)1);
-
     // now test for a new communicator
-
-    int id = 11321;
+    int id = 3;
     
     // 1st node join, rank should be 0
-    CPPUNIT_ASSERT_EQUAL(cm.joinComm(id, 0), 0);
+    CPPUNIT_ASSERT_EQUAL(cm.joinComm(id, 1), 0);
     // size should be 1
     CPPUNIT_ASSERT_EQUAL(cm.commSize(id), (size_t)1);
     // 2nd node join, rank should be 1
@@ -68,34 +88,24 @@ void CommManTest::testCommRank()
 {
     CommMan& cm = CommMan::instance();
 
-    int id = 13213;
-    
-    int rank = cm.joinComm(MPI_COMM_WORLD, 0);
-
-    int group_rank = cm.joinComm(id, rank);
-
-    // rank in communicator should be group_rank
-    CPPUNIT_ASSERT_EQUAL(cm.commRank(id, rank), group_rank);
-
     // rank in MPI_COMM_SELF should be 0
-    CPPUNIT_ASSERT_EQUAL(cm.commRank(MPI_COMM_SELF, rank), 0);
+    CPPUNIT_ASSERT_EQUAL(cm.commRank(SPFS_COMM_SELF, 2), 0);
+
+    // rank in MPI_COMM_WORLD should be the same
+    CPPUNIT_ASSERT_EQUAL(cm.commRank(SPFS_COMM_WORLD, 2), 2);
+
+    // rank in communicator should be groupRank
+    int id = 3;    
+    int groupRank = cm.joinComm(id, 3);
+    CPPUNIT_ASSERT_EQUAL(0, groupRank);
 }
 
-void CommManTest::testCommTrans()
-{
-    CommMan& cm = CommMan::instance();
-
-    int id = 1123;
-    
-    int rank = cm.joinComm(MPI_COMM_WORLD, 0);
-
-    int group_rank = cm.joinComm(id, rank);
-
-    // translate from MPI_COMM_WORLD to id should get group_rank
-    CPPUNIT_ASSERT_EQUAL(cm.commTrans(MPI_COMM_WORLD, rank, id), group_rank);
-    // translate from id to MPI_COMM_WORLD should get rnak
-    CPPUNIT_ASSERT_EQUAL(cm.commTrans(id, group_rank, MPI_COMM_WORLD), rank);
-    // translate any rank to MPI_COMM_SELF should get 0
-    CPPUNIT_ASSERT_EQUAL(cm.commTrans(id, group_rank, MPI_COMM_SELF), 0);
-    CPPUNIT_ASSERT_EQUAL(cm.commTrans(MPI_COMM_WORLD, rank, MPI_COMM_SELF), 0);
-}
+/*
+ * Local variables:
+ *  indent-tabs-mode: nil
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ *
+ * vim: ts=8 sts=4 sw=4 expandtab
+ */

@@ -55,19 +55,28 @@ void PHTFIOApplication::initialize()
     // Retrieve the resource describing the trace location
     string dirStr = par("dirPHTF").stringValue();
 
-    // Set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration
-    // in fs.ini
-    string commWorldValue =
-        PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_WORLD");
-    CommMan::instance().setCommWorld(strtol(commWorldValue.c_str(), 0, 10));
+    // PHTF stuff not able to support single initialization, so
+    // enforce that locally
+    static bool phtfInit = false;
+    if(!phtfInit)
+    {
+        // Set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration
+        // in fs.ini
+        string commWorldValue =
+            PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_WORLD");
+        CommMan::instance().setCommWorld(strtol(commWorldValue.c_str(), 0, 10));
 
-    string commSelfValue =
-        PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_SELF");
-    CommMan::instance().setCommSelf(strtol(commSelfValue.c_str(), 0, 10));
+        string commSelfValue =
+            PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_SELF");
+        CommMan::instance().setCommSelf(strtol(commSelfValue.c_str(), 0, 10));
 
-    // I have no idea what this does???
-    PHTFEventRecord::buildOpMap();
+        // I have no idea what this does???
+        PHTFEventRecord::buildOpMap();
 
+        // Disable further initialization
+        phtfInit = true;
+    }
+    
     // Schedule the kick start message
     cMessage* kickStart = new cMessage();
     scheduleAt(0.0, kickStart);
@@ -163,9 +172,9 @@ bool PHTFIOApplication::scheduleNextMessage()
             performOpenProcessing(&eventRecord, commId);
             assert(commId != -1);
 
-            // FIXME
             // Determine if this is first rank for the communicator
-            if (0 == getRank())
+            int openRank = CommMan::instance().commRank(commId, getRank());
+            if (0 == openRank)
             {
                 cMessage* msg = createRequest(&eventRecord);
                 send(msg, ioOutGate_);
