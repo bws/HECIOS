@@ -65,7 +65,7 @@ void PHTFEventRecord::recordStr(std::string recordstr)
 }
 
 /** @return The record id */
-long PHTFEventRecord::recordId()
+long PHTFEventRecord::recordId() const
 {
     return _id;
 }
@@ -125,7 +125,7 @@ void PHTFEventRecord::retValue(long retvalue)
 }
 
 /** @return The number of parameters */
-long PHTFEventRecord::paraNum()
+long PHTFEventRecord::paraNum() const
 {
     return _parameters.size();
 }
@@ -141,7 +141,7 @@ void PHTFEventRecord::paraNum(long paranum)
 }
 
 /** @return The paraindex-th parameter */
-std::string PHTFEventRecord::paramAt(long paraindex)
+std::string PHTFEventRecord::paramAt(long paraindex) const
 {
     if(paraindex < paraNum())
         return (string)_parameters.at(paraindex);
@@ -155,6 +155,45 @@ void PHTFEventRecord::paramAt(long paraindex, std::string parastr)
     if(paraindex >= paraNum())
         _parameters.resize(paraindex + 1);
     _parameters.at(paraindex) = parastr;
+}
+
+/** @return The paramindex-th parameter as a file descriptor */
+int PHTFEventRecord::paramAsDescriptor(long paramindex, const PHTFEvent & event) const
+{
+    stringstream ss("");
+    assert(paramindex < paraNum());
+    
+    string hpt = paramAt(paramindex);
+    ss << hpt << "@" << recordId();
+
+    string hstr = event.memValue("Pointer", ss.str());
+
+    // TODO: comeup with better error handling
+    if(hstr == "")
+    {
+        abort();
+    }
+    
+    int fileId = strtol(hstr.c_str(), NULL, 16);
+
+    return fileId;
+}
+
+string PHTFEventRecord::paramAsFilename(long paramindex, const PHTFEvent & event) const
+{
+    assert(paramindex < paraNum());
+
+    string strpt = paramAt(paramindex);
+
+    string str = event.memValue("String", strpt);
+
+    // TODO: come up with better error handling
+    if(str == "")
+    {
+        abort();
+    }
+
+    return str;
 }
 
 /** @return The string contains the parameters */
@@ -338,7 +377,7 @@ PHTFEvent::~PHTFEvent()
     }
 }
 
-string PHTFEvent::memValue(string type, string pointer)
+string PHTFEvent::memValue(string type, string pointer) const
 {
     return _runtime->iniValue(type, pointer);
 }

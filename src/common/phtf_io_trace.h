@@ -93,7 +93,7 @@ public:
     void recordStr(std::string recordstr);
 
     /** @return The record id */
-    long recordId();
+    long recordId() const;
     /** Set the record id */
     void recordId(long recordid);
 
@@ -118,7 +118,7 @@ public:
     void retValue(long retvalue);
 
     /** @return The number of parameters */
-    long paraNum();
+    long paraNum() const;
     /**
      * Set the number of parameters 
      * Only used with paramAt()
@@ -127,9 +127,15 @@ public:
     void paraNum(long paranum);
 
     /** @return The paraindex-th parameter */
-    std::string paramAt(long paraindex);
+    std::string paramAt(long paraindex) const;
     /** Set the parameter at position paraindex */
     void paramAt(long paraindex, std::string parastr);
+
+    /** @return The paramindex-th parameter as a file descriptor */
+    int paramAsDescriptor(long paramindex, const PHTFEvent & event) const;
+
+    /** @return The paramindex-th parameter as a file name */
+    std::string paramAsFilename(long paramindex, const PHTFEvent & event) const;
 
     /** @return The string contains the parameters */
     std::string params();
@@ -203,7 +209,7 @@ public:
     /** Write a record into the event file */
     PHTFEvent & operator << (const PHTFEventRecord & rec);
 
-    std::string memValue(std::string type, std::string pointer);
+    std::string memValue(std::string type, std::string pointer) const;
     void memValue(std::string type, std::string pointer, std::string value);
 
 private:

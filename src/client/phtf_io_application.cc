@@ -330,11 +330,9 @@ void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
                                               int& outCommunicatorId)
 {
     // Extract the descriptor number from the event record
-    stringstream ss("");
-    string hpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(4);
-    ss << hpt << "@" << const_cast<PHTFEventRecord*>(openRecord)->recordId();
-    string hstr = phtfEvent_->memValue("Pointer", ss.str());
-    int fileId = strtol(hstr.c_str(), NULL, 16);
+
+    int fileId = openRecord->
+        paramAsDescriptor(4, *phtfEvent_);
 
     // Extract the file name from the event record
     string fpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(1);
@@ -456,11 +454,9 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
     const PHTFEventRecord* openRecord)
 {
     // Extract the descriptor id
-    stringstream ss("");
-    string hpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(4);
-    ss << hpt << "@" << const_cast<PHTFEventRecord*>(openRecord)->recordId();
-    string hstr = phtfEvent_->memValue("Pointer", ss.str());
-    int fileId = strtol(hstr.c_str(), NULL, 16);
+
+    int fileId = const_cast<PHTFEventRecord*>(openRecord)->
+        paramAsDescriptor(4, *phtfEvent_);
 
     // Retrieve the descriptor
     FileDescriptor* fd = getDescriptor(fileId);
