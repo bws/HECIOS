@@ -30,6 +30,7 @@ class spfsMPIBarrierRequest;
 class spfsMPIBcastRequest;
 class spfsMPIDirectoryCreateRequest;
 class spfsMPIFileCloseRequest;
+class spfsMPIFileDeleteRequest;
 class spfsMPIFileOpenRequest;
 class spfsMPIFileReadAtRequest;
 class spfsMPIFileReadRequest;
@@ -113,6 +114,10 @@ private:
     /** @return an MPI File Close request */
     spfsMPIFileCloseRequest* createCloseMessage(
         const PHTFEventRecord* closeRecord);
+    
+    /** @return an MPI File Delete request */
+    spfsMPIFileDeleteRequest* createDeleteRequest(
+        const PHTFEventRecord* deleteRecord);
     
     /** @return an MPI File Open request */
     spfsMPIFileOpenRequest* createOpenMessage(

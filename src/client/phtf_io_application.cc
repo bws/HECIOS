@@ -140,6 +140,11 @@ bool PHTFIOApplication::scheduleNextMessage()
             scheduleCPUMessage(msg);
             msgScheduled = true;
         }
+        else if (GET_INFO == opcode || DELETE == opcode)
+        {
+            // Currently exists as a no-op
+            msgScheduled = scheduleNextMessage();
+        }
         else if (WAIT == opcode)
         {
             // Perform wait operation
@@ -278,6 +283,11 @@ spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
         case CLOSE:
             mpiMsg = createCloseMessage(rec);
             break;
+        case DELETE:
+        {
+            mpiMsg = createDeleteRequest(rec);
+            break;
+        }
         case READ_AT:
             mpiMsg = createReadAtMessage(rec);
             break;
@@ -428,6 +438,18 @@ spfsMPIFileCloseRequest* PHTFIOApplication::createCloseMessage(
     spfsMPIFileCloseRequest* close = new spfsMPIFileCloseRequest(
         0, SPFS_MPI_FILE_CLOSE_REQUEST);
     return close;
+}
+
+spfsMPIFileDeleteRequest* PHTFIOApplication::createDeleteRequest(
+    const PHTFEventRecord* deleteRecord)
+{
+    // Extract the file name
+
+    // FIXME
+    // Fill out the delete request
+    spfsMPIFileDeleteRequest* deleteRequest =
+        new spfsMPIFileDeleteRequest(0, SPFS_MPI_FILE_DELETE_REQUEST);
+    return deleteRequest;
 }
 
 spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
