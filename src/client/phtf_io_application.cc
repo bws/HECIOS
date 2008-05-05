@@ -140,7 +140,7 @@ bool PHTFIOApplication::scheduleNextMessage()
             scheduleCPUMessage(msg);
             msgScheduled = true;
         }
-        else if (GET_INFO == opcode || DELETE == opcode)
+        else if (GET_INFO == opcode)
         {
             // Currently exists as a no-op
             msgScheduled = scheduleNextMessage();
@@ -442,11 +442,13 @@ spfsMPIFileDeleteRequest* PHTFIOApplication::createDeleteRequest(
     const PHTFEventRecord* deleteRecord)
 {
     // Extract the file name
-
-    // FIXME
+    string filename = deleteRecord->paramAsFilename(2, *phtfEvent_);
+    
     // Fill out the delete request
     spfsMPIFileDeleteRequest* deleteRequest =
         new spfsMPIFileDeleteRequest(0, SPFS_MPI_FILE_DELETE_REQUEST);
+    deleteRequest->setFileName(filename.c_str());
+    cerr << __FILE__ << ":" << __LINE__ << ": Deleting " << filename << endl;
     return deleteRequest;
 }
 
