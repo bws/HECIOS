@@ -81,10 +81,10 @@ FileSystem* StorageLayoutManager::getLocalFileSystem(size_t serverNumber) const
         // If server numbers match, find the local file system
         if (serverNumber == fsServer->getNumber())
         {
-            cModule* storageLayerMod = daemonMod->submodule("storage");
-            assert(0 != storageLayerMod);
-
-            cModule* fileSystemMod = storageLayerMod->submodule("fileSystem");
+            cModule* osMod = ionMod->submodule("os");
+            assert(0 != osMod);
+            
+            cModule* fileSystemMod = osMod->submodule("fileSystem");
             fs = dynamic_cast<FileSystem*>(fileSystemMod);
             break;
         }

@@ -42,8 +42,11 @@ module IONode
         daemon: DaemonProcess;
             display: "p=100,180;i=block/process,blue";
 
+        os: OperatingSystem;
+            display: "p=100,280;i=block/process,blue";
+
         hardDisk: BasicModelDisk;
-            display: "p=100,280;i=abstract/db,sienna";
+            display: "p=100,380;i=abstract/db,sienna";
 
     connections:
 
@@ -51,9 +54,13 @@ module IONode
         daemon.out --> hca.bmiIn++;
         daemon.in <-- hca.bmiOut++;
 
+        // Connect operating system gates
+        daemon.toOS --> os.in;
+        daemon.fromOS <-- os.out;
+
         // Connect storage gates
-        daemon.toDisk --> hardDisk.in;
-        daemon.fromDisk <-- hardDisk.out;
+        os.toDisk --> hardDisk.in;
+        os.fromDisk <-- hardDisk.out;
 
         // Connect networking gates
         ethIn --> hca.ethIn++;
@@ -65,9 +72,10 @@ endmodule
 
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:
 //
-// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+// vim: ts=4 sts=4 sw=4 expandtab
 //

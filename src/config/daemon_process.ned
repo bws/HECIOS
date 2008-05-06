@@ -24,8 +24,8 @@
 module DaemonProcess
 
     gates:
-        in: in, fromDisk;
-        out: out, toDisk;
+        in: in, fromOS;
+        out: out, toOS;
 
     submodules:
         serverJobManager: JobManager;
@@ -34,23 +34,23 @@ module DaemonProcess
         pfsServer: FSServer;
             display: "p=60,180;i=block/process,light grey";
           
-        storage: StorageLayer;
+        trove: StorageLayer;
             display: "p=160,180;i=block/buffer2,light sea green";
  
     connections nocheck:
         // Messages inbound to the job manager
         in --> serverJobManager.netIn;
         pfsServer.out --> serverJobManager.pfsIn;
-        storage.out --> serverJobManager.storageIn;
+        trove.out --> serverJobManager.storageIn;
 
         // Messages outbound from the job manager
         serverJobManager.pfsOut --> pfsServer.in;
-        serverJobManager.storageOut --> storage.in;
+        serverJobManager.storageOut --> trove.in;
         serverJobManager.netOut --> out;
 
-        // Storage layer/Disk connections
-        storage.toDisk --> toDisk;
-        storage.fromDisk <-- fromDisk;
+        // Storage layer/OS connections
+        trove.toOS --> toOS;
+        trove.fromOS <-- fromOS;
 endmodule
 
 //

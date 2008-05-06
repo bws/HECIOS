@@ -63,6 +63,9 @@ private:
     /** @return the basic block size for the disk model */
     virtual uint32_t basicBlockSize() const = 0;
 
+    /** Out gate id */
+    int outGateId_;
+    
     /** Total time spent accessing the disk */
     double totalDelay_;
     
@@ -126,6 +129,7 @@ private:
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

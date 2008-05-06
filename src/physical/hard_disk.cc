@@ -38,6 +38,9 @@ void HardDisk::initialize()
 {
     // Initialize collection data
     totalDelay_ = 0;
+
+    // Retrieve gate id
+    outGateId_ = findGate("out");
 }
 
 void HardDisk::finish()
@@ -76,7 +79,7 @@ void HardDisk::handleMessage(cMessage *msg)
     
     // Schedule response at the end of service period
     resp->setContextPointer(msg);
-    sendDelayed(resp, delay, "out");
+    sendDelayed(resp, delay, outGateId_);
 }
 
 long HardDisk::getBasicBlockSize() const
