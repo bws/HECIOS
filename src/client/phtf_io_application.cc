@@ -303,6 +303,7 @@ spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
         default:
             cerr << __FILE__ << ":" << __LINE__ << ":"
                  << "ERROR: Invalid PHTF Record Op: " << rec->recordOp()
+                 << " -> " << rec->recordStr()
                  << endl;
             assert(false);
             break;
@@ -442,7 +443,7 @@ spfsMPIFileDeleteRequest* PHTFIOApplication::createDeleteRequest(
     const PHTFEventRecord* deleteRecord)
 {
     // Extract the file name
-    string filename = deleteRecord->paramAsFilename(2, *phtfEvent_);
+    string filename = deleteRecord->paramAsFilename(0, *phtfEvent_);
     
     // Fill out the delete request
     spfsMPIFileDeleteRequest* deleteRequest =
