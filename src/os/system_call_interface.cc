@@ -31,20 +31,13 @@ void SystemCallInterface::initialize()
     inGateId_ = gate("in")->id();
     requestGateId_ = gate("request")->id();
     outGateId_ = gate("out")->id();
-
-    overheadSecs_ = par("overheadSecs").doubleValue();
-    assert(0.0 <= overheadSecs_);
 }
 
 void SystemCallInterface::handleMessage(cMessage *msg)
 {
-    if (msg->isSelfMessage())
+    if (msg->arrivalGateId() == inGateId_)
     {
         send(msg, requestGateId_);
-    }
-    else if (msg->arrivalGateId() == inGateId_)
-    {
-        scheduleAt(simTime() + overheadSecs_, msg);
     }
     else
     {
@@ -53,11 +46,50 @@ void SystemCallInterface::handleMessage(cMessage *msg)
 }
 
 //------------------------------------------------
-
 Define_Module_Like( PassThroughSystemCallInterface, SystemCallInterface );
 
 PassThroughSystemCallInterface::PassThroughSystemCallInterface()
+    : SystemCallInterface()
 {
+}
+
+//------------------------------------------------
+Define_Module_Like(SequentialSystemCallInterface, SystemCallInterface);
+
+SequentialSystemCallInterface::SequentialSystemCallInterface()
+    : SystemCallInterface(),
+      messageInScheduler_(this),
+      messageOutScheduler_(this),
+      overheadSecs_(-1.0)
+{
+}
+
+void SequentialSystemCallInterface::initialize()
+{
+    // Initialize parent
+    SystemCallInterface::initialize();
+
+    // Initialize self
+    overheadSecs_ = par("overheadSecs").doubleValue();
+    assert(0.0 <= overheadSecs_);
+}
+
+void SequentialSystemCallInterface::handleMessage(cMessage* msg)
+{
+    if (msg->arrivalGateId() == inGateId_)
+    {
+        // Sequence the message and add system call delay
+        simtime_t scheduleDelay =
+            messageInScheduler_.getNextMessageScheduleDelay(overheadSecs_);
+        sendDelayed(msg, scheduleDelay, requestGateId_);
+    }
+    else
+    {
+        // Sequence the message and add system call delay
+        simtime_t scheduleDelay =
+            messageInScheduler_.getNextMessageScheduleDelay(overheadSecs_);
+        sendDelayed(msg, scheduleDelay, outGateId_);
+    }
 }
 
 /*

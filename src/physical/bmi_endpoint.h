@@ -19,6 +19,7 @@
 //
 #include <omnetpp.h>
 #include "basic_types.h"
+#include "serial_message_scheduler.h"
 class spfsBMIExpectedMessage;
 class spfsBMIMessage;
 class spfsBMIPushDataRequest;
@@ -40,7 +41,7 @@ public:
     static const unsigned int BMI_EXPECTED_MSG_BYTES = 0;
     
     /** Constructor */
-    BMIEndpoint() : cSimpleModule() {};
+    BMIEndpoint();
 
     /** Set the enpoints shandle range to provide service to */
     void setHandleRange(const HandleRange& handleRange);
@@ -99,11 +100,13 @@ private:
     /** Handle range for this endpoint */
     HandleRange handleRange_;
 
-    /** Variable for serializing all outbound messages */ 
-    double nextMessageScheduledOutTime_;
-    
-    /** Variable for serializing all inbound messages */ 
+    /** Variable for serializing all inbound messages */
+    SerialMessageScheduler messageInScheduler_;
     double nextMessageScheduledInTime_;
+    
+    /** Variable for serializing all outbound messages */
+    SerialMessageScheduler messageOutScheduler_;
+    double nextMessageScheduledOutTime_;
     
     /** Fixed overhead for sending and receiving a BMI message */
     double fixedOverheadSecs_;

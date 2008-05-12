@@ -26,6 +26,12 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
+BMIEndpoint::BMIEndpoint()
+    : cSimpleModule(),
+      messageInScheduler_(this),
+      messageOutScheduler_(this)
+{
+}
 void BMIEndpoint::setHandleRange(const HandleRange& handleRange)
 {
     handleRange_ = handleRange;
@@ -147,26 +153,16 @@ bool BMIEndpoint::handleIsLocal(const FSHandle& handle)
 
 simtime_t BMIEndpoint::getNextMessageInScheduleTime(size_t byteLength)
 {
-    simtime_t currentTime = simTime();
-    if (nextMessageScheduledInTime_ < currentTime)
-    {
-        nextMessageScheduledInTime_ = currentTime;
-    }
-    nextMessageScheduledInTime_ += fixedOverheadSecs_ + (scaledOverheadSecs_ *
-                                                         byteLength);
-    return nextMessageScheduledInTime_;
+    simtime_t delay = fixedOverheadSecs_ + (scaledOverheadSecs_ *
+                                            byteLength);
+    return messageInScheduler_.getNextMessageScheduleTime(delay);
 }
 
 simtime_t BMIEndpoint::getNextMessageOutScheduleTime(size_t byteLength)
 {
-    simtime_t currentTime = simTime();
-    if (nextMessageScheduledOutTime_ < currentTime)
-    {
-        nextMessageScheduledOutTime_ = currentTime;
-    }
-    nextMessageScheduledOutTime_ += fixedOverheadSecs_ + (scaledOverheadSecs_ *
-                                                          byteLength);
-    return nextMessageScheduledOutTime_;
+    simtime_t delay = fixedOverheadSecs_ + (scaledOverheadSecs_ *
+                                            byteLength);
+    return messageOutScheduler_.getNextMessageScheduleTime(delay);
 }
 
 /*

@@ -20,8 +20,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 #include <omnetpp.h>
+#include "serial_message_scheduler.h"
 
 /**
  * Abstract base class for system call interface models
@@ -45,32 +45,54 @@ protected:
      */
     virtual void handleMessage(cMessage *msg);
 
-private:
-
     int inGateId_;
 
     int outGateId_;
 
     int requestGateId_;
-
-    /** System call overhead */
-    double overheadSecs_;
 };
 
 /**
- * simple File System model that passes requests through with no translation
+ * simple System call model that passes requests through with no translation
  */
 class PassThroughSystemCallInterface : public SystemCallInterface
 {
   public:
     /**
      *  This is the constructor for this simulation module.
-     *
-     *  @param namestr (in) is the name of the module
-     *  @param parent (in) is the parent of this module
-     *  @param stack (in) is the size in bytes of the stack for this module
      */
     PassThroughSystemCallInterface();
+};
+
+/**
+ * System call model that sequentializes requests and applies a system call
+ * delay
+ */
+class SequentialSystemCallInterface : public SystemCallInterface
+{
+public:
+    /**
+     *  This is the constructor for this simulation module.
+     */
+    SequentialSystemCallInterface();
+
+protected:    
+    /** This is the initialization routine for this simulation module. */
+    virtual void initialize();
+
+    /** This is the finalization routine for this simulation module. */
+    virtual void handleMessage(cMessage *msg);
+
+private:
+    /** */
+    SerialMessageScheduler messageInScheduler_;
+
+    /** */
+    SerialMessageScheduler messageOutScheduler_;
+    
+    /** System call overhead */
+    double overheadSecs_;
+
 };
 
 #endif

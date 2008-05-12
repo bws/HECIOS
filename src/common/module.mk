@@ -4,6 +4,7 @@
 DIR := src/common
 
 SIM_SRC += $(DIR)/basic_data_type.cc \
+	$(DIR)/comm_man.cc \
 	$(DIR)/contiguous_data_type.cc \
 	$(DIR)/data_type.cc \
 	$(DIR)/file_descriptor.cc \
@@ -15,8 +16,8 @@ SIM_SRC += $(DIR)/basic_data_type.cc \
 	$(DIR)/io_trace.cc \
 	$(DIR)/ip_socket_map.cc \
 	$(DIR)/pfs_utils.cc \
+	$(DIR)/phtf_io_trace.cc \
+	$(DIR)/serial_message_scheduler.cc \
 	$(DIR)/shtf_io_trace.cc \
 	$(DIR)/umd_io_trace.cc \
-	$(DIR)/vector_data_type.cc\
-	$(DIR)/phtf_io_trace.cc \
-	$(DIR)/comm_man.cc
+	$(DIR)/vector_data_type.cc
