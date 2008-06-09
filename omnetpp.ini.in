@@ -1,7 +1,7 @@
 # This file is shared by all PFS simulations
 
 [General]
-preload-ned-files = src/*/*.ned @INET/nedfiles.lst
+preload-ned-files = @NEDINCLUDES@
 sim-time-limit = 10000s
 
 network = Test

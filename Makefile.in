@@ -64,7 +64,7 @@ VPATH = $(HECIOS_DIR)
 #
 # Master Makefile default targets
 #
-DEFAULT_TARGETS = $(BIN_DIR)/hecios_cmd
+DEFAULT_TARGETS = $(BIN_DIR)/hecios_cmd $(BUILD_DIR)/omnetpp.ini
 default: $(DEFAULT_TARGETS)
 
 
@@ -195,9 +195,9 @@ include $(HECIOS_DIR)/mf/tests.mk
 #
 # Top level psuedo targets
 #
-all: $(BIN_DIR)/hecios_cmd $(BIN_DIR)/hecios
+all: $(BIN_DIR)/hecios_cmd $(BIN_DIR)/hecios $(BUILD_DIR)/omnetpp.ini
 
-gui: $(BIN_DIR)/hecios
+gui: $(BIN_DIR)/hecios $(BUILD_DIR)/omnetpp.ini
 
 clean:
 	@echo "Removing all derived files."
@@ -206,12 +206,13 @@ clean:
 	$(RM) $(SIM_NED_OUTPUT) $(SIM_NED_OBJS) 
 	$(RM) $(SIM_MSG_OUTPUT) $(SIM_MSG_OBJS)
 	$(RM) $(SIM_OBJS)
+	$(RM) $(BIN_DIR)/hecios $(BIN_DIR)/hecios_cmd $(BUILD_DIR)/omnetpp.ini
 	@echo "Derived files deleted.  Project is clean."
 
 depclean:
 	$(RM) $(SIM_DEPENDS)
 
-ned_clean:
+gen_clean:
 	@echo "Removing generated source files and objects."
 	$(RM) $(SIM_NED_OUTPUT) $(SIM_NED_OBJS)
 	$(RM) $(SIM_MSG_OUTPUT) $(SIM_MSG_OBJS)
@@ -219,6 +220,10 @@ ned_clean:
 
 all_clean: clean tests_clean inet_clean
 
+
+#
+# Build targets for software installation
+#
 install:
 	$(INSTALL) -d $(INSTALL_DIR)/bin
 	$(INSTALL) -d $(INSTALL_DIR)/examples
@@ -227,7 +232,9 @@ install:
 	$(INSTALL) -c lib/*.* $(INSTALL_DIR)/lib
 	$(INSTALL) -c ini/*.ini $(INSTALL_DIR)/examples
 	find . -name *.ned -exec $(INSTALL) -c {} $(INSTALL_DIR)/lib/ned \;
-	find . -name *.ned > $(INSTALL_DIR)/lib/ned/all_ned.lst
+	find $(INSTALL_DIR) -name *.ned > $(INSTALL_DIR)/lib/ned/hecios_ned.lst
+	sed -e "s|@NEDINCLUDES@|@$(INSTALL_DIR)/lib/ned/hecios_ned.lst|" \
+            $(HECIOS_DIR)/omnetpp.ini.in > $(INSTALL_DIR)/examples/example.ini
 	@echo "HECIOS successfully installed."
 
 #
@@ -240,6 +247,18 @@ doc: $(DOC_EPS) $(DOC_PDF)
 	opp_neddoc -d ../api-doc/html -t $(DOC_DIR)/Doxytag.xml -o $(DOC_DIR)/ned-doc $(SRC_DIR)
 
 #
+# Build the Omnet configuration information
+#
+$(BUILD_DIR)/hecios_ned.lst:
+	find $(HECIOS_DIR) -name *.ned > $@
+
+$(BUILD_DIR)/omnetpp.ini: $(BUILD_DIR)/hecios_ned.lst $(HECIOS_DIR)/omnetpp.ini.in
+	sed -e "s|@NEDINCLUDES@|@$(BUILD_DIR)/hecios_ned.lst|" $(HECIOS_DIR)/omnetpp.ini.in > $@
+
+configfile: $(BUILD_DIR)/omnetpp.ini
+
+
+#
 # Targets to build HECIOS simulator (gui and command line versions)
 #
 $(SIM_MSG_OUTPUT): $(LIB_DIR)/inet.o
@@ -250,7 +269,7 @@ $(BIN_DIR)/hecios: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(LIB_DIR)/inet.o $(LIBS_GUI) -o $@
 
-$(BIN_DIR)/hecios_cmd: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS)
+$(BIN_DIR)/hecios_cmd: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) 
 	@mkdir -p $(BIN_DIR)
 	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(LIB_DIR)/inet.o $(LIBS_CMD) -o $@
 
@@ -263,4 +282,4 @@ test: tests_all
 #
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all all_clean clean default depclean doc gui install ned_clean test tests_clean
+.PHONY: all all_clean clean configfile default depclean doc gen_clean gui install test tests_clean
