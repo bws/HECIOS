@@ -53,10 +53,10 @@ void BufferCache::finish()
 
     // Record statistics
     double statHitRate = (double)statNumHits_ / (double) statNumRequests_;
-    recordScalar("Buffer Cache Requests", statNumRequests_);
-    recordScalar("Buffer Cache Hits", statNumHits_);
-    recordScalar("Buffer Cache Misses", statNumMisses_);
-    recordScalar("Buffer Cache Hit Rate", statHitRate);
+    recordScalar("SPFS Buffer Cache Requests", statNumRequests_);
+    recordScalar("SPFS Buffer Cache Hits", statNumHits_);
+    recordScalar("SPFS Buffer Cache Misses", statNumMisses_);
+    recordScalar("SPFS Buffer Cache Hit Rate", statHitRate);
 }
 
 
@@ -105,19 +105,31 @@ void BufferCache::handleBlockRequest(cMessage* msg)
     else if (spfsOSWriteDeviceRequest* write =
              dynamic_cast<spfsOSWriteDeviceRequest*>(msg))
     {
+        bool isWriteThrough = write->getWriteThrough();
+        
         // Perform cache eviction if needed
         evictCacheEntry(write->getAddress());
             
-        // Add a dirty entry to the cache
+        // Add an entry to the cache with dirty status determined by write
+        // through status
         Entry newEntry;
         newEntry.lba = write->getAddress();
-        newEntry.isDirty = true;
+        newEntry.isDirty = !isWriteThrough;
         insertEntry(newEntry);
 
-        // Create and send response
-        spfsOSWriteDeviceResponse* resp = new spfsOSWriteDeviceResponse();
-        resp->setContextPointer(msg);
-        send(resp, "out"); 
+        // Perform write though if necessary
+        if (isWriteThrough)
+        {
+            // Forward write request to device
+            send(write, "request");
+        }
+        else
+        {
+            // Create and send response
+            spfsOSWriteDeviceResponse* resp = new spfsOSWriteDeviceResponse();
+            resp->setContextPointer(msg);
+            send(resp, "out");        
+        }
     }
     else
     {
@@ -151,12 +163,26 @@ void BufferCache::handleBlockResponse(cMessage* msg)
         // Forward completed response up the chain
         send( msg, "out" );
     }
-    else
+    else if (spfsOSWriteDeviceRequest* write =
+             dynamic_cast<spfsOSWriteDeviceRequest*>(req))
     {
-        // Discard dirty block write back request and response
-        delete req;
-        delete msg;
+        bool isWriteThrough = write->getWriteThrough();
+        if (isWriteThrough)
+        {
+            // Create and send response for write through request
+            spfsOSWriteDeviceResponse* resp = new spfsOSWriteDeviceResponse();
+            resp->setContextPointer(req);
+            send(resp, "out");
+            delete msg;
+        }
+        else
+        {
+            // Discard dirty block write back request and response
+            delete req;
+            delete msg;
+        }
     }
+             
 }
 
 void BufferCache::evictCacheEntry(LogicalBlockAddress lba)

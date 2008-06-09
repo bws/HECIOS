@@ -44,11 +44,20 @@ void BlockTranslator::handleMessage(cMessage *msg)
 {
     if (msg->arrivalGateId() == inGateId_)
     {
-        spfsOSBlockIORequest* blockIO = dynamic_cast<spfsOSBlockIORequest*>(msg);
-        assert(0 != read);
-
-        // Determine if we are building read or write requests
-        bool isRead = (0 != dynamic_cast<spfsOSReadBlocksRequest*>(blockIO));
+        spfsOSBlockIORequest* blockIO = 0;
+        spfsOSReadBlocksRequest* blockRead = 0;
+        spfsOSWriteBlocksRequest* blockWrite = 0;
+        
+        if (blockRead = dynamic_cast<spfsOSReadBlocksRequest*>(msg))
+        {
+            blockIO = blockRead;
+        }
+        else if (blockWrite = dynamic_cast<spfsOSWriteBlocksRequest*>(msg))
+        {
+            blockIO = blockWrite;
+        }
+        assert(0 != blockRead || 0 != blockWrite);
+        assert(0 != blockIO);
 
         // Generate requests for each block
         size_t numRequestsGenerated = 0;
@@ -61,14 +70,19 @@ void BlockTranslator::handleMessage(cMessage *msg)
             for (size_t j = 0; j < lbas.size(); j++)
             {
                 spfsOSDeviceIORequest* req = 0;
-                if (isRead)
+                if (0 != blockRead)
                 {
                     req = new spfsOSReadDeviceRequest();
                 }
                 else
                 {
-                    req = new spfsOSWriteDeviceRequest();
+                    assert(0 != blockWrite);
+                    spfsOSWriteDeviceRequest* writeDev =
+                        new spfsOSWriteDeviceRequest();
+                    writeDev->setWriteThrough(blockWrite->getWriteThrough());
+                    req = writeDev;
                 }
+                assert(0 != req);
                 req->setAddress(lbas[j]);
                 req->setContextPointer(msg);
                 send(req, "request");

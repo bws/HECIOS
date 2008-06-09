@@ -193,6 +193,8 @@ message spfsOSReadBlocksResponse extends spfsOSBlockIOResponse
 // Write request for file system blocks 
 message spfsOSWriteBlocksRequest extends spfsOSBlockIORequest
 {
+    fields:
+        bool writeThrough = false;
 };
 
 // Write response for file system blocks 
@@ -210,6 +212,8 @@ message spfsOSDeviceIORequest
 // Read block device request
 message spfsOSReadDeviceRequest extends spfsOSDeviceIORequest
 {
+    fields:
+        bool readThrough = false;
 };
 
 // Read block device response
@@ -220,6 +224,8 @@ message spfsOSReadDeviceResponse
 // Write block device request
 message spfsOSWriteDeviceRequest extends spfsOSDeviceIORequest
 {
+    fields:
+        bool writeThrough = false;
 };
 
 // Write block device response

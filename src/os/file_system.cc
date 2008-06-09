@@ -276,6 +276,7 @@ void FileSystem::writeMetaData(spfsOSFileRequest* request)
     writeBlock->setContextPointer(request);
     writeBlock->setBlocksArraySize(1);
     writeBlock->setBlocks(0, blocks[0]);
+    writeBlock->setWriteThrough(true);
     send(writeBlock, requestGateId_);
 }
 
@@ -300,6 +301,7 @@ void FileSystem::performIO(spfsOSFileLIORequest* ioRequest)
         spfsOSWriteBlocksRequest* writeBlocks =
             new spfsOSWriteBlocksRequest(0, SPFS_OS_WRITE_BLOCKS_REQUEST);
         writeBlocks->setContextPointer(ioRequest);
+        writeBlocks->setWriteThrough(false);
         writeBlocks->setBlocksArraySize(blocks.size());
         for (size_t i = 0; i < blocks.size(); i++)
             writeBlocks->setBlocks(i, blocks[i]);
