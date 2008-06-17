@@ -3,3 +3,8 @@ config.log
 config.status
 lib
 Makefile
+.tkenvrc
+hecios_ned.lst
+omnetpp.ini
+omnetpp.sca
+omnetpp.vec
