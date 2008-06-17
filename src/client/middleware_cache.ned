@@ -37,7 +37,47 @@ simple NoMiddlewareCache
 endsimple
 
 //
+// Middleware cache using pages of direct cache
+//
+simple DirectPagedMiddlewareCache
+    parameters:
+    	pageSize: const,
+    	pageCapacity: const;
+    	
+	gates:
+		in: appIn, fsIn;
+        out: appOut, fsOut;
+endsimple
+
+//
+// Middleware cache using pages of fully associative cache
+//
+simple FullyPagedMiddlewareCache
+    parameters:
+    	pageSize: const,
+    	pageCapacity: const;
+    	
+	gates:
+		in: appIn, fsIn;
+        out: appOut, fsOut;
+endsimple
+
+//
+// Middleware cache using pages of direct cache
+//
+simple CooperativeDirectMiddlewareCache
+    parameters:
+    	pageSize: const,
+    	pageCapacity: const;
+    	
+	gates:
+		in: appIn, fsIn;
+        out: appOut, fsOut;
+endsimple
+
+//
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:

@@ -57,6 +57,15 @@ public:
                                             const FileView& view,
                                             const FileDistribution& dist,
                                             DataTypeLayout& outLayout);
+    
+    /** 
+     * @return the file regions for the first requestSize bytes of the
+     *   supplied MPI view.  This step 'flattens' the view into list I/O
+     *   offsets and extents. 
+     */
+    static std::vector<FileRegion> locateFileRegions(const FSOffset& offset,
+                                                     const FSSize& dataSize,
+                                                     const FileView& view);
 
 private:
 

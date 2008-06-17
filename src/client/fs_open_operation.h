@@ -23,6 +23,7 @@
 class cFSM;
 class cMessage;
 class FSClient;
+class Filename;
 class spfsMPIFileOpenRequest;
 
 /**
@@ -46,6 +47,9 @@ protected:
 private:
     /** @return true if this open creates a file */
     bool isFileCreate();
+    
+    /** @return true if the file exists in the file system */
+    bool fileExists(const Filename& filename);
     
     /** The filesystem client module */
     FSClient* client_;

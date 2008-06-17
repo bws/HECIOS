@@ -20,6 +20,7 @@
 #include "fs_open_operation.h"
 #include <iostream>
 #include <omnetpp.h>
+#include "file_builder.h"
 #include "filename.h"
 #include "fs_client.h"
 #include "fs_collective_create_sm.h"
@@ -48,26 +49,30 @@ void FSOpenOperation::registerStateMachines()
     Filename parentDir = openFile.getParent();
     addStateMachine(new FSLookupNameSM(parentDir, openReq_, client_));
 
-    // Second - Lookup parent attributes
-    addStateMachine(new FSGetAttributesSM(parentDir, false, openReq_, client_));
-    
-    // Finally - Perform open/create
-    if (isFileCreate())
+    // Check if the parent exists
+    if (fileExists(parentDir))
     {
-        if (useCollectiveCommunication_)
+        // Second - Lookup parent attributes
+        addStateMachine(new FSGetAttributesSM(parentDir, false, openReq_, client_));
+    
+        // Finally - Perform open/create
+        if (isFileCreate())
         {
-            addStateMachine(new FSCollectiveCreateSM(openFile,
-                                                     openReq_,
-                                                     client_));
+            if (useCollectiveCommunication_)
+            {
+                addStateMachine(new FSCollectiveCreateSM(openFile,
+                                                         openReq_,
+                                                         client_));
+            }
+            else
+            {
+                addStateMachine(new FSCreateSM(openFile, openReq_, client_));
+            }
         }
         else
         {
-            addStateMachine(new FSCreateSM(openFile, openReq_, client_));
+            addStateMachine(new FSLookupNameSM(openFile, openReq_, client_));
         }
-    }
-    else
-    {
-        addStateMachine(new FSLookupNameSM(openFile, openReq_, client_));
     }
 }
 
@@ -90,6 +95,11 @@ bool FSOpenOperation::isFileCreate()
     {
         return false;
     }
+}
+
+bool FSOpenOperation::fileExists(const Filename& filename)
+{
+    return (0 != FileBuilder::instance().getMetaData(filename));
 }
 
 /*

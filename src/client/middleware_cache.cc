@@ -17,35 +17,114 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+#include "middleware_cache.h"
+#include <cassert>
 #include <iostream>
 #include <omnetpp.h>
-#include "cache_proto_m.h"
+#include "data_type_processor.h"
+#include "file_view.h"
+#include "mpi_proto_m.h"
 using namespace std;
 
-/**
- * Model of a middleware file system data cache.
- */
-class NoMiddlewareCache : public cSimpleModule
+MiddlewareCache::MiddlewareCache()
+    : appInGateId_(-1),
+      appOutGateId_(-1),
+      fsInGateId_(-1),
+      fsOutGateId_(-1),
+      numCacheHits_(0),
+      numCacheMisses_(0),
+      numCacheEvicts_(0)
 {
-public:
-    /** Constructor */
-    NoMiddlewareCache();
+}
+
+MiddlewareCache::~MiddlewareCache()
+{
+}
+
+void MiddlewareCache::initialize()
+{
+    // Find gate ids
+    appInGateId_ = findGate("appIn");
+    appOutGateId_ = findGate("appOut");
+    fsInGateId_ = findGate("fsIn");
+    fsOutGateId_ = findGate("fsOut");
     
-protected:
-    /** Implementation of initialize */
-    virtual void initialize();
+    // Initialize statistics
+    numCacheHits_ = 0;
+    numCacheMisses_ = 0;
+    numCacheEvicts_ = 0;
+}
 
-    /** Implementation of finish */
-    virtual void finish() {};
+void MiddlewareCache::finish()
+{
+    double totalCacheAccesses = numCacheHits_ + numCacheMisses_;
+    double hitRate = numCacheHits_ / totalCacheAccesses;
+    recordScalar("SPFS MWare Cache Hit Rate", hitRate);
+    recordScalar("SPFS MWare Cache Evictions", numCacheEvicts_);
+    recordScalar("SPFS MWare Cache Hits", numCacheHits_);
+    recordScalar("SPFS MWare Cache Misses", numCacheMisses_);
+}
 
-    /** Implementation of handleMessage */
-    virtual void handleMessage(cMessage* msg);
+void MiddlewareCache::handleMessage(cMessage* msg)
+{
+     if (msg->arrivalGateId() == appInGateId())
+     {
+         handleApplicationMessage(msg);
+     }
+     else if (msg->arrivalGateId() == fsInGateId())
+     {
+         handleFileSystemMessage(msg);
+     }
+     else
+     {
+         cerr << __FILE__ << ":" << __LINE__ << ":"
+              <<  "message arrived through illegal gate: "
+              << msg->info() << endl;
+     }
+}
 
-private:
-    int appInGateId_;
-    int fsInGateId_;
-};
+//
+// PagedCache implementation
+//
+//
+PagedCache::PagedCache()
+{
+}
 
+PagedCache::~PagedCache()
+{    
+}
+
+void PagedCache::initialize()
+{
+    MiddlewareCache::initialize();
+    pageSize_ = par("pageSize");
+    pageCapacity_ = par("pageCapacity");
+}
+
+vector<FilePage> PagedCache::determineRequestPages(const FSOffset& offset,
+                                                   const FSSize& size,
+                                                   const FileView& view)
+{
+    // Flatten view into file regions for the correct size
+    vector<FileRegion> requestRegions = 
+        DataTypeProcessor::locateFileRegions(offset, size, view);
+    
+    // Convert regions into file pages
+    return regionsToPages(requestRegions);
+}
+
+vector<FilePage> PagedCache::regionsToPages(const vector<FileRegion>& fileRegions)
+{
+    vector<FilePage> spanningPages;
+    return spanningPages;
+}
+
+
+//
+// NoMiddlewareCache implementation
+//
+//
 // OMNet Registriation Method
 Define_Module(NoMiddlewareCache);
 
@@ -53,39 +132,140 @@ NoMiddlewareCache::NoMiddlewareCache()
 {
 }
 
-void NoMiddlewareCache::initialize()
+// Perform simple pass through on all messages
+void NoMiddlewareCache::handleApplicationMessage(cMessage* msg)
 {
-    appInGateId_ = gate("appIn")->id();
-    fsInGateId_ = gate("fsIn")->id();
+    send(msg, fsOutGateId());
 }
 
-/**
- * Handle MPI-IO Response messages
- */
-void NoMiddlewareCache::handleMessage(cMessage* msg)
+void NoMiddlewareCache::handleFileSystemMessage(cMessage* msg)
 {
-    if (0 != dynamic_cast<spfsCacheInvalidateRequest*>(msg))
+    send(msg, appOutGateId());
+}
+
+//
+// DirectPagedMiddlewareCache Implementation
+//
+//
+// OMNet Registriation Method
+Define_Module(DirectPagedMiddlewareCache);
+
+DirectPagedMiddlewareCache::DirectPagedMiddlewareCache()
+{
+}
+
+void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
+{
+    if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind()) 
     {
-        delete msg;
+        // Determine the size of the read request
+        spfsMPIFileReadAtRequest* readAt = 
+            static_cast<spfsMPIFileReadAtRequest*>(msg);
+        FSSize readSize = 
+            readAt->getDataType()->getExtent() * readAt->getCount();
+
+        // Convert regions into file pages
+        FileDescriptor* fd = readAt->getFileDes();
+        vector<FilePage> requestPages = determineRequestPages(readAt->getOffset(),
+                                                              readSize,
+                                                              fd->getFileView());
+        
+        // Perform a lookup on the pages
+        lookupData(requestPages);
     }
-    else if (msg->arrivalGateId() == appInGateId_)
+    else if (SPFS_MPI_FILE_READ_REQUEST == msg->kind())
     {
-        send(msg, "fsOut");
-    }
-    else if (msg->arrivalGateId() == fsInGateId_)
-    {
-        send(msg, "appOut");
+        // Determine the size of the read request
+        spfsMPIFileReadRequest* read = static_cast<spfsMPIFileReadRequest*>(msg);
+        FSSize readSize = read->getDataType()->getExtent() * read->getCount();
+
+        // Convert regions into file pages
+        FileDescriptor* fd = read->getFileDes();
+        vector<FilePage> requestPages = 
+            determineRequestPages(fd->getFilePointer(),
+                                  readSize,
+                                  fd->getFileView());        
+        
+        // Perform a lookup on the pages
+        lookupData(requestPages);
     }
     else
     {
-            cerr << "MiddlewareCache handleMessage: "
-                 << "not yet implemented for kind: "
-                 << msg->kind() << endl;
+        send(msg, fsOutGateId());
     }
 }
 
+bool DirectPagedMiddlewareCache::lookupData(const vector<FilePage> requestPages)
+{
+    return true;
+}
+
+
+void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
+{   
+    if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind()) 
+    {
+    }
+    else if (SPFS_MPI_FILE_READ_RESPONSE == msg->kind())
+    {
+    }
+    else
+    {
+        send(msg, appOutGateId());
+    }
+}
+
+
+//
+// FullyPagedMiddlewareCache Implementation
+//
+//
+//
+// OMNet Registriation Method
+Define_Module(FullyPagedMiddlewareCache);
+
+FullyPagedMiddlewareCache::FullyPagedMiddlewareCache()
+{
+}
+
+void FullyPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
+{
+    assert(false);
+}
+
+void FullyPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
+{   
+    assert(false);
+}
+
+
+//
+// CooperativeDirectMiddlewareCache Implementation
+//
+//
+// OMNet Registriation Method
+Define_Module(CooperativeDirectMiddlewareCache);
+
+CooperativeDirectMiddlewareCache::CooperativeDirectMiddlewareCache()
+{
+}
+
+void CooperativeDirectMiddlewareCache::handleApplicationMessage(cMessage* msg)
+{
+    assert(false);
+}
+
+void CooperativeDirectMiddlewareCache::handleFileSystemMessage(cMessage* msg)
+{   
+    assert(false);
+}
+
+
+
+
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

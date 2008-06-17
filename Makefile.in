@@ -259,6 +259,13 @@ configfile: $(BUILD_DIR)/omnetpp.ini
 
 
 #
+# Incremental build (useful target for IDE auto-save builds)
+#
+incremental: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) tests_incremental
+
+.PHONY: incremental
+
+#
 # Targets to build HECIOS simulator (gui and command line versions)
 #
 $(SIM_MSG_OUTPUT): $(LIB_DIR)/inet.o

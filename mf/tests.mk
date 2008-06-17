@@ -88,6 +88,10 @@ TEST_EXES = $(BIN_DIR)/common_test \
 
 tests_all: $(TEST_EXES)
 
+tests_incremental: $(SIM_TEST_OBJS)
+
+.Phony: tests_all tests_incremental
+
 #
 # Cleanup test subsystem
 #
@@ -96,6 +100,8 @@ tests_clean:
 	$(RM) $(SIM_TEST_OBJS)
 	$(RM) $(SIM_TEST_DEPENDS)
 	@echo "Derived files deleted."
+
+.PHONY: tests_clean
 
 #
 # client package unit tests

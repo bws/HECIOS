@@ -63,6 +63,24 @@ FSSize DataTypeProcessor::createFileLayoutForServer(
     return bytesProcessed;    
 }
 
+vector<FileRegion> DataTypeProcessor::locateFileRegions(const FSOffset& offset,
+                                                        const FSSize& dataSize,
+                                                        const FileView& view)
+{
+    // Determine the amount of contiguous file regions that correspond to
+    // this server's physical file locations
+    FSSize disp = view.getDisplacement();
+    const DataType* fileDataType = view.getDataType();
+    vector<FileRegion> fileRegions = fileDataType->getRegionsByBytes(offset,
+                                                                     dataSize);
+    
+    // Modify the file regions to take into account the view displacement
+    for (size_t i = 0; i < fileRegions.size(); i++)
+    {
+        fileRegions[i]. offset += disp;
+    }
+    return fileRegions;
+}
 
 
 FSSize DataTypeProcessor::processClientRequest(
@@ -142,6 +160,7 @@ void DataTypeProcessor::distributeContiguousRegion(
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
