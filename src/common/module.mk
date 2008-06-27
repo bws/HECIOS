@@ -19,5 +19,7 @@ SIM_SRC += $(DIR)/basic_data_type.cc \
 	$(DIR)/phtf_io_trace.cc \
 	$(DIR)/serial_message_scheduler.cc \
 	$(DIR)/shtf_io_trace.cc \
+	$(DIR)/struct_data_type.cc \
+	$(DIR)/subarray_data_type.cc \
 	$(DIR)/umd_io_trace.cc \
 	$(DIR)/vector_data_type.cc

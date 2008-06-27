@@ -28,6 +28,8 @@
 #include "lru_timeout_cache_test.h"
 #include "pfs_utils_test.h"
 #include "shtf_io_trace_test.h"
+#include "struct_data_type_test.h"
+#include "subarray_data_type_test.h"
 #include "umd_io_trace_test.h"
 #include "vector_data_type_test.h"
 #include "phtf_io_trace_test.h"
@@ -58,6 +60,8 @@ int main(int argc, char** argv)
     runner.addTest( LRUTimeoutCacheTest::suite() );
     runner.addTest( PFSUtilsTest::suite() );
     runner.addTest( SHTFIOTraceTest::suite() );
+    runner.addTest( StructDataTypeTest::suite() );
+    runner.addTest( SubarrayDataTypeTest::suite() );
     runner.addTest( UMDIOTraceTest::suite() );
     runner.addTest( VectorDataTypeTest::suite() );
 
