@@ -62,28 +62,27 @@ vector<FileRegion> VectorDataType::getRegionsByBytes(const FSOffset& byteOffset,
 {
     // The total regions produced
     vector<FileRegion> vectorRegions;
-/*
+
     // Construct the regions required to map numBytes of data to data regions
     size_t bytesProcessed = 0;
-    int currentRegion = 0;
+    FSOffset currentOffset = byteOffset;
     while (bytesProcessed < numBytes)
     {
-        FSOffset typeOffset = currentRegion * getExtent();
-        FSOffset dataOffset = byteOffset + typeOffset +
-            currentRegion * stride_ * oldType_.getExtent();
-        FSSize dataLength = min(blockLength_, numBytes - bytesProcessed);
-        vector<FileRegion> elementRegions = oldType_.getRegions(Offset,
-                                                                dataLength);
+        FSSize dataLength = min(blockLength_ * oldType_.getExtent(),
+                                numBytes - bytesProcessed);
+        vector<FileRegion> elementRegions =
+            oldType_.getRegionsByBytes(currentOffset, dataLength);
 
         // Add regions to the total regions vector
-        vectorIter = copy(elementRegions.begin(),
-                          elementRegions.end(),
-                          back_inserter(vectorIter));
-            
+        copy(elementRegions.begin(),
+             elementRegions.end(),
+             back_inserter(vectorRegions));
+
         // Update bookkeeping
         bytesProcessed += dataLength;
+        currentOffset += stride_ * oldType_.getExtent();
     }
-*/
+    assert(bytesProcessed == numBytes);
     return vectorRegions;
 }
 
@@ -109,7 +108,7 @@ vector<FileRegion> VectorDataType::getRegionsByCount(const FSOffset& byteOffset,
                                vectorIter);
          }
      }
-     
+
      return vectorRegions;
 }
 

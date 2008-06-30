@@ -20,12 +20,23 @@
 #include "subarray_data_type.h"
 using namespace std;
 
+size_t SubarrayDataType::calculateExtent(vector<size_t> sizes,
+                                         const DataType& oldDataType)
+{
+    size_t extent = 0;
+    for (size_t i = 0; i < sizes.size(); i++)
+    {
+        extent *= sizes[i] * oldDataType.getExtent();
+    }
+    return extent;
+}
+
 SubarrayDataType::SubarrayDataType(vector<size_t> sizes,
                                    vector<size_t> subSizes,
                                    vector<size_t> starts,
                                    SubarrayDataType::ArrayOrder ordering,
                                    const DataType& oldDataType)
-  : DataType(0),
+  : DataType(SubarrayDataType::calculateExtent(sizes, oldDataType)),
     oldType_(oldDataType)
 {
 

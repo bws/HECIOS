@@ -29,6 +29,15 @@
 class StructDataType : public DataType
 {
 public:
+    /**
+     * @return the size of an n-dimension array
+     *
+     * @param sizes - number of elements in each dimension
+     */
+    static std::size_t calculateExtent(std::vector<std::size_t> blockLengths,
+                                       std::vector<std::size_t> displacements,
+                                       std::vector<DataType*> oldDataTypes);
+
     /** Constructor */
     StructDataType(std::vector<std::size_t> blockLengths,
                    std::vector<std::size_t> displacements,

@@ -46,11 +46,8 @@ int main(int argc, char** argv)
 
     // Add all of the requisite tests
 
-    runner.addTest( CommManTest::suite() );
-    runner.addTest( PHTFIOTraceTest::suite() );
-
-
     runner.addTest( BasicDataTypeTest::suite() );
+    //runner.addTest( CommManTest::suite() );
     runner.addTest( ContiguousDataTypeTest::suite() );
     runner.addTest( FileDescriptorTest::suite() );
     runner.addTest( FileViewTest::suite() );
@@ -59,6 +56,7 @@ int main(int argc, char** argv)
     runner.addTest( LRUCacheTest::suite() );
     runner.addTest( LRUTimeoutCacheTest::suite() );
     runner.addTest( PFSUtilsTest::suite() );
+    //runner.addTest( PHTFIOTraceTest::suite() );
     runner.addTest( SHTFIOTraceTest::suite() );
     runner.addTest( StructDataTypeTest::suite() );
     runner.addTest( SubarrayDataTypeTest::suite() );

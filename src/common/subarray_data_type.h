@@ -32,6 +32,14 @@ public:
     /** Array ordering */
     enum ArrayOrder {INVALID_ORDER = 0, C_ORDER = 1, FORTRAN_ORDER = 2};
 
+    /**
+     * @return the size of an n-dimension array
+     *
+     * @param sizes - number of elements in each dimension
+     */
+    static std::size_t calculateExtent(std::vector<std::size_t> sizes,
+                                       const DataType& oldDataType);
+
     /** Constructor */
     SubarrayDataType(std::vector<std::size_t> sizes,
                      std::vector<std::size_t> subSizes,

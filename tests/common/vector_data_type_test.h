@@ -39,7 +39,7 @@ class VectorDataTypeTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testGetRegionsByBytes);
     CPPUNIT_TEST(testGetRegionsByCount);
     CPPUNIT_TEST_SUITE_END();
-    
+
 public:
 
     /** Called before each test function */
@@ -47,15 +47,15 @@ public:
 
     /** Called after each test function */
     void tearDown();
-    
+
     void testConstructor();
 
     void testGetRepresentationByteLength();
 
     void testGetRegionsByBytes();
-    
+
     void testGetRegionsByCount();
-    
+
 private:
 };
 
@@ -85,6 +85,40 @@ void VectorDataTypeTest::testGetRepresentationByteLength()
 
 void VectorDataTypeTest::testGetRegionsByBytes()
 {
+    // Test a simple scenario
+    BasicDataType bdt1(BasicDataType::MPI_DOUBLE_WIDTH);
+    VectorDataType vdt1(3,2,3, bdt1);
+
+
+    vector<FileRegion> regions =
+        vdt1.getRegionsByBytes(0, BasicDataType::MPI_DOUBLE_WIDTH * 10);
+
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        //cerr << regions[i].offset << " " << regions[i].extent << endl;
+    }
+
+    // Verify that 5 regions are returned
+    CPPUNIT_ASSERT_EQUAL((size_t)5, regions.size());
+
+    // Verify that the 1st region begins at 0 and extends for 2
+    FileRegion fr0 = regions[0];
+    CPPUNIT_ASSERT_EQUAL((FSOffset)0, fr0.offset);
+    CPPUNIT_ASSERT_EQUAL((FSSize)2 * BasicDataType::MPI_DOUBLE_WIDTH,
+                         fr0.extent);
+
+    // Verify that the 2nd region begins at 0 and extends for 2
+    FileRegion fr1 = regions[1];
+    CPPUNIT_ASSERT_EQUAL((FSOffset)(3 * BasicDataType::MPI_DOUBLE_WIDTH),
+                         fr1.offset);
+    CPPUNIT_ASSERT_EQUAL((FSSize)2 * BasicDataType::MPI_DOUBLE_WIDTH,
+                         fr1.extent);
+
+    FileRegion fr2 = regions[2];
+    CPPUNIT_ASSERT_EQUAL((FSOffset)(6 * BasicDataType::MPI_DOUBLE_WIDTH),
+                         fr2.offset);
+    CPPUNIT_ASSERT_EQUAL((FSSize)2 * BasicDataType::MPI_DOUBLE_WIDTH,
+                         fr2.extent);
 }
 
 void VectorDataTypeTest::testGetRegionsByCount()
@@ -93,24 +127,29 @@ void VectorDataTypeTest::testGetRegionsByCount()
     BasicDataType bdt1(BasicDataType::MPI_DOUBLE_WIDTH);
     VectorDataType vdt1(3,2,3, bdt1);
     vector<FileRegion> regions = vdt1.getRegionsByCount(0, 1);
-    CPPUNIT_ASSERT_EQUAL((size_t)3, regions.size());
 
     for (size_t i = 0; i < regions.size(); i++)
     {
-        cerr << regions[i].offset << " " << regions[i].extent << endl;
+        //cerr << regions[i].offset << " " << regions[i].extent << endl;
     }
-    
+
+    // Verify the correct number of regions are returned
+    CPPUNIT_ASSERT_EQUAL((size_t)3, regions.size());
+
+    // Verify 1st region begins at 0 and extends for 2
     FileRegion fr0 = regions[0];
-    //CPPUNIT_ASSERT_EQUAL((FSOffset)0, fr0.offset);
+    CPPUNIT_ASSERT_EQUAL((FSOffset)0, fr0.offset);
     CPPUNIT_ASSERT_EQUAL((FSSize)2 * BasicDataType::MPI_DOUBLE_WIDTH,
                          fr0.extent);
 
+    // Verify 2nd region begins at 3 and extends for 2
     FileRegion fr1 = regions[1];
     CPPUNIT_ASSERT_EQUAL((FSOffset)(3 * BasicDataType::MPI_DOUBLE_WIDTH),
                          fr1.offset);
     CPPUNIT_ASSERT_EQUAL((FSSize)2 * BasicDataType::MPI_DOUBLE_WIDTH,
                          fr1.extent);
-    
+
+    // Verify 3rd region begins at 6 and extends for 2
     FileRegion fr2 = regions[2];
     CPPUNIT_ASSERT_EQUAL((FSOffset)(6 * BasicDataType::MPI_DOUBLE_WIDTH),
                          fr2.offset);

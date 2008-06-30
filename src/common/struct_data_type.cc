@@ -20,9 +20,27 @@
 #include "struct_data_type.h"
 using namespace std;
 
-StructDataType::StructDataType(vector<size_t>, vector<size_t>, vector<DataType*> types)
-    : DataType(0),
-        types_(types)
+size_t StructDataType::calculateExtent(vector<size_t> blockLengths,
+                                       vector<size_t> displacements,
+                                       vector<DataType*> oldTypes)
+{
+    size_t extent = 0;
+    for (size_t i = 0; i < blockLengths.size(); i++)
+    {
+        size_t currentRange = displacements[i] +
+            (blockLengths[i] * oldTypes[i]->getExtent());
+        extent = max(extent, currentRange);
+    }
+    return extent;
+}
+
+StructDataType::StructDataType(vector<size_t>blockLengths,
+                               vector<size_t> displacements,
+                               vector<DataType*> oldTypes)
+    : DataType(StructDataType::calculateExtent(blockLengths,
+                                               displacements,
+                                               oldTypes)),
+        types_(oldTypes)
 {
 
 }

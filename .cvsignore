@@ -8,3 +8,5 @@ hecios_ned.lst
 omnetpp.ini
 omnetpp.sca
 omnetpp.vec
+core.*
+vgcore.*

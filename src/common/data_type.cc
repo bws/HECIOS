@@ -36,7 +36,7 @@ size_t DataType::calculateStridedExtent(size_t count, size_t blockLength,
     else
     {
         lower = 0;
-        upper = ((count - 1) * stride + blockLength) * elementExtent; 
+        upper = ((count - 1) * stride + blockLength) * elementExtent;
     }
     assert(upper >= lower);
     return upper - lower;
@@ -46,8 +46,6 @@ DataType::DataType(size_t extent)
     : extent_(extent),
       trueExtent_(extent)
 {
-    assert(0 != extent_);
-    assert(0 != trueExtent_);
 }
 
 DataType::DataType(const DataType& other)
