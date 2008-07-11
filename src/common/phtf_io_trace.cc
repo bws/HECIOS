@@ -131,7 +131,7 @@ long PHTFEventRecord::paraNum() const
 }
 
 /**
- * Set the number of parameters 
+ * Set the number of parameters
  * Only used with paramAt()
  * @see paramAt()
  */
@@ -162,7 +162,7 @@ int PHTFEventRecord::paramAsDescriptor(long paramindex, const PHTFEvent & event)
 {
     stringstream ss("");
     assert(paramindex < paraNum());
-    
+
     string hpt = paramAt(paramindex);
     ss << hpt << "@" << recordId();
 
@@ -173,7 +173,7 @@ int PHTFEventRecord::paramAsDescriptor(long paramindex, const PHTFEvent & event)
     {
         abort();
     }
-    
+
     int fileId = strtol(hstr.c_str(), NULL, 16);
 
     return fileId;
@@ -322,7 +322,7 @@ std::string PHTFEventRecord::opToStr(PHTFOperation opid)
 void PHTFEventRecord::buildRecordStr()
 {
     stringstream ss;
-    
+
     ss << _id << " " << opToStr(_opid) << " " << _sttime << " "
        << _duration << " " << _ret << " ";
 
@@ -342,7 +342,9 @@ void PHTFEventRecord::buildRecordFields()
     string opstr;
     string pa;
 
-    ss >> _id >> opstr >> _sttime >> _duration >> _ret;
+    ss >> _id >> opstr >> _sttime >> _duration;
+
+    ss >> hex >>_ret;
 
     _parameters.resize(0);
     while(!ss.eof())
@@ -418,11 +420,11 @@ bool PHTFEvent::eof()
             abort();
         }
     }
-    
+
     return _ifs.eof();
 }
 
-/** 
+/**
  * Open the event file
  * @param write Whther open in write mode
  * @return -1 if failed, 0 if success
@@ -430,14 +432,14 @@ bool PHTFEvent::eof()
 int PHTFEvent::open(bool write)
 {
     _runtime->init(write);
-    
+
     if(write)
     {
         if(_ofs.is_open())
         {
             _ofs.close();
         }
-        
+
         _ofs.open(_filepath.c_str());
         if(_ofs.is_open())
         {
@@ -513,7 +515,7 @@ PHTFTrace::PHTFTrace(std::string dirpath)
 void PHTFTrace::buildEvents()
 {
     int size = 32; // number of events files, temporily use 32, should be implemented in PHTFArch
-    
+
     destroyEvents();
     for(int i = 0; i < size; i ++)
         {
@@ -522,7 +524,7 @@ void PHTFTrace::buildEvents()
             ss << dirPath() << PHTFTrace::eventFileNamePrefix << i;
             ss2 << dirPath() << PHTFTrace::runtimeFileNamePrefix << i;
             PHTFEvent *ev = new PHTFEvent(ss.str(), ss2.str());
-            _events.push_back(ev); 
+            _events.push_back(ev);
         }
 }
 
@@ -624,7 +626,7 @@ void PHTFIni::readIni()
 {
     ifstream ifs;
     ifs.open(fileName_.c_str());
-    
+
     if (!ifs.is_open())
     {
         cerr << __FILE__ << ":" << __LINE__ << ":"
@@ -632,44 +634,44 @@ void PHTFIni::readIni()
              << endl;
         assert(false);
     }
-    
+
     clear();
-    
+
     string section;
     string::size_type index;
-    
+
     PHTFIniItem *item = 0;
     while(!ifs.eof())
     {
         string line;
         getline(ifs, line);
         if(line[0] == ';')continue;
-        
+
         if(line[0] == '[')
         {
             index = line.find("]", 1);
             section = line.substr(1, index - 1);
-            
+
             item = new PHTFIniItem;
-            
+
             data_[section] = item;
-            
+
         }
         else
         {
             index = line.find("=", 0);
             if(index == string::npos)continue;
-            
+
             string field = line.substr(0, index);
             string value = line.substr(index + 1, line.length());
-            
+
             if(item)
             {
                 (*item)[field] = value;
             }
         }
     }
-    
+
     ifs.close();
 }
 
@@ -736,7 +738,7 @@ void PHTFIni::iniValue(string section, string field, string value)
              << endl;
         assert(false);
     }
-    
+
     if(!exist(section))
         data_[section] = new PHTFIniItem;
 
@@ -755,7 +757,7 @@ PHTFIniItem* PHTFIni::iniSection(string section)
 PHTFFs::PHTFFs(string filepath)
 {
     _fsini = new PHTFIni(filepath);
-    _fsini->init(false);    
+    _fsini->init(false);
 }
 
 PHTFFs::PHTFFs(string filepath, bool write)

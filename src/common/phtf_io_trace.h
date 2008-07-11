@@ -49,18 +49,18 @@ enum PHTFOperation{
     WRITE_ALL_END,    READ_ORDERED_BEGIN,    READ_ORDERED_END,    WRITE_ORDERED_BEGIN,
     WRITE_ORDERED_END,    GET_TYPE_EXTENT,    SET_ATOMICITY,    GET_ATOMICITY,    SYNC,
     BARRIER, CPU_PHASE, WAIT
-    //...                 
+    //...
 };
 
 
-/** 
- * PHTF IO Trace Event Record Handler 
+/**
+ * PHTF IO Trace Event Record Handler
  */
 class PHTFEventRecord
 {
     static std::map<std::string, PHTFOperation> _opmap;
 public:
-    /** 
+    /**
      * Constructor
      * @param recordstr A string contains the record
      */
@@ -120,7 +120,7 @@ public:
     /** @return The number of parameters */
     long paraNum() const;
     /**
-     * Set the number of parameters 
+     * Set the number of parameters
      * Only used with paramAt()
      * @see paramAt()
      */
@@ -195,7 +195,7 @@ public:
 
     /** @return Whether event file has reached the end */
     bool eof();
-    /** 
+    /**
      * Open the event file
      * @param write Whther open in write mode
      * @return -1 if failed, 0 if success
@@ -234,11 +234,11 @@ protected:
 private:
     std::string fileName_;
     bool isWriteOnly_;
-    
+
 public:
     PHTFIni(std::string filename);
     ~PHTFIni();
-    
+
     bool exist(std::string section);
     bool exist(std::string section, std::string field);
     std::string iniValue(std::string section, std::string field);
@@ -254,7 +254,7 @@ public:
  */
 class PHTFArch
 {
-    
+
 };
 
 /**
@@ -266,7 +266,7 @@ public:
 
     static std::string fsSecName;
     static std::string fsConst;
-    
+
     PHTFFs(std::string filepath, bool write);
     PHTFFs(std::string filepath);
     PHTFFs(){};
@@ -323,7 +323,7 @@ public:
     /** Build the event object vector */
     void buildEvents();
     void destroyEvents();
-    
+
     /** @return The string that contains the path to the trace directory */
     std::string dirPath();
     /** Set the directory path */
