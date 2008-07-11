@@ -88,8 +88,8 @@
 <storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 
 <storageModule moduleId="org.eclipse.cdt.core.pathentry">
-<pathentry excluding="core.*" kind="src" path=""/>
-<pathentry excluding="core.*|vgcore.*" kind="out" path=""/>
+<pathentry kind="src" path=""/>
+<pathentry kind="out" path=""/>
 <pathentry kind="con" path="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO"/>
 </storageModule>
 </cconfiguration>

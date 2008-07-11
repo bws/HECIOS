@@ -19,19 +19,21 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+#pragma interface
 #include <cstddef>
 #include "data_type.h"
 
 /**
- * A basic file view data type for storing data of a specific bit width
+ * A basic file view data type for storing data of a specific byte width
  * (e.g. MPI_BYTE, MPI_INT, MPI_DOUBLE, etc.)
  */
+template<std::size_t widthInBytes>
 class BasicDataType : public DataType
 {
 public:
     /** Byte width of the MPI_BYTE data type */
     static const std::size_t MPI_BYTE_WIDTH = 1;
-    
+
     /** Byte width of the MPI_CHAR data type */
     static const std::size_t MPI_CHAR_WIDTH = 1;
 
@@ -58,25 +60,25 @@ public:
 
     /** Byte width of the MPI_FLOAT data type */
     static const std::size_t MPI_FLOAT_WIDTH = 4;
-    
+
     /** Byte width of the MPI_DOUBLE data type */
     static const std::size_t MPI_DOUBLE_WIDTH = 8;
-    
+
     /** Byte width of the MPI_LONG_LONG data type */
     static const std::size_t MPI_LONG_LONG_WIDTH = 8;
-    
+
     /** Default constructor */
-    BasicDataType(std::size_t basicTypeBytes);
+    BasicDataType();
 
     /** Destructor */
     virtual ~BasicDataType();
 
     /** Clone this */
     virtual BasicDataType* clone() const;
-    
+
     /** @return the number of bytes required to represent this data type */
     virtual std::size_t getRepresentationByteLength() const;
-    
+
     /**
      * @return the *data* regions for numBytes of data in this DataType.
      * Note that the DataType may contain empty holes, thus leading to
@@ -94,12 +96,49 @@ public:
 protected:
     /** Hidden copy constructor */
     BasicDataType(const BasicDataType& other);
-    
+
 private:
     /** Hidden assignment operator */
     BasicDataType& operator=(const BasicDataType& other);
 };
 
+/** Byte Data Type */
+#define ByteDataType BasicDataType<BasicDataType<1>::MPI_BYTE_WIDTH>
+
+/** Char Data Type */
+#define CharDataType BasicDataType<BasicDataType<1>::MPI_CHAR_WIDTH>
+
+/** Unsigned Char Data Type */
+#define UnsignedCharDataType BasicDataType<BasicDataType<1>::MPI_UNSIGNED_CHAR_WIDTH>
+
+/** Short Data Type */
+#define ShortDataType BasicDataType<BasicDataType<1>::MPI_SHORT_WIDTH>
+
+/** Unsigned Short Data Type */
+#define UnsignedShortDataType BasicDataType<BasicDataType<1>::MPI_UNSIGNED_SHORT_WIDTH>
+
+/** Wide Char Data Type */
+#define WideCharDataType BasicDataType<BasicDataType<1>::MPI_WIDE_CHAR_WIDTH>
+
+/** Int Data Type */
+#define IntDataType BasicDataType<BasicDataType<1>::MPI_INT_WIDTH>
+
+/** Long Data Type */
+#define LongDataType BasicDataType<BasicDataType<1>::MPI_LONG_WIDTH>
+
+/** Unsigned Data Type */
+#define UnsignedDataType BasicDataType<BasicDataType<1>::MPI_UNSIGNED_WIDTH>
+
+/** Float Data Type */
+#define FloatDataType BasicDataType<BasicDataType<1>::MPI_FLOAT_WIDTH>
+
+/** Double Data Type */
+#define DoubleDataType BasicDataType<BasicDataType<1>::MPI_DOUBLE_WIDTH>
+
+/** Long Long Data Type */
+#define LongLongDataType BasicDataType<BasicDataType<1>::MPI_LONG_LONG_WIDTH>
+
+#include "basic_data_type.cc"
 #endif
 
 /*

@@ -41,7 +41,7 @@ Define_Module(SHTFIOApplication);
 SHTFIOApplication::SHTFIOApplication()
     : IOApplication(),
       trace_(0),
-      byteDataType_(BasicDataType::MPI_BYTE_WIDTH)
+      byteDataType_()
 {
 }
 
@@ -57,7 +57,7 @@ void SHTFIOApplication::initialize()
     string traceName = par("traceFile").stringValue();
     trace_ = createIOTrace(traceName);
     assert(0 != trace_);
-    
+
     // Send the kick start message
     cMessage* kickStart = new cMessage();
     scheduleAt(0.0, kickStart);
@@ -186,7 +186,7 @@ cMessage* SHTFIOApplication::createMessage(IOTrace::Record* rec)
                  << endl;
             break;
     }
-    return mpiMsg;    
+    return mpiMsg;
 }
 
 void SHTFIOApplication::populateFileSystem()
@@ -224,7 +224,7 @@ spfsMPIDirectoryRemoveRequest* SHTFIOApplication::createDirectoryRemoveMessage(
     const IOTrace::Record* rmDirRecord)
 {
     assert(IOTrace::RMDIR == rmDirRecord->opType());
-    
+
     spfsMPIDirectoryRemoveRequest* removeDir =
         new spfsMPIDirectoryRemoveRequest(0, SPFS_MPI_DIRECTORY_REMOVE_REQUEST);
     removeDir->setDirName(rmDirRecord->filename().c_str());
@@ -239,7 +239,7 @@ spfsMPIFileCloseRequest* SHTFIOApplication::createCloseMessage(
     // Remove and clean up the file descriptor
     FileDescriptor* fd = removeDescriptor(closeRecord->fileId());
     delete fd;
-    
+
     spfsMPIFileCloseRequest* close = new spfsMPIFileCloseRequest(
         0, SPFS_MPI_FILE_CLOSE_REQUEST);
     return close;
@@ -279,7 +279,7 @@ spfsMPIFileOpenRequest* SHTFIOApplication::createOpenMessage(
     Filename openFile(openRecord->filename());
     FileDescriptor* fd = FileBuilder::instance().getDescriptor(openFile);
     assert(!((0 != fd) xor openRecord->fileExists()));
-    
+
     // Associate the file id with a file descriptor
     setDescriptor(openRecord->fileId(), fd);
 
@@ -293,10 +293,10 @@ spfsMPIFileOpenRequest* SHTFIOApplication::createOpenMessage(
     int accessMode = 0;
     if (openRecord->isCreate())
         accessMode |= MPI_MODE_CREATE;
-    
+
     if (openRecord->isReadOnly())
         accessMode |= MPI_MODE_RDONLY;
-    
+
     if (openRecord->isWriteOnly())
         accessMode |= MPI_MODE_WRONLY;
 
@@ -313,7 +313,7 @@ spfsMPIFileOpenRequest* SHTFIOApplication::createOpenMessage(
         accessMode |= MPI_MODE_APPEND;
 
     open->setMode(accessMode);
-    
+
     return open;
 }
 

@@ -38,7 +38,7 @@ class BasicDataTypeTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testGetRegionsByBytes);
     CPPUNIT_TEST(testGetRegionsByCount);
     CPPUNIT_TEST_SUITE_END();
-    
+
 public:
 
     /** Called before each test function */
@@ -46,15 +46,15 @@ public:
 
     /** Called after each test function */
     void tearDown();
-    
+
     void testConstructor();
 
     void testGetRepresentationByteLength();
 
     void testGetRegionsByBytes();
-    
+
     void testGetRegionsByCount();
-    
+
 private:
 };
 
@@ -68,40 +68,40 @@ void BasicDataTypeTest::tearDown()
 
 void BasicDataTypeTest::testConstructor()
 {
-    BasicDataType(1);
+    BasicDataType<1> t;
 }
 
 void BasicDataTypeTest::testGetRepresentationByteLength()
 {
-    BasicDataType dt1(1);
-    CPPUNIT_ASSERT_EQUAL((size_t)4, dt1.getRepresentationByteLength());        
+    BasicDataType<1> dt1;
+    CPPUNIT_ASSERT_EQUAL((size_t)4, dt1.getRepresentationByteLength());
 
-    BasicDataType dt2(2);
-    CPPUNIT_ASSERT_EQUAL((size_t)4, dt2.getRepresentationByteLength());        
+    BasicDataType<2> dt2;
+    CPPUNIT_ASSERT_EQUAL((size_t)4, dt2.getRepresentationByteLength());
 
-    BasicDataType dt3(16);
+    BasicDataType<16> dt3;
     CPPUNIT_ASSERT_EQUAL((size_t)4, dt3.getRepresentationByteLength());
 }
 
 void BasicDataTypeTest::testGetRegionsByBytes()
 {
-    BasicDataType dt1(BasicDataType::MPI_DOUBLE_WIDTH);
+    DoubleDataType dt1;
     vector<FileRegion> regions = dt1.getRegionsByBytes(3, 8);
     CPPUNIT_ASSERT_EQUAL((size_t)1, regions.size());
     FileRegion fr1 = regions[0];
     CPPUNIT_ASSERT_EQUAL((FSOffset)3, fr1.offset);
-    CPPUNIT_ASSERT_EQUAL((FSSize)1 * BasicDataType::MPI_DOUBLE_WIDTH,
+    CPPUNIT_ASSERT_EQUAL((FSSize)1 * DoubleDataType::MPI_DOUBLE_WIDTH,
                          fr1.extent);
 }
 
 void BasicDataTypeTest::testGetRegionsByCount()
 {
-    BasicDataType dt1(BasicDataType::MPI_DOUBLE_WIDTH);
+    DoubleDataType dt1;
     vector<FileRegion> regions = dt1.getRegionsByCount(4, 4);
     CPPUNIT_ASSERT_EQUAL((size_t)1, regions.size());
     FileRegion fr1 = regions[0];
     CPPUNIT_ASSERT_EQUAL((FSOffset)4, fr1.offset);
-    CPPUNIT_ASSERT_EQUAL((FSSize)4 * BasicDataType::MPI_DOUBLE_WIDTH,
+    CPPUNIT_ASSERT_EQUAL((FSSize)4 * DoubleDataType::MPI_DOUBLE_WIDTH,
                          fr1.extent);
 }
 

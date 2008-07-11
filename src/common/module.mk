@@ -3,8 +3,7 @@
 #
 DIR := src/common
 
-SIM_SRC += $(DIR)/basic_data_type.cc \
-	$(DIR)/comm_man.cc \
+SIM_SRC += $(DIR)/comm_man.cc \
 	$(DIR)/contiguous_data_type.cc \
 	$(DIR)/data_type.cc \
 	$(DIR)/file_descriptor.cc \

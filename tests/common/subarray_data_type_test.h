@@ -72,13 +72,13 @@ void SubarrayDataTypeTest::testConstructor()
     vector<size_t> sizes;
     vector<size_t> subSizes;
     vector<size_t> starts;
-    BasicDataType dt1(1);
+    ByteDataType dt1;
 
     // Check construction with an empty subarray
     SubarrayDataType dt2(sizes, subSizes, starts, SubarrayDataType::C_ORDER, dt1);
 
     // Check construction with an empty subarray
-    sizes.push_back(1);
+    sizes.push_back(4);
     subSizes.push_back(2);
     starts.push_back(0);
     SubarrayDataType dt3(sizes, subSizes, starts, SubarrayDataType::C_ORDER, dt1);
@@ -93,6 +93,40 @@ void SubarrayDataTypeTest::testGetRepresentationByteLength()
 
 void SubarrayDataTypeTest::testGetRegionsByBytes()
 {
+    // Check the regions on a complicated example
+    // 12x7x9x10
+    size_t sizes[] = {12,7,9,4};
+
+    // Subarray of size 6x2x4x2
+    size_t subsizes[] = {6,2,4,2};
+
+    // Starting indices: 2,3,4,1
+    size_t starts[] = {2,3,4,1};
+
+    // DataType - byte
+    ByteDataType byteType;
+
+    // Construct Subarray
+    SubarrayDataType sa1(vector<size_t>(sizes, sizes+4),
+                         vector<size_t>(subsizes, subsizes+4),
+                         vector<size_t>(starts, starts+4),
+                         SubarrayDataType::C_ORDER,
+                         byteType);
+
+    //
+    // Test 1
+    //
+    // Retrieve Regions from the beginning of the data type
+    vector<FileRegion> regions = sa1.getRegionsByBytes(0, 25);
+
+    CPPUNIT_ASSERT_EQUAL(size_t(13), regions.size());
+
+    CPPUNIT_ASSERT_EQUAL(FSOffset(49), regions[0].offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(2), regions[0].extent);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(0), regions[1].offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(2), regions[1].extent);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(0), regions[2].offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(2), regions[2].extent);
 }
 
 void SubarrayDataTypeTest::testGetRegionsByCount()

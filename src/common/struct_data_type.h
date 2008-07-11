@@ -24,7 +24,8 @@
 #include "data_type.h"
 
 /**
- * A struct file view data type (similar to MPI data types)
+ * A struct file view data type (similar to MPI data types).  See page 142
+ * of "MPI - The Complete Reference Volume 1"
  */
 class StructDataType : public DataType
 {
@@ -73,6 +74,12 @@ protected:
 private:
     /** Hidden assignment operator */
     StructDataType& operator=(const StructDataType& other);
+
+    /** */
+    std::vector<std::size_t> blockLengths_;
+
+    /** */
+    std::vector<std::size_t> displacements_;
 
     /** The data types to aggregate */
     std::vector<DataType*> types_;

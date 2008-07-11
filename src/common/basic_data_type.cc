@@ -17,44 +17,52 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "basic_data_type.h"
-using namespace std;
+//#include "basic_data_type.h"
 
-BasicDataType::BasicDataType(size_t basicTypeBytes)
-    : DataType(basicTypeBytes)
+template<std::size_t widthInBytes>
+BasicDataType<widthInBytes>::BasicDataType()
+    : DataType(widthInBytes)
 {
 }
 
-BasicDataType::BasicDataType(const BasicDataType& other)
+template<std::size_t widthInBytes>
+BasicDataType<widthInBytes>::BasicDataType(const BasicDataType<widthInBytes>& other)
     : DataType(other)
 {
 }
 
-BasicDataType::~BasicDataType()
+template<std::size_t widthInBytes>
+BasicDataType<widthInBytes>::~BasicDataType()
 {
 }
 
-BasicDataType* BasicDataType::clone() const
+template<std::size_t widthInBytes>
+BasicDataType<widthInBytes>* BasicDataType<widthInBytes>::clone() const
 {
     return new BasicDataType(*this);
 }
 
-size_t BasicDataType::getRepresentationByteLength() const
+template<std::size_t widthInBytes>
+size_t BasicDataType<widthInBytes>::getRepresentationByteLength() const
 {
     // 4 bytes should be enough
     return 4;
 }
 
-vector<FileRegion> BasicDataType::getRegionsByBytes(const FSOffset& byteOffset,
-                                                    size_t numBytes) const
+template<std::size_t widthInBytes>
+std::vector<FileRegion> BasicDataType<widthInBytes>::getRegionsByBytes(
+    const FSOffset& byteOffset,
+    size_t numBytes) const
 {
     FileRegion fr = {byteOffset, numBytes};
-    vector<FileRegion> v(1, fr);
+    std::vector<FileRegion> v(1, fr);
     return v;
 }
 
-vector<FileRegion> BasicDataType::getRegionsByCount(const FSOffset& byteOffset,
-                                                    size_t count) const
+template<std::size_t widthInBytes>
+std::vector<FileRegion> BasicDataType<widthInBytes>::getRegionsByCount(
+    const FSOffset& byteOffset,
+    size_t count) const
 {
     return getRegionsByBytes(byteOffset, count * getExtent());
 }

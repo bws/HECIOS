@@ -71,9 +71,9 @@ private:
     FileDistribution* distribution_;
 
     FileView* view_;
-    
+
     spfsReadRequest* readRequest_;
-    
+
     spfsDataFlowStart* flowStart_;
 };
 
@@ -89,8 +89,8 @@ void JobManagerTest::setUp()
     distribution_ = new BasicDistribution();
 
     // Create the file view
-    view_ = new FileView(0, new BasicDataType(4));
-    
+    view_ = new FileView(0, new DoubleDataType());
+
     // Create the read request
     readRequest_ = new spfsReadRequest(0, SPFS_READ_REQUEST);
     readRequest_->setOffset(0);

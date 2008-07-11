@@ -29,7 +29,10 @@
 class SubarrayDataType : public DataType
 {
 public:
-    /** Array ordering */
+    /**
+     * Array ordering C_ORDER corresponds to row major, FORTRAN_ORDER
+     * corresponds to column major.
+     */
     enum ArrayOrder {INVALID_ORDER = 0, C_ORDER = 1, FORTRAN_ORDER = 2};
 
     /**
@@ -75,8 +78,34 @@ protected:
     SubarrayDataType(const SubarrayDataType& other);
 
 private:
+    /**
+     * @return the number of contiguous regions in the array for this subarray
+     */
+    size_t getNumArrayRegions() const;
+
+    /** @return the memory location for region number */
+    size_t getArrayMemoryLocation(size_t region) const;
+
+    /**
+     * @ the number of elements in the contiguous dimension
+     *   (dim 0 for column-major, the last dimension for row-major)
+     */
+    size_t getSubarrayContiguousCount() const;
+
     /** Hidden assignment operator */
     SubarrayDataType& operator=(const SubarrayDataType& other);
+
+    /** Sizes of each dimension in the array */
+    std::vector<std::size_t> sizes_;
+
+    /** Size of each sub-array dimension */
+    std::vector<std::size_t> subSizes_;
+
+    /** Offset in each array dimension to begin the sub-array*/
+    std::vector<std::size_t> starts_;
+
+    /** Storage order of the array */
+    ArrayOrder order_;
 
     /** The old data type to aggregate */
     const DataType& oldType_;

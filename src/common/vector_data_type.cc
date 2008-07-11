@@ -63,24 +63,51 @@ vector<FileRegion> VectorDataType::getRegionsByBytes(const FSOffset& byteOffset,
     // The total regions produced
     vector<FileRegion> vectorRegions;
 
+    // Calculate the stride in bytes
+    size_t strideLength = stride_ * oldType_.getTrueExtent();
+
     // Construct the regions required to map numBytes of data to data regions
     size_t bytesProcessed = 0;
     FSOffset currentOffset = byteOffset;
     while (bytesProcessed < numBytes)
     {
-        FSSize dataLength = min(blockLength_ * oldType_.getExtent(),
-                                numBytes - bytesProcessed);
+        // Initialize the data length to the full size for this vector
+        FSSize dataLength = blockLength_ * oldType_.getTrueExtent();
+
+        // Handle the partial region that may be at the beginning  of this
+        // data type
+        size_t offsetInStride = currentOffset % strideLength;
+        if (0 != offsetInStride)
+        {
+            // If the offset is after all of the data in the vector,
+            // just adjust the current offset
+            // Else determine the partial data length
+            if (offsetInStride > dataLength)
+            {
+                currentOffset += strideLength - offsetInStride;
+            }
+            else
+            {
+                dataLength = dataLength - offsetInStride;
+            }
+        }
+
+        // Trim the data size to the requested size if neccesary
+        dataLength = min(dataLength, numBytes - bytesProcessed);
+
+        // Retrieve the regions for the embedded type
         vector<FileRegion> elementRegions =
-            oldType_.getRegionsByBytes(currentOffset, dataLength);
+        oldType_.getRegionsByBytes(currentOffset, dataLength);
 
         // Add regions to the total regions vector
         copy(elementRegions.begin(),
              elementRegions.end(),
              back_inserter(vectorRegions));
 
-        // Update bookkeeping
+        // Update bytes processed, and set the offset to the beginning of the
+        // next vector beginning
         bytesProcessed += dataLength;
-        currentOffset += stride_ * oldType_.getExtent();
+        currentOffset = ((currentOffset / strideLength) + 1) * strideLength;
     }
     assert(bytesProcessed == numBytes);
     return vectorRegions;
@@ -90,8 +117,7 @@ vector<FileRegion> VectorDataType::getRegionsByCount(const FSOffset& byteOffset,
                                                      size_t count) const
 {
     // The total regions produced for count vectors
-    vector<FileRegion> vectorRegions(count * count_);
-    vector<FileRegion>::iterator vectorIter = vectorRegions.begin();
+    vector<FileRegion> vectorRegions;
 
      // Flatten the types in order to construct count of the new type
      for (size_t i = 0; i < count; i++)
@@ -103,9 +129,9 @@ vector<FileRegion> VectorDataType::getRegionsByCount(const FSOffset& byteOffset,
                  j * stride_ * oldType_.getExtent();
              vector<FileRegion> elementRegions = oldType_.getRegionsByCount(
                  nextOffset, blockLength_);
-             vectorIter = copy(elementRegions.begin(),
-                               elementRegions.end(),
-                               vectorIter);
+             copy(elementRegions.begin(),
+                  elementRegions.end(),
+                  back_inserter(vectorRegions));
          }
      }
 

@@ -19,6 +19,7 @@
 //
 #include <cppunit/TextTestRunner.h>
 #include "basic_data_type_test.h"
+#include "comm_man_test.h"
 #include "contiguous_data_type_test.h"
 #include "file_descriptor_test.h"
 #include "file_view_test.h"
@@ -27,13 +28,12 @@
 #include "lru_cache_test.h"
 #include "lru_timeout_cache_test.h"
 #include "pfs_utils_test.h"
+#include "phtf_io_trace_test.h"
 #include "shtf_io_trace_test.h"
 #include "struct_data_type_test.h"
 #include "subarray_data_type_test.h"
 #include "umd_io_trace_test.h"
 #include "vector_data_type_test.h"
-#include "phtf_io_trace_test.h"
-#include "comm_man_test.h"
 
 /**
  * Unit test driver for common subsystem module

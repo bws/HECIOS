@@ -45,7 +45,7 @@ public:
 
     /** Called after each test function */
     void tearDown();
-    
+
     void testConstructor();
 
     void testCopyConstructor();
@@ -67,7 +67,7 @@ void FileViewTest::tearDown()
 
 void FileViewTest::testConstructor()
 {
-    BasicDataType* dataType = new BasicDataType(13);
+    BasicDataType<13>* dataType = new BasicDataType<13>();
     FileView view1(12, dataType);
     CPPUNIT_ASSERT_EQUAL(FSOffset(12), view1.getDisplacement());
     CPPUNIT_ASSERT(dataType == view1.getDataType());
@@ -75,7 +75,7 @@ void FileViewTest::testConstructor()
 
 void FileViewTest::testCopyConstructor()
 {
-    BasicDataType* dataType = new BasicDataType(10);
+    BasicDataType<10>* dataType = new BasicDataType<10>();
     FileView view1(6, dataType);
     FileView view2(view1);
     CPPUNIT_ASSERT_EQUAL(view1.getDisplacement(), view2.getDisplacement());
@@ -84,10 +84,10 @@ void FileViewTest::testCopyConstructor()
 
 void FileViewTest::testAssignment()
 {
-    BasicDataType* dataType1 = new BasicDataType(10);
+    BasicDataType<10>* dataType1 = new BasicDataType<10>();
     FileView view1(6, dataType1);
 
-    BasicDataType* dataType2 = new BasicDataType(33);
+    BasicDataType<33>* dataType2 = new BasicDataType<33>();
     FileView view2(11, dataType2);
 
     view2 = view1;
@@ -97,14 +97,14 @@ void FileViewTest::testAssignment()
 
 void FileViewTest::testGetDisplacement()
 {
-    BasicDataType* dataType = new BasicDataType(1);
+    BasicDataType<1>* dataType = new BasicDataType<1>();
     FileView view1(811, dataType);
     CPPUNIT_ASSERT_EQUAL(FSOffset(811), view1.getDisplacement());
 }
 
 void FileViewTest::testGetDataType()
 {
-    BasicDataType* dataType = new BasicDataType(43);
+    BasicDataType<43>* dataType = new BasicDataType<43>();
     FileView view1(0, dataType);
     CPPUNIT_ASSERT(dataType == view1.getDataType());
 }

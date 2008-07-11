@@ -54,7 +54,7 @@ public:
 
     /** Called after each test function */
     void tearDown();
-    
+
     void testConstructor();
 
     void testGetFilename();
@@ -74,7 +74,7 @@ public:
     void testSetFilePointer();
 
     void testMoveFilePointer();
-    
+
 private:
     FSMetaData* metaData;
     MockStorageLayoutManager layoutManager;
@@ -88,7 +88,7 @@ void FileDescriptorTest::setUp()
     HandleRange range = {0, 1000};
     FileBuilder::instance().registerFSServer(range, true);
     Filename root("/");
-    FileBuilder::instance().createDirectory(root, 0, layoutManager); 
+    FileBuilder::instance().createDirectory(root, 0, layoutManager);
 }
 
 void FileDescriptorTest::tearDown()
@@ -115,7 +115,7 @@ void FileDescriptorTest::testGetFilename()
     Filename name1("/foo");
     FileDescriptor fd1(name1, *metaData);
     CPPUNIT_ASSERT_EQUAL(name1, fd1.getFilename());
-    
+
     Filename name2("/popple/foople/foo");
     FileDescriptor fd2(name2, *metaData);
     CPPUNIT_ASSERT_EQUAL(name2, fd2.getFilename());
@@ -161,7 +161,7 @@ void FileDescriptorTest::testSetFileView()
     Filename name1("/foo/poo/goo");
     FileDescriptor fd1(name1, *metaData);
 
-    FileView view1(11, new BasicDataType(7));
+    FileView view1(11, new BasicDataType<7>());
     fd1.setFileView(view1);
     CPPUNIT_ASSERT_EQUAL(FSOffset(11), fd1.getFileView().getDisplacement());
 }

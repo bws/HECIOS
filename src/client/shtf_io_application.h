@@ -50,7 +50,7 @@ class SHTFIOApplication : public IOApplication
 public:
     /** Constructor */
     SHTFIOApplication();
-    
+
 protected:
     /** Implementation of initialize */
     virtual void initialize();
@@ -62,14 +62,14 @@ protected:
 
     /** Create a cMessage from an IOTrace::Record */
     virtual cMessage* createMessage(IOTrace::Record* rec);
-    
+
 private:
     /** No-op on rank changes */
     virtual void rankChanged(int oldRank) {};
-    
+
     /** Create the file system files for this trace */
     virtual void populateFileSystem();
-    
+
     /** @return create the IOTrace for traceFilename */
     IOTrace* createIOTrace(const std::string& traceFilename);
 
@@ -82,15 +82,15 @@ private:
     /** @return an MPI DirectoryCreate request */
     spfsMPIDirectoryCreateRequest* createDirectoryCreateMessage(
         const IOTrace::Record* mkdirRecord);
-    
+
     /** @return an MPI DirectoryRead request */
     spfsMPIDirectoryReadRequest* createDirectoryReadMessage(
         const IOTrace::Record* readDirRecord);
-    
+
     /** @return an MPI DirectoryRemove request */
     spfsMPIDirectoryRemoveRequest* createDirectoryRemoveMessage(
         const IOTrace::Record* rmDirRecord);
-    
+
     /** @return an MPI File Close request */
     spfsMPIFileCloseRequest* createCloseMessage(
         const IOTrace::Record* closeRecord);
@@ -102,15 +102,15 @@ private:
     /** @return an MPI File Get AMode request */
     spfsMPIFileGetAModeRequest* createGetAModeMessage(
         const IOTrace::Record* accessRecord);
-    
+
     /** @return an MPI File Get Size request */
     spfsMPIFileGetSizeRequest* createGetSizeMessage(
         const IOTrace::Record* statRecord);
-    
+
     /** @return an MPI File Open request */
     spfsMPIFileOpenRequest* createOpenMessage(
         const IOTrace::Record* openRecord);
-    
+
     /** @return an MPI File Read At request */
     spfsMPIFileReadAtRequest* createReadAtMessage(
         const IOTrace::Record* readAtRecord);
@@ -118,15 +118,15 @@ private:
     /** @return an MPI File Read At request */
     spfsMPIFileReadAtRequest* createReadMessage(
         const IOTrace::Record* readRecord);
-    
+
     /** @return an MPI File Stat request */
     spfsMPIFileStatRequest* createStatMessage(
         const IOTrace::Record* statRecord);
-    
+
     /** @return an MPI File Update Time request */
     spfsMPIFileUpdateTimeRequest* createUpdateTimeMessage(
         const IOTrace::Record* utimeRecord);
-    
+
     /** @return an MPI File Write At request */
     spfsMPIFileWriteAtRequest* createWriteAtMessage(
         const IOTrace::Record* writeAtRecord);
@@ -139,7 +139,7 @@ private:
     IOTrace* trace_;
 
     /** Byte data type used by POSIX I/O applications */
-    BasicDataType byteDataType_;
+    ByteDataType byteDataType_;
 };
 
 #endif

@@ -75,7 +75,7 @@ void FSClientTest::setUp()
     FSSize size = 9168;
     MockStorageLayoutManager layout;
     FileBuilder::instance().createFile(testFile, size, metaServerId, 2, layout);
-    
+
 }
 
 void FSClientTest::tearDown()
@@ -90,7 +90,7 @@ void FSClientTest::tearDown()
 void FSClientTest::testReadAtNoOffsetNoLength()
 {
     // Retrieve the test files handle
-    BasicDataType dt1(4);
+    BasicDataType<4> dt1;
     Filename testFile("/testFile");
     FileDescriptor* fd = FileBuilder::instance().getDescriptor(testFile);
     spfsMPIFileReadAtRequest* req =
@@ -107,7 +107,7 @@ void FSClientTest::testReadAtNoOffsetNoLength()
     //cMessage* output1 = moduleTester_->getOutputMessage();
     //CPPUNIT_ASSERT_EQUAL((size_t)1, moduleTester_->getNumOutputMessages());
     //CPPUNIT_ASSERT(0 != dynamic_cast<spfsMPIFileReadAtResponse*>(output1));
-    
+
     // Cleanup test data
     delete fd;
 }

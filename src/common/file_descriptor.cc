@@ -27,7 +27,7 @@ FileDescriptor::FileDescriptor(const Filename& name,
                                const FSMetaData& metaData)
     : filename_(name),
       metaData_(metaData),
-      fileView_(0, new BasicDataType(BasicDataType::MPI_BYTE_WIDTH)),
+      fileView_(0, new ByteDataType()),
       filePtr_(0)
 {
     // Set the root directory's handle
@@ -49,7 +49,7 @@ size_t FileDescriptor::getNumParentHandles() const
 FSHandle FileDescriptor::getParentHandle(size_t segmentIdx) const
 {
     assert(segmentIdx < parentHandles_.size());
-    return parentHandles_[segmentIdx]; 
+    return parentHandles_[segmentIdx];
 }
 
 void FileDescriptor::setFileView(const FileView& fileView)
