@@ -121,12 +121,17 @@ void SubarrayDataTypeTest::testGetRegionsByBytes()
 
     CPPUNIT_ASSERT_EQUAL(size_t(13), regions.size());
 
-    CPPUNIT_ASSERT_EQUAL(FSOffset(49), regions[0].offset);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(629), regions[0].offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(2), regions[0].extent);
-    CPPUNIT_ASSERT_EQUAL(FSOffset(0), regions[1].offset);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(633), regions[1].offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(2), regions[1].extent);
-    CPPUNIT_ASSERT_EQUAL(FSOffset(0), regions[2].offset);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(637), regions[2].offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(2), regions[2].extent);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(641), regions[3].offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(2), regions[3].extent);
+
+    CPPUNIT_ASSERT_EQUAL(FSOffset(665), regions[4].offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(2), regions[4].extent);
 }
 
 void SubarrayDataTypeTest::testGetRegionsByCount()

@@ -81,6 +81,7 @@ size_t SubarrayDataType::getRepresentationByteLength() const
 vector<FileRegion> SubarrayDataType::getRegionsByBytes(const FSOffset& byteOffset,
                                                        size_t numBytes) const
 {
+    //cerr << "Offset: " << byteOffset << " Size: " << numBytes << endl;
     vector<FileRegion> regions;
 
     // Determine the size of the contiguous data type region
@@ -94,10 +95,11 @@ vector<FileRegion> SubarrayDataType::getRegionsByBytes(const FSOffset& byteOffse
         // Determine the number discontiguous regions within the sub-array
         size_t firstRegion = arrayOffset / contigLength;
         size_t numRegions = getNumArrayRegions();
+        //cerr << "Num Regions: " << numRegions << " begin: " << firstRegion << endl;
 
         // Process regions in the array until enough bytes are processed
         // or the array
-        for (size_t i = firstRegion; i < numRegions && bytesProcessed < numBytes; i++)
+        for (size_t i = firstRegion; (i < numRegions) && (bytesProcessed < numBytes); i++)
         {
             // Calculate the memory offset into the sub-array
             FSOffset regionOffset = getArrayMemoryLocation(i);
@@ -113,7 +115,7 @@ vector<FileRegion> SubarrayDataType::getRegionsByBytes(const FSOffset& byteOffse
             }
 
             // Trim the data length if the entire length isn't needed
-            dataLength = min(dataLength, numBytes = bytesProcessed);
+            dataLength = min(dataLength, numBytes - bytesProcessed);
 
             // Get region data
             vector<FileRegion> elementRegions =
@@ -127,6 +129,7 @@ vector<FileRegion> SubarrayDataType::getRegionsByBytes(const FSOffset& byteOffse
 
             // Update the number of bytes processed
             bytesProcessed += dataLength;
+            //cerr << "bytes: " << dataLength << " total: " << bytesProcessed << endl;
         }
 
         // Increment the array offset to the next subarray
@@ -174,23 +177,21 @@ size_t SubarrayDataType::getArrayMemoryLocation(size_t region) const
     size_t arrayOffset = 0;
 
     // Construct the indices into each dimension for this region
-    // Note: that the first dimension isn't used for column major, and the last
-    // dimension isn't used for row-major.  It seems more readable this way.
     vector<size_t> dimIdxs(subSizes_.size(), 0);
     if (C_ORDER == order_)
     {
         // Make one pass to determine what indices correspond with this region
         size_t quotient = region;
-        for (size_t i = dimIdxs.size() - 2; i > size_t(-1); i--)
+        for (size_t i = dimIdxs.size() - 2; i != size_t(-1); i--)
         {
             cerr << quotient << " " << sizes_[i] << " " << endl;
 
-            dimIdxs[i] = quotient % sizes_[i];
-            quotient /= sizes_[i];
+            dimIdxs[i] = quotient % subSizes_[i];
+            quotient /= subSizes_[i];
         }
 
         // Use the dimension indices to construct the offset
-        for (size_t i = 0; i < dimIdxs.size() - 1; i++)
+        for (size_t i = 0; i < dimIdxs.size(); i++)
         {
             arrayOffset = (starts_[i] + dimIdxs[i]) + sizes_[i] * arrayOffset;
         }
@@ -201,16 +202,23 @@ size_t SubarrayDataType::getArrayMemoryLocation(size_t region) const
         size_t quotient = region;
         for (size_t i = 1; i < dimIdxs.size(); i++)
         {
-            dimIdxs[i] = quotient % sizes_[i];
-            quotient /= sizes_[i];
+            dimIdxs[i] = quotient % subSizes_[i];
+            quotient /= subSizes_[i];
         }
 
         // Use the dimension indices to construct the offset
-        for (size_t i = dimIdxs.size() - 1; i > 0; i--)
+        for (size_t i = dimIdxs.size() - 1; i != size_t(-1); i--)
         {
             arrayOffset = (starts_[i] + dimIdxs[i]) + sizes_[i] * arrayOffset;
         }
     }
+
+    //cerr << "Memory Loc: " << region << " --> ";
+    //for (size_t i = 0; i < dimIdxs.size(); i++)
+    //{
+    //    cerr << "[" << starts_[i] + dimIdxs[i] << "]";
+    //}
+    //cerr << " --> " << arrayOffset << endl;
     return arrayOffset;
 }
 
