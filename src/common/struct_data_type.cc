@@ -89,23 +89,51 @@ vector<FileRegion> StructDataType::getRegionsByBytes(const FSOffset& byteOffset,
     FSOffset currentOffset = byteOffset;
     while (bytesProcessed < numBytes)
     {
+        // Begin processing the struct subtypes
         for (size_t i = 0; i < types_.size() && bytesProcessed < numBytes; i++)
         {
-            FSSize dataLength = min(blockLengths_[i] * types_[i]->getExtent(),
-                                numBytes - bytesProcessed);
-            vector<FileRegion> elementRegions =
-                types_[i]->getRegionsByBytes(currentOffset + displacements_[i],
-                                             dataLength);
+            size_t structOffset = currentOffset % getTrueExtent();
 
-            // Add regions to the total regions vector
-            copy(elementRegions.begin(),
-                 elementRegions.end(),
-                 back_inserter(vectorRegions));
+            if (structOffset > displacements_[i] &&
+                structOffset < (displacements_[i] +
+                                (blockLengths_[i] * types_[i]->getTrueExtent())))
+            {
+                // Need to perform processing for only a portion of this type
+                FSSize offsetDiff = structOffset - displacements_[i];
+                FSSize dataLength =
+                    min(blockLengths_[i] * types_[i]->getExtent() - offsetDiff,
+                        numBytes - bytesProcessed);
 
-            // Update the number of bytes processed
-            bytesProcessed += dataLength;
+                vector<FileRegion> elementRegions =
+                    types_[i]->getRegionsByBytes(currentOffset + displacements_[i],
+                                                                 dataLength);
+
+                // Add regions to the total regions vector
+                copy(elementRegions.begin(),
+                     elementRegions.end(),
+                     back_inserter(vectorRegions));
+
+                // Update the number of bytes processed
+                bytesProcessed += dataLength;
+            }
+            else if (structOffset <= displacements_[i])
+            {
+                FSSize dataLength = min(blockLengths_[i] * types_[i]->getExtent(),
+                                        numBytes - bytesProcessed);
+                vector<FileRegion> elementRegions =
+                    types_[i]->getRegionsByBytes(currentOffset + displacements_[i],
+                                                 dataLength);
+
+                // Add regions to the total regions vector
+                copy(elementRegions.begin(),
+                     elementRegions.end(),
+                     back_inserter(vectorRegions));
+
+                // Update the number of bytes processed
+                bytesProcessed += dataLength;
+            }
         }
-        currentOffset += getExtent();
+        currentOffset = ((currentOffset % getTrueExtent()) + 1) * getTrueExtent();
     }
     assert(bytesProcessed == numBytes);
     return vectorRegions;

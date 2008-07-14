@@ -95,7 +95,7 @@ vector<FileRegion> SubarrayDataType::getRegionsByBytes(const FSOffset& byteOffse
     while (bytesProcessed < numBytes)
     {
         // Determine the number discontiguous regions within the sub-array
-        size_t firstRegion = arrayOffset / contigLength;
+        size_t firstRegion = (arrayOffset % getTrueExtent()) / contigLength;
         size_t numRegions = getNumArrayRegions();
         //cerr << "Num Regions: " << numRegions << " begin: " << firstRegion << endl;
 
