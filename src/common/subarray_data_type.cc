@@ -81,6 +81,8 @@ size_t SubarrayDataType::getRepresentationByteLength() const
 vector<FileRegion> SubarrayDataType::getRegionsByBytes(const FSOffset& byteOffset,
                                                        size_t numBytes) const
 {
+    assert(0 != getTrueExtent());
+
     //cerr << "Offset: " << byteOffset << " Size: " << numBytes << endl;
     vector<FileRegion> regions;
 
@@ -184,8 +186,6 @@ size_t SubarrayDataType::getArrayMemoryLocation(size_t region) const
         size_t quotient = region;
         for (size_t i = dimIdxs.size() - 2; i != size_t(-1); i--)
         {
-            cerr << quotient << " " << sizes_[i] << " " << endl;
-
             dimIdxs[i] = quotient % subSizes_[i];
             quotient /= subSizes_[i];
         }

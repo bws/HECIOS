@@ -83,7 +83,7 @@
 <useDefaultCommand>true</useDefaultCommand>
 <runAllBuilders>true</runAllBuilders>
 </target>
-<target name="test" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<target name="Unit Tests" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
 <buildCommand>make</buildCommand>
 <buildArguments/>
 <buildTarget>test</buildTarget>
