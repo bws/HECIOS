@@ -86,6 +86,7 @@ vector<FileRegion> StructDataType::getRegionsByBytes(const FSOffset& byteOffset,
 
     // Construct the regions required to map numBytes of data to data regions
     size_t bytesProcessed = 0;
+    FSOffset structBegin = (byteOffset / getTrueExtent()) * getTrueExtent();
     FSOffset currentOffset = byteOffset;
     while (bytesProcessed < numBytes)
     {
@@ -93,7 +94,6 @@ vector<FileRegion> StructDataType::getRegionsByBytes(const FSOffset& byteOffset,
         for (size_t i = 0; i < types_.size() && bytesProcessed < numBytes; i++)
         {
             size_t structOffset = currentOffset % getTrueExtent();
-
             if (structOffset > displacements_[i] &&
                 structOffset < (displacements_[i] +
                                 (blockLengths_[i] * types_[i]->getTrueExtent())))
@@ -105,8 +105,7 @@ vector<FileRegion> StructDataType::getRegionsByBytes(const FSOffset& byteOffset,
                         numBytes - bytesProcessed);
 
                 vector<FileRegion> elementRegions =
-                    types_[i]->getRegionsByBytes(currentOffset + displacements_[i],
-                                                                 dataLength);
+                    types_[i]->getRegionsByBytes(currentOffset, dataLength);
 
                 // Add regions to the total regions vector
                 copy(elementRegions.begin(),
@@ -121,7 +120,7 @@ vector<FileRegion> StructDataType::getRegionsByBytes(const FSOffset& byteOffset,
                 FSSize dataLength = min(blockLengths_[i] * types_[i]->getExtent(),
                                         numBytes - bytesProcessed);
                 vector<FileRegion> elementRegions =
-                    types_[i]->getRegionsByBytes(currentOffset + displacements_[i],
+                    types_[i]->getRegionsByBytes(structBegin + displacements_[i],
                                                  dataLength);
 
                 // Add regions to the total regions vector
@@ -133,7 +132,10 @@ vector<FileRegion> StructDataType::getRegionsByBytes(const FSOffset& byteOffset,
                 bytesProcessed += dataLength;
             }
         }
-        currentOffset = ((currentOffset % getTrueExtent()) + 1) * getTrueExtent();
+
+        // Increment to the next struct
+        structBegin += getTrueExtent();
+        currentOffset = structBegin;
     }
     assert(bytesProcessed == numBytes);
     return vectorRegions;

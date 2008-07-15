@@ -57,10 +57,25 @@ public:
     void testGetRegionsByCount();
 
 private:
+    StructDataType* testStructType_;
 };
 
 void StructDataTypeTest::setUp()
 {
+    // Set up the array of displacements
+    size_t displacements[] = {0, 10};
+
+    // Set up the block lengths
+    size_t blockLengths[] = {5, 2};
+
+    // Set up the old types
+    vector<DataType*> types(2);
+    types[0] = new ByteDataType();
+    types[1] = new DoubleDataType();
+
+    testStructType_ = new StructDataType(vector<size_t>(blockLengths, blockLengths + 2),
+                                         vector<size_t>(displacements, displacements + 2),
+                                         types);
 }
 
 void StructDataTypeTest::tearDown()
@@ -83,7 +98,23 @@ void StructDataTypeTest::testGetRegionsByBytes()
 
 void StructDataTypeTest::testGetRegionsByCount()
 {
+    vector<FileRegion> regions;
 
+    // Test getting regions on aligned boundary
+    regions = testStructType_->getRegionsByBytes(0, 15);
+    CPPUNIT_ASSERT_EQUAL(size_t(2), regions.size());
+    CPPUNIT_ASSERT_EQUAL(FSOffset(0), regions[0].offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(5), regions[0].extent);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(10), regions[1].offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(10), regions[1].extent);
+
+    // Test getting regions on unaligned boundary
+    regions = testStructType_->getRegionsByBytes(2, 15);
+    CPPUNIT_ASSERT_EQUAL(size_t(2), regions.size());
+    CPPUNIT_ASSERT_EQUAL(FSOffset(2), regions[0].offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(3), regions[0].extent);
+    CPPUNIT_ASSERT_EQUAL(FSOffset(10), regions[1].offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(12), regions[1].extent);
 }
 
 #endif /*STRUCT_DATA_TYPE_TEST_H_*/
