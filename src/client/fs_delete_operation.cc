@@ -39,7 +39,7 @@ FSDeleteOperation::FSDeleteOperation(FSClient* client,
       deleteName_(deleteReq->getFileName())
 {
     assert(0 != client_);
-    assert(0 != deleteReq_);    
+    assert(0 != deleteReq_);
 }
 
 FSDeleteOperation::FSDeleteOperation(FSClient* client,
@@ -52,7 +52,7 @@ FSDeleteOperation::FSDeleteOperation(FSClient* client,
       deleteName_(deleteReq->getDirName())
 {
     assert(0 != client_);
-    assert(0 != deleteReq_);    
+    assert(0 != deleteReq_);
 }
 
 void FSDeleteOperation::registerStateMachines()
@@ -62,21 +62,25 @@ void FSDeleteOperation::registerStateMachines()
     addStateMachine(new FSLookupNameSM(parentDir, deleteReq_, client_));
 
     // Second - Lookup parent attributes
-    addStateMachine(new FSGetAttributesSM(parentDir,
-                                          false,
-                                          deleteReq_,
-                                          client_));
+    // Check if the parent exists
+    if (fileExists(parentDir))
+    {
+        addStateMachine(new FSGetAttributesSM(parentDir,
+                                              false,
+                                              deleteReq_,
+                                              client_));
 
-    // Finally - perform the file remove
-    if (useCollectiveCommunication_)
-    {
-        addStateMachine(new FSCollectiveRemoveSM(deleteName_,
-                                                 deleteReq_,
-                                                 client_));
-    }
-    else
-    {
-        addStateMachine(new FSRemoveSM(deleteName_, deleteReq_, client_));
+        // Finally - perform the file remove
+        if (useCollectiveCommunication_)
+        {
+            addStateMachine(new FSCollectiveRemoveSM(deleteName_,
+                                                     deleteReq_,
+                                                     client_));
+        }
+        else
+        {
+            addStateMachine(new FSRemoveSM(deleteName_, deleteReq_, client_));
+        }
     }
 }
 
@@ -94,7 +98,7 @@ void FSDeleteOperation::sendFinalResponse()
         finalResponse = new spfsMPIDirectoryRemoveResponse(
             0, SPFS_MPI_DIRECTORY_REMOVE_RESPONSE);
     }
-    
+
     finalResponse->setContextPointer(deleteReq_);
     client_->send(finalResponse, client_->getAppOutGate());
 }

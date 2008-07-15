@@ -36,21 +36,18 @@ public:
     FSOpenOperation(FSClient* client,
                     spfsMPIFileOpenRequest* openReq,
                     bool useCollectiveCommunication);
-    
+
 protected:
     /** Register state machines to perform open operation */
     virtual void registerStateMachines();
-    
+
     /** Send final response */
     virtual void sendFinalResponse();
 
 private:
     /** @return true if this open creates a file */
     bool isFileCreate();
-    
-    /** @return true if the file exists in the file system */
-    bool fileExists(const Filename& filename);
-    
+
     /** The filesystem client module */
     FSClient* client_;
 

@@ -20,6 +20,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "fs_operation.h"
+class Filename;
 class spfsMPIRequest;
 
 /**
@@ -29,6 +30,9 @@ class spfsMPIRequest;
 class FSClientOperation : public FSOperation
 {
 public:
+    /** @return true if the file exists in the file system */
+    static bool fileExists(const Filename& filename);
+
     /** Constructor */
     FSClientOperation(spfsMPIRequest* mpiRequest);
 

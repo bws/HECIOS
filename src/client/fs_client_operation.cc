@@ -18,8 +18,14 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "fs_client_operation.h"
+#include "file_builder.h"
 #include "fs_operation_state.h"
 #include "mpi_proto_m.h"
+
+bool FSClientOperation::fileExists(const Filename& filename)
+{
+    return (0 != FileBuilder::instance().getMetaData(filename));
+}
 
 FSClientOperation::FSClientOperation(spfsMPIRequest* mpiRequest)
     : FSOperation(mpiRequest->getOpState()),

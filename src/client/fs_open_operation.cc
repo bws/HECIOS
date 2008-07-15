@@ -39,7 +39,7 @@ FSOpenOperation::FSOpenOperation(FSClient* client,
       useCollectiveCommunication_(useCollectiveCommunication)
 {
     assert(0 != client_);
-    assert(0 != openReq_);    
+    assert(0 != openReq_);
 }
 
 void FSOpenOperation::registerStateMachines()
@@ -54,7 +54,7 @@ void FSOpenOperation::registerStateMachines()
     {
         // Second - Lookup parent attributes
         addStateMachine(new FSGetAttributesSM(parentDir, false, openReq_, client_));
-    
+
         // Finally - Perform open/create
         if (isFileCreate())
         {
@@ -95,11 +95,6 @@ bool FSOpenOperation::isFileCreate()
     {
         return false;
     }
-}
-
-bool FSOpenOperation::fileExists(const Filename& filename)
-{
-    return (0 != FileBuilder::instance().getMetaData(filename));
 }
 
 /*
