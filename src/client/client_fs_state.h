@@ -39,20 +39,20 @@ public:
 
     /** Attribute Cache Type */
     typedef LRUTimeoutCache<FSHandle, FSMetaData> AttributeCache;
-    
+
     /** Attribute Cache Entry Type */
     typedef AttributeCache::EntryType AttributeEntry;
-    
+
     /** Name Cache Type */
     typedef LRUTimeoutCache<std::string, FSHandle> NameCache;
-    
+
     /** Name Cache Entry Type */
     typedef NameCache::EntryType NameEntry;
-    
+
     /** The maximum number of entries in the attribute cache */
     static const int MAX_ATTR_ENTRIES = 100;
 
-    /** The maximum time an entry may reside in the attribute cache */    
+    /** The maximum time an entry may reside in the attribute cache */
     static const double MAX_ATTR_TIME = 100.0;
 
     /** The maximum number of entries in the name cache */
@@ -82,6 +82,17 @@ public:
     /** @return the meta data handle for the directory */
     FSHandle* lookupName(const std::string& path);
 
+    /**
+     * Perform a lookup on name and fill out the number of resolved filename
+     * segments and the resolved handle (null if no item was portion of the
+     * name was resolved.
+     *
+     * @return the lookup status for the cache of name
+     */
+    FSLookupStatus lookupName(const Filename& name,
+                              size_t& outNumResolvedSegs,
+                              FSHandle* outResolvedHandle);
+
     /** I have no idea what this function is for (BWS) */
     bool serverNotUsed(int serverNum, int dist, int count, MPIDataType dtype);
 
@@ -104,13 +115,13 @@ private:
 
     /** access function for root */
     int root();
-    
+
     /** access function for totalNumServers */
     int totalNumServers();
 
     /** Attribute cache */
     AttributeCache attrCache_;
-    
+
     /** Name cache */
     NameCache nameCache_;
 

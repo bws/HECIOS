@@ -71,6 +71,7 @@ size_t Filename::getNumPathSegments() const
 
 Filename Filename::getSegment(size_t segIdx) const
 {
+    assert(segIdx < getNumPathSegments());
     string segment = path_;
     if (0 == segIdx)
         segment = path_.substr(0, 1);

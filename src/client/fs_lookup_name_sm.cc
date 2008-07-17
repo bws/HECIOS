@@ -51,8 +51,8 @@ bool FSLookupNameSM::updateState(cFSM& currentState, cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            bool isCached = isNameCached();
-            if (isCached)
+            FSLookupStatus status = isNameCached();
+            if (SPFS_FOUND == status)
             {
                 FSM_Goto(currentState, FINISH);
             }
@@ -94,20 +94,35 @@ bool FSLookupNameSM::updateState(cFSM& currentState, cMessage* msg)
     return isComplete;
 }
 
-bool FSLookupNameSM::isNameCached()
+FSLookupStatus  FSLookupNameSM::isNameCached()
 {
-    // If the name is the root, it is well known
-    if (1 == lookupName_.getNumPathSegments())
+    // Perform the cache lookup
+    size_t resolvedSegment = 0;
+    FSHandle lookupHandle = 0;
+    FSLookupStatus cacheStatus =
+        client_->fsState().lookupName(lookupName_,
+                                      resolvedSegment,
+                                      &lookupHandle);
+
+    // Update the number of resolved segments
+    if (cacheStatus == SPFS_NOTFOUND)
     {
-        return true;
+        // The root handle is well known even on cache misses
+        mpiReq_->setNumResolvedSegments(1);
+        if (1 == lookupName_.getNumPathSegments())
+        {
+            return SPFS_FOUND;
+        }
+        else
+        {
+            return SPFS_PARTIAL;
+        }
     }
-    
-    FSHandle* lookup = client_->fsState().lookupName(lookupName_.str());
-    if (0 != lookup)
+    else
     {
-        return true;
+        mpiReq_->setNumResolvedSegments(resolvedSegment);
     }
-    return false;
+    return cacheStatus;
 }
 
 void FSLookupNameSM::lookupHandleOnServer()
@@ -115,18 +130,19 @@ void FSLookupNameSM::lookupHandleOnServer()
     // Find the first resolved handle
     int numResolvedSegments = mpiReq_->getNumResolvedSegments();
     Filename resolvedName = lookupName_.getSegment(numResolvedSegments - 1);
+    //cerr << "Lookup: " << lookupName_ << endl;
+    //cerr << "Resolved so far: " << resolvedName << endl;
 
     // Determine the handle of the resolved name
     FSHandle resolvedHandle =
         FileBuilder::instance().getMetaData(resolvedName)->handle;
-    
+
     // Create the lookup request
-    cerr << "Lookup: " << lookupName_ << endl;
-    cerr << "Resolved so far: " << resolvedName << " " << resolvedHandle << endl;
+    //cerr << "Resolved handle: " << resolvedHandle << endl;
     spfsLookupPathRequest* req = FSClient::createLookupPathRequest(
         lookupName_, resolvedHandle, numResolvedSegments);
     req->setContextPointer(mpiReq_);
-    
+
     // Send the request
     client_->send(req, client_->getNetOutGate());
 }
@@ -139,7 +155,7 @@ FSLookupStatus FSLookupNameSM::processLookup(spfsLookupPathResponse* lookupRespo
     // Add the lookup results
     int numResolvedSegments = lookupResponse->getNumResolvedSegments();
     mpiReq_->setNumResolvedSegments(numResolvedSegments);
-    
+
     // Determine lookup results
     FSLookupStatus lookupStatus = lookupResponse->getStatus();
     if (SPFS_FOUND == lookupStatus)

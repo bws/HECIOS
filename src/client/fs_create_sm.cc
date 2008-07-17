@@ -53,13 +53,11 @@ bool FSCreateSM::updateState(cFSM& currentState, cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "DIAGNOSTIC: Using serial create\n";
             FSM_Goto(currentState, CREATE_META);
             break;
         }
         case FSM_Enter(CREATE_META):
-        {    
+        {
             createMeta();
             break;
         }
@@ -191,7 +189,7 @@ void FSCreateSM::createDirEnt()
     spfsCreateDirEntRequest* req = FSClient::createCreateDirEntRequest(
         parentMeta->handle, createFilename_);
     req->setContextPointer(mpiReq_);
-    client_->send(req, client_->getNetOutGate());   
+    client_->send(req, client_->getNetOutGate());
 }
 
 void FSCreateSM::addAttributesToCache()

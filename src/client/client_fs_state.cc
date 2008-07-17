@@ -76,13 +76,32 @@ FSHandle* ClientFSState::lookupName(const string& path)
     return metaHandle;
 }
 
+FSLookupStatus ClientFSState::lookupName(const Filename& name,
+                                         size_t& outNumResolvedSeg,
+                                         FSHandle* outResolvedHandle)
+{
+    FSLookupStatus lookupStatus = SPFS_NOTFOUND;
+    for (size_t i = name.getNumPathSegments() - 1; i != size_t(-1); i--)
+    {
+        FSHandle* handle = lookupName(name.getSegment(i).str());
+        if (0 != handle)
+        {
+            outNumResolvedSeg = i + 1;
+            *outResolvedHandle = *handle;
+            lookupStatus = (i == name.getNumPathSegments() - 1) ? SPFS_FOUND : SPFS_PARTIAL;
+            break;
+        }
+    }
+    return lookupStatus;
+}
+
 /** returns true is the server has data in the given request */
 bool ClientFSState::serverNotUsed(int serverNum, int dist,
                                   int count, MPIDataType dtype)
 {
     return false;
 }
-                                                                                
+
 /**
  * called during create to select servers for new file
  * randomly selects a server from 0 to S-1 where S is totalNumServers
@@ -91,7 +110,7 @@ int ClientFSState::selectServer()
 {
     return 0;
 }
-                                                                                
+
 /** hashes path to a number from 0 to S-1 where S is totalNumServers */
 int ClientFSState::hashPath(std::string path)
 {

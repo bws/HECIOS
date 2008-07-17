@@ -26,16 +26,32 @@ import
     "EtherSwitch",
     "FlatNetworkConfigurator";
 
+// Data channel operating at 100Mbs
 channel FastE
     delay 0.0   // sec
     error 0.0
     datarate 100000000   // bit/sec
 endchannel
 
+// Data channel operating at 1Gbs
 channel GigE
     delay 0.0   // sec
     error 0.0
     datarate 1000000000 // bit/sec
+endchannel
+
+// Data channel operating at 10Gbs
+channel TenGigE
+    delay 0.0   // sec
+    error 0.0
+    datarate 10000000000 // bit/sec
+endchannel
+
+// Data channel operating at 40Gbs
+channel FortyGigE
+    delay 0.0   // sec
+    error 0.0
+    datarate 40000000000 // bit/sec
 endchannel
 
 module BeowulfCluster

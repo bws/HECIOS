@@ -52,13 +52,11 @@ bool FSRemoveSM::updateState(cFSM& currentState, cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "DIAGNOSTIC: Using serial remove\n";
             FSM_Goto(currentState, REMOVE_DIRENT);
             break;
         }
         case FSM_Enter(REMOVE_DIRENT):
-        {    
+        {
             removeDirEnt();
             break;
         }
@@ -79,7 +77,7 @@ bool FSRemoveSM::updateState(cFSM& currentState, cMessage* msg)
             break;
         }
         case FSM_Enter(REMOVE_DATA):
-        {    
+        {
             removeDataObjects();
             break;
         }

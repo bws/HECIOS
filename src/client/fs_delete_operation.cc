@@ -71,14 +71,29 @@ void FSDeleteOperation::registerStateMachines()
                                               client_));
 
         // Finally - perform the file remove
+        static bool printDiagnostic = true;
         if (useCollectiveCommunication_)
         {
+            if (printDiagnostic)
+            {
+                cerr << __FILE__ << ":" << __LINE__ << ":"
+                    << "DIAGNOSTIC: Using collective remove "
+                    << "(this diagnostic will not print again)\n";
+                printDiagnostic = false;
+            }
             addStateMachine(new FSCollectiveRemoveSM(deleteName_,
                                                      deleteReq_,
                                                      client_));
         }
         else
         {
+            if (printDiagnostic)
+            {
+                cerr << __FILE__ << ":" << __LINE__ << ":"
+                    << "DIAGNOSTIC: Using serial remove "
+                    << "(this diagnostic will not print again)\n";
+                printDiagnostic = false;
+            }
             addStateMachine(new FSRemoveSM(deleteName_, deleteReq_, client_));
         }
     }

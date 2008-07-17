@@ -37,7 +37,7 @@ FSStatOperation::FSStatOperation(FSClient* client,
       useCollectiveCommunication_(useCollectiveCommunication)
 {
     assert(0 != client_);
-    assert(0 != statReq_);    
+    assert(0 != statReq_);
 }
 
 void FSStatOperation::registerStateMachines()
@@ -54,8 +54,16 @@ void FSStatOperation::registerStateMachines()
                                           client_));
 
     // Finally - perform the file remove
+    static bool printDiagnostic = true;
     if (useCollectiveCommunication_)
     {
+        if (printDiagnostic)
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                << "DIAGNOSTIC: Using collective stat "
+                << "(this diagnostic will not print again)\n";
+            printDiagnostic = false;
+        }
         addStateMachine(new FSCollectiveGetAttributesSM(statFile,
                                                         true,
                                                         statReq_,
@@ -63,6 +71,13 @@ void FSStatOperation::registerStateMachines()
     }
     else
     {
+        if (printDiagnostic)
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                << "DIAGNOSTIC: Using serial stat "
+                << "(this diagnostic will not print again)\n";
+            printDiagnostic = false;
+        }
         addStateMachine(new FSGetAttributesSM(statFile,
                                               true,
                                               statReq_,

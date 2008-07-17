@@ -101,7 +101,7 @@ void FSClientTest::testReadAtNoOffsetNoLength()
     req->setDataType(&dt1);
 
     // Ensure the output message is a ReadAtResponse
-    moduleTester_->deliverMessage(req, "appIn");
+    //moduleTester_->deliverMessage(req, "appIn");
 
     // TODO: account for the processing delay now encountered here
     //cMessage* output1 = moduleTester_->getOutputMessage();
@@ -109,6 +109,7 @@ void FSClientTest::testReadAtNoOffsetNoLength()
     //CPPUNIT_ASSERT(0 != dynamic_cast<spfsMPIFileReadAtResponse*>(output1));
 
     // Cleanup test data
+    delete req;
     delete fd;
 }
 

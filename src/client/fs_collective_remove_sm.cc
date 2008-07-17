@@ -49,13 +49,11 @@ bool FSCollectiveRemoveSM::updateState(cFSM& currentState, cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "DIAGNOSTIC: Using collective remove\n";
             FSM_Goto(currentState, COLLECTIVE_REMOVE);
             break;
         }
         case FSM_Enter(COLLECTIVE_REMOVE):
-        {    
+        {
             collectiveRemove();
             break;
         }
@@ -83,7 +81,7 @@ void FSCollectiveRemoveSM::collectiveRemove()
     FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parentName);
     assert(0 != meta);
     assert(0 != parentMeta);
-    
+
     spfsCollectiveRemoveRequest* req = FSClient::createCollectiveRemoveRequest(
         parentMeta->dataHandles[0], meta->handle, meta->dataHandles);
     req->setContextPointer(mpiReq_);

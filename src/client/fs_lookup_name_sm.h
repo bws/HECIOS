@@ -37,14 +37,14 @@ public:
     FSLookupNameSM(const Filename& lookupName,
                    spfsMPIRequest* mpiRequest,
                    FSClient* client);
-    
+
 protected:
     /** Message processing for client name lookup*/
     virtual bool updateState(cFSM& currentState, cMessage* msg);
-    
+
 private:
-    /** @return true if the lookup name is cached */
-    bool isNameCached();
+    /** @return the lookup status from the name cache */
+    FSLookupStatus isNameCached();
 
     /** Send the request to resolve the lookup name's handle */
     void lookupHandleOnServer();
@@ -54,7 +54,7 @@ private:
 
     /** Filename to perform lookup on */
     Filename lookupName_;
-    
+
     /** The originating MPI request */
     spfsMPIRequest* mpiReq_;
 

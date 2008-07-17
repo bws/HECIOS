@@ -67,7 +67,7 @@ void Lookup::handleServerMessage(cMessage* msg)
             assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
             module_->recordLookupDiskDelay(msg);
             LookupStatus status = processLookupResult();
-            
+
             if (LOCAL_LOOKUP_FAILED == status)
             {
                 FSM_Goto(currentState, FINISH_FAILED_LOOKUP);
@@ -103,7 +103,7 @@ void Lookup::handleServerMessage(cMessage* msg)
         {
             assert(0 != dynamic_cast<spfsOSFileReadResponse*>(msg));
             finish(SPFS_NOTFOUND);
-            break;            
+            break;
         }
     }
     // Store current state
@@ -125,7 +125,7 @@ void Lookup::lookupName()
     spfsOSFileReadRequest* fileRead =
         new spfsOSFileReadRequest(0, SPFS_OS_FILE_READ_REQUEST);
     fileRead->setContextPointer(lookupReq_);
-    Filename localFilename(parentHandle);    
+    Filename localFilename(parentHandle);
     fileRead->setFilename(localFilename.c_str());
     fileRead->setOffsetArraySize(1);
     fileRead->setExtentArraySize(1);
@@ -136,7 +136,7 @@ void Lookup::lookupName()
     module_->send(fileRead);
 
     //cerr << "Looking up: " << fullName.getSegment(nextSegment) << endl
-    //     << "  Parent: " << parentName << " " << parentHandle << endl; 
+    //     << "  Parent: " << parentName << " " << parentHandle << endl;
 }
 
 Lookup::LookupStatus Lookup::processLookupResult()
@@ -148,8 +148,8 @@ Lookup::LookupStatus Lookup::processLookupResult()
     FSMetaData* nextMeta = FileBuilder::instance().getMetaData(nextParent);
 
     // Return the status of the next path segment
-    //cerr << "Server resolved segs: " << resolvedSegments
-    //     << " Name segs: " << fullName.getNumPathSegments() << endl;
+    cerr << "Server resolved segs: " << resolvedSegments
+         << " Name segs: " << fullName.getNumPathSegments() << endl;
     LookupStatus status = INVALID_LOOKUP_STATUS;
     if (0 == nextMeta)
     {
@@ -164,7 +164,7 @@ Lookup::LookupStatus Lookup::processLookupResult()
         // Increment the number of locally resolved segments
         size_t localResolutions = lookupReq_->getLocallyResolvedSegments() + 1;
         lookupReq_->setLocallyResolvedSegments(localResolutions);
-        
+
         if (resolvedSegments == fullName.getNumPathSegments())
         {
             status = FULL_LOOKUP_COMPLETE;

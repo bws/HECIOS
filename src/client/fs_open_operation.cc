@@ -58,15 +58,30 @@ void FSOpenOperation::registerStateMachines()
         // Finally - Perform open/create
         if (isFileCreate())
         {
+            static bool printDiagnostic = true;
             if (useCollectiveCommunication_)
             {
                 addStateMachine(new FSCollectiveCreateSM(openFile,
                                                          openReq_,
                                                          client_));
+                if (printDiagnostic)
+                {
+                    cerr << __FILE__ << ":" << __LINE__ << ":"
+                        << "DIAGNOSTIC: Using collective create "
+                        << "(this diagnostic will not print again)\n";
+                    printDiagnostic = false;
+                }
             }
             else
             {
                 addStateMachine(new FSCreateSM(openFile, openReq_, client_));
+                if (printDiagnostic)
+                {
+                    cerr << __FILE__ << ":" << __LINE__ << ":"
+                        << "DIAGNOSTIC: Using serial create "
+                        << "(this diagnostic will not print again)\n";
+                    printDiagnostic = false;
+                }
             }
         }
         else

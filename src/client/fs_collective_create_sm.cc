@@ -49,13 +49,11 @@ bool FSCollectiveCreateSM::updateState(cFSM& currentState, cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "DIAGNOSTIC: Using collective create\n";
             FSM_Goto(currentState, COLLECTIVE_CREATE);
             break;
         }
         case FSM_Enter(COLLECTIVE_CREATE):
-        {    
+        {
             collectiveCreate();
             break;
         }

@@ -21,6 +21,7 @@ class ClientFSStateTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testInsertName);
     CPPUNIT_TEST(testRemoveName);
     CPPUNIT_TEST(testLookupName);
+    CPPUNIT_TEST(testLookupName2);
     CPPUNIT_TEST(testServerNotUsed);
     CPPUNIT_TEST(testSelectServer);
     CPPUNIT_TEST(testHashPath);
@@ -34,20 +35,22 @@ public:
 
     /** Called after each test function */
     void tearDown();
-    
+
     void testConstructor();
 
     void testInsertAttr();
 
     void testRemoveAttr();
-    
+
     void testLookupAttr();
 
     void testInsertName();
 
     void testRemoveName();
-    
+
     void testLookupName();
+
+    void testLookupName2();
 
     void testServerNotUsed();
 
@@ -143,6 +146,54 @@ void ClientFSStateTest::testLookupName()
     FSHandle handle1 = 1;
     state.insertName(dir1, handle1);
     CPPUNIT_ASSERT_EQUAL(*(state.lookupName(dir1)), handle1);
+}
+
+void ClientFSStateTest::testLookupName2()
+{
+    ClientFSState state;
+
+    // Insert several entries
+    Filename file1("/dir1");
+    FSHandle handle1 = 1;
+    state.insertName(file1.str(), handle1);
+    Filename file2("/dir1/dir2");
+    FSHandle handle2 = 2;
+    state.insertName(file2.str(), handle2);
+    Filename file3("/dir1/dir2/dir3");
+    FSHandle handle3 = 3;
+    state.insertName(file3.str(), handle3);
+
+    // Lookup a full entry
+    size_t resolvedSeg1 = 0;
+    FSHandle lookup1 = 101;
+    FSLookupStatus status1 = state.lookupName(file1, resolvedSeg1, &lookup1);
+    CPPUNIT_ASSERT_EQUAL(SPFS_FOUND, status1);
+    CPPUNIT_ASSERT_EQUAL(file1.getNumPathSegments(), resolvedSeg1);
+    CPPUNIT_ASSERT_EQUAL(handle1, lookup1);
+
+    // Lookup a partial entry
+    size_t resolvedSeg2 = 0;
+    FSHandle lookup2 = 102;
+    FSLookupStatus status2 = state.lookupName(Filename("/dir1/foo"), resolvedSeg2, &lookup2);
+    CPPUNIT_ASSERT_EQUAL(SPFS_PARTIAL, status2);
+    CPPUNIT_ASSERT_EQUAL(size_t(2), resolvedSeg2);
+    CPPUNIT_ASSERT_EQUAL(handle1, lookup2);
+
+    // Lookup a partial entry
+    size_t resolvedSeg3 = 0;
+    FSHandle lookup3 = 103;
+    FSLookupStatus status3 = state.lookupName(Filename("/dir1/dir2/bar"), resolvedSeg3, &lookup3);
+    CPPUNIT_ASSERT_EQUAL(SPFS_PARTIAL, status3);
+    CPPUNIT_ASSERT_EQUAL(size_t(3), resolvedSeg3);
+    CPPUNIT_ASSERT_EQUAL(handle2, lookup3);
+
+    // Lookup a non-existent entry
+    size_t resolvedSeg4 = 0;
+    FSHandle lookup4 = 104;
+    FSLookupStatus status4 = state.lookupName(Filename("/so/long/and"), resolvedSeg4, &lookup4);
+    CPPUNIT_ASSERT_EQUAL(SPFS_NOTFOUND, status4);
+    CPPUNIT_ASSERT_EQUAL(size_t(0), resolvedSeg4);
+    CPPUNIT_ASSERT_EQUAL(FSHandle(104), lookup4);
 }
 
 void ClientFSStateTest::testServerNotUsed()
