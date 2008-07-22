@@ -93,6 +93,8 @@ private:
     void performWaitProcessing(PHTFEventRecord* waitRecord,
                                bool& outWaitIsComplete);
 
+    void performSetViewProcessing(PHTFEventRecord* setViewRecord);
+
     /** Perform the application processing to create a new communicator */
     void performCommProcessing(PHTFEventRecord* commRecord);
     void performCreateCommunicator(std::string newcomm);

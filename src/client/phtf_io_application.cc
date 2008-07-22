@@ -218,6 +218,11 @@ bool PHTFIOApplication::scheduleNextMessage()
             // Retrieve the next operation, as this one is local
             msgScheduled = scheduleNextMessage();
         }
+        else if (SET_VIEW == opcode)
+        {
+            performSetViewProcessing(&eventRecord);
+            msgScheduled = scheduleNextMessage();
+        }
         else
         {
             // Start the non-blocking operation
@@ -416,6 +421,22 @@ void PHTFIOApplication::performWaitProcessing(PHTFEventRecord* waitRecord,
     {
         outWaitIsComplete = true;
     }
+}
+
+void PHTFIOApplication::performSetViewProcessing(PHTFEventRecord* setViewRecord)
+{
+    string hstr = setViewRecord->paramAt(0);
+    long handle = strtol(hstr.c_str(), NULL, 16);
+    FileDescriptor* fd = getDescriptor(handle);
+
+    string ofstr = setViewRecord->paramAt(1);
+    long offset = strtol(ofstr.c_str(), NULL, 0);
+
+    string dtstr = setViewRecord->paramAt(3);
+    DataType* dataType = getDataTypeById(dtstr);
+
+    FileView fileView(offset, dataType);
+    fd->setFileView(fileView);
 }
 
 void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
