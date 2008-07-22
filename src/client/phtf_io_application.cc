@@ -138,6 +138,8 @@ bool PHTFIOApplication::scheduleNextMessage()
         PHTFEventRecord eventRecord;
         *phtfEvent_ >> eventRecord;
 
+        cout << eventRecord.recordStr() << endl;
+
         int opcode = eventRecord.recordOp();
         if (CPU_PHASE == opcode)
         {
@@ -376,6 +378,7 @@ void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
 
     // Extract the communicator id
     string gstr = openRecord->paramAt(0);
+    gstr = getAlias(gstr);
     outCommunicatorId = (int)strtol(gstr.c_str(), NULL, 0);
 }
 
@@ -433,6 +436,7 @@ void PHTFIOApplication::performSetViewProcessing(PHTFEventRecord* setViewRecord)
     long offset = strtol(ofstr.c_str(), NULL, 0);
 
     string dtstr = setViewRecord->paramAt(3);
+    dtstr = getAlias(dtstr);
     DataType* dataType = getDataTypeById(dtstr);
 
     FileView fileView(offset, dataType);
@@ -458,7 +462,7 @@ void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
             break;
         default:
             cerr << "Error: unsupported comm op type: " << op << endl;
-            exit(0);
+            assert(false);
             break;
     }
     performCreateCommunicator(newcomm);
@@ -467,31 +471,23 @@ void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
 void PHTFIOApplication::performCreateCommunicator(string newcomm)
 {
     cout << "Create Comm " << newcomm;
-    Communicator comm = (Communicator)strtol(newcomm.c_str(), NULL, 0);
+    string aliasComm = getAlias(newcomm);
+    Communicator comm = (Communicator)strtol(aliasComm.c_str(), NULL, 0);
+
+    cout << " alias " << hex << comm;
 
     // create only if communicator not yet exist
     if(!CommMan::instance().exists(comm))
     {
-        // if this is a communicator alias, like in fortran, do a duplication
-        if(phtfEvent_->memValue("Alias", newcomm).compare(""))
-        {
-            Communicator comm2 = (Communicator)strtol(phtfEvent_->memValue("Alias", newcomm).c_str(), NULL, 0);
-            cout << " dup from " << hex << comm2;
-            if(!CommMan::instance().exists(comm2))
-            {
-                performCreateCommunicator(phtfEvent_->memValue("Alias", newcomm));
-            }
-            CommMan::instance().dupComm(comm2, comm);
-        }
         // if this is a new communicator, create it
-        else if(phtfEvent_->memValue(newcomm, "ranks").compare(""))
+        if(phtfEvent_->memValue(aliasComm, "ranks").compare(""))
         {
-            string ssize = phtfEvent_->memValue(newcomm, "size");
+            string ssize = phtfEvent_->memValue(aliasComm, "size");
             string srank;
             int commsize = (int)strtol(ssize.c_str(), NULL, 0);
             int commrank;
             stringstream ss("");
-            ss << phtfEvent_->memValue(newcomm, "ranks");
+            ss << phtfEvent_->memValue(aliasComm, "ranks");
 
             cout << " add " << ss.str();
             for(int i = 0; i < commsize; i ++)
@@ -503,21 +499,18 @@ void PHTFIOApplication::performCreateCommunicator(string newcomm)
         }
         else
         {
-            cerr << "Error: don't know how to create comm " << newcomm << endl;
-            exit(0);
+            cerr << "Error: don't know how to create comm " << aliasComm << endl;
+            assert(false);
         }
     }
-
     cout << ": " << CommMan::instance().commSize(comm) << endl;
 }
 
 void PHTFIOApplication::performTypeProcessing(PHTFEventRecord* typeRecord)
 {
-    // get type pointer
-    string typePt = typeRecord->paramAt(typeRecord->paraNum() - 1);
-
     // get type id
-    string typeId = phtfEvent_->memValue("Pointer", typePt);
+    string typeId = typeRecord->paramAt(typeRecord->paraNum() - 1);
+    typeId = getAlias(typeId);
 
     // create type
     performCreateDataType(typeId);
@@ -709,6 +702,8 @@ spfsMPIBarrierRequest* PHTFIOApplication::createBarrierMessage(
     const PHTFEventRecord* barrierRecord)
 {
     string str = barrierRecord->paramAt(0);
+    str = getAlias(str);
+
     int comm = (int)strtol(str.c_str(), NULL, 0);
     assert(-1 != comm);
 
@@ -781,6 +776,7 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
 
     // Extract the communicator id
     string gstr = openRecord->paramAt(0);
+    gstr = getAlias(gstr);
     int communicatorId = (int)strtol(gstr.c_str(), NULL, 0);
     cerr << __FILE__ << ":" << __LINE__ << ":"
          << "Opening file with comm: " << communicatorId << endl;
@@ -810,6 +806,7 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadAtMessage(
     FileDescriptor* fd = getDescriptor(handle);
 
     string dtstr = readAtRecord->paramAt(4);
+    dtstr = getAlias(dtstr);
     DataType* dataType = getDataTypeById(dtstr);
 
     spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
@@ -833,6 +830,7 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadMessage(
     FileDescriptor* fd = getDescriptor(handle);
 
     string dtstr = readRecord->paramAt(3);
+    dtstr = getAlias(dtstr);
     DataType* dataType = getDataTypeById(dtstr);
 
     spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
@@ -876,6 +874,7 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteAtMessage(
     FileDescriptor* fd = getDescriptor(handle);
 
     string dtstr = writeAtRecord->paramAt(4);
+    dtstr = getAlias(dtstr);
     DataType* dataType = getDataTypeById(dtstr);
 
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
@@ -900,6 +899,7 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
     FileDescriptor* fd = getDescriptor(handle);
 
     string dtstr = writeRecord->paramAt(3);
+    dtstr = getAlias(dtstr);
     DataType* dataType = getDataTypeById(dtstr);
 
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
@@ -927,6 +927,14 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createIWriteMessage(
     // Update the list of non-blocking operations still pending
     pendingRequestsById_[reqid] = iwrite;
     return iwrite;
+}
+
+string PHTFIOApplication::getAlias(string id)
+{
+    string alias = phtfEvent_->memValue("Alias", id);
+    if(alias.compare(""))
+        return getAlias(alias);
+    else return id;
 }
 
 /*

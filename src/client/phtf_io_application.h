@@ -179,6 +179,8 @@ private:
 
     /** retrieve Datatype from map, NULL if none found */
     DataType * getDataTypeById(std::string);
+
+    std::string getAlias(std::string);
 };
 
 #endif
