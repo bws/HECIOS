@@ -48,10 +48,18 @@ enum PHTFOperation{
     WRITE_AT_ALL_BEGIN,    WRITE_AT_ALL_END,    READ_ALL_BEGIN,    READ_ALL_END,    WRITE_ALL_BEGIN,
     WRITE_ALL_END,    READ_ORDERED_BEGIN,    READ_ORDERED_END,    WRITE_ORDERED_BEGIN,
     WRITE_ORDERED_END,    GET_TYPE_EXTENT,    SET_ATOMICITY,    GET_ATOMICITY,    SYNC,
-    BARRIER, CPU_PHASE, WAIT
+    BARRIER, CPU_PHASE, WAIT, TYPE_CONTIGUOUS, TYPE_STRUCT, TYPE_CREATE_SUBARRAY, TYPE_COMMIT,
+    COMM_SPLIT, COMM_RANK, COMM_DUP, COMM_CREATE
     //...
 };
 
+enum PHTFDataType{
+    BASIC = 0,
+    CONTIGUOUS,
+    STRUCT,
+    SUBARRAY,
+    VECTOR
+};
 
 /**
  * PHTF IO Trace Event Record Handler
@@ -88,7 +96,7 @@ public:
     ~PHTFEventRecord(){};
 
     /** @return The record string */
-    std::string recordStr();
+    std::string recordStr() const;
     /** Set the record string */
     void recordStr(std::string recordstr);
 
@@ -98,22 +106,22 @@ public:
     void recordId(long recordid);
 
     /** @return The record operation */
-    PHTFOperation recordOp();
+    PHTFOperation recordOp() const;
     /** Set the operation id */
     void recordOp(PHTFOperation opid);
 
     /** @return The start time */
-    double startTime();
+    double startTime() const;
     /** Set the start time */
     void startTime(double sttime);
 
     /** @return The duration time */
-    double duration();
+    double duration() const;
     /** Set the duration time */
     void duration(double duration);
 
     /** @return The return value */
-    long retValue();
+    long retValue() const;
     /** Set the return value */
     void retValue(long retvalue);
 

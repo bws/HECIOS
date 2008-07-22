@@ -54,7 +54,7 @@ public:
 
     /** Register a process rank with the communicator manager */
     void registerRank(int rank);
-    
+
     /** Set the communicator id of MPI_COMM_SELF */
     void setCommSelf(Communicator self);
 
@@ -69,6 +69,9 @@ public:
      */
     int joinComm(Communicator comm, int worldRank);
 
+    /** Duplicate comm to comm2 */
+    void dupComm(Communicator comm, Communicator comm2);
+
     /**
      * Translate rank between two communicators
      *  node need to be member of both communicators
@@ -79,12 +82,12 @@ public:
      */
     int commTrans(int comm1, int comm1_rank, int comm2);
 
+    /** @return true if the communicator exists */
+    bool exists(Communicator comm) const;
+
 protected:
     /** Constructor */
     CommMan();
-
-    /** @return true if the communicator exists */
-    bool exists(Communicator comm) const;
 
     /** @return true if the rank exists within the communicator */
     bool rankExists(Communicator comm, int rank) const;
@@ -92,10 +95,10 @@ protected:
 private:
      /** Mapping of old ranks to new ranks */
     typedef std::map<int, int> RankMap;
-    
+
     /** Map for communicators to rank mappings */
     typedef std::map<Communicator, RankMap> CommunicatorMap;
-    
+
     /** Copy constructor disabled */
     CommMan(const CommMan& other);
 
@@ -104,7 +107,7 @@ private:
 
     /** @return a reference to the rank mapping for communicator comm */
     RankMap getRankMap(Communicator comm) const;
-    
+
     /**
      * Add rank to the communicator comm
      *
@@ -114,7 +117,7 @@ private:
 
     /** Rank mappings indexed by the communicator */
     CommunicatorMap rankMapByCommunicator_;
-    
+
      /** Communicator id for the self communicator */
     Communicator commSelf_;
 

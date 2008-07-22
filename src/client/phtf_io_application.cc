@@ -24,6 +24,9 @@
 #include <string>
 #include <stdlib.h>
 #include "basic_data_type.h"
+#include "contiguous_data_type.h"
+#include "struct_data_type.h"
+#include "subarray_data_type.h"
 #include "cache_proto_m.h"
 #include "filename.h"
 #include "file_builder.h"
@@ -64,13 +67,15 @@ void PHTFIOApplication::initialize()
         // in fs.ini
         string commWorldValue =
             PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_WORLD");
-        CommMan::instance().setCommWorld(strtol(commWorldValue.c_str(), 0, 10));
+        CommMan::instance().setCommWorld(strtol(commWorldValue.c_str(), 0, 0));
 
         string commSelfValue =
             PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_SELF");
-        CommMan::instance().setCommSelf(strtol(commSelfValue.c_str(), 0, 10));
+        CommMan::instance().setCommSelf(strtol(commSelfValue.c_str(), 0, 0));
 
-        // I have no idea what this does???
+        CommMan::instance().joinComm(SPFS_COMM_WORLD, getRank());
+
+        // Build a singleton map of mpi operation IDs (string => ID)
         PHTFEventRecord::buildOpMap();
 
         // Disable further initialization
@@ -197,6 +202,22 @@ bool PHTFIOApplication::scheduleNextMessage()
             send(msg, mpiOutGate_);
             msgScheduled = true;
         }
+        else if (TYPE_CONTIGUOUS == opcode || TYPE_STRUCT == opcode || TYPE_CREATE_SUBARRAY == opcode)
+        {
+            // Perform type_contiguous operation
+            performTypeProcessing(&eventRecord);
+
+            // Retrieve the next operation, as this one is local
+            msgScheduled = scheduleNextMessage();
+        }
+        else if (COMM_DUP == opcode || COMM_CREATE == opcode || COMM_SPLIT == opcode || COMM_RANK == opcode)
+        {
+            // Perform communicator create operation
+            performCommProcessing(&eventRecord);
+
+            // Retrieve the next operation, as this one is local
+            msgScheduled = scheduleNextMessage();
+        }
         else
         {
             // Start the non-blocking operation
@@ -289,9 +310,11 @@ spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
             break;
         }
         case READ_AT:
+        case READ_AT_ALL:
             mpiMsg = createReadAtMessage(rec);
             break;
         case WRITE_AT:
+        case WRITE_AT_ALL:
             mpiMsg = createWriteAtMessage(rec);
             break;
         case IREAD:
@@ -336,7 +359,7 @@ void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
         paramAsDescriptor(4, *phtfEvent_);
 
     // Extract the file name from the event record
-    string fpt = const_cast<PHTFEventRecord*>(openRecord)->paramAt(1);
+    string fpt = openRecord->paramAt(1);
     Filename fn(phtfEvent_->memValue("String", fpt));
 
     // Construct a file descriptor for use in simulaiton
@@ -347,22 +370,22 @@ void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
     setDescriptor(fileId, fd);
 
     // Extract the communicator id
-    string gstr = const_cast<PHTFEventRecord*>(openRecord)->paramAt(0);
-    outCommunicatorId = (int)strtol(gstr.c_str(), NULL, 10);
+    string gstr = openRecord->paramAt(0);
+    outCommunicatorId = (int)strtol(gstr.c_str(), NULL, 0);
 }
 
 void PHTFIOApplication::performSeekProcessing(PHTFEventRecord* seekRecord)
 {
     string dirStr = par("dirPHTF").stringValue();
 
-    string hstr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(0);
+    string hstr = seekRecord->paramAt(0);
     long handle = strtol(hstr.c_str(), NULL, 16);
 
-    string ostr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(1);
+    string ostr = seekRecord->paramAt(1);
     long offset = strtol(ostr.c_str(), NULL, 16);
 
-    string wstr = const_cast<PHTFEventRecord*>(seekRecord)->paramAt(3);
-    int whence = (int)strtol(wstr.c_str(), NULL, 10);
+    string wstr = seekRecord->paramAt(3);
+    int whence = (int)strtol(wstr.c_str(), NULL, 0);
 
     FileDescriptor* fd = getDescriptor(handle);
 
@@ -395,11 +418,277 @@ void PHTFIOApplication::performWaitProcessing(PHTFEventRecord* waitRecord,
     }
 }
 
+void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
+{
+    int op = commRecord->recordOp();
+    string newcomm;
+    switch(op)
+    {
+        case COMM_DUP:
+            newcomm = commRecord->paramAt(1);
+            break;
+        case COMM_CREATE:
+            break;
+        case COMM_SPLIT:
+            newcomm = commRecord->paramAt(3);
+            break;
+        case COMM_RANK:
+            newcomm = commRecord->paramAt(0);
+            break;
+        default:
+            cerr << "Error: unsupported comm op type: " << op << endl;
+            exit(0);
+            break;
+    }
+    performCreateCommunicator(newcomm);
+}
+
+void PHTFIOApplication::performCreateCommunicator(string newcomm)
+{
+    cout << "Create Comm " << newcomm;
+    Communicator comm = (Communicator)strtol(newcomm.c_str(), NULL, 0);
+
+    // create only if communicator not yet exist
+    if(!CommMan::instance().exists(comm))
+    {
+        // if this is a communicator alias, like in fortran, do a duplication
+        if(phtfEvent_->memValue("Alias", newcomm).compare(""))
+        {
+            Communicator comm2 = (Communicator)strtol(phtfEvent_->memValue("Alias", newcomm).c_str(), NULL, 0);
+            cout << " dup from " << hex << comm2;
+            if(!CommMan::instance().exists(comm2))
+            {
+                performCreateCommunicator(phtfEvent_->memValue("Alias", newcomm));
+            }
+            CommMan::instance().dupComm(comm2, comm);
+        }
+        // if this is a new communicator, create it
+        else if(phtfEvent_->memValue(newcomm, "ranks").compare(""))
+        {
+            string ssize = phtfEvent_->memValue(newcomm, "size");
+            string srank;
+            int commsize = (int)strtol(ssize.c_str(), NULL, 0);
+            int commrank;
+            stringstream ss("");
+            ss << phtfEvent_->memValue(newcomm, "ranks");
+
+            cout << " add " << ss.str();
+            for(int i = 0; i < commsize; i ++)
+            {
+                ss >> srank;
+                commrank = (int)strtol(srank.c_str(), NULL, 0);
+                CommMan::instance().joinComm(comm, commrank);
+            }
+        }
+        else
+        {
+            cerr << "Error: don't know how to create comm " << newcomm << endl;
+            exit(0);
+        }
+    }
+
+    cout << ": " << CommMan::instance().commSize(comm) << endl;
+}
+
+void PHTFIOApplication::performTypeProcessing(PHTFEventRecord* typeRecord)
+{
+    // get type pointer
+    string typePt = typeRecord->paramAt(typeRecord->paraNum() - 1);
+
+    // get type id
+    string typeId = phtfEvent_->memValue("Pointer", typePt);
+
+    // create type
+    performCreateDataType(typeId);
+}
+
+void PHTFIOApplication::performCreateDataType(string typeId)
+{
+    // create type based on datatype type
+    int type = (int)strtol(phtfEvent_->memValue(typeId, "type").c_str(), NULL, 0);
+    switch(type)
+    {
+        case BASIC:
+            performCreateBasicDataType(typeId);
+            break;
+        case CONTIGUOUS:
+            performCreateContiguousDataType(typeId);
+            break;
+        case STRUCT:
+            performCreateStructDataType(typeId);
+            break;
+        case SUBARRAY:
+            performCreateSubarrayDataType(typeId);
+            break;
+        default:
+            cerr << "Error: unsupported datatype: " << type << endl;
+            assert(false);
+            break;
+    }
+}
+
+DataType * PHTFIOApplication::getDataTypeById(std::string typeId)
+{
+    if(!dataTypeById_.count(typeId))
+    {
+        return NULL;
+    }
+    else
+    {
+        return dataTypeById_[typeId];
+    }
+}
+
+void PHTFIOApplication::performCreateBasicDataType(std::string typeId)
+{
+    // get parameter
+    size_t size = (size_t)strtol(phtfEvent_->memValue(typeId, "size").c_str(), NULL, 0);
+
+    DataType * newDataType;
+    // create newtype
+    switch(size)
+    {
+        case 1:
+            newDataType = new BasicDataType<1>();
+            break;
+        case 2:
+            newDataType = new BasicDataType<2>();
+            break;
+        case 4:
+            newDataType = new BasicDataType<4>();
+            break;
+        case 8:
+            newDataType = new BasicDataType<8>();
+            break;
+        default:
+            cerr << "Error: unsupported basic type: width " << size << endl;
+            assert(false);
+            break;
+    }
+
+    dataTypeById_[typeId] = newDataType;
+    cout << "Data Type #: " << dataTypeById_.size() << endl;
+}
+
+void PHTFIOApplication::performCreateContiguousDataType(std::string typeId)
+{
+    // get parameter
+    size_t count = (size_t)strtol(phtfEvent_->memValue(typeId, "count").c_str(), NULL, 0);
+    string oldTypeId = phtfEvent_->memValue(typeId, "oldtype");
+
+    // create oldtype if not exist
+    DataType * oldType = getDataTypeById(oldTypeId);
+    if(!oldType)performCreateDataType(oldTypeId);
+    oldType = getDataTypeById(oldTypeId);
+    assert(oldType);
+
+    // create newtype
+    ContiguousDataType * newDataType = new ContiguousDataType(count, *oldType);
+    dataTypeById_[typeId] = newDataType;
+    cout << "Data Type #: " << dataTypeById_.size() << endl;
+}
+
+void PHTFIOApplication::performCreateStructDataType(std::string typeId)
+{
+    // get parameter
+    size_t count = (size_t)strtol(phtfEvent_->memValue(typeId, "count").c_str(), NULL, 0);
+    stringstream ssOldTypes("");
+    stringstream ssDisp("");
+    stringstream ssBlock("");
+    ssOldTypes << phtfEvent_->memValue(typeId, "oldtypes");
+    ssDisp << phtfEvent_->memValue(typeId, "indices");
+    ssBlock << phtfEvent_->memValue(typeId, "blocklens");
+
+    vector<size_t> blocklens;
+    vector<size_t> disp;
+    vector<DataType*> oldTypes;
+
+    for(size_t i = 0; i < count; i ++)
+    {
+        string sBlock;
+        ssBlock >> sBlock;
+        size_t b = (size_t)strtol(sBlock.c_str(), NULL, 0);
+        blocklens.push_back(b);
+
+        string sDisp;
+        ssDisp >> sDisp;
+        size_t d = (size_t)strtol(sDisp.c_str(), NULL, 0);
+        disp.push_back(d);
+
+        string oldTypeId;
+        ssOldTypes >> oldTypeId;
+
+        // create old type if not exist
+        DataType *oldType = getDataTypeById(oldTypeId);
+        if(!oldType)performCreateDataType(oldTypeId);
+        oldType = getDataTypeById(oldTypeId);
+        assert(oldType);
+        oldTypes.push_back(oldType);
+    }
+
+    // create new type
+    StructDataType * newDataType = new StructDataType(blocklens, disp, oldTypes);
+    dataTypeById_[typeId] = newDataType;
+    cout << "Data Type #: " << dataTypeById_.size() << endl;
+}
+
+void PHTFIOApplication::performCreateSubarrayDataType(std::string typeId)
+{
+    // get parameter
+    size_t ndims = (size_t)strtol(phtfEvent_->memValue(typeId, "ndims").c_str(), NULL, 0);
+    string oldTypeId = phtfEvent_->memValue(typeId, "oldtype");
+    int order = (int)strtol(phtfEvent_->memValue(typeId, "order").c_str(), NULL, 0);
+    stringstream ssSizes("");
+    stringstream ssStarts("");
+    stringstream ssSubSizes("");
+
+    ssSizes << phtfEvent_->memValue(typeId, "sizes");
+    ssStarts << phtfEvent_->memValue(typeId, "starts");
+    ssSubSizes << phtfEvent_->memValue(typeId, "subsizes");
+
+    vector<size_t> sizes;
+    vector<size_t> subSizes;
+    vector<size_t> starts;
+
+    for(size_t i = 0; i < ndims; i ++)
+    {
+        string sSize;
+        ssSizes >> sSize;
+        size_t s = (size_t)strtol(sSize.c_str(), NULL, 0);
+        sizes.push_back(s);
+
+        string sSubSize;
+        ssSubSizes >> sSubSize;
+        size_t sb = (size_t)strtol(sSubSize.c_str(), NULL, 0);
+        subSizes.push_back(sb);
+
+        string sStart;
+        ssStarts >> sStart;
+        size_t st = (size_t)strtol(sStart.c_str(), NULL, 0);
+        starts.push_back(st);
+    }
+
+    // create old type if not exist
+    DataType * oldType = getDataTypeById(oldTypeId);
+    if(!oldType)performCreateDataType(oldTypeId);
+    oldType = getDataTypeById(oldTypeId);
+    assert(oldType);
+
+    SubarrayDataType * newDataType;
+    // create new type
+    if(order == 57)
+        newDataType = new SubarrayDataType(sizes, subSizes, starts, SubarrayDataType::FORTRAN_ORDER, *oldType);
+    else
+        newDataType = new SubarrayDataType(sizes, subSizes, starts, SubarrayDataType::C_ORDER, *oldType);
+    dataTypeById_[typeId] = newDataType;
+    cout << "Data Type #: " << dataTypeById_.size() << endl;
+}
+
 spfsMPIBarrierRequest* PHTFIOApplication::createBarrierMessage(
     const PHTFEventRecord* barrierRecord)
 {
-    string str = const_cast<PHTFEventRecord*>(barrierRecord)->paramAt(0);
-    int comm = (int)strtol(str.c_str(), NULL, 10);
+    string str = barrierRecord->paramAt(0);
+    int comm = (int)strtol(str.c_str(), NULL, 0);
     assert(-1 != comm);
 
     spfsMPIBarrierRequest* barrier =
@@ -422,7 +711,7 @@ spfsMPIBcastRequest* PHTFIOApplication::createBcastRequest(
 cMessage* PHTFIOApplication::createCPUPhaseMessage(
     const PHTFEventRecord* cpuRecord)
 {
-    double delay = const_cast<PHTFEventRecord*>(cpuRecord)->duration();
+    double delay = cpuRecord->duration();
 
     cMessage *msg = new cMessage("CPU Phase");
     cPar *cp = new cPar("Delay");
@@ -458,7 +747,7 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
 {
     // Extract the descriptor id
 
-    int fileId = const_cast<PHTFEventRecord*>(openRecord)->
+    int fileId = openRecord->
         paramAsDescriptor(4, *phtfEvent_);
 
     // Retrieve the descriptor
@@ -467,11 +756,11 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
 
     // Extract the open mode
     int mode = (int)strtol(
-        const_cast<PHTFEventRecord*>(openRecord)->paramAt(2).c_str(), NULL, 10);
+        openRecord->paramAt(2).c_str(), NULL, 0);
 
     // Extract the communicator id
-    string gstr = const_cast<PHTFEventRecord*>(openRecord)->paramAt(0);
-    int communicatorId = (int)strtol(gstr.c_str(), NULL, 10);
+    string gstr = openRecord->paramAt(0);
+    int communicatorId = (int)strtol(gstr.c_str(), NULL, 0);
     cerr << __FILE__ << ":" << __LINE__ << ":"
          << "Opening file with comm: " << communicatorId << endl;
 
@@ -489,14 +778,22 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
 spfsMPIFileReadAtRequest* PHTFIOApplication::createReadAtMessage(
     const PHTFEventRecord* readAtRecord)
 {
-    long length = 0, offset = 0;
+    string ofstr = readAtRecord->paramAt(1);
+    long offset = strtol(ofstr.c_str(), NULL, 0);
 
-    FileDescriptor* fd = getDescriptor(100);
-    DataType* dataType = new ByteDataType();
+    string ctstr = readAtRecord->paramAt(3);
+    long count = strtol(ctstr.c_str(), NULL, 16);
+
+    string hstr = readAtRecord->paramAt(0);
+    long handle = strtol(hstr.c_str(), NULL, 16);
+    FileDescriptor* fd = getDescriptor(handle);
+
+    string dtstr = readAtRecord->paramAt(4);
+    DataType* dataType = getDataTypeById(dtstr);
 
     spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
         0, SPFS_MPI_FILE_READ_AT_REQUEST);
-    read->setCount(length);
+    read->setCount(count);
     read->setDataType(dataType);
     read->setOffset(offset);
     read->setFileDes(fd);
@@ -507,14 +804,15 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadAtMessage(
 spfsMPIFileReadAtRequest* PHTFIOApplication::createReadMessage(
     const PHTFEventRecord* readRecord)
 {
-    string ctstr = const_cast<PHTFEventRecord*>(readRecord)->paramAt(2);
+    string ctstr = readRecord->paramAt(2);
     long count = strtol(ctstr.c_str(), NULL, 16);
 
-    string hstr = const_cast<PHTFEventRecord*>(readRecord)->paramAt(0);
+    string hstr = readRecord->paramAt(0);
     long handle = strtol(hstr.c_str(), NULL, 16);
-
     FileDescriptor* fd = getDescriptor(handle);
-    DataType* dataType = new ByteDataType();
+
+    string dtstr = readRecord->paramAt(3);
+    DataType* dataType = getDataTypeById(dtstr);
 
     spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
         0, SPFS_MPI_FILE_READ_AT_REQUEST);
@@ -532,7 +830,7 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadMessage(
 spfsMPIFileReadAtRequest* PHTFIOApplication::createIReadMessage(
     const PHTFEventRecord* readRecord)
 {
-    string str = const_cast<PHTFEventRecord*>(readRecord)->paramAt(4);
+    string str = readRecord->paramAt(4);
     long reqid = strtol(str.c_str(), NULL, 16);
 
     spfsMPIFileReadAtRequest* iread = createReadMessage(readRecord);
@@ -546,14 +844,22 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createIReadMessage(
 spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteAtMessage(
     const PHTFEventRecord* writeAtRecord)
 {
-    long length = 10, offset = 0;
+    string ofstr = writeAtRecord->paramAt(1);
+    long offset = strtol(ofstr.c_str(), NULL, 0);
 
-    DataType* dataType = new ByteDataType();
-    FileDescriptor* fd = getDescriptor(100);
+    string ctstr = writeAtRecord->paramAt(3);
+    long count = strtol(ctstr.c_str(), NULL, 16);
+
+    string hstr = writeAtRecord->paramAt(0);
+    long handle = strtol(hstr.c_str(), NULL, 16);
+    FileDescriptor* fd = getDescriptor(handle);
+
+    string dtstr = writeAtRecord->paramAt(4);
+    DataType* dataType = getDataTypeById(dtstr);
 
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
         0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
-    write->setCount(length);
+    write->setCount(count);
     write->setDataType(dataType);
     write->setOffset(offset);
     write->setReqId(-1);
@@ -565,14 +871,15 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteAtMessage(
 spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
     const PHTFEventRecord* writeRecord)
 {
-    string ctstr = const_cast<PHTFEventRecord*>(writeRecord)->paramAt(2);
+    string ctstr = writeRecord->paramAt(2);
     long count = strtol(ctstr.c_str(), NULL, 16);
 
-    string hstr = const_cast<PHTFEventRecord*>(writeRecord)->paramAt(0);
+    string hstr = writeRecord->paramAt(0);
     long handle = strtol(hstr.c_str(), NULL, 16);
-
-    DataType* dataType = new ByteDataType();
     FileDescriptor* fd = getDescriptor(handle);
+
+    string dtstr = writeRecord->paramAt(3);
+    DataType* dataType = getDataTypeById(dtstr);
 
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
         0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
@@ -590,7 +897,7 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
 spfsMPIFileWriteAtRequest* PHTFIOApplication::createIWriteMessage(
     const PHTFEventRecord* writeRecord)
 {
-    string str = const_cast<PHTFEventRecord*>(writeRecord)->paramAt(4);
+    string str = writeRecord->paramAt(4);
     long reqid = strtol(str.c_str(), NULL, 16);
 
     spfsMPIFileWriteAtRequest* iwrite = createWriteMessage(writeRecord);

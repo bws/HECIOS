@@ -40,7 +40,7 @@ Communicator CommMan::commWorld() const
 size_t CommMan::commSize(Communicator comm) const
 {
     size_t size = 1;
-    
+
     if (commSelf_ != comm)
     {
         assert(exists(comm));
@@ -91,13 +91,13 @@ bool CommMan::exists(Communicator comm) const
 bool CommMan::rankExists(Communicator comm, int rank) const
 {
     assert(exists(comm));
-    
+
     bool result = false;
     const RankMap& rankMap = getRankMap(comm);
     if (0 != rankMap.count(rank))
     {
         result = true;
-    }    
+    }
     return result;
 }
 
@@ -129,6 +129,14 @@ int CommMan::commRank(Communicator comm, int worldRank) const
         rank = iter->second;
     }
     return rank;
+}
+
+void CommMan::dupComm(Communicator comm, Communicator comm2)
+{
+    assert(exists(comm));
+    assert(!exists(comm2));
+    RankMap map = getRankMap(comm);
+    rankMapByCommunicator_[comm2] = map;
 }
 
 CommMan::RankMap CommMan::getRankMap(Communicator comm) const

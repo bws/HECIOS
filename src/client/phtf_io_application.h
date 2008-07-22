@@ -38,6 +38,7 @@ class spfsMPIFileUpdateTimeRequest;
 class spfsMPIFileWriteAtRequest;
 class spfsMPIFileWriteRequest;
 class spfsMPIRequest;
+class DataType;
 
 /**
  * Model of an application process.
@@ -47,7 +48,7 @@ class PHTFIOApplication : public IOApplication
 public:
     /** Constructor */
     PHTFIOApplication();
-    
+
 protected:
     /** Implementation of initialize */
     virtual void initialize();
@@ -57,7 +58,7 @@ protected:
 
     /** Override handleMessage to handle Open processing */
     virtual void handleMessage(cMessage* msg);
-    
+
     /** Override ioApplication scheduleNextMessage() */
     virtual bool scheduleNextMessage();
 
@@ -84,14 +85,28 @@ private:
     /** Perform the application processing to do an open */
     void performOpenProcessing(PHTFEventRecord* openRecord,
                                int& outCommunicatorId);
-    
+
     /** Perform the application processing to simulate a seek */
     void performSeekProcessing(PHTFEventRecord* seekRecord);
-    
+
     /** Perform the application processing to simulate a wait */
     void performWaitProcessing(PHTFEventRecord* waitRecord,
                                bool& outWaitIsComplete);
-    
+
+    /** Perform the application processing to create a new communicator */
+    void performCommProcessing(PHTFEventRecord* commRecord);
+    void performCreateCommunicator(std::string newcomm);
+
+    /** Perform the application processing to do create a new datatype */
+    void performTypeProcessing(PHTFEventRecord* typeRecord);
+
+    /** Recursively creates datatypes by datatype-id */
+    void performCreateDataType(std::string typeId);
+    void performCreateBasicDataType(std::string typeId);
+    void performCreateContiguousDataType(std::string typeId);
+    void performCreateStructDataType(std::string typeId);
+    void performCreateSubarrayDataType(std::string typeId);
+
     /** @return a Barrier request */
     spfsMPIBarrierRequest* createBarrierMessage(
         const PHTFEventRecord* barrierRecord);
@@ -110,27 +125,27 @@ private:
     /** @return an MPI File Seek Message */
     cMessage* createSeekMessage(
         const PHTFEventRecord* seekRecord);
-       
+
     /** @return an MPI File Close request */
     spfsMPIFileCloseRequest* createCloseMessage(
         const PHTFEventRecord* closeRecord);
-    
+
     /** @return an MPI File Delete request */
     spfsMPIFileDeleteRequest* createDeleteRequest(
         const PHTFEventRecord* deleteRecord);
-    
+
     /** @return an MPI File Open request */
     spfsMPIFileOpenRequest* createOpenMessage(
         const PHTFEventRecord* openRecord);
-    
+
     /** @return an MPI File Read At request */
     spfsMPIFileReadAtRequest* createReadAtMessage(
         const PHTFEventRecord* readAtRecord);
-    
+
     /** @return an MPI File Update Time request */
     spfsMPIFileUpdateTimeRequest* createUpdateTimeMessage(
         const PHTFEventRecord* utimeRecord);
-    
+
     /** @return an MPI File Write At request */
     spfsMPIFileWriteAtRequest* createWriteAtMessage(
         const PHTFEventRecord* writeAtRecord);
@@ -150,12 +165,18 @@ private:
     /** @return an MPI File IWrite request */
     spfsMPIFileWriteAtRequest * createIWriteMessage(
         const PHTFEventRecord* writeRecord);
-    
+
     /** PHTF Event File */
     PHTFEvent* phtfEvent_;
 
     /** Map of non-blocking IO request that are still pending */
-    std::map<long, cMessage*> pendingRequestsById_;    
+    std::map<long, cMessage*> pendingRequestsById_;
+
+    /** Map of defined Datatypes */
+    std::map<std::string, DataType*> dataTypeById_;
+
+    /** retrieve Datatype from map, NULL if none found */
+    DataType * getDataTypeById(std::string);
 };
 
 #endif

@@ -41,7 +41,7 @@ void MPICommunicationHelper::performCommunication(
 {
     assert(0 != commUser);
     assert(0 != request);
-    
+
     // FIXME: This implementation is bogus.  It immediately completes all
     // MPI communications
     commUser->completeCommunicationCB(request);
@@ -52,7 +52,7 @@ void MPICommunicationHelper::performCollective(
 {
     assert(0 != commUser);
     assert(0 != request);
-    
+
     // Determine the number of existing collective participants
     size_t numParticipants = 1;
     Communicator commId = request->getCommunicator();
@@ -65,10 +65,10 @@ void MPICommunicationHelper::performCollective(
 
     // Update the number of participants
     numParticipantsByCommunicator_[commId] = numParticipants;
-    
+
     // Add this callback to the callback list
     callbacksByCommunicator_[commId].push_back(make_pair(commUser, request));
-    
+
     // If all members of the communicator have arrived, trigger callback
     if (numParticipants == CommMan::instance().commSize(commId))
     {
@@ -83,7 +83,7 @@ void MPICommunicationHelper::performCollective(
         // Cleanup the maps
         numParticipantsByCommunicator_.erase(commId);
         callbacksByCommunicator_.erase(commId);
-    }    
+    }
 }
 
 /*

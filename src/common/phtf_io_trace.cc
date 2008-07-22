@@ -53,7 +53,7 @@ PHTFEventRecord::PHTFEventRecord(long reid, PHTFOperation op, double st, double 
 }
 
 /** @return The record string */
-std::string PHTFEventRecord::recordStr()
+std::string PHTFEventRecord::recordStr() const
 {
     return _recordstr;
 }
@@ -77,7 +77,7 @@ void PHTFEventRecord::recordId(long recordid)
 }
 
 /** @return The record operation */
-PHTFOperation PHTFEventRecord::recordOp()
+PHTFOperation PHTFEventRecord::recordOp() const
 {
     return _opid;
 }
@@ -89,7 +89,7 @@ void PHTFEventRecord::recordOp(PHTFOperation opid)
 }
 
 /** @return The start time */
-double PHTFEventRecord::startTime()
+double PHTFEventRecord::startTime() const
 {
     return _sttime;
 }
@@ -101,7 +101,7 @@ void PHTFEventRecord::startTime(double sttime)
 }
 
 /** @return The duration time */
-double PHTFEventRecord::duration()
+double PHTFEventRecord::duration() const
 {
     return _duration;
 }
@@ -113,7 +113,7 @@ void PHTFEventRecord::duration(double duration)
 }
 
 /** @return The return value */
-long PHTFEventRecord::retValue()
+long PHTFEventRecord::retValue() const
 {
     return _ret;
 }
@@ -293,6 +293,14 @@ void PHTFEventRecord::buildOpMap()
     PHTFEventRecord::_opmap["MPI_BARRIER"] = BARRIER;
     PHTFEventRecord::_opmap["CPU_PHASE"] = CPU_PHASE;
     PHTFEventRecord::_opmap["MPIO_WAIT"] = WAIT;
+    PHTFEventRecord::_opmap["MPI_TYPE_CONTIGUOUS"] = TYPE_CONTIGUOUS;
+    PHTFEventRecord::_opmap["MPI_TYPE_STRUCT"] = TYPE_STRUCT;
+    PHTFEventRecord::_opmap["MPI_TYPE_CREATE_SUBARRAY"] = TYPE_CREATE_SUBARRAY;
+    PHTFEventRecord::_opmap["MPI_TYPE_COMMIT"] = TYPE_COMMIT;
+    PHTFEventRecord::_opmap["MPI_COMM_DUP"] = COMM_DUP;
+    PHTFEventRecord::_opmap["MPI_COMM_CREATE"] = COMM_CREATE;
+    PHTFEventRecord::_opmap["MPI_COMM_SPLIT"] = COMM_SPLIT;
+    PHTFEventRecord::_opmap["MPI_COMM_RANK"] = COMM_RANK;
 }
 
 /** @return the operation id */
