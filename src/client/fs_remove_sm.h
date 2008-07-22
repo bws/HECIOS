@@ -1,5 +1,5 @@
-#ifndef FS_CREATE_SM_H
-#define FS_CREATE_SM_H
+#ifndef FS_REMOVE_SM_H
+#define FS_REMOVE_SM_H
 //
 // This file is part of Hecios
 //
@@ -44,7 +44,7 @@ protected:
 private:
     /** Send the directory entry remove message */
     void removeDirEnt();
-    
+
     /** Send the metadata remove message */
     void removeMeta();
 
@@ -59,7 +59,7 @@ private:
 
     /** The name of the file to remove */
     Filename removeName_;
-    
+
     /** The originating MPI request */
     spfsMPIRequest* mpiReq_;
 

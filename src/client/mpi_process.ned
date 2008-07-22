@@ -31,7 +31,7 @@ import
 //
 module MPIProcess
     parameters:
-        IOApplicationType : string      ;
+        IOApplicationType : string;
     gates:
         in: ioIn, mpiClientIn, mpiServerIn;
         out: ioOut, mpiClientOut, mpiServerOut;
@@ -40,19 +40,19 @@ module MPIProcess
         app:IOApplicationType like IOApplication;
             display: "p=130,80;i=block/app,white";
 
-	mpiMiddleware: MpiMiddleware;
-	    display: "p=180,180;i=block/classifier,red";
+		mpiMiddleware: MpiMiddleware;
+	    	display: "p=180,180;i=block/classifier,red";
 
     connections:
         // Connect the MPI application to the MPI middleware
-	app.mpiOut --> mpiMiddleware.appIn;
-	app.mpiIn <-- mpiMiddleware.appOut;
+		app.mpiOut --> mpiMiddleware.appIn;
+		app.mpiIn <-- mpiMiddleware.appOut;
 
         // Connect the MPI application to the I/O middleware
         app.ioOut --> ioOut;
         app.ioIn <-- ioIn;
 
-	// Connect the MPI middleware to the MPI messaging network
+		// Connect the MPI middleware to the MPI messaging network
         mpiMiddleware.netClientOut --> mpiClientOut;
         mpiMiddleware.netClientIn <-- mpiClientIn;
         mpiMiddleware.netServerOut --> mpiServerOut;

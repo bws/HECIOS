@@ -1,9 +1,9 @@
-#ifndef FS_WRITE_H
-#define FS_WRITE_H
+#ifndef FS_WRITE_SM_H
+#define FS_WRITE_SM_H
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2008 Brad Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,34 +19,38 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "basic_types.h"
+#include <cstddef>
+#include "fs_state_machine.h"
+class cFSM;
 class cMessage;
+class FileDescriptor;
 class FSClient;
+class spfsMPIRequest;
 class spfsDataFlowFinish;
 class spfsMPIFileWriteAtRequest;
 class spfsWriteCompletionResponse;
 class spfsWriteResponse;
 
 /**
- * Class responsible for performing client-side file writes
+ * Class responsible for writing a file
  */
-class FSWrite
+class FSWriteSM : public FSStateMachine
 {
 public:
-
-    /** Constructor */
-    FSWrite(FSClient* client, spfsMPIFileWriteAtRequest* writeReq);
-    
-    /** Handle MPI-Open Message */
-    void handleMessage(cMessage* msg);
+    /** Construct the file read state machine */
+    FSWriteSM(spfsMPIFileWriteAtRequest* writeReq, FSClient* client);
 
 protected:
+    /** Message processing for removes */
+    virtual bool updateState(cFSM& currentState, cMessage* msg);
+
+private:
     /** Send messages establishing the write flows */
     void beginWrite();
 
     /** Start a flow */
     void startFlow(spfsWriteResponse* writeResponse);
-    
+
     /** Count write completions */
     void countCompletion(spfsWriteCompletionResponse* completionResponse);
 
@@ -59,28 +63,24 @@ protected:
     /** @return true if all write flows and response messages are received */
     bool isWriteComplete();
 
-    /** Send final client response */
-    void finish();
-    
-private:
+    /** The originating MPI request */
+    spfsMPIFileWriteAtRequest* writeRequest_;
 
     /** The filesystem client module */
     FSClient* client_;
 
-    /** The originating MPI write request */
-    spfsMPIFileWriteAtRequest* writeReq_;
-
     /** The number of bytes written */
-    FSSize bytesWritten_;
+    std::size_t bytesWritten_;
 };
 
 #endif
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:
  *
- * vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+ * vim: ts=4 sts=4 sw=4 expandtab
  */

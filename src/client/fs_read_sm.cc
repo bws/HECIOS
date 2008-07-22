@@ -17,10 +17,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "fs_read.h"
-#include <iostream>
-#include <numeric>
 //#define FSM_DEBUG  // Enable FSM Debug output
+#include "fs_read_sm.h"
+#include <cassert>
 #include <omnetpp.h>
 #include "data_flow.h"
 #include "data_type_layout.h"
@@ -31,27 +30,19 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSRead::FSRead(FSClient* client, spfsMPIFileReadAtRequest* readReq)
-    : client_(client),
-      readReq_(readReq),
+FSReadSM::FSReadSM(spfsMPIFileReadAtRequest* readRequest,
+                   FSClient* client)
+    : readRequest_(readRequest),
+      client_(client),
       bytesRead_(0)
 {
+    assert(0 != readRequest_);
     assert(0 != client_);
-    assert(0 != readReq_);
 }
 
-// Processing that occurs upon receipt of an MPI-IO read request
-void FSRead::handleMessage(cMessage* msg)
+bool FSReadSM::updateState(cFSM& currentState, cMessage* msg)
 {
-    /** Restore the existing state for this Read Request */
-    cFSM currentState = readReq_->getState();
-
-    /** File system read state machine states
-     *
-     *  Note that the READ state is transient to facilitate correct
-     *  response counting.  Responses are counted upon exit of the
-     *  COUNT_* state rather than upon entry
-     */
+    /** File system write state machine states */
     enum {
         INIT = 0,
         READ = FSM_Transient(1),
@@ -61,6 +52,7 @@ void FSRead::handleMessage(cMessage* msg)
         FINISH = FSM_Steady(4),
     };
 
+    bool isComplete = false;
     FSM_Switch(currentState)
     {
         case FSM_Exit(INIT):
@@ -129,21 +121,20 @@ void FSRead::handleMessage(cMessage* msg)
         }
         case FSM_Enter(FINISH):
         {
-            finish();
+            isComplete = true;
             break;
         }
     }
 
-    // Store current state
-    readReq_->setState(currentState);
+    return isComplete;
 }
 
-void FSRead::enterRead()
+void FSReadSM::enterRead()
 {
-    FileDescriptor* fd = readReq_->getFileDes();
+    FileDescriptor* fd = readRequest_->getFileDes();
     assert(0 != fd);
     const FSMetaData* metaData = fd->getMetaData();
-    
+
     // Construct the template read request
     spfsReadRequest read("ReadStuff", SPFS_READ_REQUEST);
 
@@ -151,10 +142,10 @@ void FSRead::enterRead()
     // Because the server side flow completes after the client, the request
     // is deleted on the server
     read.setAutoCleanup(false);
-    read.setContextPointer(readReq_);
-    read.setOffset(readReq_->getOffset());
+    read.setContextPointer(readRequest_);
+    read.setOffset(readRequest_->getOffset());
     read.setView(new FileView(fd->getFileView()));
-    
+
     // Send request to each server
     int numRequests = 0;
     int numServers = metaData->dataHandles.size();
@@ -164,9 +155,9 @@ void FSRead::enterRead()
         metaData->dist->setObjectIdx(i);
         FSSize aggregateSize = 0;
         FSSize reqBytes = DataTypeProcessor::createFileLayoutForClient(
-            readReq_->getOffset(),
-            *readReq_->getDataType(),
-            readReq_->getCount(),
+            readRequest_->getOffset(),
+            *readRequest_->getDataType(),
+            readRequest_->getCount(),
             *read.getView(),
             *metaData->dist,
             aggregateSize);
@@ -180,7 +171,7 @@ void FSRead::enterRead()
             req->setDataSize(aggregateSize);
             req->setClientFlowBmiTag(simulation.getUniqueNumber());
             req->setServerFlowBmiTag(simulation.getUniqueNumber());
-            
+
             // Set the message size in bytes
             req->setByteLength(8 + 8 + 4 + 4 + 4 +
                                //FSClient::CREDENTIALS_SIZE +
@@ -194,16 +185,16 @@ void FSRead::enterRead()
     }
 
     // Set the number of outstanding responses and flows
-    readReq_->setRemainingResponses(numRequests);
-    readReq_->setRemainingFlows(numRequests);
+    readRequest_->setRemainingResponses(numRequests);
+    readRequest_->setRemainingFlows(numRequests);
 }
 
-void FSRead::startFlow(spfsReadResponse* readResponse)
+void FSReadSM::startFlow(spfsReadResponse* readResponse)
 {
     // Extract the file descriptor
-    FileDescriptor* fd = readReq_->getFileDes();
+    FileDescriptor* fd = readRequest_->getFileDes();
     assert(0 != fd);
-    
+
     // Extract the server request
     spfsReadRequest* serverRequest =
         static_cast<spfsReadRequest*>(readResponse->contextPointer());
@@ -211,9 +202,9 @@ void FSRead::startFlow(spfsReadResponse* readResponse)
     // Create the flow start message
     spfsDataFlowStart* flowStart =
         new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
-    flowStart->setContextPointer(readReq_);
+    flowStart->setContextPointer(readRequest_);
     flowStart->setClientContextPointer(serverRequest);
-    
+
     // Set the handle as the connection id (TODO: This is hacky)
     flowStart->setBmiConnectionId(serverRequest->getHandle());
     flowStart->setInboundBmiTag(serverRequest->getClientFlowBmiTag());
@@ -227,51 +218,32 @@ void FSRead::startFlow(spfsReadResponse* readResponse)
     flowStart->setHandle(serverRequest->getHandle());
     flowStart->setView(serverRequest->getView());
     flowStart->setDist(serverRequest->getDist());
-    flowStart->setOffset(readReq_->getOffset());
-    flowStart->setDataType(readReq_->getDataType());
-    flowStart->setCount(readReq_->getCount());
+    flowStart->setOffset(readRequest_->getOffset());
+    flowStart->setDataType(readRequest_->getDataType());
+    flowStart->setCount(readRequest_->getCount());
 
     // Send the start message
     client_->send(flowStart, client_->getNetOutGate());
 }
 
-void FSRead::countResponse()
+void FSReadSM::countResponse()
 {
-    int numRemainingResponses = readReq_->getRemainingResponses();
-    readReq_->setRemainingResponses(--numRemainingResponses);
+    int numRemainingResponses = readRequest_->getRemainingResponses();
+    readRequest_->setRemainingResponses(--numRemainingResponses);
 }
 
-void FSRead::countFlowFinish(spfsDataFlowFinish* finishMsg)
+void FSReadSM::countFlowFinish(spfsDataFlowFinish* finishMsg)
 {
     assert(0 != finishMsg);
     bytesRead_ += finishMsg->getFlowSize();
-    int numRemainingFlows = readReq_->getRemainingFlows();
-    readReq_->setRemainingFlows(--numRemainingFlows);
-
-    // TODO
-    // Extract the server request for this flow and clean up memory
-    //spfsDataFlowStart* flowStart =
-    //    static_cast<spfsDataFlowStart*>(finishMsg->contextPointer());
-    //spfsReadRequest* serverRead =
-    //    static_cast<spfsReadRequest*>(flowStart->getClientContextPointer());
-    //cerr << "Classname: " << serverRead->className() << endl;
-    //delete serverRead;
+    int numRemainingFlows = readRequest_->getRemainingFlows();
+    readRequest_->setRemainingFlows(--numRemainingFlows);
 }
 
-bool FSRead::isReadComplete()
+bool FSReadSM::isReadComplete()
 {
-    return (0 == readReq_->getRemainingResponses())
-        && (0 == readReq_->getRemainingFlows());
-}
-
-void FSRead::finish()
-{
-    spfsMPIFileReadAtResponse* mpiResp =
-        new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
-    mpiResp->setContextPointer(readReq_);
-    mpiResp->setIsSuccessful(true);
-    mpiResp->setBytesRead(bytesRead_);
-    client_->send(mpiResp, client_->getAppOutGate());
+    return (0 == readRequest_->getRemainingResponses())
+        && (0 == readRequest_->getRemainingFlows());
 }
 
 /*

@@ -1,7 +1,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2008 bradles
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -17,8 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-//#define FSM_DEBUG  // Enable FSM Debug output
-#include "fs_create_sm.h"
+#include "fs_create_directory_sm.h"
 #include <omnetpp.h>
 #include "file_builder.h"
 #include "fs_client.h"
@@ -26,26 +25,24 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSCreateSM::FSCreateSM(const Filename& filename,
-                       spfsMPIRequest* mpiReq,
-                       FSClient* client)
-    : createFilename_(filename),
+FSCreateDirectorySM::FSCreateDirectorySM(const Filename& filename,
+                                         spfsMPIRequest* mpiReq,
+                                         FSClient* client)
+    : createDirName_(filename),
       mpiReq_(mpiReq),
       client_(client)
 {
 }
-
-bool FSCreateSM::updateState(cFSM& currentState, cMessage* msg)
+bool FSCreateDirectorySM::updateState(cFSM& currentState, cMessage* msg)
 {
     /** File system collective create state machine states */
     enum {
         INIT = 0,
         CREATE_META = FSM_Steady(1),
-        CREATE_DATA = FSM_Transient(2),
-        COUNT_DATA_RESPONSES = FSM_Steady(3),
-        WRITE_ATTR = FSM_Steady(4),
-        WRITE_DIRENT = FSM_Steady(5),
-        FINISH = FSM_Steady(6)
+        CREATE_DATA = FSM_Steady(2),
+        WRITE_ATTR = FSM_Steady(3),
+        WRITE_DIRENT = FSM_Steady(4),
+        FINISH = FSM_Steady(5)
     };
 
     bool isComplete = false;
@@ -69,26 +66,12 @@ bool FSCreateSM::updateState(cFSM& currentState, cMessage* msg)
         }
         case FSM_Enter(CREATE_DATA):
         {
-            createDataObjects();
+            createDataObject();
             break;
         }
         case FSM_Exit(CREATE_DATA):
         {
-            FSM_Goto(currentState, COUNT_DATA_RESPONSES);
-            break;
-        }
-        case FSM_Exit(COUNT_DATA_RESPONSES):
-        {
-            assert(0 != dynamic_cast<spfsCreateResponse*>(msg));
-            countDataCreationResponse();
-            if (isDataCreationComplete())
-            {
-                FSM_Goto(currentState, WRITE_ATTR);
-            }
-            else
-            {
-                FSM_Goto(currentState, COUNT_DATA_RESPONSES);
-            }
+            FSM_Goto(currentState, WRITE_ATTR);
             break;
         }
         case FSM_Enter(WRITE_ATTR):
@@ -98,7 +81,6 @@ bool FSCreateSM::updateState(cFSM& currentState, cMessage* msg)
         }
         case FSM_Exit(WRITE_ATTR):
         {
-            cerr << msg->className() << " " << msg->info() << endl;
             assert(0 != dynamic_cast<spfsSetAttrResponse*>(msg));
             FSM_Goto(currentState, WRITE_DIRENT);
             break;
@@ -124,84 +106,69 @@ bool FSCreateSM::updateState(cFSM& currentState, cMessage* msg)
 
     return isComplete;
 }
-
-void FSCreateSM::createMeta()
+void FSCreateDirectorySM::createMeta()
 {
+    // hash path to meta server number
+    int metaServer = FileBuilder::instance().getMetaServers()[0];
+
     // Build message to create metadata
-    FSMetaData* meta = FileBuilder::instance().getMetaData(createFilename_);
-    spfsCreateRequest* req =
-        FSClient::createCreateRequest(meta->handle, SPFS_METADATA_OBJECT);
+    spfsCreateRequest* req = FSClient::createCreateRequest(
+        FileBuilder::instance().getFirstHandle(metaServer),
+        SPFS_METADATA_OBJECT);
     req->setContextPointer(mpiReq_);
     client_->send(req, client_->getNetOutGate());
 }
 
-void FSCreateSM::createDataObjects()
+void FSCreateDirectorySM::writeAttributes()
 {
-    // Retrieve the bookkeeping information for this file
-    FSMetaData* meta = FileBuilder::instance().getMetaData(createFilename_);
-
-    // Construct the create requests for this file's data handles
-    for (size_t i = 0; i < meta->dataHandles.size(); i++)
-    {
-        spfsCreateRequest* create =
-            FSClient::createCreateRequest(meta->dataHandles[i],
-                                          SPFS_DATA_OBJECT);
-        create->setContextPointer(mpiReq_);
-        client_->send(create, client_->getNetOutGate());
-    }
-
-    // Set the number of create responses to expect
-    mpiReq_->setRemainingResponses(meta->dataHandles.size());
-}
-
-void FSCreateSM::countDataCreationResponse()
-{
-    // Decrement the number of create responses to expect
-    int numResponses = mpiReq_->getRemainingResponses() - 1;
-    mpiReq_->setRemainingResponses(numResponses);
-}
-
-bool FSCreateSM::isDataCreationComplete()
-{
-    int numResponses = mpiReq_->getRemainingResponses();
-    if (0 == numResponses)
-        return true;
-    return false;
-}
-
-void FSCreateSM::writeAttributes()
-{
-    FSMetaData* meta = FileBuilder::instance().getMetaData(createFilename_);
+    FSMetaData* meta = FileBuilder::instance().getMetaData(createDirName_);
     spfsSetAttrRequest* req =
         FSClient::createSetAttrRequest(meta->handle, SPFS_METADATA_OBJECT);
     req->setContextPointer(mpiReq_);
     client_->send(req, client_->getNetOutGate());
 }
 
-void FSCreateSM::createDirEnt()
+void FSCreateDirectorySM::createDataObject()
+{
+    // Retrieve the bookkeeping information for this directory
+    const FSMetaData* metaData =
+        FileBuilder::instance().getMetaData(createDirName_);
+    assert(0 != metaData);
+    assert(1 == metaData->dataHandles.size());
+
+    // Construct the create requests for this directory's data handles
+    spfsCreateRequest* create =
+        FSClient::createCreateRequest(metaData->dataHandles[0],
+                                      SPFS_DIRECTORY_OBJECT);
+    create->setContextPointer(mpiReq_);
+    client_->send(create, client_->getNetOutGate());
+}
+
+void FSCreateDirectorySM::createDirEnt()
 {
     // Get the parent handle
-    int parentIdx = createFilename_.getNumPathSegments() - 2;
-    Filename parentName = createFilename_.getSegment(parentIdx);
+    Filename parentName = createDirName_.getParent();
     FSMetaData* parentMeta = FileBuilder::instance().getMetaData(parentName);
 
     // Construct the directory entry creation request
-    spfsCreateDirEntRequest* req = FSClient::createCreateDirEntRequest(
-        parentMeta->handle, createFilename_);
+    spfsCreateDirEntRequest *req =
+        FSClient::createCreateDirEntRequest(parentMeta->handle,
+                                            createDirName_);
     req->setContextPointer(mpiReq_);
     client_->send(req, client_->getNetOutGate());
 }
 
-void FSCreateSM::updateClientCache()
+void FSCreateDirectorySM::updateClientCache()
 {
-    FSMetaData* meta = FileBuilder::instance().getMetaData(createFilename_);
+    FSMetaData* meta = FileBuilder::instance().getMetaData(createDirName_);
 
-    // Update the name cache
-    client_->fsState().insertName(createFilename_.str(), meta->handle);
+     // Update the name cache
+     client_->fsState().insertName(createDirName_.str(), meta->handle);
 
-    // Update the attr cache
-    client_->fsState().insertAttr(meta->handle, *meta);
+     // Update the attr cache
+     client_->fsState().insertAttr(meta->handle, *meta);
 }
+
 
 /*
  * Local variables:

@@ -1,5 +1,5 @@
-#ifndef FS_CREATE_SM_H
-#define FS_CREATE_SM_H
+#ifndef FS_SET_ATTRIBUTES_SM_H
+#define FS_SET_ATTRIBUTES_SM_H
 //
 // This file is part of Hecios
 //
@@ -21,55 +21,41 @@
 //
 #include "filename.h"
 #include "fs_state_machine.h"
+#include "pfs_types.h"
 class cFSM;
 class cMessage;
 class FSClient;
 class spfsMPIRequest;
 
 /**
- * Class responsible for opening a file
+ * Class responsible for getting the attributes for a handle
  */
-class FSCreateSM : public FSStateMachine
+class FSSetAttributesSM : public FSStateMachine
 {
 public:
-    /** Construct the file create state machine */
-    FSCreateSM(const Filename& filename,
-               spfsMPIRequest* mpiReq,
-               FSClient* client);
+    /** Constructor for get attribute state machine */
+    FSSetAttributesSM(const Filename& filename,
+                      spfsMPIRequest* mpiRequest,
+                      FSClient* client);
 
 protected:
-    /** Message processing for serial creates */
+    /** Message processing for client name lookup*/
     virtual bool updateState(cFSM& currentState, cMessage* msg);
 
 private:
-    /** Send the metadata creation message */
-    void createMeta();
-
-    /** Send the metadata creation message */
-    void createDataObjects();
-
-    /** Send the metadata creation message */
-    void countDataCreationResponse();
-
-    /** @return true if all the data objects have been create */
-    bool isDataCreationComplete();
-
-    /** Send the message to set the metadata */
+    /** Send the requests to set the data attributes */
     void writeAttributes();
 
-    /** Send the directory entry creation message */
-    void createDirEnt();
+    /** @return Cache the file's attributes */
+    void cacheAttributes();
 
-    /** Add the file's new attributes to the client cache */
-    void updateClientCache();
-
-    /** The name of the file to create */
-    Filename createFilename_;
+    /** Handle to retrieve the attributes */
+    FSHandle handle_;
 
     /** The originating MPI request */
     spfsMPIRequest* mpiReq_;
 
-    /** The filesystem client module */
+    /** The file system client module */
     FSClient* client_;
 };
 

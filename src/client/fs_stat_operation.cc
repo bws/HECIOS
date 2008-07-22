@@ -53,7 +53,8 @@ void FSStatOperation::registerStateMachines()
                                           statReq_,
                                           client_));
 
-    // Finally - perform the file remove
+    // Finally - perform the file stat
+    addStateMachine(new FSLookupNameSM(statFile, statReq_, client_));
     static bool printDiagnostic = true;
     if (useCollectiveCommunication_)
     {

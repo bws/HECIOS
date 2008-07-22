@@ -1,9 +1,10 @@
-#ifndef FS_CREATE_SM_H
-#define FS_CREATE_SM_H
+#ifndef FS_CREATE_DIRECTORY_SM_H_
+#define FS_CREATE_DIRECTORY_SM_H_
+
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2008 bradles
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -27,15 +28,15 @@ class FSClient;
 class spfsMPIRequest;
 
 /**
- * Class responsible for opening a file
+ * Class responsible for creating a directory
  */
-class FSCreateSM : public FSStateMachine
+class FSCreateDirectorySM : public FSStateMachine
 {
 public:
-    /** Construct the file create state machine */
-    FSCreateSM(const Filename& filename,
-               spfsMPIRequest* mpiReq,
-               FSClient* client);
+    /** Construct the directory creation state machine */
+    FSCreateDirectorySM(const Filename& dirname,
+                        spfsMPIRequest* mpiReq,
+                        FSClient* client);
 
 protected:
     /** Message processing for serial creates */
@@ -45,8 +46,8 @@ private:
     /** Send the metadata creation message */
     void createMeta();
 
-    /** Send the metadata creation message */
-    void createDataObjects();
+    /** Send the data object creation message */
+    void createDataObject();
 
     /** Send the metadata creation message */
     void countDataCreationResponse();
@@ -60,11 +61,11 @@ private:
     /** Send the directory entry creation message */
     void createDirEnt();
 
-    /** Add the file's new attributes to the client cache */
+    /** Insert the cache entries for this directory */
     void updateClientCache();
 
     /** The name of the file to create */
-    Filename createFilename_;
+    Filename createDirName_;
 
     /** The originating MPI request */
     spfsMPIRequest* mpiReq_;
@@ -73,7 +74,7 @@ private:
     FSClient* client_;
 };
 
-#endif
+#endif /* FS_CREATE_DIRECTORY_SM_H_ */
 
 /*
  * Local variables:

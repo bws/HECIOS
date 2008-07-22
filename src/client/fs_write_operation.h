@@ -1,9 +1,9 @@
-#ifndef FS_READ_DIRECTORY_H
-#define FS_READ_DIRECTORY_H
+#ifndef FS_WRITE_OPERATION_H_
+#define FS_WRITE_OPERATION_H_
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2008 bradles
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,44 +19,38 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "pfs_types.h"
+#include "fs_client_operation.h"
+class cFSM;
 class cMessage;
 class FSClient;
-class spfsMPIDirectoryReadRequest;
+class spfsMPIFileWriteAtRequest;
 
-/**
- * Class responsible for reading a directory
- */
-class FSReadDirectory
+/** Class responsible for performing client-side file reads */
+class FSWriteOperation : public FSClientOperation
 {
 public:
-    /** Constructor */
-    FSReadDirectory(FSClient* client, spfsMPIDirectoryReadRequest* readReq);
-    
-    /** Handle MPI-Open Message */
-    void handleMessage(cMessage* msg);
+    /** Construct operation */
+    FSWriteOperation(FSClient* client, spfsMPIFileWriteAtRequest* writeRequest);
+
+protected:
+    /** Register state machines to perform the read */
+    virtual void registerStateMachines();
+
+    /** Send final response */
+    virtual void sendFinalResponse();
 
 private:
-    /** Send the request to read the directory's attributes */
-    void getAttributes();
-    
-    /** Send the request to read the directory's entries */
-    void addAttributesToCache();
-    
-    /** Send the request to read the directory's entries */
-    void readDirEnt();
-    
-    /** Send the final response from the client */
-    void finish();
-    
-    /** The filesystem client module */
+
+    /** The file system client module */
     FSClient* client_;
 
-    /** The originating MPI Directory read request */
-    spfsMPIDirectoryReadRequest* readReq_;
+    /** The originating MPI Read request */
+    spfsMPIFileWriteAtRequest* writeAtRequest_;
 };
 
-#endif
+
+
+#endif /* FS_WRITE_OPERATION_H_ */
 
 /*
  * Local variables:

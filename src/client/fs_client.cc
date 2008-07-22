@@ -20,14 +20,14 @@
 #include "fs_client.h"
 #include <iostream>
 #include "fs_close_operation.h"
-#include "fs_create_directory.h"
+#include "fs_create_directory_operation.h"
 #include "fs_delete_operation.h"
 #include "fs_open_operation.h"
-#include "fs_read.h"
-#include "fs_read_directory.h"
+#include "fs_read_directory_operation.h"
+#include "fs_read_operation.h"
 #include "fs_stat_operation.h"
-#include "fs_update_time.h"
-#include "fs_write.h"
+#include "fs_write_operation.h"
+#include "fs_update_time_operation.h"
 #include "pfs_types.h"
 #include "pvfs_proto_m.h"
 #include "mpi_proto_m.h"
@@ -48,7 +48,7 @@ spfsCollectiveCreateRequest* FSClient::createCollectiveCreateRequest(
 
     // Add the metadata handle
     create->setMetaHandle(metaHandle);
-    
+
     // Add the data handles
     create->setDataHandlesArraySize(dataHandles.size());
     for (size_t i = 0; i < dataHandles.size(); i++)
@@ -122,7 +122,7 @@ spfsCreateRequest* FSClient::createCreateRequest(const FSHandle& handle,
 
     // Set the create request size (op, creds, fs_id, objType, extentArraySize,
     // extentArray)
-    create->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 + 4 + 4 + 8);    
+    create->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 + 4 + 4 + 8);
     return create;
 }
 
@@ -201,7 +201,7 @@ spfsReadRequest* FSClient::createReadRequest(const FSHandle& handle,
     read->setDist(dist.clone());
     read->setClientFlowBmiTag(simulation.getUniqueNumber());
     read->setServerFlowBmiTag(simulation.getUniqueNumber());
-    
+
     // Set the Read request size (op, creds, fs_id, handle, objType,
     // attrMask, Attributes) TODO: fix attribute size
     read->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 +
@@ -267,7 +267,7 @@ spfsWriteRequest* FSClient::createWriteRequest(const FSHandle& handle,
     write->setDist(dist.clone());
     write->setClientFlowBmiTag(simulation.getUniqueNumber());
     write->setServerFlowBmiTag(simulation.getUniqueNumber());
-    
+
     // Set the Write request size (op, creds, fs_id, handle, objType,
     // attrMask, Attributes) TODO: fix attribute size
     write->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 +
@@ -474,16 +474,18 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
     {
         case SPFS_MPI_DIRECTORY_CREATE_REQUEST:
         {
-            FSCreateDirectory dirCreate(
+            //FSCreateDirectory dirCreate(
+            //    this, static_cast<spfsMPIDirectoryCreateRequest*>(request));
+            FSCreateDirectoryOperation dirCreate(
                 this, static_cast<spfsMPIDirectoryCreateRequest*>(request));
-            dirCreate.handleMessage(msg);
+            dirCreate.processMessage(msg);
             break;
         }
         case SPFS_MPI_DIRECTORY_READ_REQUEST:
         {
-            FSReadDirectory readDir(
+            FSReadDirectoryOperation readDir(
                 this, static_cast<spfsMPIDirectoryReadRequest*>(request));
-            readDir.handleMessage(msg);
+            readDir.processMessage(msg);
             break;
         }
         case SPFS_MPI_DIRECTORY_REMOVE_REQUEST:
@@ -521,9 +523,9 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_FILE_READ_AT_REQUEST:
         {
-            FSRead read(this,
-                        static_cast<spfsMPIFileReadAtRequest*>(request));
-            read.handleMessage(msg);
+            FSReadOperation read(this,
+                                 static_cast<spfsMPIFileReadAtRequest*>(request));
+            read.processMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_STAT_REQUEST:
@@ -536,17 +538,17 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_FILE_UPDATE_TIME_REQUEST:
         {
-            FSUpdateTime utime(
+            FSUpdateTimeOperation utime(
                 this,
                 static_cast<spfsMPIFileUpdateTimeRequest*>(request));
-            utime.handleMessage(msg);
+            utime.processMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_WRITE_AT_REQUEST:
         {
-            FSWrite write(this,
-                          static_cast<spfsMPIFileWriteAtRequest*>(request));
-            write.handleMessage(msg);
+            FSWriteOperation write(this,
+                                   static_cast<spfsMPIFileWriteAtRequest*>(request));
+            write.processMessage(msg);
             break;
         }
         case SPFS_MPI_FILE_READ_REQUEST:
@@ -589,7 +591,7 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
     simtime_t reqSendTime = parentRequest->creationTime();
     simtime_t respArriveTime = simTime();
     simtime_t delay = respArriveTime - reqSendTime;
-    
+
     switch(serverResponse->kind())
     {
         case SPFS_COLLECTIVE_CREATE_RESPONSE:

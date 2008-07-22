@@ -1,9 +1,9 @@
-#ifndef FS_UPDATE_TIME_H
-#define FS_UPDATE_TIME_H
+#ifndef FS_READ_DIRECTORY_SM_H
+#define FS_READ_DIRECTORY_SM_H
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2008 Brad Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,50 +19,45 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "pfs_types.h"
+#include <cstddef>
+#include "fs_state_machine.h"
+class cFSM;
 class cMessage;
+class FileDescriptor;
 class FSClient;
-class spfsLookupPathResponse;
-class spfsMPIFileUpdateTimeRequest;
+class spfsMPIRequest;
 
 /**
- * Class responsible for performing client-side file time updates
+ * Class responsible for removing a file
  */
-class FSUpdateTime
+class FSReadDirectorySM : public FSStateMachine
 {
 public:
-
-    /** Constructor */
-    FSUpdateTime(FSClient* client, spfsMPIFileUpdateTimeRequest* utimeReq);
-    
-    /** Handle MPI-Open Message */
-    void handleMessage(cMessage* msg);
+    /** Construct the read directory state machine */
+    FSReadDirectorySM(FileDescriptor* fd,
+                      std::size_t numEntries,
+                      spfsMPIRequest* mpiReq,
+                      FSClient* client);
 
 protected:
-    /** Send message setting the utime attribute */
-    void updateTime();
+    /** Message processing for removes */
+    virtual bool updateState(cFSM& currentState, cMessage* msg);
 
-    /** Send final client response */
-    void finish();
-    
 private:
-    /** */
-    bool isParentNameCached();
-    bool isParentAttrCached();
-    
-    /** */
-    void lookupParentOnServer();
-    void getParentAttributes();
-    void cacheParentAttributes();
-    void lookupNameOnServer();
-    FSLookupStatus processLookup(spfsLookupPathResponse* lookupResponse);
-    void writeAttributes();
-    
+    /** Send the message to send the dir read request */
+    void readDirEnt();
+
+    /** The name of the file to remove */
+    FileDescriptor* descriptor_;
+
+    /** The number of directory entries to read */
+    std::size_t numEntries_;
+
+    /** The originating MPI request */
+    spfsMPIRequest* mpiReq_;
+
     /** The filesystem client module */
     FSClient* client_;
-
-    /** The originating MPI update time request */
-    spfsMPIFileUpdateTimeRequest* utimeReq_;
 };
 
 #endif
