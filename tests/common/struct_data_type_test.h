@@ -26,6 +26,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "basic_data_type.h"
 #include "struct_data_type.h"
+#include "subarray_data_type.h"
 using namespace std;
 
 /** Unit test for StructDataType */
@@ -38,6 +39,7 @@ class StructDataTypeTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testGetRepresentationByteLength);
     CPPUNIT_TEST(testGetRegionsByBytes);
     CPPUNIT_TEST(testGetRegionsByCount);
+    CPPUNIT_TEST(testSubarrayStruct);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -94,10 +96,6 @@ void StructDataTypeTest::testGetRepresentationByteLength()
 
 void StructDataTypeTest::testGetRegionsByBytes()
 {
-}
-
-void StructDataTypeTest::testGetRegionsByCount()
-{
     vector<FileRegion> regions;
 
     // Test getting regions on aligned boundary
@@ -115,6 +113,15 @@ void StructDataTypeTest::testGetRegionsByCount()
     CPPUNIT_ASSERT_EQUAL(FSSize(3), regions[0].extent);
     CPPUNIT_ASSERT_EQUAL(FSOffset(10), regions[1].offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(12), regions[1].extent);
+}
+
+void StructDataTypeTest::testGetRegionsByCount()
+{
+}
+
+void StructDataTypeTest::testSubarrayStruct()
+{
+
 }
 
 #endif /*STRUCT_DATA_TYPE_TEST_H_*/
