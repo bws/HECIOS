@@ -27,6 +27,7 @@
 #include "contiguous_data_type.h"
 #include "struct_data_type.h"
 #include "subarray_data_type.h"
+#include "vector_data_type.h"
 #include "cache_proto_m.h"
 #include "filename.h"
 #include "file_builder.h"
@@ -140,6 +141,8 @@ bool PHTFIOApplication::scheduleNextMessage()
 
         cout << eventRecord.recordStr() << endl;
 
+        rec_id_ = eventRecord.recordId();
+
         int opcode = eventRecord.recordOp();
         if (CPU_PHASE == opcode)
         {
@@ -204,7 +207,7 @@ bool PHTFIOApplication::scheduleNextMessage()
             send(msg, mpiOutGate_);
             msgScheduled = true;
         }
-        else if (TYPE_CONTIGUOUS == opcode || TYPE_STRUCT == opcode || TYPE_CREATE_SUBARRAY == opcode)
+        else if (TYPE_CONTIGUOUS == opcode || TYPE_STRUCT == opcode || TYPE_CREATE_SUBARRAY == opcode || TYPE_VECTOR == opcode)
         {
             // Perform type_contiguous operation
             performTypeProcessing(&eventRecord);
@@ -223,6 +226,10 @@ bool PHTFIOApplication::scheduleNextMessage()
         else if (SET_VIEW == opcode)
         {
             performSetViewProcessing(&eventRecord);
+            msgScheduled = scheduleNextMessage();
+        }
+        else if (GET_SIZE == opcode || SET_SIZE == opcode)
+        {
             msgScheduled = scheduleNextMessage();
         }
         else
@@ -438,8 +445,9 @@ void PHTFIOApplication::performSetViewProcessing(PHTFEventRecord* setViewRecord)
     string dtstr = setViewRecord->paramAt(3);
     dtstr = getAlias(dtstr);
     DataType* dataType = getDataTypeById(dtstr);
+    assert(dataType);
 
-    FileView fileView(offset, dataType);
+    FileView fileView(offset, dataType->clone());
     fd->setFileView(fileView);
 }
 
@@ -470,7 +478,7 @@ void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
 
 void PHTFIOApplication::performCreateCommunicator(string newcomm)
 {
-    cout << "Create Comm " << newcomm;
+    cout << "Create comm " << newcomm;
     string aliasComm = getAlias(newcomm);
     Communicator comm = (Communicator)strtol(aliasComm.c_str(), NULL, 0);
 
@@ -510,7 +518,6 @@ void PHTFIOApplication::performTypeProcessing(PHTFEventRecord* typeRecord)
 {
     // get type id
     string typeId = typeRecord->paramAt(typeRecord->paraNum() - 1);
-    typeId = getAlias(typeId);
 
     // create type
     performCreateDataType(typeId);
@@ -519,20 +526,34 @@ void PHTFIOApplication::performTypeProcessing(PHTFEventRecord* typeRecord)
 void PHTFIOApplication::performCreateDataType(string typeId)
 {
     // create type based on datatype type
-    int type = (int)strtol(phtfEvent_->memValue(typeId, "type").c_str(), NULL, 0);
+
+    stringstream ss("");
+    ss << typeId << "@" << rec_id_;
+
+
+    string realtype = phtfEvent_->memValue("Pointer", ss.str());
+    stringstream ss2("");
+    ss2 << realtype << "@" << rec_id_;
+
+    cout << "Create datatype " << realtype << " ";
+
+    int type = (int)strtol(phtfEvent_->memValue(ss2.str(), "type").c_str(), NULL, 0);
     switch(type)
     {
         case BASIC:
-            performCreateBasicDataType(typeId);
+            performCreateBasicDataType(realtype);
             break;
         case CONTIGUOUS:
-            performCreateContiguousDataType(typeId);
+            performCreateContiguousDataType(realtype);
             break;
         case STRUCT:
-            performCreateStructDataType(typeId);
+            performCreateStructDataType(realtype);
             break;
         case SUBARRAY:
-            performCreateSubarrayDataType(typeId);
+            performCreateSubarrayDataType(realtype);
+            break;
+        case VECTOR:
+            performCreateVectorDataType(realtype);
             break;
         default:
             cerr << "Error: unsupported datatype: " << type << endl;
@@ -543,9 +564,23 @@ void PHTFIOApplication::performCreateDataType(string typeId)
 
 DataType * PHTFIOApplication::getDataTypeById(std::string typeId)
 {
+    stringstream ss("");
+    ss << typeId << "@" << rec_id_;
+
     if(!dataTypeById_.count(typeId))
     {
-        return NULL;
+        if(!dataTypeById_.count(ss.str()))
+        {
+            performCreateBasicDataType(typeId);
+            if(!dataTypeById_.count(typeId))
+                return NULL;
+            else
+                return dataTypeById_[typeId];
+        }
+        else
+        {
+            return dataTypeById_[ss.str()];
+        }
     }
     else
     {
@@ -556,7 +591,19 @@ DataType * PHTFIOApplication::getDataTypeById(std::string typeId)
 void PHTFIOApplication::performCreateBasicDataType(std::string typeId)
 {
     // get parameter
-    size_t size = (size_t)strtol(phtfEvent_->memValue(typeId, "size").c_str(), NULL, 0);
+    size_t size;
+    string dirStr = par("dirPHTF").stringValue();
+    string ssize = PHTFTrace::getInstance(dirStr)->getFs()->consts(typeId);
+    if(!ssize.compare(""))
+    {
+        ssize = phtfEvent_->memValue(typeId, "size");
+        if(!ssize.compare(""))
+        {
+            return;
+        }
+    }
+
+    size = (size_t)strtol(ssize.c_str(), 0, 10);
 
     DataType * newDataType;
     // create newtype
@@ -586,14 +633,21 @@ void PHTFIOApplication::performCreateBasicDataType(std::string typeId)
 
 void PHTFIOApplication::performCreateContiguousDataType(std::string typeId)
 {
+    stringstream ss("");
+    ss << typeId << "@" << rec_id_;
+
     // get parameter
-    size_t count = (size_t)strtol(phtfEvent_->memValue(typeId, "count").c_str(), NULL, 0);
-    string oldTypeId = phtfEvent_->memValue(typeId, "oldtype");
+    size_t count = (size_t)strtol(phtfEvent_->memValue(ss.str(), "count").c_str(), NULL, 0);
+    string oldTypeId = phtfEvent_->memValue(ss.str(), "oldtype");
 
     // create oldtype if not exist
     DataType * oldType = getDataTypeById(oldTypeId);
-    if(!oldType)performCreateDataType(oldTypeId);
-    oldType = getDataTypeById(oldTypeId);
+    if(!oldType)
+    {
+        performCreateDataType(oldTypeId);
+        oldType = getDataTypeById(oldTypeId);
+    }
+
     assert(oldType);
 
     // create newtype
@@ -604,14 +658,17 @@ void PHTFIOApplication::performCreateContiguousDataType(std::string typeId)
 
 void PHTFIOApplication::performCreateStructDataType(std::string typeId)
 {
+    stringstream ss("");
+    ss << typeId << "@" << rec_id_;
+
     // get parameter
-    size_t count = (size_t)strtol(phtfEvent_->memValue(typeId, "count").c_str(), NULL, 0);
+    size_t count = (size_t)strtol(phtfEvent_->memValue(ss.str(), "count").c_str(), NULL, 0);
     stringstream ssOldTypes("");
     stringstream ssDisp("");
     stringstream ssBlock("");
-    ssOldTypes << phtfEvent_->memValue(typeId, "oldtypes");
-    ssDisp << phtfEvent_->memValue(typeId, "indices");
-    ssBlock << phtfEvent_->memValue(typeId, "blocklens");
+    ssOldTypes << phtfEvent_->memValue(ss.str(), "oldtypes");
+    ssDisp << phtfEvent_->memValue(ss.str(), "indices");
+    ssBlock << phtfEvent_->memValue(ss.str(), "blocklens");
 
     vector<size_t> blocklens;
     vector<size_t> disp;
@@ -634,8 +691,11 @@ void PHTFIOApplication::performCreateStructDataType(std::string typeId)
 
         // create old type if not exist
         DataType *oldType = getDataTypeById(oldTypeId);
-        if(!oldType)performCreateDataType(oldTypeId);
-        oldType = getDataTypeById(oldTypeId);
+        if(!oldType)
+        {
+            performCreateDataType(oldTypeId);
+            oldType = getDataTypeById(oldTypeId);
+        }
         assert(oldType);
         oldTypes.push_back(oldType);
     }
@@ -648,17 +708,20 @@ void PHTFIOApplication::performCreateStructDataType(std::string typeId)
 
 void PHTFIOApplication::performCreateSubarrayDataType(std::string typeId)
 {
+    stringstream ss("");
+    ss << typeId << "@" << rec_id_;
+
     // get parameter
-    size_t ndims = (size_t)strtol(phtfEvent_->memValue(typeId, "ndims").c_str(), NULL, 0);
-    string oldTypeId = phtfEvent_->memValue(typeId, "oldtype");
-    int order = (int)strtol(phtfEvent_->memValue(typeId, "order").c_str(), NULL, 0);
+    size_t ndims = (size_t)strtol(phtfEvent_->memValue(ss.str(), "ndims").c_str(), NULL, 0);
+    string oldTypeId = phtfEvent_->memValue(ss.str(), "oldtype");
+    int order = (int)strtol(phtfEvent_->memValue(ss.str(), "order").c_str(), NULL, 0);
     stringstream ssSizes("");
     stringstream ssStarts("");
     stringstream ssSubSizes("");
 
-    ssSizes << phtfEvent_->memValue(typeId, "sizes");
-    ssStarts << phtfEvent_->memValue(typeId, "starts");
-    ssSubSizes << phtfEvent_->memValue(typeId, "subsizes");
+    ssSizes << phtfEvent_->memValue(ss.str(), "sizes");
+    ssStarts << phtfEvent_->memValue(ss.str(), "starts");
+    ssSubSizes << phtfEvent_->memValue(ss.str(), "subsizes");
 
     vector<size_t> sizes;
     vector<size_t> subSizes;
@@ -684,8 +747,11 @@ void PHTFIOApplication::performCreateSubarrayDataType(std::string typeId)
 
     // create old type if not exist
     DataType * oldType = getDataTypeById(oldTypeId);
-    if(!oldType)performCreateDataType(oldTypeId);
-    oldType = getDataTypeById(oldTypeId);
+    if(!oldType)
+    {
+        performCreateDataType(oldTypeId);
+        oldType = getDataTypeById(oldTypeId);
+    }
     assert(oldType);
 
     SubarrayDataType * newDataType;
@@ -694,6 +760,31 @@ void PHTFIOApplication::performCreateSubarrayDataType(std::string typeId)
         newDataType = new SubarrayDataType(sizes, subSizes, starts, SubarrayDataType::FORTRAN_ORDER, *oldType);
     else
         newDataType = new SubarrayDataType(sizes, subSizes, starts, SubarrayDataType::C_ORDER, *oldType);
+    dataTypeById_[typeId] = newDataType;
+    cout << "Data Type #: " << dataTypeById_.size() << endl;
+}
+
+void PHTFIOApplication::performCreateVectorDataType(std::string typeId)
+{
+    stringstream ss("");
+    ss << typeId << "@" << rec_id_;
+
+    // get parameter
+    size_t blocklength = (size_t)strtol(phtfEvent_->memValue(ss.str(), "blocklength").c_str(), NULL, 0);
+    size_t count = (size_t)strtol(phtfEvent_->memValue(ss.str(), "count").c_str(), NULL, 0);
+    string oldTypeId = phtfEvent_->memValue(ss.str(), "oldtype");
+    int stride = (int)strtol(phtfEvent_->memValue(ss.str(), "stride").c_str(), NULL, 0);
+
+    // create old type if not exist
+    DataType * oldType = getDataTypeById(oldTypeId);
+    if(!oldType)
+    {
+        performCreateDataType(oldTypeId);
+        oldType = getDataTypeById(oldTypeId);
+    }
+    assert(oldType);
+
+    VectorDataType * newDataType = new VectorDataType(count, blocklength, stride, *oldType);
     dataTypeById_[typeId] = newDataType;
     cout << "Data Type #: " << dataTypeById_.size() << endl;
 }
@@ -812,7 +903,7 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadAtMessage(
     spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
         0, SPFS_MPI_FILE_READ_AT_REQUEST);
     read->setCount(count);
-    read->setDataType(dataType);
+    read->setDataType(dataType->clone());
     read->setOffset(offset);
     read->setFileDes(fd);
     read->setReqId(-1);
@@ -836,7 +927,7 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadMessage(
     spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
         0, SPFS_MPI_FILE_READ_AT_REQUEST);
     read->setCount(count);
-    read->setDataType(dataType);
+    read->setDataType(dataType->clone());
     read->setFileDes(fd);
     read->setOffset(fd->getFilePointer());
     read->setReqId(-1);
@@ -880,7 +971,7 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteAtMessage(
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
         0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
     write->setCount(count);
-    write->setDataType(dataType);
+    write->setDataType(dataType->clone());
     write->setOffset(offset);
     write->setReqId(-1);
     write->setFileDes(fd);
@@ -904,7 +995,7 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
 
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
         0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
-    write->setDataType(dataType);
+    write->setDataType(dataType->clone());
     write->setCount(count);
     write->setOffset(fd->getFilePointer());
     write->setReqId(-1);
@@ -934,7 +1025,16 @@ string PHTFIOApplication::getAlias(string id)
     string alias = phtfEvent_->memValue("Alias", id);
     if(alias.compare(""))
         return getAlias(alias);
-    else return id;
+    else
+    {
+        stringstream ss("");
+        ss << "0x" << id.substr(id.length() - 8);
+        alias = phtfEvent_->memValue("Alias", ss.str());
+        if(alias.compare(""))
+            return getAlias(alias);
+        else
+            return id;
+    }
 }
 
 /*

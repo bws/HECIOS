@@ -295,6 +295,7 @@ void PHTFEventRecord::buildOpMap()
     PHTFEventRecord::_opmap["MPIO_WAIT"] = WAIT;
     PHTFEventRecord::_opmap["MPI_TYPE_CONTIGUOUS"] = TYPE_CONTIGUOUS;
     PHTFEventRecord::_opmap["MPI_TYPE_STRUCT"] = TYPE_STRUCT;
+    PHTFEventRecord::_opmap["MPI_TYPE_VECTOR"] = TYPE_VECTOR;
     PHTFEventRecord::_opmap["MPI_TYPE_CREATE_SUBARRAY"] = TYPE_CREATE_SUBARRAY;
     PHTFEventRecord::_opmap["MPI_TYPE_COMMIT"] = TYPE_COMMIT;
     PHTFEventRecord::_opmap["MPI_COMM_DUP"] = COMM_DUP;

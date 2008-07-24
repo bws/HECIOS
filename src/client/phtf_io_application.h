@@ -108,6 +108,7 @@ private:
     void performCreateContiguousDataType(std::string typeId);
     void performCreateStructDataType(std::string typeId);
     void performCreateSubarrayDataType(std::string typeId);
+    void performCreateVectorDataType(std::string typeId);
 
     /** @return a Barrier request */
     spfsMPIBarrierRequest* createBarrierMessage(
@@ -181,6 +182,8 @@ private:
     DataType * getDataTypeById(std::string);
 
     std::string getAlias(std::string);
+
+    long rec_id_;
 };
 
 #endif
