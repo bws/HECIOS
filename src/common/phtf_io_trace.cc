@@ -185,7 +185,10 @@ string PHTFEventRecord::paramAsFilename(long paramindex, const PHTFEvent & event
 
     string strpt = paramAt(paramindex);
 
-    string str = event.memValue("String", strpt);
+    stringstream ss("");
+    ss << strpt << "@" << recordId();
+
+    string str = event.memValue("String", ss.str());
 
     // TODO: come up with better error handling
     if(str == "")
