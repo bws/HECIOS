@@ -373,8 +373,8 @@ void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
         paramAsDescriptor(4, *phtfEvent_);
 
     // Extract the file name from the event record
-    string fpt = openRecord->paramAt(1);
-    Filename fn(phtfEvent_->memValue("String", fpt));
+    string fpt = openRecord->paramAsFilename(1, *phtfEvent_);
+    Filename fn(fpt);
 
     // Construct a file descriptor for use in simulaiton
     FileDescriptor* fd = FileBuilder::instance().getDescriptor(fn);
