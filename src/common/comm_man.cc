@@ -21,6 +21,12 @@
 #include <cassert>
 using namespace std;
 
+/** Declare the self communicator available for external linkage */
+Communicator SPFS_COMM_SELF = CommMan::instance().commSelf();
+
+/** Declare the global communicator available for external linkage */
+Communicator SPFS_COMM_WORLD = CommMan::instance().commWorld();
+
 CommMan::CommMan()
     : commSelf_(-1),
       commWorld_(-1)

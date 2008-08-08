@@ -800,11 +800,11 @@ void PHTFFs::addFile(string filename, string filesize)
 PHTFIniItem::iterator PHTFFs::item(int id)
 {
     if(id >= fileNum())
-        return NULL;
+        return (PHTFIniItem::iterator)NULL;
     else
     {
         int i = 0;
-        PHTFIniItem::iterator it = 0;
+        PHTFIniItem::iterator it;
         PHTFIniItem* sec = _fsini->iniSection(PHTFFs::fsSecName);
         for(it = sec->begin(); it != sec->end(); it++, i ++)
         {

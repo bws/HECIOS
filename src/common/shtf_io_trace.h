@@ -104,7 +104,7 @@ private:
 
     /** @return an READDIR IOTraceRecord */
     IOTrace::Record* createReadDirRecord(int descriptor,
-                                         size_t descriptor,
+                                         size_t count,
                                          double startTime,
                                          double duration);
 

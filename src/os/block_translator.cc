@@ -48,11 +48,11 @@ void BlockTranslator::handleMessage(cMessage *msg)
         spfsOSReadBlocksRequest* blockRead = 0;
         spfsOSWriteBlocksRequest* blockWrite = 0;
         
-        if (blockRead = dynamic_cast<spfsOSReadBlocksRequest*>(msg))
+        if ((blockRead = dynamic_cast<spfsOSReadBlocksRequest*>(msg)))
         {
             blockIO = blockRead;
         }
-        else if (blockWrite = dynamic_cast<spfsOSWriteBlocksRequest*>(msg))
+        else if ((blockWrite = dynamic_cast<spfsOSWriteBlocksRequest*>(msg)))
         {
             blockIO = blockWrite;
         }

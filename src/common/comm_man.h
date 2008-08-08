@@ -127,10 +127,10 @@ private:
 };
 
 /** Process local communicator */
-static Communicator SPFS_COMM_SELF = CommMan::instance().commSelf();
+extern Communicator SPFS_COMM_SELF;
 
 /** All process communicator */
-static Communicator SPFS_COMM_WORLD = CommMan::instance().commWorld();
+extern Communicator SPFS_COMM_WORLD;
 
 #endif
 /*
