@@ -193,7 +193,11 @@ string PHTFEventRecord::paramAsFilename(long paramindex, const PHTFEvent & event
     // TODO: come up with better error handling
     if(str == "")
     {
-        abort();
+        str = event.memValue("String", strpt);
+        if(str == "")
+        {
+            abort();
+        }
     }
 
     return str;
