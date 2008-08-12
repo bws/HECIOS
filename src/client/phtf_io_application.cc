@@ -603,11 +603,11 @@ void PHTFIOApplication::performCreateBasicDataType(std::string typeId)
         ssize = phtfEvent_->memValue(typeId, "size");
         if(!ssize.compare(""))
         {
-            return;
+            ssize = typeId;
         }
     }
 
-    size = (size_t)strtol(ssize.c_str(), 0, 10);
+    size = (size_t)strtol(ssize.c_str(), 0, 0);
 
     DataType * newDataType;
     // create newtype
@@ -996,6 +996,7 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
     string dtstr = writeRecord->paramAt(3);
     dtstr = getAlias(dtstr);
     DataType* dataType = getDataTypeById(dtstr);
+    assert(NULL != dataType);
 
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
         0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
@@ -1031,13 +1032,24 @@ string PHTFIOApplication::getAlias(string id)
         return getAlias(alias);
     else
     {
-        stringstream ss("");
-        ss << "0x" << id.substr(id.length() - 8);
-        alias = phtfEvent_->memValue("Alias", ss.str());
-        if(alias.compare(""))
-            return getAlias(alias);
+        if(id.length() >= 8)
+        {
+            stringstream ss("");
+            ss << "0x" << id.substr(id.length() - 8);
+            alias = phtfEvent_->memValue("Alias", ss.str());
+            if(alias.compare(""))
+            {
+                return getAlias(alias);
+            }
+            else
+            {
+                return id;
+            }
+        }
         else
+        {
             return id;
+        }
     }
 }
 
