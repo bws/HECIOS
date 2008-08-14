@@ -113,31 +113,6 @@ vector<FileRegion> VectorDataType::getRegionsByBytes(const FSOffset& byteOffset,
     return vectorRegions;
 }
 
-vector<FileRegion> VectorDataType::getRegionsByCount(const FSOffset& byteOffset,
-                                                     size_t count) const
-{
-    // The total regions produced for count vectors
-    vector<FileRegion> vectorRegions;
-
-     // Flatten the types in order to construct count of the new type
-     for (size_t i = 0; i < count; i++)
-     {
-         FSOffset countOffset = i * getExtent();
-         for (size_t j = 0; j < count_; j++)
-         {
-             FSOffset nextOffset = byteOffset + countOffset +
-                 j * stride_ * oldType_.getExtent();
-             vector<FileRegion> elementRegions = oldType_.getRegionsByCount(
-                 nextOffset, blockLength_);
-             copy(elementRegions.begin(),
-                  elementRegions.end(),
-                  back_inserter(vectorRegions));
-         }
-     }
-
-     return vectorRegions;
-}
-
 /*
  * Local variables:
  *  indent-tabs-mode: nil

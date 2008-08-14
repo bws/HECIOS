@@ -1,7 +1,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2008 bradles
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -17,45 +17,39 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include "contiguous_data_type.h"
 #include <cassert>
+#include "hindexed_data_type.h"
 using namespace std;
 
-ContiguousDataType::ContiguousDataType(size_t count, const DataType& oldType)
-    : DataType(count * oldType.getExtent()),
-      count_(count),
-      oldType_(oldType.clone())
-{
-    assert(this != &oldType);
-}
-
-ContiguousDataType::ContiguousDataType(const ContiguousDataType& other)
-    : DataType(other),
-      count_(other.count_),
-      oldType_(other.oldType_)
+HindexedDataType::HindexedDataType(const vector<size_t>& blockLengths,
+                                   const vector<size_t>& displacements,
+                                   const DataType& oldDataType)
+    : StructDataType(blockLengths,
+                     displacements,
+                     vector<const DataType*>(blockLengths.size(), &oldDataType))
 {
 }
 
-ContiguousDataType::~ContiguousDataType()
+HindexedDataType::HindexedDataType(const HindexedDataType& other)
+  : StructDataType(other)
 {
-    delete oldType_;
 }
 
-ContiguousDataType* ContiguousDataType::clone() const
+HindexedDataType::~HindexedDataType()
 {
-    return new ContiguousDataType(*this);
+
 }
 
-size_t ContiguousDataType::getRepresentationByteLength() const
+HindexedDataType* HindexedDataType::clone() const
 {
-    return 4 + oldType_->getRepresentationByteLength();
+    return new HindexedDataType(*this);
 }
 
-vector<FileRegion> ContiguousDataType::getRegionsByBytes(
-    const FSOffset& byteOffset,
-    size_t numBytes) const
+size_t HindexedDataType::getRepresentationByteLength() const
 {
-    return oldType_->getRegionsByBytes(byteOffset, numBytes);
+    size_t length = 4 + (4 + 4) * count() +
+        oldType(0)->getRepresentationByteLength();
+    return length;
 }
 
 /*

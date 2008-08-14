@@ -65,12 +65,6 @@ public:
     virtual std::vector<FileRegion> getRegionsByBytes(
         const FSOffset& byteOffset, std::size_t numBytes) const = 0;
 
-    /**
-     * @return the data regions for count of this DataType.
-     */
-    virtual std::vector<FileRegion> getRegionsByCount(
-        const FSOffset& byteOffset, std::size_t count) const = 0;
-
 protected:
     /** Copy constructor may be called by clone */
     DataType(const DataType& other);

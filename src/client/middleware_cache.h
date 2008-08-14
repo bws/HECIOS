@@ -25,6 +25,8 @@
 #include "basic_types.h"
 #include "file_page.h"
 class FileView;
+class spfsMPIFileReadAtRequest;
+class spfsMPIFileWriteAtRequest;
 
 /**
  * An abstract model of a middleware file system data cache.
@@ -94,22 +96,37 @@ public:
     /** Abstract destructor */
     virtual ~PagedCache() = 0;
     
+    /** @return the number of pages the cache can contain */
+    size_t cacheCapacity() const { return pageCapacity_; };
+
     /** @return the cache's page size */
     size_t pageSize() const { return pageSize_; };
     
-    /** @return the number of pages the cache can contain */
-    size_t pageCapacity() const { return pageCapacity_; };
+    /** @return the first offset for the page */
+    FSOffset pageBeginOffset(const FilePageId& pageId) const;
     
-    /** @return Array of pages spanning the supplied file regions */
-    std::vector<FilePage> determineRequestPages(const FSOffset& offset,
-                                                const FSSize& size,
-                                                const FileView& view);
+    /** @return Array of pages ids spanning the supplied file regions */
+    std::vector<FilePageId> determineRequestPages(const FSOffset& offset,
+                                                  const FSSize& size,
+                                                  const FileView& view);
     
 protected:
     /** Module initialization */
     void initialize();
 
+    /** @return a request to read the desired pages */
+    spfsMPIFileReadAtRequest* createPageReadRequest(
+        const std::vector<FilePageId>& pageIds) const;
+
+    /** @return a request to write the desired pages */
+    spfsMPIFileWriteAtRequest* createPageWriteRequest(
+        const std::vector<FilePageId>& pageIds) const;
+
 private:
+    /** @return Array of page ids spanning the supplied file regions */
+    std::vector<FilePageId> regionsToPageIds(
+        const std::vector<FileRegion>& fileRegions);
+    
     /** @return Array of pages spanning the supplied file regions */
     std::vector<FilePage> regionsToPages(
         const std::vector<FileRegion>& fileRegions);
@@ -144,15 +161,17 @@ public:
     DirectPagedMiddlewareCache();
 
 private:
+    /** Handle messages received from the application */
     virtual void handleApplicationMessage(cMessage* msg);
-    
+
+    /** Handle messages received from the file system */
     virtual void handleFileSystemMessage(cMessage* msg);
 
     /** @return true if all of the pages are resident
      *  
      * Side effect: Retrieves non-resident pages
      */ 
-    bool lookupData(const std::vector<FilePage> requestPages);
+    bool lookupData(const std::vector<FilePageId> requestPageIds);
 };
 
 /** A fully associative paged cache for a single node */

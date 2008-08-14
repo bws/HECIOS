@@ -37,12 +37,12 @@ public:
      */
     static std::size_t calculateExtent(std::vector<std::size_t> blockLengths,
                                        std::vector<std::size_t> displacements,
-                                       std::vector<DataType*> oldDataTypes);
+                                       std::vector<const DataType*> oldDataTypes);
 
     /** Constructor */
     StructDataType(std::vector<std::size_t> blockLengths,
                    std::vector<std::size_t> displacements,
-                   std::vector<DataType*> oldTypes);
+                   std::vector<const DataType*> oldTypes);
 
     /** Destructor */
     virtual ~StructDataType();
@@ -61,16 +61,16 @@ public:
     virtual std::vector<FileRegion> getRegionsByBytes(
         const FSOffset& byteOffset, std::size_t numBytes) const;
 
-    /**
-     * @return the data regions for count of this DataType.
-     */
-    virtual std::vector<FileRegion> getRegionsByCount(
-        const FSOffset& byteOffset, std::size_t count) const;
-
 protected:
     /** Copy constructor for use by clone */
     StructDataType(const StructDataType& other);
 
+    /** @return the number of elements in the struct */
+    std::size_t count() const { return blockLengths_.size(); };
+
+    /** @return The idx'th old data type */
+    const DataType* oldType(std::size_t idx) const { return types_[idx]; };
+    
 private:
     /** Hidden assignment operator */
     StructDataType& operator=(const StructDataType& other);
@@ -82,7 +82,7 @@ private:
     std::vector<std::size_t> displacements_;
 
     /** The data types to aggregate */
-    std::vector<DataType*> types_;
+    std::vector<const DataType*> types_;
 };
 
 #endif /*STRUCT_DATA_TYPE_H_*/

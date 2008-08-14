@@ -21,6 +21,7 @@
 //
 #include <map>
 #include <vector>
+#include "comm_man.h"
 #include "pfs_types.h"
 #include "singleton.h"
 class spfsMPICollectiveRequest;

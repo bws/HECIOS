@@ -1,9 +1,9 @@
-#ifndef CONTIGUOUS_DATA_TYPE_H
-#define CONTIGUOUS_DATA_TYPE_H
+#ifndef HINDEXED_DATA_TYPE_H_
+#define HINDEXED_DATA_TYPE_H_
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2008 Brad Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,50 +20,45 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <cstddef>
+#include <vector>
+#include "struct_data_type.h"
 #include "data_type.h"
 
 /**
- * A contiguous file view data type (similar to MPI data types)
+ * A Hindexed file view data type (similar to MPI data types)
  */
-class ContiguousDataType : public DataType
+class HindexedDataType : public StructDataType
 {
 public:
-    /** Default constructor */
-    ContiguousDataType(std::size_t count, const DataType& oldType);
+    static std::size_t calculateExtent(
+        const std::vector<std::size_t>& blockLengths,
+        const std::vector<std::size_t>& displacements,
+        const DataType& oldDataType);
+
+    /** Constructor */
+    HindexedDataType(const std::vector<std::size_t>& blocklengths,
+                     const std::vector<std::size_t>& displacements,
+                     const DataType& oldType);
 
     /** Destructor */
-    virtual ~ContiguousDataType();
-    
-    /** @return a cloned copy of this */
-    virtual ContiguousDataType* clone() const;
-    
+    virtual ~HindexedDataType();
+
+    /** @return a copy of this */
+    virtual HindexedDataType* clone() const;
+
     /** @return the number of bytes required to represent this data type */
     std::size_t getRepresentationByteLength() const;
-    
-    /**
-     * @return the *data* regions for numBytes of data in this DataType.
-     * Note that the DataType may contain empty holes, thus leading to
-     * numBytes of data corresponding to a much larger DataType extent.
-     */
-    virtual std::vector<FileRegion> getRegionsByBytes(
-        const FSOffset& byteOffset, std::size_t numBytes) const;
 
 protected:
-    /** Copy constructor */
-    ContiguousDataType(const ContiguousDataType& other);
+    /** Copy constructor for use by clone */
+    HindexedDataType(const HindexedDataType& other);
 
 private:
     /** Hidden assignment operator */
-    ContiguousDataType& operator=(const ContiguousDataType& other);
-
-    /** The count of contiguous old types */
-    std::size_t count_;
-
-    /** The old type to aggregate */
-    DataType* oldType_;
+    HindexedDataType& operator=(const HindexedDataType& other);
 };
 
-#endif
+#endif /*HINDEXED_DATA_TYPE_H_*/
 
 /*
  * Local variables:

@@ -23,10 +23,12 @@
 #include "singleton.h"
 #include "pfs_types.h"
 
+/** Type for a collective communicator descriptor */
+typedef int Communicator;
+
 /**
  * Communicator Manager (singleton)
  */
-
 class CommMan : public Singleton<CommMan>
 {
 public:
@@ -41,7 +43,7 @@ public:
     Communicator commWorld() const;
 
     /** @return The size of comm */
-    size_t commSize(Communicator comm) const;
+    std::size_t commSize(Communicator comm) const;
 
     /**
      * Get the rank in a certain communicator
@@ -89,8 +91,11 @@ protected:
     /** Constructor */
     CommMan();
 
-    /** @return true if the rank exists within the communicator */
-    bool rankExists(Communicator comm, int rank) const;
+    /** @return true if the world rank exists within the communicator */
+    bool worldRankExists(Communicator comm, int worldRank) const;
+
+    /** @return true if the world rank exists within the communicator */
+    bool commRankExists(Communicator comm, int commRank) const;
 
 private:
      /** Mapping of old ranks to new ranks */
@@ -109,11 +114,11 @@ private:
     RankMap getRankMap(Communicator comm) const;
 
     /**
-     * Add rank to the communicator comm
+     * Add worldRank to the communicator comm
      *
      * @return the rank value used in the joined communicator
      */
-    int addRank(int rank, Communicator comm);
+    int addRank(int worldRank, Communicator comm);
 
     /** Rank mappings indexed by the communicator */
     CommunicatorMap rankMapByCommunicator_;

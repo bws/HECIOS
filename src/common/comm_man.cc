@@ -77,7 +77,7 @@ void CommMan::setCommWorld(Communicator world)
 
 void CommMan::registerRank(int rank)
 {
-    assert(false == rankExists(commWorld_, rank));
+    assert(false == worldRankExists(commWorld_, rank));
     // Add the rank to the all process communicator
     addRank(rank, commWorld_);
 }
@@ -94,15 +94,27 @@ bool CommMan::exists(Communicator comm) const
     return doesExist;
 }
 
-bool CommMan::rankExists(Communicator comm, int rank) const
+bool CommMan::commRankExists(Communicator comm, int commRank) const
 {
     assert(exists(comm));
 
-    bool result = false;
     const RankMap& rankMap = getRankMap(comm);
-    if (0 != rankMap.count(rank))
+
+    // If the rank is less than the size, it exists
+    // otherwise, it does not
+    return (size_t(commRank) < rankMap.size());
+}
+
+bool CommMan::worldRankExists(Communicator comm, int worldRank) const
+{
+    bool result = false;
+    if (exists(comm))
     {
-        result = true;
+        const RankMap& rankMap = getRankMap(comm);
+        if (0 != rankMap.count(worldRank))
+        {
+            result = true;
+        }
     }
     return result;
 }
@@ -111,7 +123,7 @@ int CommMan::joinComm(Communicator comm, int worldRank)
 {
     assert(comm != commSelf_);
     assert(comm != commWorld_);
-
+    assert(false == worldRankExists(comm, worldRank));
     return addRank(worldRank, comm);
 }
 
@@ -129,7 +141,7 @@ int CommMan::commRank(Communicator comm, int worldRank) const
     else
     {
         assert(exists(comm));
-        assert(rankExists(comm, worldRank));
+        assert(worldRankExists(comm, worldRank));
         const RankMap& rankMap = getRankMap(comm);
         RankMap::const_iterator iter = rankMap.find(worldRank);
         rank = iter->second;
@@ -154,11 +166,11 @@ CommMan::RankMap CommMan::getRankMap(Communicator comm) const
     return iter->second;
 }
 
-int CommMan::addRank(int rank, Communicator comm)
+int CommMan::addRank(int worldRank, Communicator comm)
 {
     assert(commSelf_ != comm);
     int newRank = rankMapByCommunicator_[comm].size();
-    (rankMapByCommunicator_[comm])[rank] = newRank;
+    (rankMapByCommunicator_[comm])[worldRank] = newRank;
     return newRank;
 }
 

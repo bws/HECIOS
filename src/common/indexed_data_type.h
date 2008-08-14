@@ -1,9 +1,9 @@
-#ifndef CONTIGUOUS_DATA_TYPE_H
-#define CONTIGUOUS_DATA_TYPE_H
+#ifndef INDEXED_DATA_TYPE_H_
+#define INDEXED_DATA_TYPE_H_
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2008 Brad Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,27 +20,35 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <cstddef>
+#include <vector>
 #include "data_type.h"
 
 /**
- * A contiguous file view data type (similar to MPI data types)
+ * A indexed file view data type (similar to MPI data types)
  */
-class ContiguousDataType : public DataType
+class IndexedDataType : public DataType
 {
 public:
-    /** Default constructor */
-    ContiguousDataType(std::size_t count, const DataType& oldType);
+    static std::size_t calculateExtent(
+        const std::vector<std::size_t>& blockLengths,
+        const std::vector<std::size_t>& displacements,
+        const DataType& oldDataType);
+
+    /** Constructor */
+    IndexedDataType(const std::vector<std::size_t>& blocklengths,
+                    const std::vector<std::size_t>& displacements,
+                    const DataType& oldType);
 
     /** Destructor */
-    virtual ~ContiguousDataType();
-    
-    /** @return a cloned copy of this */
-    virtual ContiguousDataType* clone() const;
-    
+    virtual ~IndexedDataType();
+
+    /** @return a copy of this */
+    virtual IndexedDataType* clone() const;
+
     /** @return the number of bytes required to represent this data type */
     std::size_t getRepresentationByteLength() const;
-    
-    /**
+
+   /**
      * @return the *data* regions for numBytes of data in this DataType.
      * Note that the DataType may contain empty holes, thus leading to
      * numBytes of data corresponding to a much larger DataType extent.
@@ -49,21 +57,30 @@ public:
         const FSOffset& byteOffset, std::size_t numBytes) const;
 
 protected:
-    /** Copy constructor */
-    ContiguousDataType(const ContiguousDataType& other);
+    /** Copy constructor for use by clone */
+    IndexedDataType(const IndexedDataType& other);
 
+    /** @return the number of element regions in the type */
+    std::size_t count() const { return blockLengths_.size(); };
+
+    /** @return The old data type */
+    const DataType& oldType() const { return oldType_; };
+    
 private:
     /** Hidden assignment operator */
-    ContiguousDataType& operator=(const ContiguousDataType& other);
+    IndexedDataType& operator=(const IndexedDataType& other);
 
-    /** The count of contiguous old types */
-    std::size_t count_;
+    /** The number of elements in each indexed block */
+    std::vector<std::size_t> blockLengths_;
 
-    /** The old type to aggregate */
-    DataType* oldType_;
+    /** The displacments for each element block measured as elements */
+    std::vector<std::size_t> displacements_;
+
+    /** The old data type to aggregate */
+    const DataType& oldType_;
 };
 
-#endif
+#endif /*INDEXED_DATA_TYPE_H_*/
 
 /*
  * Local variables:

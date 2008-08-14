@@ -58,6 +58,8 @@ public:
 
     void testGetRegionsByCount();
 
+    void testSubarrayStruct();
+
 private:
     StructDataType* testStructType_;
 };
@@ -71,7 +73,7 @@ void StructDataTypeTest::setUp()
     size_t blockLengths[] = {5, 2};
 
     // Set up the old types
-    vector<DataType*> types(2);
+    vector<const DataType*> types(2);
     types[0] = new ByteDataType();
     types[1] = new DoubleDataType();
 

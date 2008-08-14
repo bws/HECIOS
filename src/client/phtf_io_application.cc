@@ -74,8 +74,6 @@ void PHTFIOApplication::initialize()
             PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_SELF");
         CommMan::instance().setCommSelf(strtol(commSelfValue.c_str(), 0, 0));
 
-        //CommMan::instance().joinComm(SPFS_COMM_WORLD, getRank());
-
         // Build a singleton map of mpi operation IDs (string => ID)
         PHTFEventRecord::buildOpMap();
 
@@ -676,7 +674,7 @@ void PHTFIOApplication::performCreateStructDataType(std::string typeId)
 
     vector<size_t> blocklens;
     vector<size_t> disp;
-    vector<DataType*> oldTypes;
+    vector<const DataType*> oldTypes;
 
     for(size_t i = 0; i < count; i ++)
     {

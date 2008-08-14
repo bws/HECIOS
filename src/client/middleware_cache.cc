@@ -95,6 +95,23 @@ PagedCache::~PagedCache()
 {    
 }
 
+FSOffset PagedCache::pageBeginOffset(const FilePageId& pageId) const
+{
+    return (pageId * pageSize_);
+}
+
+vector<FilePageId> PagedCache::determineRequestPages(const FSOffset& offset,
+                                                     const FSSize& size,
+                                                     const FileView& view)
+{
+    // Flatten view into file regions for the correct size
+    vector<FileRegion> requestRegions = 
+        DataTypeProcessor::locateFileRegions(offset, size, view);
+    
+    // Convert regions into file pages
+    return regionsToPageIds(requestRegions);
+}
+
 void PagedCache::initialize()
 {
     MiddlewareCache::initialize();
@@ -102,21 +119,46 @@ void PagedCache::initialize()
     pageCapacity_ = par("pageCapacity");
 }
 
-vector<FilePage> PagedCache::determineRequestPages(const FSOffset& offset,
-                                                   const FSSize& size,
-                                                   const FileView& view)
+spfsMPIFileReadAtRequest* PagedCache::createPageReadRequest(
+    const vector<FilePageId>& pageIds) const
 {
-    // Flatten view into file regions for the correct size
-    vector<FileRegion> requestRegions = 
-        DataTypeProcessor::locateFileRegions(offset, size, view);
-    
-    // Convert regions into file pages
-    return regionsToPages(requestRegions);
+    return 0;
+}
+
+spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
+    const vector<FilePageId>& pageIds) const
+{
+    return 0;
+}
+
+vector<FilePageId> PagedCache::regionsToPageIds(const vector<FileRegion>& fileRegions)
+{
+    vector<FilePageId> spanningPageIds;
+    for (size_t i = 0; i < fileRegions.size(); i++)
+    {
+        // Determine the first and last page
+        FSOffset begin = fileRegions[0].offset;
+        FSOffset end = begin + fileRegions[0].extent;
+        size_t firstPage = begin / pageSize_;
+        size_t lastPage = end / pageSize_;
+        for (size_t j = firstPage; j < lastPage; j++)
+        {
+            spanningPageIds.push_back(j);
+        }
+    }
+    return spanningPageIds;
 }
 
 vector<FilePage> PagedCache::regionsToPages(const vector<FileRegion>& fileRegions)
 {
+    vector<FilePageId> spanningIds = regionsToPageIds(fileRegions);
     vector<FilePage> spanningPages;
+    for (size_t i = 0; i < spanningIds.size(); i++)
+    {
+        FilePageId pageId = spanningIds[i];
+        FilePage fp(pageBeginOffset(pageId), pageSize_);
+        spanningPages.push_back(fp);
+    }
     return spanningPages;
 }
 
@@ -166,7 +208,7 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
 
         // Convert regions into file pages
         FileDescriptor* fd = readAt->getFileDes();
-        vector<FilePage> requestPages = determineRequestPages(readAt->getOffset(),
+        vector<FilePageId> requestPages = determineRequestPages(readAt->getOffset(),
                                                               readSize,
                                                               fd->getFileView());
         
@@ -181,7 +223,7 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
 
         // Convert regions into file pages
         FileDescriptor* fd = read->getFileDes();
-        vector<FilePage> requestPages = 
+        vector<FilePageId> requestPages = 
             determineRequestPages(fd->getFilePointer(),
                                   readSize,
                                   fd->getFileView());        
@@ -195,7 +237,7 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
     }
 }
 
-bool DirectPagedMiddlewareCache::lookupData(const vector<FilePage> requestPages)
+bool DirectPagedMiddlewareCache::lookupData(const vector<FilePageId> requestPageIds)
 {
     return true;
 }

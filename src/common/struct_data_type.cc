@@ -23,7 +23,7 @@ using namespace std;
 
 size_t StructDataType::calculateExtent(vector<size_t> blockLengths,
                                        vector<size_t> displacements,
-                                       vector<DataType*> oldTypes)
+                                       vector<const DataType*> oldTypes)
 {
     size_t extent = 0;
     for (size_t i = 0; i < blockLengths.size(); i++)
@@ -37,7 +37,7 @@ size_t StructDataType::calculateExtent(vector<size_t> blockLengths,
 
 StructDataType::StructDataType(vector<size_t> blockLengths,
                                vector<size_t> displacements,
-                               vector<DataType*> oldTypes) :
+                               vector<const DataType*> oldTypes) :
     DataType(StructDataType::calculateExtent(blockLengths, displacements,
                                              oldTypes)),
     blockLengths_(blockLengths),
@@ -141,34 +141,6 @@ vector<FileRegion> StructDataType::getRegionsByBytes(const FSOffset& byteOffset,
     assert(bytesProcessed == numBytes);
     return vectorRegions;
 }
-
-vector<FileRegion> StructDataType::getRegionsByCount(const FSOffset& byteOffset,
-                                                     size_t count) const
-{
-    // The total regions produced for count vectors
-    vector<FileRegion> vectorRegions;
-
-    // Flatten the types in order to construct count of the new type
-    for (size_t i = 0; i < count; i++)
-    {
-        FSOffset countOffset = i * getExtent();
-        for (size_t j = 0; j < types_.size(); j++)
-        {
-            // Get the regions for the next type in the struct
-            FSOffset nextOffset = byteOffset + countOffset + displacements_[j];
-            vector<FileRegion> elementRegions =
-                types_[j]->getRegionsByCount(nextOffset, blockLengths_[j]);
-
-            // Copy the regions to the output vector
-            copy(elementRegions.begin(),
-                 elementRegions.end(),
-                 back_inserter(vectorRegions));
-        }
-    }
-
-    return vectorRegions;
-}
-
 
 /*
  * Local variables:

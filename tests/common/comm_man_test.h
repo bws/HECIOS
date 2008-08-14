@@ -61,27 +61,25 @@ void CommManTest::tearDown()
 
 void CommManTest::testCommSize()
 {
+    CommMan& cm = CommMan::instance();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), cm.commSize(SPFS_COMM_SELF));
+    CPPUNIT_ASSERT_EQUAL(size_t(4), cm.commSize(SPFS_COMM_WORLD));
 }
 
 void CommManTest::testJoinComm()
 {
     CommMan& cm = CommMan::instance();
-
-    // now test for a new communicator
-    int id = 3;
+    Communicator id = 3;
     
-    // 1st node join, rank should be 0
-    CPPUNIT_ASSERT_EQUAL(cm.joinComm(id, 1), 0);
-    // size should be 1
-    CPPUNIT_ASSERT_EQUAL(cm.commSize(id), (size_t)1);
-    // 2nd node join, rank should be 1
-    CPPUNIT_ASSERT_EQUAL(cm.joinComm(id, 1), 1);
-    // size should be 2
-    CPPUNIT_ASSERT_EQUAL(cm.commSize(id), (size_t)2);
-    // 2nd node join twice, rank should be 1
-    CPPUNIT_ASSERT_EQUAL(cm.joinComm(id, 1), 1);
-    // size should still be 2
-    CPPUNIT_ASSERT_EQUAL(cm.commSize(id), (size_t)2);
+    // 1st node joins communicator, rank should be 0
+    int rank0 = cm.joinComm(id, 1);
+    CPPUNIT_ASSERT_EQUAL(0, rank0);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), cm.commSize(id));
+    
+    // 2nd node joins communicator, rank should be 1
+    int rank1 = cm.joinComm(id, 4);
+    CPPUNIT_ASSERT_EQUAL(1, rank1);
+    CPPUNIT_ASSERT_EQUAL(size_t(2), cm.commSize(id));
 }
 
 void CommManTest::testCommRank()

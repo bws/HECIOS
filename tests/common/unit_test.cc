@@ -24,6 +24,7 @@
 #include "file_descriptor_test.h"
 #include "file_view_test.h"
 #include "filename_test.h"
+#include "indexed_data_type_test.h"
 #include "ip_socket_map_test.h"
 #include "lru_cache_test.h"
 #include "lru_timeout_cache_test.h"
@@ -47,12 +48,13 @@ int main(int argc, char** argv)
     // Add all of the requisite tests
 
     runner.addTest( BasicDataTypeTest::suite() );
-    //runner.addTest( CommManTest::suite() );
+    runner.addTest( CommManTest::suite() );
     runner.addTest( ContiguousDataTypeTest::suite() );
     runner.addTest( FileDescriptorTest::suite() );
     runner.addTest( FileViewTest::suite() );
     runner.addTest( FilenameTest::suite() );
     runner.addTest( IPSocketMapTest::suite() );
+    runner.addTest( IndexedDataTypeTest::suite() );
     runner.addTest( LRUCacheTest::suite() );
     runner.addTest( LRUTimeoutCacheTest::suite() );
     runner.addTest( PFSUtilsTest::suite() );

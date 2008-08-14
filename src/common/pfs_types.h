@@ -62,9 +62,6 @@ inline bool operator==(const FSMetaData& lhs, const FSMetaData& rhs)
     return (lhs.handle == rhs.handle);
 }
 
-/** Type for a collective communicator handle */
-typedef int Communicator;
-
 /** Map for holding file system data for construction */
 typedef std::map<std::string, FSSize> FileSystemMap;
 

@@ -12,6 +12,8 @@ SIM_SRC += $(DIR)/comm_man.cc \
 	$(DIR)/fs_operation.cc \
 	$(DIR)/fs_operation_state.cc \
 	$(DIR)/fs_state_machine.cc \
+	$(DIR)/hindexed_data_type.cc \
+	$(DIR)/indexed_data_type.cc \
 	$(DIR)/io_trace.cc \
 	$(DIR)/ip_socket_map.cc \
 	$(DIR)/pfs_utils.cc \
