@@ -138,9 +138,9 @@ void IndexedDataTypeTest::testGetRegionsByBytes()
     CPPUNIT_ASSERT_EQUAL((size_t)3, regions.size());
 
     // Verify they first regions begins at 10, and extends for 14 bytes
-    CPPUNIT_ASSERT_EQUAL(FSOffset(10 * DoubleDataType::MPI_DOUBLE_WIDTH),
+    CPPUNIT_ASSERT_EQUAL(FSOffset(10 * DoubleDataType::MPI_DOUBLE_WIDTH) + 2,
                          regions[0].offset);
-    CPPUNIT_ASSERT_EQUAL(FSSize(DoubleDataType::MPI_DOUBLE_WIDTH),
+    CPPUNIT_ASSERT_EQUAL(FSSize(DoubleDataType::MPI_DOUBLE_WIDTH) - 2,
                          regions[0].extent);
 
     // Verify they first regions begins at 2, and extends for 14 bytes
@@ -152,7 +152,7 @@ void IndexedDataTypeTest::testGetRegionsByBytes()
     // Verify they first regions begins at 2, and extends for 14 bytes
     CPPUNIT_ASSERT_EQUAL(FSOffset(30 * DoubleDataType::MPI_DOUBLE_WIDTH),
                          regions[2].offset);
-    CPPUNIT_ASSERT_EQUAL(FSSize(1 * DoubleDataType::MPI_DOUBLE_WIDTH),
+    CPPUNIT_ASSERT_EQUAL(FSSize(1 * DoubleDataType::MPI_DOUBLE_WIDTH) + 2,
                          regions[2].extent);
 }
 

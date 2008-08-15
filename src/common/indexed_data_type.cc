@@ -86,40 +86,25 @@ vector<FileRegion> IndexedDataType::getRegionsByBytes(
     while (bytesProcessed < numBytes)
     {
         // Begin processing the struct subtypes
+        size_t elementsProcessedSize = 0;
         for (size_t i = 0;
              i < blockLengths_.size() && bytesProcessed < numBytes;
              i++)
         {
             size_t typeOffset = currentOffset % getTrueExtent();
-            size_t displacement = displacements_[i] * oldType_.getTrueExtent();
-            if (typeOffset > displacement &&
-                typeOffset < (displacement +
-                              blockLengths_[i] * oldType_.getTrueExtent()))
+            size_t nextElementsSize = blockLengths_[i] *
+                oldType_.getTrueExtent();
+            if (typeOffset > elementsProcessedSize &&
+                typeOffset < (elementsProcessedSize + nextElementsSize))
             {
                 // Need to perform processing for only a portion of this type
-                FSSize offsetDiff = typeOffset - displacement;
-                FSSize dataLength =
-                    min(blockLengths_[i] *oldType_.getTrueExtent() - offsetDiff,
-                        numBytes - bytesProcessed);
+                FSSize dataLength = min(nextElementsSize - typeOffset,
+                                        numBytes - bytesProcessed);
 
+                FSOffset beginOff = typeBegin + typeOffset +
+                    (displacements_[i] * oldType_.getTrueExtent()); 
                 vector<FileRegion> elementRegions =
-                    oldType_.getRegionsByBytes(currentOffset, dataLength);
-
-                // Add regions to the total regions vector
-                copy(elementRegions.begin(),
-                     elementRegions.end(),
-                     back_inserter(vectorRegions));
-
-                // Update the number of bytes processed
-                bytesProcessed += dataLength;
-            }
-            else if (typeOffset <= displacement)
-            {
-                FSSize dataLength =
-                    min(blockLengths_[i] * oldType_.getTrueExtent(),
-                        numBytes - bytesProcessed);
-                vector<FileRegion> elementRegions =
-                    oldType_.getRegionsByBytes(typeBegin + displacement,
+                    oldType_.getRegionsByBytes(beginOff,
                                                dataLength);
 
                 // Add regions to the total regions vector
@@ -130,9 +115,30 @@ vector<FileRegion> IndexedDataType::getRegionsByBytes(
                 // Update the number of bytes processed
                 bytesProcessed += dataLength;
             }
+            else if (typeOffset <= (elementsProcessedSize + nextElementsSize))
+            {
+                FSOffset beginOff = typeBegin +
+                    (displacements_[i] * oldType_.getTrueExtent());
+                FSSize dataLength = min(nextElementsSize,
+                                        numBytes - bytesProcessed);
+                vector<FileRegion> elementRegions =
+                    oldType_.getRegionsByBytes(beginOff,
+                                               dataLength);
+
+                // Add regions to the total regions vector
+                copy(elementRegions.begin(),
+                     elementRegions.end(),
+                     back_inserter(vectorRegions));
+
+                // Update the number of bytes processed
+                bytesProcessed += dataLength;
+            }
+
+            // Update the bookkeeping for the type
+            elementsProcessedSize += nextElementsSize;
         }
 
-        // Increment to the next struct
+        // Increment to the next count
         typeBegin += getTrueExtent();
         currentOffset = typeBegin;
     }

@@ -102,7 +102,7 @@ void StructDataTypeTest::testGetRegionsByBytes()
 
     // Test getting regions on aligned boundary
     regions = testStructType_->getRegionsByBytes(0, 15);
-    CPPUNIT_ASSERT_EQUAL(size_t(2), regions.size());
+    CPPUNIT_ASSERT_EQUAL(FSSize(2), regions.size());
     CPPUNIT_ASSERT_EQUAL(FSOffset(0), regions[0].offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(5), regions[0].extent);
     CPPUNIT_ASSERT_EQUAL(FSOffset(10), regions[1].offset);
@@ -110,7 +110,7 @@ void StructDataTypeTest::testGetRegionsByBytes()
 
     // Test getting regions on unaligned boundary
     regions = testStructType_->getRegionsByBytes(2, 15);
-    CPPUNIT_ASSERT_EQUAL(size_t(2), regions.size());
+    CPPUNIT_ASSERT_EQUAL(FSSize(2), regions.size());
     CPPUNIT_ASSERT_EQUAL(FSOffset(2), regions[0].offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(3), regions[0].extent);
     CPPUNIT_ASSERT_EQUAL(FSOffset(10), regions[1].offset);
