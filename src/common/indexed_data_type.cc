@@ -90,8 +90,8 @@ vector<FileRegion> IndexedDataType::getRegionsByBytes(
              i < blockLengths_.size() && bytesProcessed < numBytes;
              i++)
         {
-            size_t displacement = displacements_[i] * oldType_.getTrueExtent();
             size_t typeOffset = currentOffset % getTrueExtent();
+            size_t displacement = displacements_[i] * oldType_.getTrueExtent();
             if (typeOffset > displacement &&
                 typeOffset < (displacement +
                               blockLengths_[i] * oldType_.getTrueExtent()))
