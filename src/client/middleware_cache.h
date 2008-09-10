@@ -24,9 +24,14 @@
 #include <omnetpp.h>
 #include "basic_types.h"
 #include "file_page.h"
+#include "lru_cache.h"
+class FileDescriptor;
 class FileView;
+class Filename;
 class spfsMPIFileReadAtRequest;
+class spfsMPIFileReadRequest;
 class spfsMPIFileWriteAtRequest;
+class spfsMPIFileWriteRequest;
 
 /**
  * An abstract model of a middleware file system data cache.
@@ -116,11 +121,13 @@ protected:
 
     /** @return a request to read the desired pages */
     spfsMPIFileReadAtRequest* createPageReadRequest(
-        const std::vector<FilePageId>& pageIds) const;
+        const std::vector<FilePageId>& pageIds,
+        spfsMPIFileReadRequest* origRequest) const;
 
     /** @return a request to write the desired pages */
     spfsMPIFileWriteAtRequest* createPageWriteRequest(
-        const std::vector<FilePageId>& pageIds) const;
+        const std::vector<FilePageId>& pageIds,
+        spfsMPIFileWriteRequest* origRequest) const;
 
 private:
     /** @return Array of page ids spanning the supplied file regions */
@@ -130,7 +137,12 @@ private:
     /** @return Array of pages spanning the supplied file regions */
     std::vector<FilePage> regionsToPages(
         const std::vector<FileRegion>& fileRegions);
-    
+
+    /** @return a file descriptor for filename with the page view applied */
+    FileDescriptor* getPageViewDescriptor(
+        const Filename& filename,
+        const std::vector<std::size_t>& pageIds) const;
+
     /** Page size attribute */
     std::size_t pageSize_;
     
@@ -171,7 +183,15 @@ private:
      *  
      * Side effect: Retrieves non-resident pages
      */ 
-    bool lookupData(const std::vector<FilePageId> requestPageIds);
+    bool lookupData(const std::vector<FilePageId>& pageIds);
+
+    /**
+     * Add pages to the cache performing cache evictions as necessary
+     */
+    void populateData(const std::vector<FilePageId>& pageIds);
+
+    /** Data structure for holding the cached data */
+    LRUCache<std::size_t, FilePageId> lruCache_;
 };
 
 /** A fully associative paged cache for a single node */

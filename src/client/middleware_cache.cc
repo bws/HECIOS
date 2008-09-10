@@ -21,7 +21,10 @@
 #include <cassert>
 #include <iostream>
 #include <omnetpp.h>
+#include "basic_data_type.h"
+#include "block_indexed_data_type.h"
 #include "data_type_processor.h"
+#include "file_builder.h"
 #include "file_view.h"
 #include "mpi_proto_m.h"
 using namespace std;
@@ -120,15 +123,43 @@ void PagedCache::initialize()
 }
 
 spfsMPIFileReadAtRequest* PagedCache::createPageReadRequest(
-    const vector<FilePageId>& pageIds) const
+    const vector<FilePageId>& pageIds,
+    spfsMPIFileReadRequest* origRequest) const
 {
-    return 0;
+    // Construct a descriptor that views only the correct pages
+    Filename name = origRequest->getFileDes()->getFilename();
+    FileDescriptor* fd = getPageViewDescriptor(name, pageIds);
+    
+    // Create the read request
+    spfsMPIFileReadAtRequest* readRequest =
+        new spfsMPIFileReadAtRequest("PagedCache Read Request",
+                                     SPFS_MPI_FILE_READ_AT_REQUEST);
+    readRequest->setContextPointer(origRequest);
+    readRequest->setFileDes(fd);
+    readRequest->setDataType(new ByteDataType());
+    readRequest->setCount(pageIds.size() * pageSize_);
+    readRequest->setOffset(0);
+    return readRequest;
 }
 
 spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
-    const vector<FilePageId>& pageIds) const
+    const vector<FilePageId>& pageIds,
+    spfsMPIFileWriteRequest* origRequest) const
 {
-    return 0;
+    // Construct a descriptor that views only the correct pages
+    Filename name = origRequest->getFileDes()->getFilename();
+    FileDescriptor* fd = getPageViewDescriptor(name, pageIds);
+    
+    // Create the read request
+    spfsMPIFileWriteAtRequest* writeRequest =
+        new spfsMPIFileWriteAtRequest("PagedCache Write Request",
+                                      SPFS_MPI_FILE_WRITE_AT_REQUEST);
+    writeRequest->setContextPointer(origRequest);
+    writeRequest->setFileDes(fd);
+    writeRequest->setDataType(new ByteDataType());
+    writeRequest->setCount(pageIds.size() * pageSize_);
+    writeRequest->setOffset(0);
+    return writeRequest;
 }
 
 vector<FilePageId> PagedCache::regionsToPageIds(const vector<FileRegion>& fileRegions)
@@ -162,6 +193,27 @@ vector<FilePage> PagedCache::regionsToPages(const vector<FileRegion>& fileRegion
     return spanningPages;
 }
 
+FileDescriptor* PagedCache::getPageViewDescriptor(
+    const Filename& filename, const vector<size_t>& pageIds) const
+{
+    // Create the vector of displacements
+    vector<size_t> displacements(pageIds.size());
+    for (size_t i = 0; i < displacements.size(); i++)
+    {
+        displacements[i] = pageIds[i] * pageSize_;
+    }
+
+    // Create the block indexed data type to use as the view
+    BlockIndexedDataType* pageView = new BlockIndexedDataType(pageSize_,
+                                                              displacements,
+                                                              ByteDataType());
+    FileView cacheView(0, pageView);
+
+    // Create a descriptor with which to apply the view
+    FileDescriptor* fd = FileBuilder::instance().getDescriptor(filename);
+    fd->setFileView(cacheView);    
+    return fd;
+}
 
 //
 // NoMiddlewareCache implementation
@@ -193,6 +245,7 @@ void NoMiddlewareCache::handleFileSystemMessage(cMessage* msg)
 Define_Module(DirectPagedMiddlewareCache);
 
 DirectPagedMiddlewareCache::DirectPagedMiddlewareCache()
+    : lruCache_(0)
 {
 }
 
@@ -237,25 +290,46 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
     }
 }
 
-bool DirectPagedMiddlewareCache::lookupData(const vector<FilePageId> requestPageIds)
+void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
+{
+    // Determine if the message is a write back
+    if (0 == msg->contextPointer())
+    {
+        assert(SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->kind());
+        cerr << __FILE__ << ":" << __LINE__ << ": "
+             << "Cache Write-Back Complete" << endl;
+    }
+    else
+    {
+        if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind()) 
+        {
+            vector<FilePageId> readPages;
+            populateData(readPages);
+        }
+        else if (SPFS_MPI_FILE_READ_RESPONSE == msg->kind())
+        {
+            vector<FilePageId> readPages;
+            populateData(readPages);
+        }
+        else
+        {
+            send(msg, appOutGateId());
+        }
+    }
+}
+
+bool DirectPagedMiddlewareCache::lookupData(
+    const vector<FilePageId>& requestPageIds)
 {
     return true;
 }
 
-
-void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
-{   
-    if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind()) 
-    {
-    }
-    else if (SPFS_MPI_FILE_READ_RESPONSE == msg->kind())
-    {
-    }
-    else
-    {
-        send(msg, appOutGateId());
-    }
+void DirectPagedMiddlewareCache::populateData(
+    const vector<FilePageId>& requestPageIds)
+{
+    //return true;
 }
+
 
 
 //
