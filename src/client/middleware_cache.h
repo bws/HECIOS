@@ -191,7 +191,7 @@ private:
     void populateData(const std::vector<FilePageId>& pageIds);
 
     /** Data structure for holding the cached data */
-    LRUCache<std::size_t, FilePageId> lruCache_;
+    LRUCache<std::size_t, FilePageId>* lruCache_;
 };
 
 /** A fully associative paged cache for a single node */
