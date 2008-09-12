@@ -19,6 +19,7 @@
 //
 #include <cppunit/TextTestRunner.h>
 #include "client_fs_state_test.h"
+#include "direct_paged_middleware_cache_test.h"
 #include "fs_client_test.h"
 
 int main(int argc, char** argv)
@@ -27,6 +28,7 @@ int main(int argc, char** argv)
 
     // Add all of the requisite tests
     runner.addTest( ClientFSStateTest::suite() );
+    runner.addTest( DirectPagedMiddlewareCacheTest::suite() );
     runner.addTest( FSClientTest::suite() );
 
     bool success = runner.run();
