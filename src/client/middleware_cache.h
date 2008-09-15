@@ -44,13 +44,13 @@ public:
 
     /** Abstract destructor */
     ~MiddlewareCache() = 0;
-    
+
     /** @return the appIn gate id */
     int appInGateId() const { return appInGateId_; };
-    
+
     /** @return the appOut gate id */
     int appOutGateId() const { return appOutGateId_; };
-        
+
     /** @return the fsIn gate id */
     int fsInGateId() const { return fsInGateId_; };
 
@@ -71,7 +71,7 @@ protected:
 private:
     /** Interface for handling messages from the application */
     virtual void handleApplicationMessage(cMessage* msg) = 0;
-    
+
     /** Interface for handling messages from the file system */
     virtual void handleFileSystemMessage(cMessage* msg) = 0;
 
@@ -80,13 +80,13 @@ private:
     int appOutGateId_;
     int fsInGateId_;
     int fsOutGateId_;
-    
+
     /** The number of cache hits */
     std::size_t numCacheHits_;
-    
+
     /** The number of cache misses */
     std::size_t numCacheMisses_;
-    
+
     /** The number of cache evictions */
     std::size_t numCacheEvicts_;
 };
@@ -97,24 +97,24 @@ class PagedCache : public MiddlewareCache
 public:
     /** Constructor */
     PagedCache();
-  
+
     /** Abstract destructor */
     virtual ~PagedCache() = 0;
-    
+
     /** @return the number of pages the cache can contain */
     size_t cacheCapacity() const { return pageCapacity_; };
 
     /** @return the cache's page size */
     size_t pageSize() const { return pageSize_; };
-    
+
     /** @return the first offset for the page */
     FSOffset pageBeginOffset(const FilePageId& pageId) const;
-    
+
     /** @return Array of pages ids spanning the supplied file regions */
     std::vector<FilePageId> determineRequestPages(const FSOffset& offset,
                                                   const FSSize& size,
                                                   const FileView& view);
-    
+
 protected:
     /** Module initialization */
     void initialize();
@@ -133,7 +133,7 @@ private:
     /** @return Array of page ids spanning the supplied file regions */
     std::vector<FilePageId> regionsToPageIds(
         const std::vector<FileRegion>& fileRegions);
-    
+
     /** @return Array of pages spanning the supplied file regions */
     std::vector<FilePage> regionsToPages(
         const std::vector<FileRegion>& fileRegions);
@@ -145,7 +145,7 @@ private:
 
     /** Page size attribute */
     std::size_t pageSize_;
-    
+
     /** Page capacity attribute */
     std::size_t pageCapacity_;
 };
@@ -156,7 +156,7 @@ class NoMiddlewareCache : public MiddlewareCache
 public:
     /** Constructor */
     NoMiddlewareCache();
-    
+
 private:
     /** Forward application messages to file system */
     virtual void handleApplicationMessage(cMessage* msg);
@@ -172,6 +172,10 @@ public:
     /** Constructor */
     DirectPagedMiddlewareCache();
 
+protected:
+    /** Perform module initialization */
+    virtual void initialize();
+
 private:
     /** Handle messages received from the application */
     virtual void handleApplicationMessage(cMessage* msg);
@@ -180,9 +184,9 @@ private:
     virtual void handleFileSystemMessage(cMessage* msg);
 
     /** @return true if all of the pages are resident
-     *  
+     *
      * Side effect: Retrieves non-resident pages
-     */ 
+     */
     bool lookupData(const std::vector<FilePageId>& pageIds);
 
     /**
@@ -203,13 +207,13 @@ public:
 
 private:
     virtual void handleApplicationMessage(cMessage* msg);
-    
+
     virtual void handleFileSystemMessage(cMessage* msg);
 
     /** @return true if all of the pages are resident
-     *  
+     *
      * Side effect: Retrieves non-resident pages
-     */ 
+     */
     bool lookupData(const std::vector<FilePage> requestPages);
 };
 
@@ -221,7 +225,7 @@ public:
 
 private:
     virtual void handleApplicationMessage(cMessage* msg);
-    
+
     virtual void handleFileSystemMessage(cMessage* msg);
 };
 

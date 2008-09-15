@@ -23,11 +23,14 @@
 #include <iostream>
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
+#include "basic_data_type.h"
 #include "csimple_module_tester.h"
+#include "file_builder.h"
 #include "middleware_cache.h"
 #include "mock_storage_layout_manager.h"
 #include "mpi_proto_m.h"
 #include "pvfs_proto_m.h"
+#include "vector_data_type.h"
 using namespace std;
 
 /** Unit test for DirectPagedMiddlewareCache */
@@ -36,8 +39,7 @@ class DirectPagedMiddlewareCacheTest : public CppUnit::TestFixture
     // Create generic unit test and register test functions for automatic
     // exercise
     CPPUNIT_TEST_SUITE(DirectPagedMiddlewareCacheTest);
-    CPPUNIT_TEST(testRead);
-    CPPUNIT_TEST(testReadAt);
+    CPPUNIT_TEST(testApplicationRead);
     CPPUNIT_TEST(testWrite);
     CPPUNIT_TEST(testWriteAt);
     CPPUNIT_TEST_SUITE_END();
@@ -50,11 +52,8 @@ public:
     /** Called after each test function */
     virtual void tearDown();
 
-    /** Test components of a Read request */
-    void testRead();
-
     /** Test components of a ReadAt request */
-    void testReadAt();
+    void testApplicationRead();
 
     /** Test components of a Write request */
     void testWrite();
@@ -65,47 +64,81 @@ public:
 private:
 
     cSimpleModuleTester* moduleTester_;
-    FSMetaData* testMeta_;
+    Filename* file1_;
+    Filename* file2_;
+    Filename* file3_;
+    Filename* file4_;
 };
 
 void DirectPagedMiddlewareCacheTest::setUp()
 {
     // Register servers for use during testing
-    //HandleRange range1 = {100, 200};
-    //HandleRange range2 = {2000, 3000};
-    //FileBuilder::instance().registerFSServer(range1, true);
-    //FileBuilder::instance().registerFSServer(range2, false);
+    HandleRange range1 = {100, 200};
+    HandleRange range2 = {2000, 3000};
+    FileBuilder::instance().registerFSServer(range1, true);
+    FileBuilder::instance().registerFSServer(range2, false);
 
     // Test file for use during testing
-    //MockStorageLayoutManager layout;
-    //Filename file("/dir1/dir2/file1");
-    //FileBuilder::instance().createFile(file, 1024, 0, 4, layout);
-    //testMeta_ = FileBuilder::instance().getMetaData(file);
-    
+    MockStorageLayoutManager layout;
+    file1_= new Filename("/file1");
+    FileBuilder::instance().createFile(*file1_, 1024, 0, 4, layout);
+    file2_ = new Filename("/file2");
+    FileBuilder::instance().createFile(*file2_, 1024, 0, 4, layout);
+    file3_ = new Filename("/file3");
+    FileBuilder::instance().createFile(*file3_, 1024, 0, 4, layout);
+    file4_ = new Filename("/file4");
+    FileBuilder::instance().createFile(*file4_, 1024, 0, 4, layout);
+
     // Create the module for testing
     moduleTester_ = new cSimpleModuleTester("DirectPagedMiddlewareCache",
-                                            "src/client/middleware_cache.ned");
+                                            "src/client/middleware_cache.ned",
+                                            false);
+
+    // Set the module parameters and initialize
+    cModule* module = moduleTester_->getModule();
+    module->par("pageSize") = 100;
+    module->par("pageCapacity") = 10;
+    moduleTester_->callInitialize();
+
 }
 
 void DirectPagedMiddlewareCacheTest::tearDown()
 {
-    //FileBuilder::clearState();
-    
+    FileBuilder::clearState();
+
+    delete file1_;
+    file1_ = 0;
+    delete file2_;
+    file2_ = 0;
+    delete file3_;
+    file3_ = 0;
+    delete file4_;
+    file4_ = 0;
+
     delete moduleTester_;
     moduleTester_ = 0;
 }
 
-void DirectPagedMiddlewareCacheTest::testRead()
+void DirectPagedMiddlewareCacheTest::testApplicationRead()
 {
-}
+    // Data for use in tests
+    ByteDataType byteDataType;
+    VectorDataType vectorDataType();
 
-void DirectPagedMiddlewareCacheTest::testReadAt()
-{
     //
     // Test Case 1
     //
     spfsMPIFileReadAtRequest* readAt =
         new spfsMPIFileReadAtRequest(0, SPFS_MPI_FILE_READ_AT_REQUEST);
+    readAt->setFileDes(FileBuilder::instance().getDescriptor(*file1_));
+    readAt->setDataType(&byteDataType);
+    readAt->setCount(4000);
+    readAt->setOffset(0);
+    moduleTester_->deliverMessage(readAt, "appIn");
+
+    size_t numOutput = moduleTester_->getNumOutputMessages();
+    CPPUNIT_ASSERT_EQUAL(size_t(40), numOutput);
+
     delete readAt;
 }
 

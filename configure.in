@@ -7,7 +7,7 @@ dnl
 dnl Determine source and build directories
 dnl
 CONFIG_BUILD_DIR=`pwd`
-CONFIG_PROJECT_RELATIVE_DIR=$srcdir
+CONFIG_PROJECT_RELATIVE_DIR="$srcdir"
 CONFIG_PROJECT_DIR=`cd $srcdir; pwd`
 AC_SUBST(CONFIG_BUILD_DIR)
 AC_SUBST(CONFIG_PROJECT_DIR)

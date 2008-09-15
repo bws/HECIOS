@@ -237,6 +237,8 @@ install:
             $(HECIOS_DIR)/omnetpp.ini.in > $(INSTALL_DIR)/examples/example.ini
 	@echo "HECIOS successfully installed."
 
+.PHONY: install
+
 #
 # Build targets for documentation
 #
@@ -245,6 +247,8 @@ doc: $(DOC_EPS) $(DOC_PDF)
 	doxygen $(DOC_DIR)/Doxyfile
 	doxytag -t $(DOC_DIR)/Doxytag.xml $(DOC_DIR)/api-doc/html
 	opp_neddoc -d ../api-doc/html -t $(DOC_DIR)/Doxytag.xml -o $(DOC_DIR)/ned-doc $(SRC_DIR)
+
+.PHONY: doc
 
 #
 # Build the Omnet configuration information
@@ -257,6 +261,7 @@ $(BUILD_DIR)/omnetpp.ini: $(BUILD_DIR)/hecios_ned.lst $(HECIOS_DIR)/omnetpp.ini.
 
 configfile: $(BUILD_DIR)/omnetpp.ini
 
+.PHONY: configfile
 
 #
 # Incremental build (useful target for IDE auto-save builds)
@@ -286,7 +291,9 @@ $(BIN_DIR)/hecios_cmd: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS)
 #
 test: tests_all
 
+.PHONY: test
+
 #
 # Psuedotargets (required by make for some dependencies)
 #
-.PHONY: all all_clean clean configfile default depclean doc gen_clean gui install test tests_clean
+.PHONY: all all_clean clean default depclean gen_clean gui tests_clean

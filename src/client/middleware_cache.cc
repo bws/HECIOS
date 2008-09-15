@@ -51,7 +51,7 @@ void MiddlewareCache::initialize()
     appOutGateId_ = findGate("appOut");
     fsInGateId_ = findGate("fsIn");
     fsOutGateId_ = findGate("fsOut");
-    
+
     // Initialize statistics
     numCacheHits_ = 0;
     numCacheMisses_ = 0;
@@ -95,7 +95,7 @@ PagedCache::PagedCache()
 }
 
 PagedCache::~PagedCache()
-{    
+{
 }
 
 FSOffset PagedCache::pageBeginOffset(const FilePageId& pageId) const
@@ -108,9 +108,9 @@ vector<FilePageId> PagedCache::determineRequestPages(const FSOffset& offset,
                                                      const FileView& view)
 {
     // Flatten view into file regions for the correct size
-    vector<FileRegion> requestRegions = 
+    vector<FileRegion> requestRegions =
         DataTypeProcessor::locateFileRegions(offset, size, view);
-    
+
     // Convert regions into file pages
     return regionsToPageIds(requestRegions);
 }
@@ -129,7 +129,7 @@ spfsMPIFileReadAtRequest* PagedCache::createPageReadRequest(
     // Construct a descriptor that views only the correct pages
     Filename name = origRequest->getFileDes()->getFilename();
     FileDescriptor* fd = getPageViewDescriptor(name, pageIds);
-    
+
     // Create the read request
     spfsMPIFileReadAtRequest* readRequest =
         new spfsMPIFileReadAtRequest("PagedCache Read Request",
@@ -149,7 +149,7 @@ spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
     // Construct a descriptor that views only the correct pages
     Filename name = origRequest->getFileDes()->getFilename();
     FileDescriptor* fd = getPageViewDescriptor(name, pageIds);
-    
+
     // Create the read request
     spfsMPIFileWriteAtRequest* writeRequest =
         new spfsMPIFileWriteAtRequest("PagedCache Write Request",
@@ -211,7 +211,7 @@ FileDescriptor* PagedCache::getPageViewDescriptor(
 
     // Create a descriptor with which to apply the view
     FileDescriptor* fd = FileBuilder::instance().getDescriptor(filename);
-    fd->setFileView(cacheView);    
+    fd->setFileView(cacheView);
     return fd;
 }
 
@@ -249,14 +249,24 @@ DirectPagedMiddlewareCache::DirectPagedMiddlewareCache()
 {
 }
 
+void DirectPagedMiddlewareCache::initialize()
+{
+    // Initialize parent
+    PagedCache::initialize();
+
+    // Initialize LRU management
+    assert(0 != cacheCapacity());
+    lruCache_ = new LRUCache<std::size_t, FilePageId>(cacheCapacity());
+}
+
 void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
 {
-    if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind()) 
+    if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind())
     {
         // Determine the size of the read request
-        spfsMPIFileReadAtRequest* readAt = 
+        spfsMPIFileReadAtRequest* readAt =
             static_cast<spfsMPIFileReadAtRequest*>(msg);
-        FSSize readSize = 
+        FSSize readSize =
             readAt->getDataType()->getExtent() * readAt->getCount();
 
         // Convert regions into file pages
@@ -264,7 +274,7 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
         vector<FilePageId> requestPages = determineRequestPages(readAt->getOffset(),
                                                               readSize,
                                                               fd->getFileView());
-        
+
         // Perform a lookup on the pages
         lookupData(requestPages);
     }
@@ -276,16 +286,17 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
 
         // Convert regions into file pages
         FileDescriptor* fd = read->getFileDes();
-        vector<FilePageId> requestPages = 
+        vector<FilePageId> requestPages =
             determineRequestPages(fd->getFilePointer(),
                                   readSize,
-                                  fd->getFileView());        
-        
+                                  fd->getFileView());
+
         // Perform a lookup on the pages
         lookupData(requestPages);
     }
     else
     {
+        // Forward messages not handled by the cache
         send(msg, fsOutGateId());
     }
 }
@@ -301,7 +312,7 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
     }
     else
     {
-        if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind()) 
+        if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind())
         {
             vector<FilePageId> readPages;
             populateData(readPages);
@@ -350,7 +361,7 @@ void FullyPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
 }
 
 void FullyPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
-{   
+{
     assert(false);
 }
 
@@ -372,7 +383,7 @@ void CooperativeDirectMiddlewareCache::handleApplicationMessage(cMessage* msg)
 }
 
 void CooperativeDirectMiddlewareCache::handleFileSystemMessage(cMessage* msg)
-{   
+{
     assert(false);
 }
 
