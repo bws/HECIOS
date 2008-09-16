@@ -87,6 +87,29 @@ void MiddlewareCache::handleMessage(cMessage* msg)
 }
 
 //
+// NoMiddlewareCache implementation
+//
+//
+// OMNet Registriation Method
+Define_Module(NoMiddlewareCache);
+
+NoMiddlewareCache::NoMiddlewareCache()
+{
+}
+
+// Perform simple pass through on all messages
+void NoMiddlewareCache::handleApplicationMessage(cMessage* msg)
+{
+    send(msg, fsOutGateId());
+}
+
+void NoMiddlewareCache::handleFileSystemMessage(cMessage* msg)
+{
+    send(msg, appOutGateId());
+}
+
+
+//
 // PagedCache implementation
 //
 //
@@ -215,27 +238,6 @@ FileDescriptor* PagedCache::getPageViewDescriptor(
     return fd;
 }
 
-//
-// NoMiddlewareCache implementation
-//
-//
-// OMNet Registriation Method
-Define_Module(NoMiddlewareCache);
-
-NoMiddlewareCache::NoMiddlewareCache()
-{
-}
-
-// Perform simple pass through on all messages
-void NoMiddlewareCache::handleApplicationMessage(cMessage* msg)
-{
-    send(msg, fsOutGateId());
-}
-
-void NoMiddlewareCache::handleFileSystemMessage(cMessage* msg)
-{
-    send(msg, appOutGateId());
-}
 
 //
 // DirectPagedMiddlewareCache Implementation
@@ -276,26 +278,12 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
                                                               fd->getFileView());
 
         // Perform a lookup on the pages
-        lookupData(requestPages);
-    }
-    else if (SPFS_MPI_FILE_READ_REQUEST == msg->kind())
-    {
-        // Determine the size of the read request
-        spfsMPIFileReadRequest* read = static_cast<spfsMPIFileReadRequest*>(msg);
-        FSSize readSize = read->getDataType()->getExtent() * read->getCount();
-
-        // Convert regions into file pages
-        FileDescriptor* fd = read->getFileDes();
-        vector<FilePageId> requestPages =
-            determineRequestPages(fd->getFilePointer(),
-                                  readSize,
-                                  fd->getFileView());
-
-        // Perform a lookup on the pages
-        lookupData(requestPages);
+        lookupData(requestPages, readAt);
     }
     else
     {
+        assert(SPFS_MPI_FILE_READ_REQUEST != msg->kind());
+
         // Forward messages not handled by the cache
         send(msg, fsOutGateId());
     }
@@ -315,28 +303,53 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
         if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind())
         {
             vector<FilePageId> readPages;
-            populateData(readPages);
-        }
-        else if (SPFS_MPI_FILE_READ_RESPONSE == msg->kind())
-        {
-            vector<FilePageId> readPages;
-            populateData(readPages);
+            populateData(readPages, 0);
         }
         else
         {
+            assert(SPFS_MPI_FILE_READ_RESPONSE != msg->kind());
+
+            // Forward messages not handled by the cache
             send(msg, appOutGateId());
         }
     }
 }
 
 bool DirectPagedMiddlewareCache::lookupData(
-    const vector<FilePageId>& requestPageIds)
+    const vector<FilePageId>& requestPageIds,
+    spfsMPIFileReadAtRequest* parentRequest)
 {
-    return true;
+    size_t cacheSize = cacheCapacity();
+
+    // Determine which pages are not in the cache
+    vector<FilePageId> uncachedPages;
+    for (size_t i = 0; i < requestPageIds.size(); i++)
+    {
+        size_t cacheKey = requestPageIds[i] %  cacheSize;
+        if (!lruCache_->exists(cacheKey))
+        {
+            uncachedPages.push_back(requestPageIds[i]);
+        }
+    }
+
+    // Retrieve pages not satisfied by the cache
+    bool requestSatisfiedByCache = false;
+    if (0 == uncachedPages.size())
+    {
+        requestSatisfiedByCache = true;
+    }
+    else
+    {
+        spfsMPIFileReadAtRequest* pageRead = createPageReadRequest(uncachedPages,
+                                                                   parentRequest);
+        send(pageRead, fsOutGateId());
+    }
+    return requestSatisfiedByCache;
 }
 
 void DirectPagedMiddlewareCache::populateData(
-    const vector<FilePageId>& requestPageIds)
+    const vector<FilePageId>& requestPageIds,
+    spfsMPIFileReadAtResponse* parentResponse)
 {
     //return true;
 }

@@ -29,6 +29,7 @@ class FileDescriptor;
 class FileView;
 class Filename;
 class spfsMPIFileReadAtRequest;
+class spfsMPIFileReadAtResponse;
 class spfsMPIFileReadRequest;
 class spfsMPIFileWriteAtRequest;
 class spfsMPIFileWriteRequest;
@@ -91,6 +92,23 @@ private:
     std::size_t numCacheEvicts_;
 };
 
+
+/** Model of a cache that does simple pass through semantics */
+class NoMiddlewareCache : public MiddlewareCache
+{
+public:
+    /** Constructor */
+    NoMiddlewareCache();
+
+private:
+    /** Forward application messages to file system */
+    virtual void handleApplicationMessage(cMessage* msg);
+
+    /** Forward application messages to file system */
+    virtual void handleFileSystemMessage(cMessage* msg);
+};
+
+
 /** An abstract page aligned cache */
 class PagedCache : public MiddlewareCache
 {
@@ -150,21 +168,6 @@ private:
     std::size_t pageCapacity_;
 };
 
-/** Model of a cache that does simple pass through semantics */
-class NoMiddlewareCache : public MiddlewareCache
-{
-public:
-    /** Constructor */
-    NoMiddlewareCache();
-
-private:
-    /** Forward application messages to file system */
-    virtual void handleApplicationMessage(cMessage* msg);
-
-    /** Forward application messages to file system */
-    virtual void handleFileSystemMessage(cMessage* msg);
-};
-
 /** A Direct paged cache for a single node */
 class DirectPagedMiddlewareCache : public PagedCache
 {
@@ -187,12 +190,14 @@ private:
      *
      * Side effect: Retrieves non-resident pages
      */
-    bool lookupData(const std::vector<FilePageId>& pageIds);
+    bool lookupData(const std::vector<FilePageId>& pageIds,
+                    spfsMPIFileReadAtRequest* parentRequest);
 
     /**
      * Add pages to the cache performing cache evictions as necessary
      */
-    void populateData(const std::vector<FilePageId>& pageIds);
+    void populateData(const std::vector<FilePageId>& pageIds,
+                      spfsMPIFileReadAtResponse* parentResponse);
 
     /** Data structure for holding the cached data */
     LRUCache<std::size_t, FilePageId>* lruCache_;

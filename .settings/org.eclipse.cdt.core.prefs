@@ -1,6 +1,11 @@
-#Fri Jun 27 14:52:36 EDT 2008
+#Tue Sep 16 15:10:30 GMT-05:00 2008
 eclipse.preferences.version=1
+indexer/filesToParseUpFront=
+indexer/indexAllFiles=false
 indexer/indexerId=org.eclipse.cdt.core.fastIndexer
+indexer/skipMacroReferences=false
+indexer/skipReferences=false
+indexer/skipTypeReferences=false
 indexerId=org.eclipse.cdt.core.fastIndexer
 org.eclipse.cdt.core.formatter.alignment_for_arguments_in_method_invocation=18
 org.eclipse.cdt.core.formatter.alignment_for_base_clause_in_type_declaration=82

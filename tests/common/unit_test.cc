@@ -19,6 +19,7 @@
 //
 #include <cppunit/TextTestRunner.h>
 #include "basic_data_type_test.h"
+#include "block_indexed_data_type_test.h"
 #include "comm_man_test.h"
 #include "contiguous_data_type_test.h"
 #include "file_descriptor_test.h"
@@ -48,6 +49,7 @@ int main(int argc, char** argv)
     // Add all of the requisite tests
 
     runner.addTest( BasicDataTypeTest::suite() );
+    runner.addTest( BlockIndexedDataTypeTest::suite() );
     runner.addTest( CommManTest::suite() );
     runner.addTest( ContiguousDataTypeTest::suite() );
     runner.addTest( FileDescriptorTest::suite() );

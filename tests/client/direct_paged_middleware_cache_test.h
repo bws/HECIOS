@@ -26,6 +26,7 @@
 #include "basic_data_type.h"
 #include "csimple_module_tester.h"
 #include "file_builder.h"
+#include "file_view.h"
 #include "middleware_cache.h"
 #include "mock_storage_layout_manager.h"
 #include "mpi_proto_m.h"
@@ -81,13 +82,13 @@ void DirectPagedMiddlewareCacheTest::setUp()
     // Test file for use during testing
     MockStorageLayoutManager layout;
     file1_= new Filename("/file1");
-    FileBuilder::instance().createFile(*file1_, 1024, 0, 4, layout);
+    FileBuilder::instance().createFile(*file1_, 10000, 0, 2, layout);
     file2_ = new Filename("/file2");
-    FileBuilder::instance().createFile(*file2_, 1024, 0, 4, layout);
+    FileBuilder::instance().createFile(*file2_, 10000, 0, 2, layout);
     file3_ = new Filename("/file3");
-    FileBuilder::instance().createFile(*file3_, 1024, 0, 4, layout);
+    FileBuilder::instance().createFile(*file3_, 10000, 0, 2, layout);
     file4_ = new Filename("/file4");
-    FileBuilder::instance().createFile(*file4_, 1024, 0, 4, layout);
+    FileBuilder::instance().createFile(*file4_, 10000, 0, 2, layout);
 
     // Create the module for testing
     moduleTester_ = new cSimpleModuleTester("DirectPagedMiddlewareCache",
@@ -121,25 +122,59 @@ void DirectPagedMiddlewareCacheTest::tearDown()
 
 void DirectPagedMiddlewareCacheTest::testApplicationRead()
 {
-    // Data for use in tests
-    ByteDataType byteDataType;
-    VectorDataType vectorDataType();
-
     //
     // Test Case 1
     //
-    spfsMPIFileReadAtRequest* readAt =
+    ByteDataType byteDataType;
+    spfsMPIFileReadAtRequest* appRead =
         new spfsMPIFileReadAtRequest(0, SPFS_MPI_FILE_READ_AT_REQUEST);
-    readAt->setFileDes(FileBuilder::instance().getDescriptor(*file1_));
-    readAt->setDataType(&byteDataType);
-    readAt->setCount(4000);
-    readAt->setOffset(0);
-    moduleTester_->deliverMessage(readAt, "appIn");
+    appRead->setFileDes(FileBuilder::instance().getDescriptor(*file1_));
+    appRead->setDataType(&byteDataType);
+    appRead->setCount(4000);
+    appRead->setOffset(0);
+    moduleTester_->deliverMessage(appRead, "appIn");
 
+    // Check the number of cache output messages
     size_t numOutput = moduleTester_->getNumOutputMessages();
-    CPPUNIT_ASSERT_EQUAL(size_t(40), numOutput);
+    CPPUNIT_ASSERT_EQUAL(size_t(1), numOutput);
 
-    delete readAt;
+    // Extract the cache read file view to check it for correctness
+    cMessage* outputMsg = moduleTester_->popOutputMessage();
+    CPPUNIT_ASSERT(0 != outputMsg);
+
+    // Verify the request
+    spfsMPIFileReadAtRequest* cacheRead = dynamic_cast<spfsMPIFileReadAtRequest*>(outputMsg);
+    CPPUNIT_ASSERT(0 != cacheRead);
+    CPPUNIT_ASSERT_EQUAL(0l, cacheRead->getOffset());
+    CPPUNIT_ASSERT_EQUAL(4000, cacheRead->getCount());
+    CPPUNIT_ASSERT_EQUAL(byteDataType.getExtent(), cacheRead->getDataType()->getExtent());
+    CPPUNIT_ASSERT_EQUAL(byteDataType.getTrueExtent(), cacheRead->getDataType()->getTrueExtent());
+
+    // Verify the applied file view is correct
+    FileDescriptor* fd = cacheRead->getFileDes();
+    CPPUNIT_ASSERT(0 != fd);
+
+    // Verify the view data type describes the correct file regions
+    FileView cacheView = fd->getFileView();
+    const DataType* dtype = cacheView.getDataType();
+    CPPUNIT_ASSERT_EQUAL(FSOffset(0), cacheView.getDisplacement());
+    CPPUNIT_ASSERT(0 != dtype);
+    CPPUNIT_ASSERT_EQUAL(size_t(4000), dtype->getExtent());
+    CPPUNIT_ASSERT_EQUAL(size_t(4000), dtype->getTrueExtent());
+/*
+    vector<FileRegion> regions = dtype->getRegionsByBytes(0, 4000);
+    CPPUNIT_ASSERT_EQUAL(size_t(40), regions.size());
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        CPPUNIT_ASSERT_EQUAL(FSOffset(i * 100), regions[i].offset);
+        CPPUNIT_ASSERT_EQUAL(FSSize(100), regions[i].extent);
+    }
+
+    // Clean up test
+    delete appRead;
+    delete cacheRead;
+    delete dtype;
+    */
 }
 
 void DirectPagedMiddlewareCacheTest::testWrite()
