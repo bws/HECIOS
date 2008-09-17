@@ -40,7 +40,8 @@ class DirectPagedMiddlewareCacheTest : public CppUnit::TestFixture
     // Create generic unit test and register test functions for automatic
     // exercise
     CPPUNIT_TEST_SUITE(DirectPagedMiddlewareCacheTest);
-    CPPUNIT_TEST(testApplicationRead);
+    CPPUNIT_TEST(testApplicationReadContig);
+    CPPUNIT_TEST(testApplicationReadVector);
     CPPUNIT_TEST(testWrite);
     CPPUNIT_TEST(testWriteAt);
     CPPUNIT_TEST_SUITE_END();
@@ -54,7 +55,10 @@ public:
     virtual void tearDown();
 
     /** Test components of a ReadAt request */
-    void testApplicationRead();
+    void testApplicationReadContig();
+
+    /** Test components of a ReadAt request */
+    void testApplicationReadVector();
 
     /** Test components of a Write request */
     void testWrite();
@@ -120,7 +124,7 @@ void DirectPagedMiddlewareCacheTest::tearDown()
     moduleTester_ = 0;
 }
 
-void DirectPagedMiddlewareCacheTest::testApplicationRead()
+void DirectPagedMiddlewareCacheTest::testApplicationReadContig()
 {
     //
     // Test Case 1
@@ -161,7 +165,7 @@ void DirectPagedMiddlewareCacheTest::testApplicationRead()
     CPPUNIT_ASSERT(0 != dtype);
     CPPUNIT_ASSERT_EQUAL(size_t(4000), dtype->getExtent());
     CPPUNIT_ASSERT_EQUAL(size_t(4000), dtype->getTrueExtent());
-/*
+
     vector<FileRegion> regions = dtype->getRegionsByBytes(0, 4000);
     CPPUNIT_ASSERT_EQUAL(size_t(40), regions.size());
     for (size_t i = 0; i < regions.size(); i++)
@@ -170,11 +174,52 @@ void DirectPagedMiddlewareCacheTest::testApplicationRead()
         CPPUNIT_ASSERT_EQUAL(FSSize(100), regions[i].extent);
     }
 
-    // Clean up test
+    //
+    // Test 2 - Deliver the file system read response
+    //
+    spfsMPIFileReadAtResponse* cacheReadResponse =
+        new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
+    cacheReadResponse->setContextPointer(cacheRead);
+    moduleTester_->deliverMessage(cacheReadResponse, "fsIn");
+
+    // Check the number of cache output messages
+    CPPUNIT_ASSERT_EQUAL(size_t(1), moduleTester_->getNumOutputMessages());
+
+    // Extract the cache read file view to check it for correctness
+    outputMsg = moduleTester_->popOutputMessage();
+    CPPUNIT_ASSERT(0 != outputMsg);
+    spfsMPIFileReadAtResponse* appReadResponse =
+        dynamic_cast<spfsMPIFileReadAtResponse*>(outputMsg);
+    CPPUNIT_ASSERT(0 != appReadResponse);
+    CPPUNIT_ASSERT(appReadResponse->contextPointer() == appRead);
+
+     // Clean up test 1 and 2 requests
     delete appRead;
+    delete appReadResponse;
     delete cacheRead;
-    delete dtype;
-    */
+    delete cacheReadResponse;
+
+    //
+    // Test 3 - Perform a request that is fully cached
+    //
+    appRead = new spfsMPIFileReadAtRequest(0, SPFS_MPI_FILE_READ_AT_REQUEST);
+    appRead->setFileDes(FileBuilder::instance().getDescriptor(*file1_));
+    appRead->setDataType(&byteDataType);
+    appRead->setCount(300);
+    appRead->setOffset(3700);
+    moduleTester_->deliverMessage(appRead, "appIn");
+
+    // Check the number of cache output messages
+    //CPPUNIT_ASSERT_EQUAL(size_t(0), moduleTester_->getNumOutputMessages());
+
+    // Clean up test
+    //delete appRead;
+    //delete cacheRead;
+
+}
+
+void DirectPagedMiddlewareCacheTest::testApplicationReadVector()
+{
 }
 
 void DirectPagedMiddlewareCacheTest::testWrite()

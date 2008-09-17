@@ -22,6 +22,7 @@
 #include <cstddef>
 #include <vector>
 #include <omnetpp.h>
+#include "basic_data_type.h"
 #include "basic_types.h"
 #include "file_page.h"
 #include "lru_cache.h"
@@ -166,6 +167,9 @@ private:
 
     /** Page capacity attribute */
     std::size_t pageCapacity_;
+
+    /** Byte Data Type used within cache pages */
+    ByteDataType byteDataType_;
 };
 
 /** A Direct paged cache for a single node */

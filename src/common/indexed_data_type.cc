@@ -85,7 +85,7 @@ vector<FileRegion> IndexedDataType::getRegionsByBytes(
     FSOffset currentOffset = byteOffset;
     while (bytesProcessed < numBytes)
     {
-        // Begin processing the struct subtypes
+        // Begin processing the indexed blocks
         size_t elementsProcessedSize = 0;
         for (size_t i = 0;
              i < blockLengths_.size() && bytesProcessed < numBytes;
@@ -97,12 +97,16 @@ vector<FileRegion> IndexedDataType::getRegionsByBytes(
             if (typeOffset > elementsProcessedSize &&
                 typeOffset < (elementsProcessedSize + nextElementsSize))
             {
+                // Caclulate the offset into this element block
+                FSOffset elementOffset = typeOffset - elementsProcessedSize;
+
                 // Need to perform processing for only a portion of this type
-                FSSize dataLength = min(nextElementsSize - typeOffset,
+                FSSize dataLength = min(nextElementsSize - elementOffset,
                                         numBytes - bytesProcessed);
 
-                FSOffset beginOff = typeBegin + typeOffset +
-                    (displacements_[i] * oldType_.getTrueExtent()); 
+               FSOffset beginOff = typeBegin +
+                    (typeOffset - elementsProcessedSize) +
+                    (displacements_[i] * oldType_.getTrueExtent());
                 vector<FileRegion> elementRegions =
                     oldType_.getRegionsByBytes(beginOff,
                                                dataLength);

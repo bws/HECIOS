@@ -35,6 +35,8 @@ class BlockIndexedDataTypeTest : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(BlockIndexedDataTypeTest);
     CPPUNIT_TEST(testConstructor);
     CPPUNIT_TEST(testGetRepresentationByteLength);
+    CPPUNIT_TEST(testGetExtent);
+    CPPUNIT_TEST(testGetTrueExtent);
     CPPUNIT_TEST(testGetRegionsByBytes);
     CPPUNIT_TEST(testGetRegionsByCount);
     CPPUNIT_TEST_SUITE_END();
@@ -50,6 +52,10 @@ public:
     void testConstructor();
 
     void testGetRepresentationByteLength();
+
+    void testGetExtent();
+
+    void testGetTrueExtent();
 
     void testGetRegionsByBytes();
 
@@ -73,6 +79,26 @@ void BlockIndexedDataTypeTest::testConstructor()
     BlockIndexedDataType dt2(2,
                              vector<size_t>(displacements, displacements + 4),
                              dt1);
+}
+
+void BlockIndexedDataTypeTest::testGetExtent()
+{
+    size_t displacements[] = {10, 20, 30, 40};
+    ByteDataType dt1;
+    BlockIndexedDataType dt2(5,
+                             vector<size_t>(displacements, displacements + 4),
+                             dt1);
+    CPPUNIT_ASSERT_EQUAL(size_t(45), dt2.getExtent());
+}
+
+void BlockIndexedDataTypeTest::testGetTrueExtent()
+{
+    size_t displacements[] = {10, 20, 30, 100};
+    ByteDataType dt1;
+    BlockIndexedDataType dt2(5,
+                             vector<size_t>(displacements, displacements + 4),
+                             dt1);
+    CPPUNIT_ASSERT_EQUAL(size_t(105), dt2.getTrueExtent());
 }
 
 void BlockIndexedDataTypeTest::testGetRepresentationByteLength()
@@ -132,15 +158,15 @@ void BlockIndexedDataTypeTest::testGetRegionsByBytes()
     CPPUNIT_ASSERT_EQUAL(FSSize(5), regions[0].extent);
 
     // Verify they first regions begins at 2, and extends for 14 bytes
-    CPPUNIT_ASSERT_EQUAL(FSOffset(20 * DoubleDataType::MPI_DOUBLE_WIDTH),
+    CPPUNIT_ASSERT_EQUAL(FSOffset(200 * DoubleDataType::MPI_DOUBLE_WIDTH),
                          regions[1].offset);
-    CPPUNIT_ASSERT_EQUAL(FSSize(DoubleDataType::MPI_DOUBLE_WIDTH * 2),
+    CPPUNIT_ASSERT_EQUAL(FSSize(DoubleDataType::MPI_DOUBLE_WIDTH * 5),
                          regions[1].extent);
 
     // Verify they first regions begins at 2, and extends for 14 bytes
-    CPPUNIT_ASSERT_EQUAL(FSOffset(30 * DoubleDataType::MPI_DOUBLE_WIDTH),
+    CPPUNIT_ASSERT_EQUAL(FSOffset(300 * DoubleDataType::MPI_DOUBLE_WIDTH),
                          regions[2].offset);
-    CPPUNIT_ASSERT_EQUAL(FSSize(1 * DoubleDataType::MPI_DOUBLE_WIDTH) + 2,
+    CPPUNIT_ASSERT_EQUAL(FSSize(2 * DoubleDataType::MPI_DOUBLE_WIDTH) + 3,
                          regions[2].extent);
 }
 

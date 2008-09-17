@@ -229,7 +229,7 @@ FileDescriptor* PagedCache::getPageViewDescriptor(
     // Create the block indexed data type to use as the view
     BlockIndexedDataType* pageView = new BlockIndexedDataType(pageSize_,
                                                               displacements,
-                                                              ByteDataType());
+                                                              byteDataType_);
     FileView cacheView(0, pageView);
 
     // Create a descriptor with which to apply the view
