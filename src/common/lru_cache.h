@@ -24,6 +24,7 @@
 #include <list>
 #include <map>
 #include <utility>
+#include <vector>
 #include "spfs_exceptions.h"
 /**
  * A simple fixed size cache using LRU replacement.
@@ -39,9 +40,10 @@ public:
     struct EntryType
     {
         ValueType data;
+        bool isDirty;
         typename std::list<KeyType>::iterator lruRef;
     };
-    
+
     /** Convencience typedef of the key-value map */
     typedef std::map<KeyType,EntryType*> MapType;
 
@@ -60,20 +62,34 @@ public:
      * Insert a Key-Value pair into the cache.  If the cache already
      * contains more entries than the maximum size, evict the least
      * recently used item
+     *
+     * @param key the cache lookup key
+     * @param value the cached value
+     * @param isDirty the cached value's dirty bit
      */
-    void insert(const KeyType& key, const ValueType& value);
-    
+    void insert(const KeyType& key,
+                const ValueType& value,
+                bool isDirty = false);
+
     /**
      * Remove the value for key from the cache
      *
-     * @throw NoSuchEntry if no entry exists for key
+     * @throw NoSuchEntry if no entry exists for the key
      */
     void remove(const KeyType& key);
 
     /**
+     * Set the dirty-bit for the cache key in question without updating
+     * the LRU status
+     *
+     * @throw NoSuchEntry if no entry exists for the key
+     */
+    void setDirtyBit(const KeyType& key, bool dirtyValue);
+
+    /**
      * @return The value for key and update the LRU ordering
      *
-     * @throw NoSuchEntry if no entry exists for key
+     * @throw NoSuchEntry if no entry exists for the key
      */
     ValueType lookup(const KeyType& key);
 
@@ -83,6 +99,12 @@ public:
      * @return true if a value exists for the given key
      */
     bool exists(const KeyType& key) const;
+
+    /**
+     * @return a vector of all the dirty cache values.  Does not update
+     *         the LRU status
+     */
+    std::vector<KeyType> getDirtyEntries() const;
 
     /**
      * @return the next entry that will be evicted on a new insertion
@@ -95,7 +117,7 @@ public:
      * @return the cache capacity
      */
     std::size_t capacity() const;
-    
+
     /**
      * @return the number of entries in the cache
      */
@@ -136,7 +158,8 @@ LRUCache<KeyType,ValueType>::~LRUCache()
 
 template<class KeyType, class ValueType>
 void LRUCache<KeyType,ValueType>::insert(const KeyType& key,
-                                         const ValueType& value)
+                                         const ValueType& value,
+                                         bool isDirty)
 {
     // Check to see if the entry already exists
     typename std::map<KeyType, EntryType*>::iterator pos;
@@ -145,6 +168,7 @@ void LRUCache<KeyType,ValueType>::insert(const KeyType& key,
     {
         // Entry already exists, update it
         pos->second->data = value;
+        pos->second->isDirty = isDirty;
 
         // Update the LRU data
         lruList_.erase(pos->second->lruRef);
@@ -163,6 +187,7 @@ void LRUCache<KeyType,ValueType>::insert(const KeyType& key,
         // Fill out the Cache entry data
         EntryType* entry = new EntryType();
         entry->data = value;
+        entry->isDirty = isDirty;
 
         // Add to the LRU list
         lruList_.push_front(key);
@@ -199,6 +224,21 @@ void LRUCache<KeyType,ValueType>::remove(const KeyType& key)
 }
 
 template<class KeyType, class ValueType>
+void LRUCache<KeyType,ValueType>::setDirtyBit(const KeyType& key, bool dirtyValue)
+{
+    typename std::map<KeyType, EntryType*>::iterator pos;
+
+    // Search the map for key
+    pos = keyEntryMap_.find(key);
+    if (pos == keyEntryMap_.end())
+    {
+        NoSuchEntry e;
+        throw e;
+    }
+    pos->second->isDirty = dirtyValue;
+}
+
+template<class KeyType, class ValueType>
 bool LRUCache<KeyType,ValueType>::exists(const KeyType& key) const
 {
     typename std::map<KeyType, EntryType*>::const_iterator pos;
@@ -225,7 +265,7 @@ ValueType LRUCache<KeyType,ValueType>::lookup(const KeyType& key)
         NoSuchEntry e;
         throw e;
     }
-    
+
     entry = pos->second;
 
     // Refresh the LRU list
@@ -233,6 +273,25 @@ ValueType LRUCache<KeyType,ValueType>::lookup(const KeyType& key)
     lruList_.push_front(key);
     entry->lruRef = lruList_.begin();
     return entry->data;
+}
+
+template<class KeyType, class ValueType>
+std::vector<KeyType> LRUCache<KeyType,ValueType>::getDirtyEntries() const
+{
+    std::vector<KeyType> dirtyEntries;
+
+    // Loop thru the map to find all of the dirty entries
+    typename MapType::const_iterator mapEnd = keyEntryMap_.end();
+    typename MapType::const_iterator mapIter;
+    for (mapIter = keyEntryMap_.begin(); mapIter != mapEnd; mapIter++)
+    {
+        if (mapIter->second->isDirty)
+        {
+            dirtyEntries.push_back(mapIter->first);
+        }
+    }
+
+    return dirtyEntries;
 }
 
 template<class KeyType, class ValueType>

@@ -274,8 +274,8 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
         // Convert regions into file pages
         FileDescriptor* fd = readAt->getFileDes();
         vector<FilePageId> requestPages = determineRequestPages(readAt->getOffset(),
-                                                              readSize,
-                                                              fd->getFileView());
+                                                                readSize,
+                                                                fd->getFileView());
 
         // Perform a lookup on the pages
         lookupData(requestPages, readAt);
@@ -302,8 +302,15 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
     {
         if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind())
         {
-            vector<FilePageId> readPages;
-            populateData(readPages, 0);
+            //cMessage* origMsg = msg->contextPointer();
+            //spfsMPIFileReadAtRequest* cacheReadAt =
+            //    dynamic_cast<spfsMPIFileReadAtRequest>(origMsg);
+            //assert(0 != cacheReadAt);
+            //vector<FilePageId> requestPages =
+            //    determineRequestPages(readAt->getOffset(),
+            //                          readSize,
+            //                          fd->getFileView());
+            //populateData(readPages, 0);
         }
         else
         {

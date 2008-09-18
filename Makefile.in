@@ -218,7 +218,7 @@ gen_clean:
 	$(RM) $(SIM_MSG_OUTPUT) $(SIM_MSG_OBJS)
 	@echo "Generated source files and objects removed."
 
-all_clean: clean tests_clean inet_clean
+all_clean: clean clean_test inet_clean
 
 
 #
@@ -266,7 +266,7 @@ configfile: $(BUILD_DIR)/omnetpp.ini
 #
 # Incremental build (useful target for IDE auto-save builds)
 #
-incremental: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) tests_incremental
+incremental: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) incremental_test
 
 .PHONY: incremental
 

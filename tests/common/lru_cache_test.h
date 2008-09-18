@@ -17,8 +17,10 @@ class LRUCacheTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testConstructor);
     CPPUNIT_TEST(testInsert);
     CPPUNIT_TEST(testRemove);
+    CPPUNIT_TEST(testSetDirtyBit);
     CPPUNIT_TEST(testLookup);
     CPPUNIT_TEST(testCapacity);
+    CPPUNIT_TEST(testGetDirtyEntries);
     CPPUNIT_TEST(testGetLRU);
     CPPUNIT_TEST(testSize);
     CPPUNIT_TEST(testLRUPolicy);
@@ -31,16 +33,20 @@ public:
 
     /** Called after each test function */
     void tearDown();
-    
+
     void testConstructor();
 
     void testInsert();
 
     void testRemove();
-    
+
+    void testSetDirtyBit();
+
     void testLookup();
 
     void testCapacity();
+
+    void testGetDirtyEntries();
 
     void testGetLRU();
 
@@ -77,11 +83,11 @@ void LRUCacheTest::testInsert()
 {
     LRUCache<int, int> cache(1);
     cache.insert(1,1);
-    
+
     cache1_->insert(1, "value1");
     cache1_->insert(2, "Value2");
     CPPUNIT_ASSERT_EQUAL((size_t)2, cache1_->size());
-        
+
     cache2_->insert(101, "Value101");
     cache2_->insert(102, "Value102");
     CPPUNIT_ASSERT_EQUAL((size_t)2, cache2_->size());
@@ -97,6 +103,23 @@ void LRUCacheTest::testRemove()
     cache1_->insert(63, "value63");
     cache1_->remove(63);
     CPPUNIT_ASSERT_EQUAL((size_t)0, cache1_->size());
+}
+
+void LRUCacheTest::testSetDirtyBit()
+{
+    LRUCache<int, int> cache(10);
+    cache.insert(1, 1, false);
+    cache.insert(2, 1, false);
+    cache.insert(3, 1, false);
+    cache.insert(4, 1, false);
+
+    vector<int> dirtyEntries = cache.getDirtyEntries();
+    CPPUNIT_ASSERT_EQUAL(size_t(0), dirtyEntries.size());
+
+    cache.setDirtyBit(3, true);
+    dirtyEntries = cache.getDirtyEntries();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), dirtyEntries.size());
+    CPPUNIT_ASSERT_EQUAL(3, dirtyEntries[0]);
 }
 
 void LRUCacheTest::testLookup()
@@ -121,25 +144,25 @@ void LRUCacheTest::testLookup()
     cache1_->insert(2009, "value2009");
 
     CPPUNIT_ASSERT_EQUAL(string("value2000"), cache1_->lookup(2000));
-    
+
     CPPUNIT_ASSERT_EQUAL(string("value2001"), cache1_->lookup(2001));
-    
+
     CPPUNIT_ASSERT_EQUAL(string("value2002"), cache1_->lookup(2002));
-    
+
     CPPUNIT_ASSERT_EQUAL(string("value2003"), cache1_->lookup(2003));
-    
+
     CPPUNIT_ASSERT_EQUAL(string("value2004"), cache1_->lookup(2004));
-    
+
     CPPUNIT_ASSERT_EQUAL(string("value2005"), cache1_->lookup(2005));
-    
+
     CPPUNIT_ASSERT_EQUAL(string("value2006"), cache1_->lookup(2006));
-    
+
     CPPUNIT_ASSERT_EQUAL(string("value2007"), cache1_->lookup(2007));
-    
+
     CPPUNIT_ASSERT_EQUAL(string("value2008"), cache1_->lookup(2008));
-    
+
     CPPUNIT_ASSERT_EQUAL(string("value2009"), cache1_->lookup(2009));
-    
+
     // Lookup a non-existant entry
     CPPUNIT_ASSERT_THROW(cache1_->lookup(2010), NoSuchEntry);
 }
@@ -151,6 +174,20 @@ void LRUCacheTest::testCapacity()
 
     LRUCache<int,int> cache2(20);
     CPPUNIT_ASSERT_EQUAL((size_t)20, cache2.capacity());
+}
+
+void LRUCacheTest::testGetDirtyEntries()
+{
+    LRUCache<int,int> cache(10);
+    cache.insert(1, 1, false);
+    cache.insert(2, 1, true);
+    cache.insert(3, 1, true);
+    cache.insert(4, 1, false);
+
+    vector<int> dirtyEntries = cache.getDirtyEntries();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), dirtyEntries.size());
+    CPPUNIT_ASSERT_EQUAL(2, dirtyEntries[0]);
+    CPPUNIT_ASSERT_EQUAL(3, dirtyEntries[1]);
 }
 
 void LRUCacheTest::testGetLRU()
@@ -224,19 +261,19 @@ void LRUCacheTest::testLRUPolicy()
     cache1_->insert(647, "val647");
     cache1_->insert(648, "val648");
     cache1_->insert(649, "val649");
-    
+
     // Test LRU after inserts
     cache1_->insert(650, "val650");
     CPPUNIT_ASSERT(cache1_->exists(650));
     CPPUNIT_ASSERT(!cache1_->exists(640));
-    
+
     // Test LRU after lookups
     cache1_->lookup(641);
     cache1_->insert(651, "val651");
     CPPUNIT_ASSERT(!cache1_->exists(642));
     CPPUNIT_ASSERT(cache1_->exists(641));
     CPPUNIT_ASSERT(cache1_->exists(651));
-    
+
     // Test LRU after removes
     cache1_->remove(643);
     CPPUNIT_ASSERT(!cache1_->exists(643));
