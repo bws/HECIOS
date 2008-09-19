@@ -31,16 +31,22 @@ class FilePage
 {
 public:
     FilePage(FSOffset offset, FSSize size) : offset_(offset), size_(size) {};
-    
+
     FSOffset offset() const { return offset_; };
-    
+
     FSSize size() const { return size_; };
-    
+
 private:
     FSOffset offset_;
-    
+
     FSSize size_;
 };
+
+bool operator<(const FilePage& lhs, const FilePage& rhs)
+{
+    return (lhs.offset() < rhs.offset());
+}
+
 #endif /*FILE_PAGE_H_*/
 
 /*

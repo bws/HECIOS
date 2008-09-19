@@ -20,6 +20,8 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <cstddef>
+#include <map>
+#include <set>
 #include <vector>
 #include <omnetpp.h>
 #include "basic_data_type.h"
@@ -130,9 +132,9 @@ public:
     FSOffset pageBeginOffset(const FilePageId& pageId) const;
 
     /** @return Array of pages ids spanning the supplied file regions */
-    std::vector<FilePageId> determineRequestPages(const FSOffset& offset,
-                                                  const FSSize& size,
-                                                  const FileView& view);
+    std::set<FilePageId> determineRequestPages(const FSOffset& offset,
+                                               const FSSize& size,
+                                               const FileView& view);
 
 protected:
     /** Module initialization */
@@ -140,27 +142,27 @@ protected:
 
     /** @return a request to read the desired pages */
     spfsMPIFileReadAtRequest* createPageReadRequest(
-        const std::vector<FilePageId>& pageIds,
+        const std::set<FilePageId>& pageIds,
         spfsMPIFileReadRequest* origRequest) const;
 
     /** @return a request to write the desired pages */
     spfsMPIFileWriteAtRequest* createPageWriteRequest(
-        const std::vector<FilePageId>& pageIds,
+        const std::set<FilePageId>& pageIds,
         spfsMPIFileWriteRequest* origRequest) const;
 
 private:
     /** @return Array of page ids spanning the supplied file regions */
-    std::vector<FilePageId> regionsToPageIds(
+    std::set<FilePageId> regionsToPageIds(
         const std::vector<FileRegion>& fileRegions);
 
     /** @return Array of pages spanning the supplied file regions */
-    std::vector<FilePage> regionsToPages(
+    std::set<FilePage> regionsToPages(
         const std::vector<FileRegion>& fileRegions);
 
     /** @return a file descriptor for filename with the page view applied */
     FileDescriptor* getPageViewDescriptor(
         const Filename& filename,
-        const std::vector<std::size_t>& pageIds) const;
+        const std::set<FilePageId>& pageIds) const;
 
     /** Page size attribute */
     std::size_t pageSize_;
@@ -183,6 +185,19 @@ protected:
     /** Perform module initialization */
     virtual void initialize();
 
+    /** Register all the pages pending to satisfy a request */
+    void registerPendingRequest(spfsMPIFileReadAtRequest* request,
+                                const std::set<FilePageId>& pendingPages);
+
+    /** Mark pages as no longer pending for requests */
+    void updatePendingRequests(const std::set<FilePageId>& pageIds);
+
+    /** @return Removes and returns requests with no more pages remaining */
+    std::vector<spfsMPIFileReadAtRequest*> popCompletedRequests();
+
+    /** Remove pages already registered and requested as pending from the set */
+    void trimRequestedPages(std::set<FilePageId>& pageIds) const;
+
 private:
     /** Handle messages received from the application */
     virtual void handleApplicationMessage(cMessage* msg);
@@ -190,40 +205,21 @@ private:
     /** Handle messages received from the file system */
     virtual void handleFileSystemMessage(cMessage* msg);
 
-    /** @return true if all of the pages are resident
-     *
-     * Side effect: Retrieves non-resident pages
+    /**
+     * @return pages not satisfied by the cache
      */
-    bool lookupData(const std::vector<FilePageId>& pageIds,
-                    spfsMPIFileReadAtRequest* parentRequest);
+    std::set<FilePageId> lookupData(spfsMPIFileReadAtRequest* parentRequest);
 
     /**
      * Add pages to the cache performing cache evictions as necessary
      */
-    void populateData(const std::vector<FilePageId>& pageIds,
-                      spfsMPIFileReadAtResponse* parentResponse);
+    void populateData(spfsMPIFileReadAtResponse* parentResponse);
 
     /** Data structure for holding the cached data */
     LRUCache<std::size_t, FilePageId>* lruCache_;
-};
 
-/** A fully associative paged cache for a single node */
-class FullyPagedMiddlewareCache : public PagedCache
-{
-public:
-    /** Constructor */
-    FullyPagedMiddlewareCache();
-
-private:
-    virtual void handleApplicationMessage(cMessage* msg);
-
-    virtual void handleFileSystemMessage(cMessage* msg);
-
-    /** @return true if all of the pages are resident
-     *
-     * Side effect: Retrieves non-resident pages
-     */
-    bool lookupData(const std::vector<FilePage> requestPages);
+    /** Map of request to the total pending pages */
+    std::map<spfsMPIFileReadAtRequest*, std::set<FilePageId> > pendingRequests_;
 };
 
 /** A cooperative direct paged cache for a single node */

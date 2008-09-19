@@ -18,6 +18,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "middleware_cache.h"
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <omnetpp.h>
@@ -126,9 +127,9 @@ FSOffset PagedCache::pageBeginOffset(const FilePageId& pageId) const
     return (pageId * pageSize_);
 }
 
-vector<FilePageId> PagedCache::determineRequestPages(const FSOffset& offset,
-                                                     const FSSize& size,
-                                                     const FileView& view)
+set<FilePageId> PagedCache::determineRequestPages(const FSOffset& offset,
+                                                  const FSSize& size,
+                                                  const FileView& view)
 {
     // Flatten view into file regions for the correct size
     vector<FileRegion> requestRegions =
@@ -146,7 +147,7 @@ void PagedCache::initialize()
 }
 
 spfsMPIFileReadAtRequest* PagedCache::createPageReadRequest(
-    const vector<FilePageId>& pageIds,
+    const set<FilePageId>& pageIds,
     spfsMPIFileReadRequest* origRequest) const
 {
     // Construct a descriptor that views only the correct pages
@@ -166,7 +167,7 @@ spfsMPIFileReadAtRequest* PagedCache::createPageReadRequest(
 }
 
 spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
-    const vector<FilePageId>& pageIds,
+    const set<FilePageId>& pageIds,
     spfsMPIFileWriteRequest* origRequest) const
 {
     // Construct a descriptor that views only the correct pages
@@ -185,9 +186,9 @@ spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
     return writeRequest;
 }
 
-vector<FilePageId> PagedCache::regionsToPageIds(const vector<FileRegion>& fileRegions)
+set<FilePageId> PagedCache::regionsToPageIds(const vector<FileRegion>& fileRegions)
 {
-    vector<FilePageId> spanningPageIds;
+    set<FilePageId> spanningPageIds;
     for (size_t i = 0; i < fileRegions.size(); i++)
     {
         // Determine the first and last page
@@ -197,33 +198,37 @@ vector<FilePageId> PagedCache::regionsToPageIds(const vector<FileRegion>& fileRe
         size_t lastPage = end / pageSize_;
         for (size_t j = firstPage; j < lastPage; j++)
         {
-            spanningPageIds.push_back(j);
+            FilePageId id = j;
+            spanningPageIds.insert(id);
         }
     }
     return spanningPageIds;
 }
 
-vector<FilePage> PagedCache::regionsToPages(const vector<FileRegion>& fileRegions)
+set<FilePage> PagedCache::regionsToPages(const vector<FileRegion>& fileRegions)
 {
-    vector<FilePageId> spanningIds = regionsToPageIds(fileRegions);
-    vector<FilePage> spanningPages;
-    for (size_t i = 0; i < spanningIds.size(); i++)
+    set<FilePage> spanningPages;
+    set<FilePageId> spanningIds = regionsToPageIds(fileRegions);
+    set<FilePageId>::const_iterator idIter;
+    set<FilePageId>::const_iterator idEnd = spanningIds.end();
+    for (idIter = spanningIds.begin(); idIter != idEnd; ++idIter)
     {
-        FilePageId pageId = spanningIds[i];
-        FilePage fp(pageBeginOffset(pageId), pageSize_);
-        spanningPages.push_back(fp);
+        FilePage fp(pageBeginOffset(*idIter), pageSize_);
+        spanningPages.insert(fp);
     }
     return spanningPages;
 }
 
 FileDescriptor* PagedCache::getPageViewDescriptor(
-    const Filename& filename, const vector<size_t>& pageIds) const
+    const Filename& filename, const set<size_t>& pageIds) const
 {
     // Create the vector of displacements
+    set<FilePageId>::const_iterator idIter = pageIds.begin();
     vector<size_t> displacements(pageIds.size());
     for (size_t i = 0; i < displacements.size(); i++)
     {
-        displacements[i] = pageIds[i] * pageSize_;
+        displacements[i] = (*idIter) * pageSize_;
+        ++idIter;
     }
 
     // Create the block indexed data type to use as the view
@@ -265,28 +270,35 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
 {
     if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind())
     {
-        // Determine the size of the read request
         spfsMPIFileReadAtRequest* readAt =
             static_cast<spfsMPIFileReadAtRequest*>(msg);
-        FSSize readSize =
-            readAt->getDataType()->getExtent() * readAt->getCount();
 
-        // Convert regions into file pages
-        FileDescriptor* fd = readAt->getFileDes();
-        vector<FilePageId> requestPages = determineRequestPages(readAt->getOffset(),
-                                                                readSize,
-                                                                fd->getFileView());
+        // Determine the pages remaining for this request
+        set<FilePageId> remainingPages = lookupData(readAt);
+        registerPendingRequest(readAt, remainingPages);
 
-        // Perform a lookup on the pages
-        lookupData(requestPages, readAt);
+        // Request the pages from the file system (but not pages
+        // that are already in transit)
+        trimRequestedPages(remainingPages);
+        spfsMPIFileReadAtRequest* pageRead = createPageReadRequest(remainingPages,
+                                                                   readAt);
+        send(pageRead, fsOutGateId());
+    }
+    else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == msg->kind())
+    {
+
+        // Complete any requests satisfied by this request
+        popCompletedRequests();
     }
     else
     {
         assert(SPFS_MPI_FILE_READ_REQUEST != msg->kind());
+        assert(SPFS_MPI_FILE_WRITE_REQUEST != msg->kind());
 
         // Forward messages not handled by the cache
         send(msg, fsOutGateId());
     }
+
 }
 
 void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
@@ -315,6 +327,7 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
         else
         {
             assert(SPFS_MPI_FILE_READ_RESPONSE != msg->kind());
+            assert(SPFS_MPI_FILE_WRITE_RESPONSE != msg->kind());
 
             // Forward messages not handled by the cache
             send(msg, appOutGateId());
@@ -322,67 +335,77 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
     }
 }
 
-bool DirectPagedMiddlewareCache::lookupData(
-    const vector<FilePageId>& requestPageIds,
-    spfsMPIFileReadAtRequest* parentRequest)
+set<FilePageId> DirectPagedMiddlewareCache::lookupData(
+    spfsMPIFileReadAtRequest* readAt)
 {
-    size_t cacheSize = cacheCapacity();
+    // Convert regions into file pages
+    FileDescriptor* fd = readAt->getFileDes();
+    FSSize readSize = readAt->getDataType()->getExtent() * readAt->getCount();
+    set<FilePageId> requestPages = determineRequestPages(readAt->getOffset(),
+                                                         readSize,
+                                                         fd->getFileView());
 
-    // Determine which pages are not in the cache
-    vector<FilePageId> uncachedPages;
-    for (size_t i = 0; i < requestPageIds.size(); i++)
+    // Remove pages already in the cache
+    set<FilePageId>::iterator iter;
+    for (iter = requestPages.begin(); requestPages.end() != iter; /* nothing */)
     {
-        size_t cacheKey = requestPageIds[i] %  cacheSize;
-        if (!lruCache_->exists(cacheKey))
+        if (lruCache_->exists(*iter))
         {
-            uncachedPages.push_back(requestPageIds[i]);
+            // The call to erase invalidates the iterator, thus we have to
+            // use post-increment in the erase call.  See item 9 in
+            // Effective STL.
+            requestPages.erase(iter++);
+        }
+        else
+        {
+            ++iter;
         }
     }
-
-    // Retrieve pages not satisfied by the cache
-    bool requestSatisfiedByCache = false;
-    if (0 == uncachedPages.size())
-    {
-        requestSatisfiedByCache = true;
-    }
-    else
-    {
-        spfsMPIFileReadAtRequest* pageRead = createPageReadRequest(uncachedPages,
-                                                                   parentRequest);
-        send(pageRead, fsOutGateId());
-    }
-    return requestSatisfiedByCache;
+    return requestPages;
 }
 
 void DirectPagedMiddlewareCache::populateData(
-    const vector<FilePageId>& requestPageIds,
-    spfsMPIFileReadAtResponse* parentResponse)
+    spfsMPIFileReadAtResponse* readAtResponse)
 {
-    //return true;
+    // Extract the originating request
+    cMessage* msg = static_cast<cMessage*>(readAtResponse->contextPointer());
+    spfsMPIFileReadAtRequest* readAt = dynamic_cast<spfsMPIFileReadAtRequest*>(msg);
+    assert(0 != readAt);
+
+    // Convert regions into file pages
+    FileDescriptor* fd = readAt->getFileDes();
+    FSSize readSize = readAt->getDataType()->getExtent() * readAt->getCount();
+    set<FilePageId> requestPages = determineRequestPages(readAt->getOffset(),
+                                                         readSize,
+                                                         fd->getFileView());
+
+    // Update pending requests
+    updatePendingRequests(requestPages);
+
+    // Update the cache
+
 }
 
-
-
-//
-// FullyPagedMiddlewareCache Implementation
-//
-//
-//
-// OMNet Registriation Method
-Define_Module(FullyPagedMiddlewareCache);
-
-FullyPagedMiddlewareCache::FullyPagedMiddlewareCache()
+void DirectPagedMiddlewareCache::registerPendingRequest(
+    spfsMPIFileReadAtRequest* fileRequest, const set<FilePageId>& pendingPages)
 {
+    pendingRequests_[fileRequest] = pendingPages;
 }
 
-void FullyPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
+void DirectPagedMiddlewareCache::updatePendingRequests(const set<FilePageId>& pageIds)
 {
-    assert(false);
+
 }
 
-void FullyPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
+vector<spfsMPIFileReadAtRequest*> DirectPagedMiddlewareCache::popCompletedRequests()
 {
-    assert(false);
+    vector<spfsMPIFileReadAtRequest*> completeRequests;
+    return completeRequests;
+}
+
+void DirectPagedMiddlewareCache::trimRequestedPages(set<FilePageId>& pageIds) const
+{
+
 }
 
 
