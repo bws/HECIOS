@@ -59,6 +59,11 @@ std::size_t FileView::getRepresentationByteLength() const
     return 8 + dataType_->getRepresentationByteLength();
 }
 
+std::ostream& operator<<(std::ostream& ost, const FileView& fv)
+{
+    return ost << "FileView(disp=" << fv.getDisplacement() << ","
+               << "dt=" << fv.getDataType()->getExtent() << ")";
+}
 /*
  * Local variables:
  *  indent-tabs-mode: nil

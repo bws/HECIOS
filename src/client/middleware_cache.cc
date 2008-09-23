@@ -139,6 +139,38 @@ set<FilePageId> PagedCache::determineRequestPages(const FSOffset& offset,
     return regionsToPageIds(requestRegions);
 }
 
+set<FilePageId> PagedCache::determineRequestPartialPages(const FSOffset& offset,
+                                                         const FSSize& size,
+                                                         const FileView& view)
+{
+    set<FilePageId> partialPageIds;
+
+    // Flatten view into file regions for the correct size
+    vector<FileRegion> requestRegions =
+        DataTypeProcessor::locateFileRegions(offset, size, view);
+
+    for (size_t i = 0; i < requestRegions.size(); i++)
+    {
+        // Only need to check if the first page begins on a boundary
+        // and if the last page ends on a boundary.  Double insertion is
+        // not a problems since we are using the stl::set datatype
+        FSOffset begin = requestRegions[i].offset;
+        if (0 != (begin % pageSize_))
+        {
+            size_t pageId = begin / pageSize_;
+            partialPageIds.insert(pageId);
+        }
+
+        FSOffset end = begin + requestRegions[i].extent;
+        if (pageSize_ != (end % pageSize_))
+        {
+            size_t pageId = end / pageSize_;
+            partialPageIds.insert(pageId);
+        }
+    }
+    return partialPageIds;
+}
+
 void PagedCache::initialize()
 {
     MiddlewareCache::initialize();
@@ -150,6 +182,9 @@ spfsMPIFileReadAtRequest* PagedCache::createPageReadRequest(
     const set<FilePageId>& pageIds,
     spfsMPIFileReadRequest* origRequest) const
 {
+    assert(!pageIds.empty());
+    assert(0 != origRequest);
+
     // Construct a descriptor that views only the correct pages
     Filename name = origRequest->getFileDes()->getFilename();
     FileDescriptor* fd = getPageViewDescriptor(name, pageIds);
@@ -170,6 +205,9 @@ spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
     const set<FilePageId>& pageIds,
     spfsMPIFileWriteRequest* origRequest) const
 {
+    assert(!pageIds.empty());
+    assert(0 != origRequest);
+
     // Construct a descriptor that views only the correct pages
     Filename name = origRequest->getFileDes()->getFilename();
     FileDescriptor* fd = getPageViewDescriptor(name, pageIds);
@@ -192,8 +230,8 @@ set<FilePageId> PagedCache::regionsToPageIds(const vector<FileRegion>& fileRegio
     for (size_t i = 0; i < fileRegions.size(); i++)
     {
         // Determine the first and last page
-        FSOffset begin = fileRegions[0].offset;
-        FSOffset end = begin + fileRegions[0].extent;
+        FSOffset begin = fileRegions[i].offset;
+        FSOffset end = begin + fileRegions[i].extent;
         size_t firstPage = begin / pageSize_;
         size_t lastPage = end / pageSize_;
         for (size_t j = firstPage; j < lastPage; j++)
@@ -222,6 +260,8 @@ set<FilePage> PagedCache::regionsToPages(const vector<FileRegion>& fileRegions)
 FileDescriptor* PagedCache::getPageViewDescriptor(
     const Filename& filename, const set<size_t>& pageIds) const
 {
+    assert(!pageIds.empty());
+
     // Create the vector of displacements
     set<FilePageId>::const_iterator idIter = pageIds.begin();
     vector<size_t> displacements(pageIds.size());
@@ -275,20 +315,21 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
 
         // Determine the pages remaining for this request
         set<FilePageId> remainingPages = lookupData(readAt);
-        registerPendingRequest(readAt, remainingPages);
 
         // Request the pages from the file system (but not pages
         // that are already in transit)
         trimRequestedPages(remainingPages);
-        spfsMPIFileReadAtRequest* pageRead = createPageReadRequest(remainingPages,
+        registerPendingRequest(readAt, remainingPages);
+        if (!remainingPages.empty())
+        {
+            spfsMPIFileReadAtRequest* pageRead = createPageReadRequest(remainingPages,
                                                                    readAt);
-        send(pageRead, fsOutGateId());
+            send(pageRead, fsOutGateId());
+        }
     }
     else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == msg->kind())
     {
 
-        // Complete any requests satisfied by this request
-        popCompletedRequests();
     }
     else
     {
@@ -299,6 +340,8 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
         send(msg, fsOutGateId());
     }
 
+    // Complete any requests satisfied by this request
+    popCompletedRequests();
 }
 
 void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
@@ -314,15 +357,21 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
     {
         if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind())
         {
-            //cMessage* origMsg = msg->contextPointer();
-            //spfsMPIFileReadAtRequest* cacheReadAt =
-            //    dynamic_cast<spfsMPIFileReadAtRequest>(origMsg);
-            //assert(0 != cacheReadAt);
-            //vector<FilePageId> requestPages =
-            //    determineRequestPages(readAt->getOffset(),
-            //                          readSize,
-            //                          fd->getFileView());
-            //populateData(readPages, 0);
+            // Update the cache and any pending requests
+            spfsMPIFileReadAtResponse* cacheRead =
+                dynamic_cast<spfsMPIFileReadAtResponse*>(msg);
+            assert(0 != cacheRead);
+            populateData(cacheRead);
+
+            // Complete requests satisfied by this read
+            vector<spfsMPIFileReadAtRequest*> completeReqs = popCompletedRequests();
+            for (size_t i = 0; i < completeReqs.size(); i++)
+            {
+                spfsMPIFileReadAtResponse* readAtResp =
+                    new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
+                readAtResp->setContextPointer(completeReqs[i]);
+                send(readAtResp, appOutGateId());
+            }
         }
         else
         {
@@ -379,11 +428,25 @@ void DirectPagedMiddlewareCache::populateData(
                                                          readSize,
                                                          fd->getFileView());
 
-    // Update pending requests
+    // Update pages in the cache that aren't marked dirty
+    set<FilePageId>::const_iterator iter;
+    const set<FilePageId>::const_iterator iterEnd = requestPages.end();
+    for (iter = requestPages.begin(); iterEnd != iter; ++iter)
+    {
+        try
+        {
+            if (!lruCache_->getDirtyBit(*iter))
+            {
+                lruCache_->insert(*iter, *iter);
+            }
+        } catch(NoSuchEntry& exc)
+        {
+            lruCache_->insert(*iter, *iter);
+        }
+    }
+
+    // Update pending requests with these pages
     updatePendingRequests(requestPages);
-
-    // Update the cache
-
 }
 
 void DirectPagedMiddlewareCache::registerPendingRequest(
@@ -394,18 +457,53 @@ void DirectPagedMiddlewareCache::registerPendingRequest(
 
 void DirectPagedMiddlewareCache::updatePendingRequests(const set<FilePageId>& pageIds)
 {
+    RequestMap::iterator iter;
+    for (iter = pendingRequests_.begin(); pendingRequests_.end() != iter; ++iter)
+    {
+        set<FilePageId> result;
+        set_difference(iter->second.begin(), iter->second.end(),
+                       pageIds.begin(), pageIds.end(),
+                       inserter(result, result.begin()));
 
+        // Assign the resulting set as the new pending requests
+        iter->second = result;
+    }
 }
 
 vector<spfsMPIFileReadAtRequest*> DirectPagedMiddlewareCache::popCompletedRequests()
 {
     vector<spfsMPIFileReadAtRequest*> completeRequests;
+    RequestMap::iterator iter;
+    for (iter = pendingRequests_.begin(); pendingRequests_.end() != iter; /* nothing */)
+    {
+        if (iter->second.empty())
+        {
+            completeRequests.push_back(iter->first);
+            pendingRequests_.erase(iter++);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
     return completeRequests;
 }
 
 void DirectPagedMiddlewareCache::trimRequestedPages(set<FilePageId>& pageIds) const
 {
-
+    if (!pendingRequests_.empty())
+    {
+        set<FilePageId> result;
+        RequestMap::const_iterator iter;
+        for (iter = pendingRequests_.begin(); pendingRequests_.end() != iter; ++iter)
+        {
+            set_difference(pageIds.begin(), pageIds.end(),
+                           iter->second.begin(), iter->second.end(),
+                           inserter(result, result.begin()));
+        }
+        // Assign the resulting set as the new set of trimmed pages
+        pageIds = result;
+    }
 }
 
 

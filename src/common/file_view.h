@@ -20,6 +20,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "basic_types.h"
+#include <iosfwd>
 #include <vector>
 class DataType;
 
@@ -42,7 +43,7 @@ public:
 
     /** Destructor */
     ~FileView();
-    
+
     /** Assignment operator */
     FileView& operator=(const FileView& other);
 
@@ -54,15 +55,18 @@ public:
 
     /** @return the number of bytes required to represent this data type */
     std::size_t getRepresentationByteLength() const;
-    
+
 private:
     /** Swap the contents of this and other */
     void swap(FileView& other);
-    
+
     FSOffset displacement_;
 
     DataType* dataType_;
 };
+
+/** @return Output stream containg the file view */
+std::ostream& operator<<(std::ostream& ost, const FileView& fv);
 
 #endif
 

@@ -101,6 +101,13 @@ public:
     bool exists(const KeyType& key) const;
 
     /**
+     * @return the dirty bit for key
+     *
+     * @throw NoSuchENtry if no entry exists for the key
+     */
+    bool getDirtyBit(const KeyType& key) const;
+
+    /**
      * @return a vector of all the dirty cache values.  Does not update
      *         the LRU status
      */
@@ -273,6 +280,21 @@ ValueType LRUCache<KeyType,ValueType>::lookup(const KeyType& key)
     lruList_.push_front(key);
     entry->lruRef = lruList_.begin();
     return entry->data;
+}
+
+template<class KeyType, class ValueType>
+bool LRUCache<KeyType,ValueType>::getDirtyBit(const KeyType& key) const
+{
+    // Search the map for key
+    typename std::map<KeyType, EntryType*>::const_iterator pos;
+    pos = keyEntryMap_.find(key);
+    if (pos == keyEntryMap_.end())
+    {
+        NoSuchEntry e;
+        throw e;
+     }
+
+    return pos->second->isDirty;
 }
 
 template<class KeyType, class ValueType>

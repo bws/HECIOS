@@ -30,10 +30,13 @@ typedef std::size_t FilePageId;
 class FilePage
 {
 public:
+    /** Constructor */
     FilePage(FSOffset offset, FSSize size) : offset_(offset), size_(size) {};
 
+    /** @return the page's beginning offset */
     FSOffset offset() const { return offset_; };
 
+    /** @return the page's size/extent */
     FSSize size() const { return size_; };
 
 private:
@@ -42,7 +45,8 @@ private:
     FSSize size_;
 };
 
-bool operator<(const FilePage& lhs, const FilePage& rhs)
+/** @return true if lhs' offset is less than rhs' offset */
+inline bool operator<(const FilePage& lhs, const FilePage& rhs)
 {
     return (lhs.offset() < rhs.offset());
 }

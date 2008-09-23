@@ -136,6 +136,14 @@ public:
                                                const FSSize& size,
                                                const FileView& view);
 
+    /**
+     * @return Array of pages ids that are only partially covered by
+     *         the request
+     */
+    std::set<FilePageId> determineRequestPartialPages(const FSOffset& offset,
+                                                      const FSSize& size,
+                                                      const FileView& view);
+
 protected:
     /** Module initialization */
     void initialize();
@@ -178,6 +186,9 @@ private:
 class DirectPagedMiddlewareCache : public PagedCache
 {
 public:
+    /** Typedef mapping read requests to its pending pages */
+    typedef std::map<spfsMPIFileReadAtRequest*, std::set<FilePageId> > RequestMap;
+
     /** Constructor */
     DirectPagedMiddlewareCache();
 
@@ -219,7 +230,7 @@ private:
     LRUCache<std::size_t, FilePageId>* lruCache_;
 
     /** Map of request to the total pending pages */
-    std::map<spfsMPIFileReadAtRequest*, std::set<FilePageId> > pendingRequests_;
+    RequestMap pendingRequests_;
 };
 
 /** A cooperative direct paged cache for a single node */
