@@ -34,6 +34,7 @@ class Filename;
 class spfsMPIFileReadAtRequest;
 class spfsMPIFileReadAtResponse;
 class spfsMPIFileReadRequest;
+class spfsMPIFileRequest;
 class spfsMPIFileWriteAtRequest;
 class spfsMPIFileWriteRequest;
 
@@ -137,6 +138,14 @@ public:
                                                const FileView& view);
 
     /**
+     * @return Array of pages ids that are fully covered by
+     *         the request (no partial pages)
+     */
+    std::set<FilePageId> determineRequestFullPages(const FSOffset& offset,
+                                                   const FSSize& size,
+                                                   const FileView& view);
+
+    /**
      * @return Array of pages ids that are only partially covered by
      *         the request
      */
@@ -151,12 +160,12 @@ protected:
     /** @return a request to read the desired pages */
     spfsMPIFileReadAtRequest* createPageReadRequest(
         const std::set<FilePageId>& pageIds,
-        spfsMPIFileReadRequest* origRequest) const;
+        spfsMPIFileRequest* origRequest) const;
 
     /** @return a request to write the desired pages */
     spfsMPIFileWriteAtRequest* createPageWriteRequest(
         const std::set<FilePageId>& pageIds,
-        spfsMPIFileWriteRequest* origRequest) const;
+        spfsMPIFileRequest* origRequest) const;
 
 private:
     /** @return Array of page ids spanning the supplied file regions */
@@ -187,27 +196,14 @@ class DirectPagedMiddlewareCache : public PagedCache
 {
 public:
     /** Typedef mapping read requests to its pending pages */
-    typedef std::map<spfsMPIFileReadAtRequest*, std::set<FilePageId> > RequestMap;
+    typedef std::map<spfsMPIFileRequest*, std::set<FilePageId> > RequestMap;
 
     /** Constructor */
     DirectPagedMiddlewareCache();
 
 protected:
     /** Perform module initialization */
-    virtual void initialize();
-
-    /** Register all the pages pending to satisfy a request */
-    void registerPendingRequest(spfsMPIFileReadAtRequest* request,
-                                const std::set<FilePageId>& pendingPages);
-
-    /** Mark pages as no longer pending for requests */
-    void updatePendingRequests(const std::set<FilePageId>& pageIds);
-
-    /** @return Removes and returns requests with no more pages remaining */
-    std::vector<spfsMPIFileReadAtRequest*> popCompletedRequests();
-
-    /** Remove pages already registered and requested as pending from the set */
-    void trimRequestedPages(std::set<FilePageId>& pageIds) const;
+        virtual void initialize();
 
 private:
     /** Handle messages received from the application */
@@ -217,14 +213,57 @@ private:
     virtual void handleFileSystemMessage(cMessage* msg);
 
     /**
-     * @return pages not satisfied by the cache
+     * @return Pages that must be requested for this read.  Note that pages
+     * in cache or currently in-flight for this request are not returned.
+     *
+     * @side Registers the unsatisfied pages for the request
      */
-    std::set<FilePageId> lookupData(spfsMPIFileReadAtRequest* parentRequest);
+    std::set<FilePageId> resolveRequest(spfsMPIFileReadAtRequest* readRequest);
 
     /**
-     * Add pages to the cache performing cache evictions as necessary
+     * @return Pages that must be requested for this write.  Only partial pages
+     * not in the cache or currently in-flight
+     *
+     * @side Registers the unsatisfied pages for the request
      */
-    void populateData(spfsMPIFileReadAtResponse* parentResponse);
+    std::set<FilePageId> resolveRequest(spfsMPIFileWriteAtRequest* writeRequest);
+
+    /**
+     * Update the cache with pages that are fully written by this request
+     */
+    void updateCache(spfsMPIFileWriteAtRequest* writeRequest);
+
+    /**
+     * Update the cache with pages that have been read from the file system
+     */
+    void updateCache(spfsMPIFileReadAtResponse* readResponse);
+
+    /**
+     * Update the cache with pages marking the dirty status.  The resulting
+     * writeback pages are returned in outWritebacks.
+     */
+    void updateCache(const std::set<FilePageId>& updatePages,
+                     bool updatesDirty,
+                     std::set<FilePageId>& outWriteBacks);
+
+    /**
+     * Send application responses for all of the pending requests in the
+     * completed state.
+     */
+    void completeRequests();
+
+    /** Register all the pages pending to satisfy a request */
+    void registerPendingRequest(spfsMPIFileRequest* request,
+                                const std::set<FilePageId>& pendingPages);
+
+    /** Mark pages as no longer pending for requests */
+    void updatePendingRequests(const std::set<FilePageId>& pageIds);
+
+    /** @return Removes and returns requests with no more pages remaining */
+    std::vector<spfsMPIFileRequest*> popCompletedRequests();
+
+    /** Remove pages already registered and requested as pending from the set */
+    std::set<FilePageId> removeRequestedPages(std::set<FilePageId>& pageIds) const;
 
     /** Data structure for holding the cached data */
     LRUCache<std::size_t, FilePageId>* lruCache_;

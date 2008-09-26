@@ -109,16 +109,29 @@ enum mpiMessageKind
 message spfsMPIRequest
 {
     fields:
-        bool isCollective = false;
-        int rank;
-        int commMembers[] = 0;
-
         // internal fields
         cFSM state;
         FSOperationState opState;
         unsigned int numResolvedSegments = 1;
         int remainingResponses = 0;
         int socketId = -1;
+};
+
+// The abstract base class for collective messages -- not used purely correctly
+// because multiple inheritance is not supported
+message spfsMPICollectiveRequest extends spfsMPIRequest
+{
+    fields:
+        bool isCollective = false;
+        int rank;
+        int communicator;        
+}
+
+// The abstract base class for all MPI message requests requiring a descriptor
+message spfsMPIFileRequest extends spfsMPICollectiveRequest
+{
+    fields:
+        FileDescriptorPtr fileDes = 0;
 };
 
 // The abstract base class for all MPI message responses
@@ -128,45 +141,25 @@ message spfsMPIResponse
         bool isSuccessful;
 };
 
-// The abstract base class for all MPI collective message requests
-message spfsMPICollectiveRequest extends spfsMPIRequest
-{
-    fields:
-        bool isCollective = false;
-        int rank;
-        int communicator;
-};
-
-// The abstract base class for all MPI collective message responses
-message spfsMPICollectiveResponse extends spfsMPIResponse
-{
-    fields:
-        bool isSuccessful;
-};
-
 // Request to open a file 
-message spfsMPIFileOpenRequest extends spfsMPICollectiveRequest
+message spfsMPIFileOpenRequest extends spfsMPIFileRequest
 {
     fields:
         string fileName;
         int mode;
-
-        // internal fields
-        FileDescriptorPtr fileDes = 0;
 };
 
 // Open file response
-message spfsMPIFileOpenResponse extends spfsMPICollectiveResponse
+message spfsMPIFileOpenResponse extends spfsMPIResponse
 {
     fields:
         FileDescriptorPtr fileDes;
 };
 
 // Request to close a file
-message spfsMPIFileCloseRequest extends spfsMPIRequest
+message spfsMPIFileCloseRequest extends spfsMPIFileRequest
 {
     fields:
-        FileDescriptorPtr fileDes;
 };
 
 // Close file response
@@ -188,10 +181,9 @@ message spfsMPIFileDeleteResponse extends spfsMPIResponse
 };
 
 // Request to resize a file
-message spfsMPIFileSetSizeRequest extends spfsMPIRequest
+message spfsMPIFileSetSizeRequest extends spfsMPIFileRequest
 {
     fields:
-        FileDescriptorPtr fileDes;
         int fileSize;
 };
 
@@ -201,23 +193,21 @@ message spfsMPIFileSetSizeResponse extends spfsMPIResponse
 };
 
 // Request to preallocate file space
-message spfsMPIFilePreallocateRequest extends spfsMPIRequest
+message spfsMPIFilePreallocateRequest extends spfsMPIFileRequest
 {
     fields:
-        FileDescriptorPtr fileDes;
         int fileSize;
 };
 
-// Delete file response
+// Preallocate file response
 message spfsMPIFilePreallocateResponse extends spfsMPIResponse
 {
 };
 
 // Request to get the access mode of a file
-message spfsMPIFileGetAModeRequest extends spfsMPIRequest
+message spfsMPIFileGetAModeRequest extends spfsMPIFileRequest
 {
     fields:
-        FileDescriptorPtr fileDes;
 };
 
 // Get file access mode response
@@ -228,10 +218,9 @@ message spfsMPIFileGetAModeResponse extends spfsMPIResponse
 };
 
 // Request to get the size of a file
-message spfsMPIFileGetSizeRequest extends spfsMPIRequest
+message spfsMPIFileGetSizeRequest extends spfsMPIFileRequest
 {
     fields:
-        FileDescriptorPtr fileDes;
 };
 
 // Get file size response
@@ -242,10 +231,9 @@ message spfsMPIFileGetSizeResponse extends spfsMPIResponse
 };
 
 // Request to get the file info object
-message spfsMPIFileGetInfoRequest extends spfsMPIRequest
+message spfsMPIFileGetInfoRequest extends spfsMPIFileRequest
 {
     fields:
-        FileDescriptorPtr fileDes;
 };
 
 // Get file info response
@@ -256,10 +244,9 @@ message spfsMPIFileGetInfoResponse extends spfsMPIResponse
 };
 
 // Request to set the file info object
-message spfsMPIFileSetInfoRequest extends spfsMPIRequest
+message spfsMPIFileSetInfoRequest extends spfsMPIFileRequest
 {
     fields:
-        FileDescriptorPtr fileDes;
         string info[];
 };
 
@@ -269,10 +256,9 @@ message spfsMPIFileSetInfoResponse extends spfsMPIResponse
 };
 
 // Request to read from a file
-message spfsMPIFileReadRequest extends spfsMPIRequest
+message spfsMPIFileReadRequest extends spfsMPIFileRequest
 {
     fields:
-	FileDescriptorPtr fileDes;
 	int count;
 	MPIDataType dataType;
 
@@ -301,10 +287,9 @@ message spfsMPIFileReadAtResponse extends spfsMPIFileReadResponse
 };
 
 // Request to write to a file
-message spfsMPIFileWriteRequest extends spfsMPIRequest
+message spfsMPIFileWriteRequest extends spfsMPIFileRequest
 {
     fields:
-        FileDescriptorPtr fileDes;
         int count;
         MPIDataType dataType;
 
@@ -349,10 +334,9 @@ message spfsMPIDirectoryCreateResponse extends spfsMPIResponse
 };
 
 // Request to read a directory
-message spfsMPIDirectoryReadRequest extends spfsMPIRequest
+message spfsMPIDirectoryReadRequest extends spfsMPIFileRequest
 {
     fields:
-        FileDescriptorPtr fileDes;
         unsigned long count;
 };
 
@@ -401,7 +385,7 @@ message spfsMPIFileUpdateTimeResponse extends spfsMPIResponse
 };
 
 // Simple MPI Send request
-message spfsMPISendRequest extends spfsMPIRequest
+message spfsMPISendRequest extends spfsMPICollectiveRequest
 {
 };
 
@@ -418,7 +402,7 @@ message spfsMPIBarrierRequest extends spfsMPICollectiveRequest
 };
 
 // Broadcast response
-message spfsMPIBarrierResponse extends spfsMPICollectiveResponse
+message spfsMPIBarrierResponse extends spfsMPIResponse
 {
 };
 
@@ -431,7 +415,7 @@ message spfsMPIBcastRequest extends spfsMPICollectiveRequest
 };
 
 // Broadcast response
-message spfsMPIBcastResponse extends spfsMPICollectiveResponse
+message spfsMPIBcastResponse extends spfsMPIResponse
 {
 };
 

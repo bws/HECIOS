@@ -72,6 +72,18 @@ public:
                 bool isDirty = false);
 
     /**
+     * Perform the cache insertion and set the evicted value and dirty bit
+     * in the outbound parameters.
+     *
+     * @throw NoSuchEntry if no eviction occurs
+     */
+    void insertAndRecall(const KeyType& key,
+                         const ValueType& value,
+                         bool isDirty,
+                         ValueType& outEvictedValue,
+                         bool& outEvictedDirtyBit);
+
+    /**
      * Remove the value for key from the cache
      *
      * @throw NoSuchEntry if no entry exists for the key
@@ -187,8 +199,8 @@ void LRUCache<KeyType,ValueType>::insert(const KeyType& key,
         // If the cache is full, evict an item according to LRU policy
         if (numEntries_ == maxEntries_)
         {
-            KeyType key = *(lruList_.rbegin());
-            this->remove(key);
+            KeyType lruKey = *(lruList_.rbegin());
+            this->remove(lruKey);
         }
 
         // Fill out the Cache entry data
@@ -203,6 +215,70 @@ void LRUCache<KeyType,ValueType>::insert(const KeyType& key,
         // Insert the cache entry
         keyEntryMap_.insert(std::make_pair(key, entry));
         numEntries_++;
+    }
+}
+
+template<class KeyType, class ValueType>
+void LRUCache<KeyType,ValueType>::insertAndRecall(const KeyType& key,
+                                                  const ValueType& value,
+                                                  bool isDirty,
+                                                  ValueType& outEvictedValue,
+                                                  bool& outEvictedDirtyBit)
+{
+    bool hasEviction = false;
+
+    // Check to see if the entry already exists
+    typename std::map<KeyType, EntryType*>::iterator pos;
+    pos = keyEntryMap_.find(key);
+    if (pos != keyEntryMap_.end())
+    {
+        // Entry already exists, update it
+        pos->second->data = value;
+        pos->second->isDirty = isDirty;
+
+        // Update the LRU data
+        lruList_.erase(pos->second->lruRef);
+        lruList_.push_front(key);
+        pos->second->lruRef = lruList_.begin();
+    }
+    else
+    {
+        // If the cache is full, retrieve and perform the next eviction
+        if (numEntries_ == maxEntries_)
+        {
+            KeyType lruKey = *(lruList_.rbegin());
+
+            // Set the outbound parameters
+            typename std::map<KeyType, EntryType*>::iterator evictee;
+            evictee = keyEntryMap_.find(lruKey);
+            assert(evictee != keyEntryMap_.end());
+            outEvictedValue = evictee->second->data;
+            outEvictedDirtyBit = evictee->second->isDirty;
+
+            // Remove the entry
+            this->remove(lruKey);
+
+            // Indicate an eviction occurred
+            hasEviction = true;
+        }
+        // Fill out the Cache entry data
+        EntryType* entry = new EntryType();
+        entry->data = value;
+        entry->isDirty = isDirty;
+
+        // Add to the LRU list
+        lruList_.push_front(key);
+        entry->lruRef = lruList_.begin();
+
+        // Insert the cache entry
+        keyEntryMap_.insert(std::make_pair(key, entry));
+        numEntries_++;
+    }
+
+    if (!hasEviction)
+    {
+        NoSuchEntry e;
+        throw e;
     }
 }
 
