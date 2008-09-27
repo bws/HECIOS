@@ -27,10 +27,10 @@
 #include "basic_data_type.h"
 #include "basic_types.h"
 #include "file_page.h"
+#include "filename.h"
 #include "lru_cache.h"
 class FileDescriptor;
 class FileView;
-class Filename;
 class spfsMPIFileReadAtRequest;
 class spfsMPIFileReadAtResponse;
 class spfsMPIFileReadRequest;
@@ -117,6 +117,17 @@ private:
 class PagedCache : public MiddlewareCache
 {
 public:
+    /** Key used to locate a page in the cache */
+    class Key
+    {
+    public:
+        Key(const Filename& fn, std::size_t k) : filename(fn), key(k) {};
+
+        Filename filename;
+
+        std::size_t key;
+    };
+
     /** Constructor */
     PagedCache();
 
@@ -159,11 +170,13 @@ protected:
 
     /** @return a request to read the desired pages */
     spfsMPIFileReadAtRequest* createPageReadRequest(
+        const Filename& filename,
         const std::set<FilePageId>& pageIds,
         spfsMPIFileRequest* origRequest) const;
 
     /** @return a request to write the desired pages */
     spfsMPIFileWriteAtRequest* createPageWriteRequest(
+        const Filename& filename,
         const std::set<FilePageId>& pageIds,
         spfsMPIFileRequest* origRequest) const;
 
@@ -190,6 +203,8 @@ private:
     /** Byte Data Type used within cache pages */
     ByteDataType byteDataType_;
 };
+
+bool operator<(const PagedCache::Key& lhs, const PagedCache::Key& rhs);
 
 /** A Direct paged cache for a single node */
 class DirectPagedMiddlewareCache : public PagedCache
@@ -242,15 +257,22 @@ private:
      * Update the cache with pages marking the dirty status.  The resulting
      * writeback pages are returned in outWritebacks.
      */
-    void updateCache(const std::set<FilePageId>& updatePages,
+    void updateCache(const Filename& filename,
+                     const std::set<FilePageId>& updatePages,
                      bool updatesDirty,
-                     std::set<FilePageId>& outWriteBacks);
+                     std::set<PagedCache::Key>& outWriteBacks);
 
     /**
      * Send application responses for all of the pending requests in the
      * completed state.
      */
     void completeRequests();
+
+    /**
+     * Complete the writebacks contained in the set of page keys
+     */
+    void completeWriteBacks(const std::set<PagedCache::Key>& writeBacks,
+                            spfsMPIFileRequest* req);
 
     /** Register all the pages pending to satisfy a request */
     void registerPendingRequest(spfsMPIFileRequest* request,
@@ -266,7 +288,7 @@ private:
     std::set<FilePageId> removeRequestedPages(std::set<FilePageId>& pageIds) const;
 
     /** Data structure for holding the cached data */
-    LRUCache<std::size_t, FilePageId>* lruCache_;
+    LRUCache<PagedCache::Key, FilePageId>* lruCache_;
 
     /** Map of request to the total pending pages */
     RequestMap pendingRequests_;

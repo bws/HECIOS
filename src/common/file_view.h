@@ -56,6 +56,9 @@ public:
     /** @return the number of bytes required to represent this data type */
     std::size_t getRepresentationByteLength() const;
 
+    /** @return true if the view is equivalent */
+    bool operator==(const FileView& other) const;
+
 private:
     /** Swap the contents of this and other */
     void swap(FileView& other);

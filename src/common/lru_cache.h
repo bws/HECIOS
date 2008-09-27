@@ -80,6 +80,7 @@ public:
     void insertAndRecall(const KeyType& key,
                          const ValueType& value,
                          bool isDirty,
+                         KeyType& outEvictedKey,
                          ValueType& outEvictedValue,
                          bool& outEvictedDirtyBit);
 
@@ -222,6 +223,7 @@ template<class KeyType, class ValueType>
 void LRUCache<KeyType,ValueType>::insertAndRecall(const KeyType& key,
                                                   const ValueType& value,
                                                   bool isDirty,
+                                                  KeyType& outEvictedKey,
                                                   ValueType& outEvictedValue,
                                                   bool& outEvictedDirtyBit)
 {
@@ -252,6 +254,7 @@ void LRUCache<KeyType,ValueType>::insertAndRecall(const KeyType& key,
             typename std::map<KeyType, EntryType*>::iterator evictee;
             evictee = keyEntryMap_.find(lruKey);
             assert(evictee != keyEntryMap_.end());
+            outEvictedKey = evictee->first;
             outEvictedValue = evictee->second->data;
             outEvictedDirtyBit = evictee->second->isDirty;
 

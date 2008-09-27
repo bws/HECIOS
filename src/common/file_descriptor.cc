@@ -69,6 +69,13 @@ void FileDescriptor::moveFilePointer(FSOffset inc)
     assert(0 <= filePtr_);
 }
 
+bool FileDescriptor::operator==(const FileDescriptor& other) const
+{
+    return (filename_ == other.filename_ &&
+            filePtr_ == other.filePtr_ &&
+            fileView_ == other.fileView_);
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

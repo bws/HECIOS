@@ -59,6 +59,13 @@ std::size_t FileView::getRepresentationByteLength() const
     return 8 + dataType_->getRepresentationByteLength();
 }
 
+bool FileView::operator ==(const FileView& other) const
+{
+    // FIXME: Fix the data type comparison to use equivalence
+    return (displacement_ == other.displacement_ &&
+            dataType_ == other.dataType_);
+}
+
 std::ostream& operator<<(std::ostream& ost, const FileView& fv)
 {
     return ost << "FileView(disp=" << fv.getDisplacement() << ","

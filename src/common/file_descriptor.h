@@ -42,16 +42,16 @@ public:
 
     /** @return the file's name */
     Filename getFilename() const { return filename_; };
-    
+
     /** @return the current position of the file pointer */
     FSOffset getFilePointer() const { return filePtr_; };
 
     /** @return the file view set for this file */
     FileView getFileView() const { return fileView_; };
-    
+
     /** @return the meta data handle for this file */
     FSHandle getHandle() const { return metaData_.handle; };
-    
+
     /** @return the descriptor's metadata */
     const FSMetaData* getMetaData() const { return &metaData_; };
 
@@ -60,7 +60,7 @@ public:
 
     /** @return the resolved handle for the filename path segment */
     FSHandle getParentHandle(std::size_t segmentIdx) const;
-    
+
     /** Set the file view */
     void setFileView(const FileView& fileView);
 
@@ -69,7 +69,10 @@ public:
 
     /** Add inc to the file pointer */
     void moveFilePointer(FSOffset inc);
-    
+
+    /** @return true if the file descriptors are equivalent */
+    bool operator==(const FileDescriptor& other) const;
+
 private:
     /** Copy constructor hidden */
     FileDescriptor(const FileDescriptor& other);
