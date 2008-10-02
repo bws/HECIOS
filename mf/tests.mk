@@ -67,6 +67,7 @@ SIM_TEST_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_TEST_SRC)))
 #
 TEST_MAKECMDGOALS := $(filter %test, $(MAKECMDGOALS))
 TEST_MAKECMDGOALS += $(filter incremental, $(MAKECMDGOALS))
+TEST_MAKECMDGOALS += $(filter tests_%, $(MAKECMDGOALS))
 ifneq ($(strip $(TEST_MAKECMDGOALS)),)
 -include $(SIM_TEST_DEPENDS)
 endif
@@ -87,24 +88,24 @@ TEST_EXES = $(BIN_DIR)/common_test \
 	$(BIN_DIR)/physical_test \
 	$(BIN_DIR)/server_test
 
-all_test: $(TEST_EXES)
+tests_all: $(TEST_EXES)
 
-incremental_test: $(SIM_TEST_OBJS)
+tests_incremental: $(SIM_TEST_OBJS)
 	@#echo "Test Objs:  $^"
 
 
-.Phony: all_test incremental_test
+.Phony: tests_all tests_incremental
 
 #
 # Cleanup test subsystem
 #
-clean_test:
+tests_clean:
 	@echo "Removing test subsytem derived objects."
 	$(RM) $(SIM_TEST_OBJS)
 	$(RM) $(SIM_TEST_DEPENDS)
 	@echo "Derived files deleted."
 
-.PHONY: clean_test
+.PHONY: tests_clean
 
 #
 # client package unit tests
