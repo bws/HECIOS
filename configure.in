@@ -19,13 +19,28 @@ AC_PROG_CXX
 AC_LANG_CPLUSPLUS
 
 dnl 
-dnl Check for headers
+dnl Check for C++ headers
 dnl
 AC_HEADER_STDC
+AC_CHECK_HEADER([algorithm], 
+                [], 
+                AC_MSG_ERROR(Must include headers for libstdc++))
+AC_CHECK_HEADER([cassert], 
+                [], 
+                AC_MSG_ERROR(Must include headers for libstdc++))
+AC_CHECK_HEADER([cstddef], 
+                [], 
+                AC_MSG_ERROR(Must include headers for libstdc++))
+AC_CHECK_HEADER([iostream], 
+                [], 
+                AC_MSG_ERROR(Must include headers for libstdc++))
 AC_CHECK_HEADER([list], 
                 [], 
                 AC_MSG_ERROR(Must include headers for libstdc++))
 AC_CHECK_HEADER([map], 
+                [], 
+                AC_MSG_ERROR(Must include headers for libstdc++))
+AC_CHECK_HEADER([string], 
                 [], 
                 AC_MSG_ERROR(Must include headers for libstdc++))
 AC_CHECK_HEADER([vector], 
@@ -52,8 +67,14 @@ AC_ARG_WITH([omnet],
 if test x$withval = xyes ; then
     AC_MSG_ERROR(--with-omnet must be a given pathname)
 else
-    AC_SUBST(OMNET_DIR, "$omnet_dir")
+    AC_SUBST(CONFIG_OMNET_DIR, "$omnet_dir")
 fi
+
+dnl
+dnl Locate the XML library for use by Omnet
+dnl
+xml_library="-lxml2"
+AC_SUBST(CONFIG_XML_LIB, "$xml_library")
 
 dnl
 dnl Sets the compilation options
@@ -87,6 +108,12 @@ esac
 AC_SUBST(CONFIG_CXXFLAGS, "$CONFIG_CXXFLAGS")
 AC_SUBST(CONFIG_UNSAFE_CXXFLAGS, "$CONFIG_UNSAFE_CXXFLAGS")
 AC_SUBST(CONFIG_LDFLAGS, "$CONFIG_LDFLAGS")
+
+dnl
+dnl Set the installation prefix
+dnl
+install_prefix='${HOME}/software/hecios'
+AC_SUBST(CONFIG_INSTALL_PREFIX, "$install_prefix")
 
 dnl
 dnl Generate output
