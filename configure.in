@@ -13,7 +13,7 @@ AC_SUBST(CONFIG_BUILD_DIR)
 AC_SUBST(CONFIG_PROJECT_DIR)
 
 dnl
-dnl Check for programs (needs check for ar and install)
+dnl Check for programs (needs check for install and ld with partial linking)
 dnl
 AC_PROG_CXX
 AC_LANG_CPLUSPLUS
@@ -51,6 +51,7 @@ dnl
 dnl Checks for typedefs, structures, and compiler characteristics.
 dnl
 AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
 
 dnl
 dnl Checks for library functions.
@@ -73,8 +74,21 @@ fi
 dnl
 dnl Locate the XML library for use by Omnet
 dnl
-xml_library="-lxml2"
-AC_SUBST(CONFIG_XML_LIB, "$xml_library")
+xml_library="none"
+if test x$xml_library = xnone ; then
+    AC_SEARCH_LIBS([xmlInitParser], [xml2], xml_library="-lxml2")
+fi
+
+if test x$xml_library = xnone ; then
+    AC_SEARCH_LIBS([XML_ParserCreate], [expat], xml_library="-lexpat")
+fi
+
+if test x$xml_library = xnone ; then
+    AC_MSG_ERROR(libxml2 or libexpat must be installed)
+else
+    AC_SUBST(CONFIG_XML_LIB, "$xml_library")
+fi
+
 
 dnl
 dnl Sets the compilation options
@@ -110,10 +124,9 @@ AC_SUBST(CONFIG_UNSAFE_CXXFLAGS, "$CONFIG_UNSAFE_CXXFLAGS")
 AC_SUBST(CONFIG_LDFLAGS, "$CONFIG_LDFLAGS")
 
 dnl
-dnl Set the installation prefix
+dnl Set the default installation prefix
 dnl
-install_prefix='${HOME}/software/hecios'
-AC_SUBST(CONFIG_INSTALL_PREFIX, "$install_prefix")
+AC_PREFIX_DEFAULT([${HOME}/software/hecios])
 
 dnl
 dnl Generate output

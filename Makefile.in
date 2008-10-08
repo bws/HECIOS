@@ -1,7 +1,7 @@
 #
 # This file is part of Hecios
 #
-# Copyright (C) 2007 Brad Settlemyer
+# Copyright (C) 2007,2008 Brad Settlemyer
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@
 #
 HECIOS_DIR := @CONFIG_PROJECT_DIR@
 BUILD_DIR := @CONFIG_BUILD_DIR@
-INSTALL_DIR = @CONFIG_INSTALL_PREFIX@
+INSTALL_DIR = @prefix@
 OMNET_DIR := @CONFIG_OMNET_DIR@
 CONFIG_CXXFLAGS := @CONFIG_CXXFLAGS@
 CONFIG_UNSAFE_CXXFLAGS := @CONFIG_UNSAFE_CXXFLAGS@
