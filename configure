@@ -612,7 +612,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_default_prefix=${HOME}/software/hecios
+ac_default_prefix="$install_prefix"
 ac_subst_vars='SHELL
 PATH_SEPARATOR
 PACKAGE_NAME
@@ -4483,6 +4483,9 @@ CONFIG_UNSAFE_CXXFLAGS="$CONFIG_UNSAFE_CXXFLAGS"
 CONFIG_LDFLAGS="$CONFIG_LDFLAGS"
 
 
+install_prefix='${HOME}/software/hecios'
+
+prefix="$install_prefix"
 
 
 ac_config_files="$ac_config_files Makefile"

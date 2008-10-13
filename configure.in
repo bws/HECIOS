@@ -126,7 +126,10 @@ AC_SUBST(CONFIG_LDFLAGS, "$CONFIG_LDFLAGS")
 dnl
 dnl Set the default installation prefix
 dnl
-AC_PREFIX_DEFAULT([${HOME}/software/hecios])
+install_prefix='${HOME}/software/hecios'
+AC_PREFIX_DEFAULT("$install_prefix")
+dnl This shouldn't be needed, but its eating the enclosing {}'s otherwise 
+AC_SUBST(prefix, "$install_prefix")
 
 dnl
 dnl Generate output

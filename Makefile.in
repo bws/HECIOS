@@ -41,15 +41,16 @@ CONFIG_XML_LIBS := @CONFIG_XML_LIB@
 DOC_DIR = doc
 SRC_DIR = src
 INET_DIR = INET
-CLIENT_DIR= $(SRC_DIR)/client
-COMMON_DIR= $(SRC_DIR)/common
-CONFIG_DIR= $(SRC_DIR)/config
-IO_DIR= $(SRC_DIR)/io
-LAYOUT_DIR= $(SRC_DIR)/layout
-MESSAGES_DIR= $(SRC_DIR)/messages
-OS_DIR= $(SRC_DIR)/os
-PHYSICAL_DIR= $(SRC_DIR)/physical
-SERVER_DIR= $(SRC_DIR)/server
+CLIENT_DIR = $(SRC_DIR)/client
+COMMON_DIR = $(SRC_DIR)/common
+CONFIG_DIR = $(SRC_DIR)/config
+IO_DIR = $(SRC_DIR)/io
+LAYOUT_DIR = $(SRC_DIR)/layout
+MESSAGES_DIR = $(SRC_DIR)/messages
+OS_DIR = $(SRC_DIR)/os
+PHYSICAL_DIR = $(SRC_DIR)/physical
+SERVER_DIR = $(SRC_DIR)/server
+TOOLS_DIR = $(SRC_DIR)/tools
 
 #
 # Build target directories
@@ -133,6 +134,7 @@ LIBS_CMD = -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
 #
 DOC_SRC :=
 SIM_SRC :=
+TOOLS_SRC :=
 
 #
 # Include module makefiles
@@ -148,6 +150,7 @@ include $(MESSAGES_DIR)/module.mk
 include $(OS_DIR)/module.mk
 include $(PHYSICAL_DIR)/module.mk
 include $(SERVER_DIR)/module.mk
+include $(TOOLS_DIR)/module.mk
 
 #
 # Doc Module build targets
@@ -196,7 +199,7 @@ include $(HECIOS_DIR)/mf/tests.mk
 #
 # Top level psuedo targets
 #
-all: $(BIN_DIR)/hecios_cmd $(BIN_DIR)/hecios $(BUILD_DIR)/omnetpp.ini
+all: $(BIN_DIR)/hecios_cmd $(BIN_DIR)/hecios $(BIN_DIR)/lanl_trace_parser $(BUILD_DIR)/omnetpp.ini
 
 gui: $(BIN_DIR)/hecios $(BUILD_DIR)/omnetpp.ini
 
@@ -230,6 +233,7 @@ install:
 	$(INSTALL) -d $(INSTALL_DIR)/examples
 	$(INSTALL) -d $(INSTALL_DIR)/lib/ned
 	$(INSTALL) -c bin/hecios* $(INSTALL_DIR)/bin
+	$(INSTALL) -c bin/lanl_trace_parser $(INSTALL_DIR)/bin
 	$(INSTALL) -c lib/*.* $(INSTALL_DIR)/lib
 	$(INSTALL) -c ini/*.ini $(INSTALL_DIR)/examples
 	find . -name *.ned -exec $(INSTALL) -c {} $(INSTALL_DIR)/lib/ned \;
