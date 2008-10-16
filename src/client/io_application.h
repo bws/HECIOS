@@ -32,16 +32,16 @@ class IOApplication : public cSimpleModule
 public:
     /** Constructor */
     IOApplication();
-    
+
     /** @return the file descriptor for a file id */
     FileDescriptor* getDescriptor(int fileId) const;
 
     /** Set the process rank for this application */
     void setRank(int rank);
-    
+
     /** @return the MPI application's canonical process rank */
     int getRank() const { return rank_; };
-    
+
 protected:
     /** Associate the fileId with a file descriptor */
     void setDescriptor(int fileId, FileDescriptor* descriptor);
@@ -52,7 +52,7 @@ protected:
      * @return the disassociated file descriptor
      */
     FileDescriptor* removeDescriptor(int FileId);
-    
+
     /** Create the file system files for this trace */
     virtual void populateFileSystem() = 0;
 
@@ -83,10 +83,10 @@ protected:
 private:
     /** Invoked when the rank has been changed */
     virtual void rankChanged(int oldRank) = 0;
-    
+
     /** @return true if the next message was able to be scheduled */
     virtual bool scheduleNextMessage() = 0;
-    
+
     /** process rank */
     int rank_;
 
@@ -96,7 +96,11 @@ private:
     /** Fixed data collection */
     double totalCpuPhaseTime_;
     double applicationCompletionTime_;
-    
+    double totalBytesRead_;
+    double totalBytesWritten_;
+    double totalReadTime_;
+    double totalWriteTime_;
+
     /** Temporal timing data collections */
     cOutVector cpuPhaseDelay_;
     cOutVector directoryCreateDelay_;

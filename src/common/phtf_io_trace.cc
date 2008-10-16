@@ -125,7 +125,7 @@ void PHTFEventRecord::retValue(long retvalue)
 }
 
 /** @return The number of parameters */
-long PHTFEventRecord::paraNum() const
+size_t PHTFEventRecord::paraNum() const
 {
     return _parameters.size();
 }
@@ -140,17 +140,25 @@ void PHTFEventRecord::paraNum(long paranum)
     _parameters.resize(paranum);
 }
 
-/** @return The paraindex-th parameter */
-std::string PHTFEventRecord::paramAt(long paraindex) const
+string PHTFEventRecord::paramAt(size_t idx) const
 {
-    if(paraindex < paraNum())
-        return (string)_parameters.at(paraindex);
-    else
-        return "";
+    assert(idx < paraNum());
+    return _parameters.at(idx);
+}
+
+size_t PHTFEventRecord::paramAsSizeT(size_t idx) const
+{
+    assert(idx < paraNum());
+    string s = _parameters.at(idx);
+    istringstream iss(s);
+    size_t param;
+    iss >> param;
+    assert(false == iss.fail());
+    return param;
 }
 
 /** Set the parameter at position paraindex */
-void PHTFEventRecord::paramAt(long paraindex, std::string parastr)
+void PHTFEventRecord::paramAt(size_t paraindex, std::string parastr)
 {
     if(paraindex >= paraNum())
         _parameters.resize(paraindex + 1);
@@ -158,7 +166,7 @@ void PHTFEventRecord::paramAt(long paraindex, std::string parastr)
 }
 
 /** @return The paramindex-th parameter as a file descriptor */
-int PHTFEventRecord::paramAsDescriptor(long paramindex, const PHTFEvent & event) const
+int PHTFEventRecord::paramAsDescriptor(size_t paramindex, const PHTFEvent & event) const
 {
     stringstream ss("");
     assert(paramindex < paraNum());
@@ -179,7 +187,7 @@ int PHTFEventRecord::paramAsDescriptor(long paramindex, const PHTFEvent & event)
     return fileId;
 }
 
-string PHTFEventRecord::paramAsFilename(long paramindex, const PHTFEvent & event) const
+string PHTFEventRecord::paramAsFilename(size_t paramindex, const PHTFEvent & event) const
 {
     assert(paramindex < paraNum());
 
@@ -218,7 +226,7 @@ std::string PHTFEventRecord::params()
 }
 
 /** Set the parameters string */
-void PHTFEventRecord::params(std::string parastr)
+void PHTFEventRecord::params(string parastr)
 {
     stringstream ss(parastr);
     string pa;
@@ -236,7 +244,7 @@ void PHTFEventRecord::params(std::string parastr)
 }
 
 /** Set the parameter vector */
-void PHTFEventRecord::params(std::vector <std::string> paras)
+void PHTFEventRecord::params(vector<string> paras)
 {
     _parameters = paras;
 }
@@ -360,7 +368,7 @@ void PHTFEventRecord::buildRecordFields()
 
     ss >> _id >> opstr >> _sttime >> _duration;
 
-    ss >> hex >>_ret;
+    ss >>_ret;
 
     _parameters.resize(0);
     while(!ss.eof())
@@ -523,7 +531,7 @@ PHTFTrace::PHTFTrace(std::string dirpath)
     buildEvents();
 
     stringstream ss("");
-    ss << dirPath() << PHTFTrace::fsFileName;
+    ss << dirPath() << "/" << PHTFTrace::fsFileName;
     _fsfile = new PHTFFs(ss.str());
 }
 
@@ -537,8 +545,8 @@ void PHTFTrace::buildEvents()
         {
             stringstream ss("");
             stringstream ss2("");
-            ss << dirPath() << PHTFTrace::eventFileNamePrefix << i;
-            ss2 << dirPath() << PHTFTrace::runtimeFileNamePrefix << i;
+            ss << dirPath() << "/" << PHTFTrace::eventFileNamePrefix << i;
+            ss2 << dirPath() << "/" << PHTFTrace::runtimeFileNamePrefix << i;
             PHTFEvent *ev = new PHTFEvent(ss.str(), ss2.str());
             _events.push_back(ev);
         }
@@ -604,7 +612,7 @@ PHTFTrace* PHTFTrace::getInstance(string dirpath)
     return PHTFTrace::_trace;
 }
 
-PHTFIni::PHTFIni(string filename)
+PHTFIni::PHTFIni(const string& filename)
     : fileName_(filename)
 {
 }

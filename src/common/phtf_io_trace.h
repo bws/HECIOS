@@ -19,7 +19,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include <cstddef>
 #include <vector>
 #include <map>
 #include <string>
@@ -126,7 +126,8 @@ public:
     void retValue(long retvalue);
 
     /** @return The number of parameters */
-    long paraNum() const;
+    std::size_t paraNum() const;
+
     /**
      * Set the number of parameters
      * Only used with paramAt()
@@ -135,15 +136,19 @@ public:
     void paraNum(long paranum);
 
     /** @return The paraindex-th parameter */
-    std::string paramAt(long paraindex) const;
+    std::string paramAt(std::size_t idx) const;
+
+    /** @return The paramindex-th parameter as a size_t */
+    std::size_t paramAsSizeT(std::size_t idx) const;
+
     /** Set the parameter at position paraindex */
-    void paramAt(long paraindex, std::string parastr);
+    void paramAt(std::size_t idx, std::string parastr);
 
     /** @return The paramindex-th parameter as a file descriptor */
-    int paramAsDescriptor(long paramindex, const PHTFEvent & event) const;
+    int paramAsDescriptor(std::size_t paramindex, const PHTFEvent & event) const;
 
     /** @return The paramindex-th parameter as a file name */
-    std::string paramAsFilename(long paramindex, const PHTFEvent & event) const;
+    std::string paramAsFilename(std::size_t paramindex, const PHTFEvent & event) const;
 
     /** @return The string contains the parameters */
     std::string params();
@@ -173,7 +178,7 @@ private:
     double _sttime;
     double _duration;
     long _ret;
-    std::vector <std::string> _parameters;
+    std::vector<std::string> _parameters;
 };
 
 /**
@@ -244,7 +249,7 @@ private:
     bool isWriteOnly_;
 
 public:
-    PHTFIni(std::string filename);
+    PHTFIni(const std::string& filename);
     ~PHTFIni();
 
     bool exist(std::string section);

@@ -617,12 +617,15 @@ void PaserSm::enterProcL()
         *event << re;
     }
 
-    if(re.recordOp() == SEEK ||
-            re.recordOp() == WRITE_AT ||
-            re.recordOp() == READ_AT ||
-            re.recordOp() == WRITE_AT_ALL ||
-            re.recordOp() == READ_AT_ALL)
-        event->memValue("Pointer", context_, re.paramAt(0));
+    if (re.recordOp() == SEEK ||
+        re.recordOp() == WRITE_AT ||
+        re.recordOp() == READ_AT ||
+        re.recordOp() == WRITE_AT_ALL ||
+        re.recordOp() == READ_AT_ALL)
+    {
+        string val = re.paramAt(0);
+        event->memValue("Pointer", context_, val);
+    }
 }
 
 void PaserSm::exitProcL()

@@ -40,12 +40,12 @@ void PHTFIOTraceTest::testRecordConstructor1()
     PHTFEventRecord re("1 MPI_FILE_WRITE 2.2301 0.0031 4 123 234");
     CPPUNIT_ASSERT_EQUAL(re.recordStr(), string("1 MPI_FILE_WRITE 2.2301 0.0031 4 123 234"));
     CPPUNIT_ASSERT_EQUAL(re.recordId(), (long)1);
-    CPPUNIT_ASSERT_EQUAL(re.recordOp(), WRITE); 
+    CPPUNIT_ASSERT_EQUAL(re.recordOp(), WRITE);
     CPPUNIT_ASSERT_EQUAL(re.startTime(), (double)2.2301);
     CPPUNIT_ASSERT_EQUAL(re.duration(), (double)0.0031);
     CPPUNIT_ASSERT_EQUAL(re.retValue(), (long)4);
     CPPUNIT_ASSERT_EQUAL(re.params(), string("123 234"));
-    CPPUNIT_ASSERT_EQUAL(re.paraNum(), (long)2);
+    CPPUNIT_ASSERT_EQUAL(re.paraNum(), size_t(2));
     CPPUNIT_ASSERT_EQUAL(re.paramAt(0), string("123"));
     CPPUNIT_ASSERT_EQUAL(re.paramAt(1), string("234"));
 }

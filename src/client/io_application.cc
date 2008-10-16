@@ -72,6 +72,10 @@ void IOApplication::initialize()
     // Initialize scalar data collection values
     totalCpuPhaseTime_ = 0.0;
     applicationCompletionTime_ = 0.0;
+    totalBytesRead_ = 0.0;
+    totalBytesWritten_ = 0.0;
+    totalReadTime_ = 0.0;
+    totalWriteTime_ = 0.0;
 }
 
 /**
@@ -90,6 +94,10 @@ void IOApplication::finish()
 
     recordScalar("SPFS Total CPU Phase Delay", totalCpuPhaseTime_);
     recordScalar("SPFS App. Completion Time", applicationCompletionTime_);
+    recordScalar("SPFS Total Bytes Read", totalBytesRead_);
+    recordScalar("SPFS Total Bytes Written", totalBytesWritten_);
+    recordScalar("SPFS Total Read Time", totalReadTime_);
+    recordScalar("SPFS Total Write Time", totalWriteTime_);
 
 }
 
@@ -173,6 +181,13 @@ void IOApplication::handleIOMessage(cMessage* msg)
         case SPFS_MPI_FILE_READ_AT_RESPONSE:
         {
             fileReadDelay_.record(delay);
+
+            // Collect aggregate statistics
+            totalReadTime_ += delay;
+            spfsMPIFileReadAtRequest* readAt =
+                static_cast<spfsMPIFileReadAtRequest*>(parentRequest);
+            DataType* dt = readAt->getDataType();
+            totalBytesRead_ += (readAt->getCount() * dt->getExtent());
             break;
         }
         case SPFS_MPI_FILE_SET_INFO_RESPONSE:
@@ -196,6 +211,13 @@ void IOApplication::handleIOMessage(cMessage* msg)
         case SPFS_MPI_FILE_WRITE_AT_RESPONSE:
         {
             fileWriteDelay_.record(delay);
+
+            // Collect aggregate statistics
+            totalWriteTime_ += delay;
+            spfsMPIFileWriteAtRequest* writeAt =
+                static_cast<spfsMPIFileWriteAtRequest*>(parentRequest);
+            DataType* dt = writeAt->getDataType();
+            totalBytesWritten_ += (writeAt->getCount() * dt->getExtent());
             break;
         }
         default:
@@ -204,10 +226,10 @@ void IOApplication::handleIOMessage(cMessage* msg)
                  << msg->kind() << endl;
             break;
     }
-    
+
     // Delete the originating request
     delete parentRequest;
-    
+
     // Delete the response
     delete msg;
 }
@@ -244,7 +266,7 @@ void IOApplication::handleMessage(cMessage* msg)
         handleMPIMessage(msg);
     }
 
-    bool messageScheduled = scheduleNextMessage(); 
+    bool messageScheduled = scheduleNextMessage();
     if (!messageScheduled)
     {
         cerr << "Rank " << rank_ << " IOApplication Time: " << simTime()

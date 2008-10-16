@@ -89,17 +89,13 @@ module BeowulfCluster
     connections:
 
         for i = 0..numCPUNodes-1 do
-            cpun[i].ethOut --> FastE --> switch.in++;
-            cpun[i].ethIn <-- FastE <-- switch.out++;
-            //cpun[i].ethOut --> GigE --> switch.in++;
-            //cpun[i].ethIn <-- GigE <-- switch.out++;
+            cpun[i].ethOut --> GigE --> switch.in++;
+            cpun[i].ethIn <-- GigE <-- switch.out++;
         endfor;
 
         for i = 0..numIONodes - 1 do
-            ion[i].ethOut --> FastE --> switch.in++;
-            ion[i].ethIn <-- FastE <-- switch.out++;
-            //ion[i].ethOut --> GigE --> switch.in++;
-            //ion[i].ethIn <-- GigE <-- switch.out++;
+            ion[i].ethOut --> GigE --> switch.in++;
+            ion[i].ethIn <-- GigE <-- switch.out++;
         endfor;
 
     display: "o=white"; // affects background
@@ -113,6 +109,10 @@ endnetwork
 
 // Settings for a beowulf cluster similar to adenine
 network adenine: BeowulfCluster
+endnetwork
+
+// Settings for a beowulf cluster similar to Palmetto
+network Palmetto: BeowulfCluster
 endnetwork
 
 

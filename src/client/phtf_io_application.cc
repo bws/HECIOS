@@ -308,40 +308,66 @@ spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
     switch(rec->recordOp())
     {
         case BARRIER:
+        {
             mpiMsg = createBarrierMessage(rec);
             break;
+        }
         case OPEN:
+        {
             mpiMsg = createOpenMessage(rec);
             break;
+        }
         case CLOSE:
+        {
             mpiMsg = createCloseMessage(rec);
             break;
+        }
         case DELETE:
         {
             mpiMsg = createDeleteRequest(rec);
             break;
         }
+        case READ:
+        {
+            mpiMsg = createReadMessage(rec);
+            break;
+        }
         case READ_AT:
         case READ_AT_ALL:
+        {
             mpiMsg = createReadAtMessage(rec);
             break;
+        }
+        case WRITE:
+        {
+            mpiMsg = createWriteMessage(rec);
+            break;
+        }
         case WRITE_AT:
         case WRITE_AT_ALL:
+        {
             mpiMsg = createWriteAtMessage(rec);
             break;
+        }
         case IREAD:
+        {
             mpiMsg = createIReadMessage(rec);
             break;
+        }
         case IWRITE:
+        {
             mpiMsg = createIWriteMessage(rec);
             break;
+        }
         default:
+        {
             cerr << __FILE__ << ":" << __LINE__ << ":"
                  << "ERROR: Invalid PHTF Record Op: " << rec->recordOp()
                  << " -> " << rec->recordStr()
                  << endl;
             assert(false);
             break;
+        }
     }
 
     return mpiMsg;
@@ -394,24 +420,34 @@ void PHTFIOApplication::performSeekProcessing(PHTFEventRecord* seekRecord)
     string hstr = seekRecord->paramAt(0);
     long handle = strtol(hstr.c_str(), NULL, 16);
 
-    string ostr = seekRecord->paramAt(1);
-    long offset = strtol(ostr.c_str(), NULL, 16);
-
-    string wstr = seekRecord->paramAt(3);
-    int whence = (int)strtol(wstr.c_str(), NULL, 0);
-
+    size_t offset = seekRecord->paramAsSizeT(1);
+    int whence = seekRecord->paramAsSizeT(2);
     FileDescriptor* fd = getDescriptor(handle);
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << " Seek: " << " " << offset << " " << whence << endl;
 
-    if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_SET").c_str(), 0, 10))
+    // Determine the seek whence values
+    int MPI_SEEK_SET, MPI_SEEK_CUR, MPI_SEEK_END;
+    PHTFTrace* trace = PHTFTrace::getInstance(dirStr);
+    istringstream seekSetStream(trace->getFs()->consts("MPI_SEEK_SET"));
+    seekSetStream >> MPI_SEEK_SET;
+    istringstream seekCurStream(trace->getFs()->consts("MPI_SEEK_CUR"));
+    seekCurStream >> MPI_SEEK_CUR;
+    istringstream seekEndStream(trace->getFs()->consts("MPI_SEEK_END"));
+    seekEndStream >> MPI_SEEK_END;
+
+    // Adjust the file pointer
+    if (MPI_SEEK_SET == whence)
     {
         fd->setFilePointer(offset);
     }
-    else if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_CUR").c_str(), 0, 10))
+    else if (MPI_SEEK_CUR == whence)
     {
         fd->moveFilePointer(offset);
     }
-    else if(whence == (int)strtol(PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_SEEK_END").c_str(), 0, 10))
+    else
     {
+        assert(MPI_SEEK_END == whence);
         fd->setFilePointer(fd->getMetaData()->size + offset);
     }
 }
@@ -480,7 +516,7 @@ void PHTFIOApplication::performCreateCommunicator(string newcomm)
     string aliasComm = getAlias(newcomm);
     Communicator comm = (Communicator)strtol(aliasComm.c_str(), NULL, 0);
 
-    cout << " alias " << hex << comm;
+    cout << " alias "  << comm;
 
     // create only if communicator not yet exist
     if(!CommMan::instance().exists(comm))
@@ -562,6 +598,8 @@ void PHTFIOApplication::performCreateDataType(string typeId)
 
 DataType * PHTFIOApplication::getDataTypeById(std::string typeId)
 {
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Looking up datatype by id: " << typeId << endl;
     stringstream ss("");
     ss << typeId << "@" << rec_id_;
 
@@ -934,7 +972,8 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadMessage(
     read->setOffset(fd->getFilePointer());
     read->setReqId(-1);
 
-    fd->moveFilePointer(count);
+    // Increment the file pointer
+    fd->moveFilePointer(count * dataType->getExtent());
 
     return read;
 }
@@ -984,12 +1023,13 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteAtMessage(
 spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
     const PHTFEventRecord* writeRecord)
 {
-    string ctstr = writeRecord->paramAt(2);
-    long count = strtol(ctstr.c_str(), NULL, 16);
-
     string hstr = writeRecord->paramAt(0);
     long handle = strtol(hstr.c_str(), NULL, 16);
     FileDescriptor* fd = getDescriptor(handle);
+
+    size_t count = writeRecord->paramAsSizeT(2);
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Count: " << count << endl;
 
     string dtstr = writeRecord->paramAt(3);
     dtstr = getAlias(dtstr);
@@ -1004,7 +1044,8 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
     write->setReqId(-1);
     write->setFileDes(fd);
 
-    fd->moveFilePointer(count);
+    // Increment the file pointer
+    fd->moveFilePointer(count * dataType->getExtent());
 
     return write;
 }
