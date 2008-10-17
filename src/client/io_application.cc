@@ -96,9 +96,17 @@ void IOApplication::finish()
     recordScalar("SPFS App. Completion Time", applicationCompletionTime_);
     recordScalar("SPFS Total Bytes Read", totalBytesRead_);
     recordScalar("SPFS Total Bytes Written", totalBytesWritten_);
-    recordScalar("SPFS Total Read Time", totalReadTime_);
-    recordScalar("SPFS Total Write Time", totalWriteTime_);
+    recordScalar("SPFS Total Read Time (s)", totalReadTime_);
+    recordScalar("SPFS Total Write Time (s)", totalWriteTime_);
 
+    double readBandwidth = totalBytesRead_ / 1048576 / totalReadTime_;
+    recordScalar("SPFS Total Read Bandwidth", readBandwidth);
+
+    double writeBandwidth = totalBytesWritten_ / 1048576 / totalWriteTime_;
+    recordScalar("SPFS Total Write Bandwidth", writeBandwidth);
+
+    cerr << "Total Read Bandwdith : " << readBandwidth << " MB/s" << endl;
+    cerr << "Total Write Bandwdith : " << writeBandwidth << " MB/s" << endl;
 }
 
 void IOApplication::handleSelfMessage(cMessage* msg)

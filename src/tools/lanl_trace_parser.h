@@ -77,7 +77,7 @@ private:
     std::string nextStr_;
     std::string retdur_;
     std::ifstream ifs_;
-    std::string context_;
+    std::string currentEventPtrAddr_;
 
     std::string datatypeparams;
     std::string newdatatype;

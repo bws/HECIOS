@@ -173,13 +173,7 @@ int PHTFEventRecord::paramAsDescriptor(size_t paramindex, const PHTFEvent & even
     ss << hpt << "@" << recordId();
 
     string hstr = event.memValue("Pointer", ss.str());
-
-    // TODO: comeup with better error handling
-    if(hstr == "")
-    {
-        abort();
-    }
-
+    assert(0 != hstr.size());
     int fileId = strtol(hstr.c_str(), NULL, 16);
 
     return fileId;

@@ -670,7 +670,7 @@ void LanlTraceParser::enterProcL()
         re.recordOp() == WRITE_AT_ALL ||
         re.recordOp() == READ_AT_ALL)
     {
-        event->memValue("Pointer", context_, re.paramAt(0));
+        event->memValue("Pointer", currentEventPtrAddr_, re.paramAt(0));
     }
 }
 
@@ -700,6 +700,9 @@ void LanlTraceParser::enterProcR()
 
     // Add the file
     fs->addFile(filename, oss.str());
+
+    // Set the address of the pointer to the handle
+    currentEventPtrAddr_ = createContext(re.paramAt(4), currentEventCount_);
 }
 
 void LanlTraceParser::exitProcR()
