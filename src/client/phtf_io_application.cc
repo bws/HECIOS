@@ -391,17 +391,14 @@ void PHTFIOApplication::populateFileSystem()
 void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
                                               int& outCommunicatorId)
 {
+    // Extract the filename
+    Filename openFilename(openRecord->paramAt(1));
+
     // Extract the descriptor number from the event record
-
-    int fileId = openRecord->
-        paramAsDescriptor(4, *phtfEvent_);
-
-    // Extract the file name from the event record
-    string fpt = openRecord->paramAsFilename(1, *phtfEvent_);
-    Filename fn(fpt);
+    int fileId = openRecord->paramAsDescriptor(4, *phtfEvent_);
 
     // Construct a file descriptor for use in simulaiton
-    FileDescriptor* fd = FileBuilder::instance().getDescriptor(fn);
+    FileDescriptor* fd = FileBuilder::instance().getDescriptor(openFilename);
     assert(0 != fd);
 
     // Associate the file id with a file descriptor

@@ -218,9 +218,10 @@ public:
     void close();
 
     /** Extract a record from the event file */
-    PHTFEvent & operator >> (PHTFEventRecord & rec);
+    PHTFEvent& operator>>(PHTFEventRecord& rec);
+
     /** Write a record into the event file */
-    PHTFEvent & operator << (const PHTFEventRecord & rec);
+    PHTFEvent& operator<<(const PHTFEventRecord& rec);
 
     std::string memValue(std::string type, std::string pointer) const;
     void memValue(std::string type, std::string pointer, std::string value);

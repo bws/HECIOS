@@ -33,22 +33,20 @@ PHTFTrace* PHTFTrace::_trace = NULL;
 
 
 PHTFEventRecord::PHTFEventRecord(string recordstr)
+    : _recordstr(recordstr)
 {
-    recordStr(recordstr);
-
     buildRecordFields();
     buildRecordStr();
 }
 
 PHTFEventRecord::PHTFEventRecord(long reid, PHTFOperation op, double st, double du, long ret, std::vector <std::string> paras)
+    : _id(reid),
+      _opid(op),
+      _sttime(st),
+      _duration(du),
+      _ret(ret)
 {
-    recordId(reid);
-    recordOp(op);
-    startTime(st);
-    duration(du);
-    retValue(ret);
     params(paras);
-
     buildRecordStr();
 }
 
@@ -217,9 +215,9 @@ std::string PHTFEventRecord::params()
     stringstream ss;
     vector<string>::iterator it;
     for(it = _parameters.begin(); it < _parameters.end(); it ++)
-        {
-            ss << *it << " ";
-        }
+    {
+        ss << *it << " ";
+    }
     string str = ss.str();
     str.erase(str.end() - 1);
     return str;
@@ -345,16 +343,15 @@ std::string PHTFEventRecord::opToStr(PHTFOperation opid)
 /** Build the record string */
 void PHTFEventRecord::buildRecordStr()
 {
-    stringstream ss;
-
+    ostringstream ss;
     ss << _id << " " << opToStr(_opid) << " " << _sttime << " "
        << _duration << " " << _ret << " ";
 
     vector<string>::iterator it;
     for(it = _parameters.begin(); it < _parameters.end(); it ++)
-        {
-            ss << *it << " ";
-        }
+    {
+        ss << *it << " ";
+    }
     _recordstr = ss.str();
     _recordstr.erase(_recordstr.end() - 1);
 }
@@ -498,7 +495,7 @@ void PHTFEvent::close()
 }
 
 /** Extract a record from the event file */
-PHTFEvent & PHTFEvent::operator >> (PHTFEventRecord & rec)
+PHTFEvent& PHTFEvent::operator>>(PHTFEventRecord& rec)
 {
     string line;
 
@@ -511,7 +508,7 @@ PHTFEvent & PHTFEvent::operator >> (PHTFEventRecord & rec)
 }
 
 /** Write a record into the event file */
-PHTFEvent & PHTFEvent::operator << (const PHTFEventRecord & rec)
+PHTFEvent& PHTFEvent::operator<<(const PHTFEventRecord & rec)
 {
     if(_ofs.is_open())
     {
