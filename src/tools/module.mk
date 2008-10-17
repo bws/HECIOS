@@ -4,4 +4,4 @@
 DIR := src/tools
 
 TOOLS_SRC += $(DIR)/lanl_trace_parser.cc \
-             $(DIR)/parser_sm.cc 
+             $(DIR)/lanl_trace_parser_main.cc 

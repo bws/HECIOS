@@ -175,11 +175,13 @@ SIM_MSG_OBJS := $(patsubst %.msg,%_m.o, $(filter %.msg, $(SIM_SRC)))
 SIM_NED_OUTPUT := $(patsubst %.ned,%_n.cc, $(filter %.ned, $(SIM_SRC)))
 SIM_NED_OBJS := $(patsubst %.ned,%_n.o, $(filter %.ned, $(SIM_SRC)))
 SIM_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_SRC)))
+TOOLS_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(TOOLS_SRC)))
 
 #
 # Source code dependency generation
 #
 SIM_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_SRC)))
+TOOLS_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(TOOLS_SRC)))
 
 #
 # Include dependency makefiles if building source target
@@ -187,6 +189,7 @@ SIM_DEPENDS := $(patsubst %.cc, %.d, $(filter %.cc, $(SIM_SRC)))
 DEPFILTER_MAKECMDGOALS := $(filter %clean %doc, $(MAKECMDGOALS))
 ifeq ($(strip $(DEPFILTER_MAKECMDGOALS)),)
 -include $(SIM_DEPENDS)
+-include $(TOOLS_DEPENDS)
 endif
 
 #
@@ -271,7 +274,7 @@ configfile: $(BUILD_DIR)/omnetpp.ini
 #
 # Incremental build (useful target for IDE auto-save builds)
 #
-incremental: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) tests_incremental
+incremental: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) $(TOOLS_OBJS) tests_incremental
 
 .PHONY: incremental
 

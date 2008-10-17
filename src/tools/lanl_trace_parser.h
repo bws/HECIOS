@@ -35,7 +35,7 @@ using namespace std;
     }while(current_st_ < IDLE                   \
            || current_act_ != ENTER)
 
-class PaserSm
+class LanlTraceParser
 {
 private:
     enum state
@@ -92,8 +92,8 @@ private:
     regmatch_t regMatches[MAXPARA];
 
 public:
-    PaserSm(string fn, string dpath, string rank);
-    ~PaserSm(){delete event;delete fs;};
+    LanlTraceParser(string fn, string dpath, string rank);
+    ~LanlTraceParser(){delete event;delete fs;};
 
     void startProc();
 

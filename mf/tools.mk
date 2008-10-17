@@ -60,7 +60,7 @@ NEDFLAGS += $(patsubst %, -I%, $(INCLUDES))
 #
 TOOLS_LANL_TRACE_PARSER_OBJS = $(SRC_DIR)/common/phtf_io_trace.o \
 								$(SRC_DIR)/tools/lanl_trace_parser.o \
-								$(SRC_DIR)/tools/parser_sm.o \
+								$(SRC_DIR)/tools/lanl_trace_parser_main.o
 
 $(BIN_DIR)/lanl_trace_parser: $(TOOLS_LANL_TRACE_PARSER_OBJS)
 	@mkdir -p $(BIN_DIR)
