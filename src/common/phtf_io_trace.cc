@@ -19,6 +19,7 @@
 //
 #include <cassert>
 #include <cstdlib>
+#include <iomanip>
 #include "phtf_io_trace.h"
 
 using namespace std;
@@ -138,10 +139,28 @@ void PHTFEventRecord::paraNum(long paranum)
     _parameters.resize(paranum);
 }
 
+/** Set the parameter at position paraindex */
+void PHTFEventRecord::paramAt(size_t paraindex, std::string parastr)
+{
+    if(paraindex >= paraNum())
+        _parameters.resize(paraindex + 1);
+    _parameters.at(paraindex) = parastr;
+}
+
 string PHTFEventRecord::paramAt(size_t idx) const
 {
     assert(idx < paraNum());
     return _parameters.at(idx);
+}
+
+uint64_t PHTFEventRecord::paramAsAddress(size_t idx) const
+{
+    assert(idx < paraNum());
+    string s = _parameters.at(idx);
+    istringstream iss(s);
+    uint64_t addr;
+    iss >> setbase(16) >> addr;
+    return addr;
 }
 
 size_t PHTFEventRecord::paramAsSizeT(size_t idx) const
@@ -153,14 +172,6 @@ size_t PHTFEventRecord::paramAsSizeT(size_t idx) const
     iss >> param;
     assert(false == iss.fail());
     return param;
-}
-
-/** Set the parameter at position paraindex */
-void PHTFEventRecord::paramAt(size_t paraindex, std::string parastr)
-{
-    if(paraindex >= paraNum())
-        _parameters.resize(paraindex + 1);
-    _parameters.at(paraindex) = parastr;
 }
 
 /** @return The paramindex-th parameter as a file descriptor */

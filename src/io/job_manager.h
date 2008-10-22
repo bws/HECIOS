@@ -52,7 +52,7 @@ public:
     /** @return the flow for flowId or null if no such flow exists */
     DataFlow* lookupDataFlow(int flowId) const;
 
-    /** Allow a data flow to subscribe to messages from other flows */ 
+    /** Allow a data flow to subscribe to messages from other flows */
     void subscribeDataFlowToTag(DataFlow* flow, int flowTag);
 
     /** @return the data flow subscribed to the flow tag */
@@ -60,12 +60,12 @@ public:
 
     /** Remove tag subscriptions for flow tag*/
     void removeSubscriptionTag(int flowTag);
-    
+
     /** Remove tag subscriptions for flow */
     void unsubscribeDataFlow(DataFlow* flow);
-    
+
 protected:
-    
+
     /** Implementation of initialize */
     virtual void initialize();
 
@@ -79,16 +79,16 @@ private:
 
     /** Handle messages arriving from self */
     void handleSelfMessage(cMessage* msg);
-    
+
     /** Handle messages arriving from the network */
     void handleNetworkMessage(cMessage* msg);
-    
+
     /** Handle messages arriving from the parallel file system */
     void handlePFSMessage(cMessage* msg);
-    
+
     /** Handle messages arriving from the storage system */
     void handleStorageMessage(cMessage* msg);
-    
+
     /** Gate ids */
     int directInGateId_;
     int netInGateId_;
@@ -103,12 +103,6 @@ private:
 
     /** The size of flow buffers */
     FSSize flowBufferSize_;
-    
-    /** Map of flows by flow id */
-    //std::map<int, DataFlow*> dataFlowsById_;
-
-    /** Map of flows by subscribed BMI tags */
-    //std::map<int, DataFlow*> dataFlowsByBMITag_;
 };
 
 #endif

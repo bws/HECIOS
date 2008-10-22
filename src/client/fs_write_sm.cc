@@ -248,9 +248,16 @@ void FSWriteSM::countCompletion(spfsWriteCompletionResponse* completionResponse)
 
 bool FSWriteSM::isWriteComplete()
 {
-    return (0 == writeRequest_->getRemainingResponses())
-        && (0 == writeRequest_->getRemainingFlows())
-        && (0 == writeRequest_->getRemainingCompletions());
+    bool isComplete = (0 == writeRequest_->getRemainingResponses())
+                        && (0 == writeRequest_->getRemainingFlows())
+                        && (0 == writeRequest_->getRemainingCompletions());
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Write Completion Status: " << isComplete << endl
+    //     << "\tRemaining Resps: " << writeRequest_->getRemainingResponses() << endl
+    //     << "\tRemaining Flows: " << writeRequest_->getRemainingFlows() << endl
+    //     << "\tRemaining Completions: " << writeRequest_->getRemainingCompletions() << endl;
+
+    return isComplete;
 }
 
 /*

@@ -180,7 +180,7 @@ void JobManager::handlePFSMessage(cMessage* msg)
 
         // Subscribe the flow to a BMI tag
         subscribeDataFlowToTag(flow, flowStart->getInboundBmiTag());
-        
+
         // Start the flow
         flow->initialize();
     }
@@ -199,7 +199,7 @@ void JobManager::handleStorageMessage(cMessage* msg)
 {
     assert(0 != msg);
     assert(0 != msg->contextPointer());
-    
+
     // Route message to the flow or PFS depending on its originator
     cMessage* request = static_cast<cMessage*>(msg->contextPointer());
     cMessage* origReq = static_cast<cMessage*>(request->contextPointer());

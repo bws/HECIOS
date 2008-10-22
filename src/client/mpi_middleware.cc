@@ -52,7 +52,7 @@ void MpiMiddleware::completeCommunicationCB(spfsMPIRequest* request)
     // Do some Omnet Magic to allow the simulation to resume right here
     Enter_Method("Complete MPI Communication");
     take(request);
-    
+
     spfsMPIResponse* response = 0;
 
     // Create the response based on the message kind
@@ -154,6 +154,7 @@ void MpiMiddleware::sendApp(cMessage *msg)
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

@@ -125,9 +125,6 @@ public:
     /** Set the return value */
     void retValue(long retvalue);
 
-    /** @return The number of parameters */
-    std::size_t paraNum() const;
-
     /**
      * Set the number of parameters
      * Only used with paramAt()
@@ -135,14 +132,20 @@ public:
      */
     void paraNum(long paranum);
 
+    /** Set the parameter at position paraindex */
+    void paramAt(std::size_t idx, std::string parastr);
+
+    /** @return The number of parameters */
+    std::size_t paraNum() const;
+
     /** @return The paraindex-th parameter */
     std::string paramAt(std::size_t idx) const;
 
+    /** @return The paramindex-th parameter as a base16 address */
+    uint64_t paramAsAddress(std::size_t idx) const;
+
     /** @return The paramindex-th parameter as a size_t */
     std::size_t paramAsSizeT(std::size_t idx) const;
-
-    /** Set the parameter at position paraindex */
-    void paramAt(std::size_t idx, std::string parastr);
 
     /** @return The paramindex-th parameter as a file descriptor */
     int paramAsDescriptor(std::size_t paramindex, const PHTFEvent & event) const;

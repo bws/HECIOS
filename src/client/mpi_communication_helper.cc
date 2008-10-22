@@ -43,7 +43,7 @@ void MPICommunicationHelper::performCommunication(
     assert(0 != commUser);
     assert(0 != request);
 
-    // FIXME: This implementation is bogus.  It immediately completes all
+    // TODO: This implementation is bogus.  It immediately completes all
     // MPI communications
     commUser->completeCommunicationCB(request);
 }
@@ -63,6 +63,9 @@ void MPICommunicationHelper::performCollective(
     {
         numParticipants = 1 + iter->second;
     }
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Coll Size: " << CommMan::instance().commSize(commId)
+         << " Parts Arrived: " << numParticipants << endl;
 
     // Update the number of participants
     numParticipantsByCommunicator_[commId] = numParticipants;

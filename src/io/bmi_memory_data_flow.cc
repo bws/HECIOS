@@ -69,6 +69,9 @@ void BMIMemoryDataFlow::processDataFlowMessage(cMessage* msg)
         sendPushAck(pushRequest);
         addNetworkProgress(pushRequest->getDataSize());
         addStorageProgress(pushRequest->getDataSize());
+
+        // Perform data collection for flow progress
+        collectTransferFromNetworkDelay(pushRequest);
     }
     else if (0 != dynamic_cast<spfsBMIPushDataResponse*>(msg))
     {
@@ -76,7 +79,10 @@ void BMIMemoryDataFlow::processDataFlowMessage(cMessage* msg)
             static_cast<spfsBMIPushDataResponse*>(msg);
         addNetworkProgress(pushResp->getReceivedSize());
         addStorageProgress(pushResp->getReceivedSize());
-        
+
+        // Perform data collection for flow progress
+        collectTransferToNetworkDelay(pushResp);
+
         // If data remains to be sent, send it
         FSSize bufSize = min(getBufferSize(), getSize() - amountPushed_);
         if (0 != bufSize)
@@ -84,7 +90,7 @@ void BMIMemoryDataFlow::processDataFlowMessage(cMessage* msg)
             pushDataToNetwork(bufSize);
         }
     }
-    
+
     // If the flow is complete, send the finish message
     if (isComplete())
     {
@@ -118,7 +124,7 @@ void BMIMemoryDataFlow::pushDataToNetwork(FSSize pushSize)
     pushRequest->setFlowSize(getSize());
     pushRequest->setDataSize(pushSize);
     pushRequest->setByteLength(pushSize);
-    
+
     // Send the push request
     //cerr << "Pushing client data: " << pushSize << endl;
     module_->send(pushRequest, "netOut");
@@ -153,7 +159,7 @@ void BMIMemoryDataFlow::sendPushAck(spfsBMIPushDataRequest* request)
     assert(0 != partner);
     cModule* partnerModule = partner->parentModule();
     assert(0 != partnerModule);
-    
+
     // Send the acknowledgement directly to module
     parentModule()->sendDirect(pushResponse, 0.0, partnerModule, "directIn");
 }

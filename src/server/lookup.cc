@@ -148,8 +148,9 @@ Lookup::LookupStatus Lookup::processLookupResult()
     FSMetaData* nextMeta = FileBuilder::instance().getMetaData(nextParent);
 
     // Return the status of the next path segment
-    cerr << "Server resolved segs: " << resolvedSegments
-         << " Name segs: " << fullName.getNumPathSegments() << endl;
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Server resolved segs: " << resolvedSegments
+    //     << " Name segs: " << fullName.getNumPathSegments() << endl;
     LookupStatus status = INVALID_LOOKUP_STATUS;
     if (0 == nextMeta)
     {

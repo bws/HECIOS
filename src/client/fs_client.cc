@@ -499,6 +499,8 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_FILE_OPEN_REQUEST:
         {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "Begin client open operation." << endl;
             FSOpenOperation open(this,
                                  static_cast<spfsMPIFileOpenRequest*>(request),
                                  useCollectiveCreate_);

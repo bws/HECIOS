@@ -90,8 +90,7 @@ void IOApplication::finish()
         delete iter->second;
     }
 
-    // Reset the rank generator to 0
-
+    // Record simulation statistics
     recordScalar("SPFS Total CPU Phase Delay", totalCpuPhaseTime_);
     recordScalar("SPFS App. Completion Time", applicationCompletionTime_);
     recordScalar("SPFS Total Bytes Read", totalBytesRead_);
@@ -99,14 +98,42 @@ void IOApplication::finish()
     recordScalar("SPFS Total Read Time (s)", totalReadTime_);
     recordScalar("SPFS Total Write Time (s)", totalWriteTime_);
 
-    double readBandwidth = totalBytesRead_ / 1048576 / totalReadTime_;
+    double readBandwidth = totalBytesRead_ / 1.0e6 / totalReadTime_;
     recordScalar("SPFS Total Read Bandwidth", readBandwidth);
 
-    double writeBandwidth = totalBytesWritten_ / 1048576 / totalWriteTime_;
+    double writeBandwidth = totalBytesWritten_ / 1.0e6 / totalWriteTime_;
     recordScalar("SPFS Total Write Bandwidth", writeBandwidth);
 
+    // Write some out to the terminal for easy verification
     cerr << "Total Read Bandwdith : " << readBandwidth << " MB/s" << endl;
     cerr << "Total Write Bandwdith : " << writeBandwidth << " MB/s" << endl;
+}
+
+/**
+ * Handle MPI-IO Response messages
+ */
+void IOApplication::handleMessage(cMessage* msg)
+{
+    if (msg->isSelfMessage())
+    {
+        handleSelfMessage(msg);
+    }
+    else if (msg->arrivalGateId() == ioInGate_)
+    {
+        handleIOMessage(msg);
+    }
+    else if (msg->arrivalGateId() == mpiInGate_)
+    {
+        handleMPIMessage(msg);
+    }
+
+    bool messageScheduled = scheduleNextMessage();
+    if (!messageScheduled)
+    {
+        cerr << "Rank " << rank_ << " IOApplication Time: " << simTime()
+             << ": No more messages to post or blocked." << endl;
+        applicationCompletionTime_ = simTime();
+    }
 }
 
 void IOApplication::handleSelfMessage(cMessage* msg)
@@ -247,40 +274,6 @@ void IOApplication::handleMPIMessage(cMessage* msg)
     cerr << __FILE__ << ":" << __LINE__ << ":"
          << "This default implementation must fail" << endl;
     assert(false);
-}
-
-//void IOApplication::initRank()
-//{
-//    cerr << "init ";
-//    rank_ = CommMan::instance().joinComm(MPI_COMM_WORLD, 0);
-//    cerr << "rank: " << rank_ << endl;
-//}
-
-/**
- * Handle MPI-IO Response messages
- */
-void IOApplication::handleMessage(cMessage* msg)
-{
-    if (msg->isSelfMessage())
-    {
-        handleSelfMessage(msg);
-    }
-    else if (msg->arrivalGateId() == ioInGate_)
-    {
-        handleIOMessage(msg);
-    }
-    else if (msg->arrivalGateId() == mpiInGate_)
-    {
-        handleMPIMessage(msg);
-    }
-
-    bool messageScheduled = scheduleNextMessage();
-    if (!messageScheduled)
-    {
-        cerr << "Rank " << rank_ << " IOApplication Time: " << simTime()
-             << ": No more messages to post or blocked." << endl;
-        applicationCompletionTime_ = simTime();
-    }
 }
 
 void IOApplication::setDescriptor(int fileId, FileDescriptor* descriptor)

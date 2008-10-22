@@ -3,9 +3,6 @@
 // Abstract interface for all I/O applications
 //
 simple IOApplication
-    parameters:
-        numTraceProcs : const;
-
     gates:
         in: ioIn, mpiIn;
         out: ioOut, mpiOut;

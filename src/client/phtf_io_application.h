@@ -59,15 +59,15 @@ protected:
     /** Override handleMessage to handle Open processing */
     virtual void handleMessage(cMessage* msg);
 
+    /** Override ioApplication message handler */
+    virtual void handleIOMessage(cMessage* msg);
+    virtual void handleMPIMessage(cMessage* msg);
+
     /** Override ioApplication scheduleNextMessage() */
     virtual bool scheduleNextMessage();
 
     /** Create a cMessage from a trace record */
     spfsMPIRequest* createRequest(PHTFEventRecord* rec);
-
-    /** Override ioApplication message handler */
-    virtual void handleIOMessage(cMessage* msg);
-    virtual void handleMPIMessage(cMessage* msg);
 
 private:
     /** Join the correct communicators on rank change */
@@ -84,7 +84,7 @@ private:
 
     /** Perform the application processing to do an open */
     void performOpenProcessing(PHTFEventRecord* openRecord,
-                               int& outCommunicatorId);
+                               uint64_t& outCommunicatorId);
 
     /** Perform the application processing to simulate a seek */
     void performSeekProcessing(PHTFEventRecord* seekRecord);

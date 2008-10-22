@@ -48,13 +48,13 @@ public:
 
     /** TODO */
     static const int DATAFILE_ATTRIBUTES_BYTE_SIZE = 16;
-    
+
     /** @return the default size of metadata/attributes */
     static std::size_t getDefaultAttrSize();
 
     /** @return the size of a directory entry */
     static std::size_t getDirectoryEntrySize();
-    
+
     /** Set the default size of metadata/attributes */
     static void setDefaultAttrSize(std::size_t attrSize);
 
@@ -63,79 +63,79 @@ public:
 
     /** @return the server processing delay for changing a directory entry */
     static simtime_t changeDirEntProcessingDelay();
-    
+
     /** Set the create data file processing delay */
     static void setCreateDFileProcessingDelay(simtime_t createDFileDelay);
 
     /** @return the server processing delay for creating a data object */
     static simtime_t createDFileProcessingDelay();
-    
+
     /** Set the create directory processing delay */
     static void setCreateDirectoryProcessingDelay(simtime_t createDirDelay);
 
     /** @return the server processing delay for creating a directory */
     static simtime_t createDirectoryProcessingDelay();
-    
+
     /** Set the create metadata processing delay */
     static void setCreateMetadataProcessingDelay(simtime_t createMetadataDelay);
 
     /** @return the server processing delay for creating a metadata object */
     static simtime_t createMetadataProcessingDelay();
-    
+
     /** Set the create directory entry processing delay */
     static void setCreateDirEntProcessingDelay(simtime_t createDirEntDelay);
 
     /** @return the server processing delay for creating a directory entry */
     static simtime_t createDirEntProcessingDelay();
-    
+
     /** Set the attribute retrieval processing delay */
     static void setGetAttrProcessingDelay(simtime_t getAttrDelay);
 
     /** @return the server processing delay for getting object attributes */
     static simtime_t getAttrProcessingDelay();
-    
+
     /** Set the Path resolution processing delay */
     static void setLookupPathProcessingDelay(simtime_t lookupPathDelay);
 
     /** @return the server processing delay for resolving a path */
     static simtime_t lookupPathProcessingDelay();
-    
+
     /** Set the read directory processing delay */
     static void setReadDirProcessingDelay(simtime_t readDirDelay);
 
     /** @return the server processing delay for reading directory entries */
     static simtime_t readDirProcessingDelay();
-    
+
     /** Set the remove directory entry processing delay */
     static void setRemoveDirEntProcessingDelay(simtime_t removeDirEntDelay);
 
     /** @return the server processing delay for removing a directory entry */
     static simtime_t removeDirEntProcessingDelay();
-    
+
     /** Set the remove metadata processing delay */
     static void setRemoveMetaProcessingDelay(simtime_t removeMetaDelay);
 
     /** @return the server processing delay for removing metadata */
     static simtime_t removeMetaProcessingDelay();
-    
+
     /** Set the remove object processing delay */
     static void setRemoveObjectProcessingDelay(simtime_t removeObjectDelay);
 
     /** @return the server processing delay for removing an object */
     static simtime_t removeObjectProcessingDelay();
-    
+
     /** Set the attributes set processing delay */
     static void setSetAttrProcessingDelay(simtime_t setAttrDelay);
 
     /** @return the server processing delay for setting object attributes */
     static simtime_t setAttrProcessingDelay();
-    
+
     /** Set the server overhead delay */
     static void setServerOverheadDelay(simtime_t serverOverheadDelay);
 
     /** Set disk data collection on or off */
     static void setCollectDiskData(bool collectFlag);
-    
+
     /** Constructor */
     FSServer();
 
@@ -165,46 +165,46 @@ public:
 
     /** Record that a change dir ent request has arrived */
     void recordChangeDirEnt();
-    
+
     /** Record that a collective create request has arrived */
     void recordCollectiveCreate();
-    
+
     /** Record that a collective get attributes request has arrived */
     void recordCollectiveGetAttr();
-    
+
     /** Record that a collective remove request has arrived */
     void recordCollectiveRemove();
-    
+
     /** Record that a create dirent request has arrived */
     void recordCreateDirEnt();
-    
+
     /** Record that a create object request has arrived */
     void recordCreateObject();
-    
+
     /** Record that a get attributes request has arrived */
     void recordGetAttr();
-    
+
     /** Record that a lookup path request has arrived */
     void recordLookup();
-    
+
     /** Record that a read directory request has arrived */
     void recordReadDir();
-    
+
     /** Record that a read request has arrived */
     void recordRead();
-    
+
     /** Record that a remove directory entry request has arrived */
     void recordRemoveDirEnt();
-    
+
     /** Record that a remove object request has arrived */
     void recordRemoveObject();
-    
+
     /** Record that a set attributes dirent request has arrived */
     void recordSetAttr();
-    
+
     /** Record that a write request has arrived */
     void recordWrite();
-    
+
     /** Record the disk delay for changing a directory entry */
     void recordChangeDirEntDiskDelay(cMessage* fileWriteResponse);
 
@@ -220,9 +220,12 @@ public:
     /** Record the disk delay for performing name lookup */
     void recordLookupDiskDelay(cMessage* fileReadResponse);
 
+    /** Record the disk delay for reading PFS data */
+    void recordReadDirDataDelay(cMessage* fileReadResponse);
+
     /** Record the disk delay for read directory entries */
     void recordReadDirDiskDelay(cMessage* fileReadResponse);
-    
+
     /** Record the disk delay for removing a directory entry */
     void recordRemoveDirEntDiskDelay(cMessage* fileWriteResponse);
 
@@ -231,9 +234,12 @@ public:
 
     /** Record the disk delay for setting attributes */
     void recordSetAttrDiskDelay(cMessage* fileWriteResponse);
-    
+
+    /** Record the disk delay for writing PFS data */
+    void recordWriteDataDiskDelay(cMessage* fileWriteResponse);
+
 protected:
-    
+
     /** Implementation of initialize */
     virtual void initialize();
 
@@ -245,7 +251,7 @@ protected:
 
     /** Process incoming message according to the parent request type */
     void processRequest(spfsRequest* request, cMessage* msg);
-    
+
 private:
     /**
      * @return the difference between the current time and originating req
@@ -279,25 +285,25 @@ private:
 
     /** Read Directory server processing delay */
     static simtime_t readDirProcessingDelay_;
-    
+
     /** Remove Directory Entry server processing delay */
     static simtime_t removeDirEntProcessingDelay_;
-    
+
     /** Remove Object server processing delay */
     static simtime_t removeObjectProcessingDelay_;
-    
+
     /** Remove metadata server processing delay */
     static simtime_t removeMetaProcessingDelay_;
-    
+
     /** Set Attributes server processing delay */
     static simtime_t setAttrProcessingDelay_;
-    
+
     /** Server overhead delay */
     static simtime_t serverOverheadDelay_;
-    
+
     /** Data collection flag */
     static bool collectDiskData_;
-    
+
     /** Unique server number */
     std::size_t serverNumber_;
 
@@ -326,7 +332,7 @@ private:
     double numRemoveObjects_;
     double numSetAttrs_;
     double numWrites_;
-    
+
     /** Data collection vectors */
     cOutVector changeDirEntDiskDelay_;
     cOutVector collectiveCreateDiskDelay_;
@@ -336,10 +342,12 @@ private:
     cOutVector createObjectDiskDelay_;
     cOutVector getAttrDiskDelay_;
     cOutVector lookupDiskDelay_;
+    cOutVector readDataDiskDelay_;
     cOutVector readDirDiskDelay_;
     cOutVector removeDirEntDiskDelay_;
     cOutVector removeObjectDiskDelay_;
     cOutVector setAttrDiskDelay_;
+    cOutVector writeDataDiskDelay_;
 };
 
 #endif

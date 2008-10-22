@@ -41,14 +41,14 @@ public:
 
     /** Constructor */
     BMITcpClient() : BMIEndpoint() {};
-    
+
     /** @return a BMIExpected message encapsulating msg */
     virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg);
-    
+
     /** @return a BMIUnexpected message encapsulating msg */
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
         spfsRequest* request);
-    
+
 protected:
     /** Implementation of initialize */
     virtual void initializeEndpoint();
@@ -58,19 +58,19 @@ protected:
 
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
-    
+
     /** Send a BMIExpected message over the network */
     virtual void sendOverNetwork(spfsBMIExpectedMessage* expectedMsg);
-    
+
     /** Send a BMIExpected message over the network */
     virtual void sendOverNetwork(spfsBMIUnexpectedMessage* unexpectedMsg);
-    
+
     /** Extract the payload from a completed socket message */
     void socketDataArrived(int, void *, cMessage *msg, bool);
 
     /** Handle the arrival of status messages to note when a msg is recvd */
     void socketStatusArrived(int connId, void *yourPtr, TCPStatusInfo *status);
-    
+
 private:
 
     /** @return a socket with an open connection to the server */
@@ -134,7 +134,7 @@ void BMITcpClient::handleMessage(cMessage* msg)
     else
     {
         BMIEndpoint::handleMessage(msg);
-    }    
+    }
 }
 
 spfsBMIUnexpectedMessage* BMITcpClient::createUnexpectedMessage(
@@ -170,7 +170,7 @@ void BMITcpClient::sendOverNetwork(spfsBMIUnexpectedMessage* msg)
 {
     assert(0 != msg);
     assert(0 < msg->byteLength());
-    
+
     // Retrieve the socket for this handle
     TCPSocket* sock = getConnectedSocket(msg->getHandle());
     sock->send(msg);
@@ -213,7 +213,8 @@ void BMITcpClient::socketStatusArrived(int connId,
                                        void *yourPtr,
                                        TCPStatusInfo* status)
 {
-    cerr << "Socket status arrived: State: " << status->state()
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Socket status arrived: State: " << status->state()
          << " Name: " << status->stateName()
          << " MSS: " << status->snd_mss()
          << " Final Ack: " << status->fin_ack_rcvd() << endl;

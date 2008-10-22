@@ -1,7 +1,6 @@
 simple PHTFIOApplication
     parameters:
-        dirPHTF : string,
-        numTraceProcs : const;
+        dirPHTF : string;
 
     gates:
         in: ioIn, mpiIn;

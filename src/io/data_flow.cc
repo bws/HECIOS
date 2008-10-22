@@ -39,7 +39,11 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
       uniqueId_(simulation.getUniqueNumber()),
       flowSize_(0),
       networkTransferTotal_(0),
-      storageTransferTotal_(0)
+      storageTransferTotal_(0),
+      transferFromNetworkDelay_("SPFS Flow from Network Delay"),
+      transferFromStorageDelay_("SPFS Flow from Storage Delay"),
+      transferToNetworkDelay_("SPFS Flow to Network Delay"),
+      transferToStorageDelay_("SPFS Flow to Storage Delay")
 {
     // Create the data type layout
     if (CLIENT_READ == mode_ || CLIENT_WRITE == mode_)
@@ -54,7 +58,7 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
             aggregateSize);
         layout_.addRegion(0, flowSize_);
     }
-    else if (SERVER_READ == mode_ || SERVER_WRITE == mode_) 
+    else if (SERVER_READ == mode_ || SERVER_WRITE == mode_)
     {
         flowSize_ = DataTypeProcessor::createFileLayoutForServer(
             flowStart.getOffset(),
@@ -115,6 +119,42 @@ void DataFlow::addStorageProgress(FSSize dataTransferred)
 {
     storageTransferTotal_ += dataTransferred;
 }
+
+void DataFlow::collectTransferFromNetworkDelay(cMessage* response)
+{
+    simtime_t delay = getRoundTripDelay(response);
+    transferFromNetworkDelay_.record(delay);
+}
+
+void DataFlow::collectTransferFromStorageDelay(cMessage* response)
+{
+    simtime_t delay = getRoundTripDelay(response);
+    transferFromStorageDelay_.record(delay);
+}
+
+void DataFlow::collectTransferToNetworkDelay(cMessage* response)
+{
+    simtime_t delay = getRoundTripDelay(response);
+    transferToNetworkDelay_.record(delay);
+}
+
+void DataFlow::collectTransferToStorageDelay(cMessage* response)
+{
+    simtime_t delay = getRoundTripDelay(response);
+    transferToStorageDelay_.record(delay);
+}
+
+simtime_t DataFlow::getRoundTripDelay(cMessage* response) const
+{
+    // Get the originating request
+    cMessage* request = static_cast<cMessage*>(response->contextPointer());
+
+    // Determine the request response roundtrip time
+    simtime_t reqSendTime = request->creationTime();
+    simtime_t respArriveTime = parentModule_->simTime();
+    return (respArriveTime - reqSendTime);
+}
+
 
 /*
  * Local variables:

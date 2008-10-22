@@ -70,7 +70,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
                     }
                 break;
             }
-    
+
         case FSM_Enter(BCAST):
             {
 //                cerr << mpiMiddleware_->rank() << "enter BCAST" << msg->kind() << endl;
@@ -80,7 +80,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
 
                 break;
             }
-    
+
         case FSM_Exit(BCAST):
             {
 //                cerr << mpiMiddleware_->rank() << "exit BCAST" << msg->kind() << endl;
@@ -90,7 +90,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
                     FSM_Goto(currentState_, RSP);
                 break;
             }
-    
+
         case FSM_Enter(WAIT):
             {
 //                cerr << mpiMiddleware_->rank() << "enter WAIT" << msg->kind() << endl;
@@ -99,7 +99,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
                         enterWait(rsp);
                 break;
             }
-    
+
         case FSM_Exit(WAIT):
             {
 //                cerr << mpiMiddleware_->rank() << "exit WAIT" << rspCounter_ << ":" << childNum_ << endl;
@@ -108,7 +108,7 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
                         FSM_Goto(currentState_, RSP);
                 break;
             }
-    
+
         case FSM_Enter(RSP):
             {
 //                cerr << mpiMiddleware_->rank() << "enter RSP" << msg->kind() << endl;
@@ -124,7 +124,8 @@ void MPIMidBcastSM::handleMessage(cMessage* msg)
             }
         default:
         {
-            cerr << "Dear god what went wrong" << endl;
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "Dear god what went wrong" << endl;
             break;
         }
     }
@@ -140,10 +141,10 @@ void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
                                                 mpiMiddleware_->rank());
 
     parentSM_ = msg->contextPointer();
-    // calculate number of tree levels    
+    // calculate number of tree levels
     int steps = (int)ceil(log(size) / log(2));
     // calculate current level
-    
+
     int mystep = 0;
 
     int dist = (size + rank - parent) % (0x1 << steps);
@@ -152,7 +153,7 @@ void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
         dist >>= 1;
         mystep ++;
     }
-    
+
     if(rank != root)
     {
         // send embed msg to app
@@ -163,7 +164,7 @@ void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
 
     parentWRank_ = CommMan::instance().commTrans(msg->getCommunicator(),
                                                      parent, MPI_COMM_WORLD);
-    
+
     for(int i = mystep; i < steps; i ++)
     {
         // calculate next direct child node rank
@@ -178,10 +179,10 @@ void MPIMidBcastSM::enterBcast(spfsMPIMidBcastRequest* msg)
 
             int child_wrank = CommMan::instance().commTrans(
                 msg->getCommunicator(), child_rank, MPI_COMM_WORLD);
-            
+
             req->setRank(child_wrank);
             req->encapsulate(dupMsg);
-            
+
             // send msg to child
             mpiMiddleware_->sendNet(req);
             childNum_ ++;
@@ -208,7 +209,7 @@ void MPIMidBcastSM::enterRsp()
     {
         // response to parent
         spfsMPIMidBcastResponse *msg = new spfsMPIMidBcastResponse("bcast rsp", SPFS_MPIMID_BCAST_RESPONSE);
-        
+
         spfsMPISendRequest* req = new spfsMPISendRequest();
 
         req->setRank(parentWRank_);
@@ -220,6 +221,7 @@ void MPIMidBcastSM::enterRsp()
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

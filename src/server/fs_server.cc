@@ -220,8 +220,9 @@ FSServer::FSServer()
 
 bool FSServer::handleIsLocal(const FSHandle& handle) const
 {
-    cerr << "Server checking handle locality: " << handle
-         << " Range [" << range_.first << "," << range_.last << "]\n";
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Server checking handle locality: " << handle
+    //     << " Range [" << range_.first << "," << range_.last << "]\n";
     return ((handle >= range_.first) && (handle <= range_.last));
 }
 
@@ -295,7 +296,7 @@ void FSServer::setNumber(size_t number)
     // Set the server's name
     stringstream s;
     s << serverNumber_;
-    serverName_ = "server" + s.str();    
+    serverName_ = "server" + s.str();
 }
 
 void FSServer::handleMessage(cMessage* msg)
@@ -421,7 +422,7 @@ void FSServer::processRequest(spfsRequest* request, cMessage* msg)
                  << "ERROR: Server unable to construct response" << endl
                  << "!!!!!!!!! ------------------------ !!!!!!!!!!!!!" << endl;
         }
-    }    
+    }
 }
 
 void FSServer::send(cMessage* msg)
@@ -528,6 +529,14 @@ void FSServer::recordCreateObjectDiskDelay(cMessage* fileOpenResponse)
     }
 }
 
+//void FSServer::recordReadDataDiskDelay(cMessage* fileReadResponse)
+//{
+//    if (collectDiskData_)
+//    {
+//        readDataDiskDelay_.record(getRoundTripDelay(fileReadResponse));
+//    }
+//}
+
 void FSServer::recordGetAttrDiskDelay(cMessage* fileReadResponse)
 {
     if (collectDiskData_)
@@ -576,11 +585,19 @@ void FSServer::recordSetAttrDiskDelay(cMessage* fileWriteResponse)
     }
 }
 
+//void FSServer::recordWriteDataDiskDelay(cMessage* fileWriteResponse)
+//{
+//    if (collectDiskData_)
+//    {
+//        writeDataDiskDelay_.record(getRoundTripDelay(fileWriteResponse));
+//    }
+//}
+
 simtime_t FSServer::getRoundTripDelay(cMessage* response) const
 {
     // Get the originating request
     cMessage* request = static_cast<cMessage*>(response->contextPointer());
-    
+
     // Determine the request response roundtrip time
     simtime_t reqSendTime = request->creationTime();
     simtime_t respArriveTime = simTime();

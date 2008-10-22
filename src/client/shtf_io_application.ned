@@ -1,7 +1,6 @@
 simple SHTFIOApplication
     parameters:
-        traceFile: string,
-        numTraceProcs : const;
+        traceFile: string;
 
     gates:
         in: ioIn, mpiIn;

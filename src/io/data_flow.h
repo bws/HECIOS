@@ -20,6 +20,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <cstddef>
+#include <omnetpp.h>
 #include "basic_types.h"
 #include "data_type_layout.h"
 class cMessage;
@@ -52,16 +53,16 @@ public:
 
     /** @return the buffer size used for network data flows */
     FSSize getBufferSize() const { return bufferSize_; };
-    
+
     /** @return the size of the flow */
     FSSize getSize() const { return flowSize_; };
-    
+
     /** @return the originating request */
     spfsDataFlowStart* getOriginatingMessage() const;
 
     /** @return the flow mode */
     Mode getMode() const { return mode_; };
-    
+
     /** @return the unique id for this data flow */
     int getUniqueId() const { return uniqueId_; };
 
@@ -73,18 +74,17 @@ public:
 
     /** @return true when the flow network interaction is completed */
     bool isNetworkComplete() const;
-    
+
     /** @return true when the flow storage interaction is completed */
     bool isStorageComplete() const;
-    
+
     /** @return the parent module for this flow */
     cSimpleModule* parentModule() const { return parentModule_; };
-    
+
     /** Handle data flow messages */
     void handleServerMessage(cMessage* msg);
-    
-protected:
 
+protected:
     /** Add dataTransferred to the transfer to the network total */
     void addNetworkProgress(FSSize dataTransferred);
 
@@ -93,16 +93,16 @@ protected:
 
     /** @return the amount of data sent/received from the network */
     FSSize getNetworkProgress() const { return networkTransferTotal_; };
-    
+
     /** @return the amount of data committed/retrieved from storage */
     FSSize getStorageProgress() const { return storageTransferTotal_; };
 
     /** Start the flow of data */
     virtual void startTransfer() = 0;
-    
+
     /** Perform the processing for a data flow message */
     virtual void processDataFlowMessage(cMessage* msg) = 0;
-    
+
     /** Push data to the storage device */
     virtual void pushDataToStorage(FSSize pushSize) = 0;
 
@@ -115,10 +115,27 @@ protected:
     /** Pull data from the network */
     virtual void pullDataFromNetwork(FSSize pullSize) = 0;
 
+    /** Record the transfer from network delay */
+    void collectTransferFromNetworkDelay(cMessage* response);
+
+    /** Record the transfer from storage delay */
+    void collectTransferFromStorageDelay(cMessage* response);
+
+    /** Record the transfer to network delay */
+    void collectTransferToNetworkDelay(cMessage* response);
+
+    /** Record the transfer to storage delay */
+    void collectTransferToStorageDelay(cMessage* response);
+
     /** Memory to disk layout of data being processed */
     DataTypeLayout layout_;
 
 private:
+    /**
+     * @return the time between the origination of the request and
+     *  this response.
+     */
+    simtime_t getRoundTripDelay(cMessage* response) const;
 
     /** The originating flow begin */
     const spfsDataFlowStart* originatingMessage_;
@@ -131,7 +148,7 @@ private:
 
     /** Parent module */
     cSimpleModule* parentModule_;
-    
+
     /** Indicate whether the flow is processing a read or write */
     Mode mode_;
 
@@ -146,6 +163,12 @@ private:
 
     /** Amount of data transferred to/from storage */
     FSSize storageTransferTotal_;
+
+    // Data collection
+    cOutVector transferFromNetworkDelay_;
+    cOutVector transferFromStorageDelay_;
+    cOutVector transferToNetworkDelay_;
+    cOutVector transferToStorageDelay_;
 };
 
 #endif

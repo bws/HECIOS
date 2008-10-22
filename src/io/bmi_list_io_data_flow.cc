@@ -67,7 +67,7 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
             static_cast<spfsBMIPushDataRequest*>(msg);
         FSSize dataSize = pushRequest->getDataSize();
         addNetworkProgress(dataSize);
-        
+
         // Send the data successfully received acknowledgement
         sendPushAck(dataSize);
 
@@ -79,7 +79,7 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         spfsBMIPushDataResponse* pushResp =
             static_cast<spfsBMIPushDataResponse*>(msg);
         addNetworkProgress(pushResp->getReceivedSize());
-        
+
         // Perform the next processing step
         pullDataFromStorage(getBufferSize());
     }
@@ -89,9 +89,12 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
             static_cast<spfsOSFileReadResponse*>(msg);
         FSSize bytesRead = readResp->getBytesRead();
         addStorageProgress(bytesRead);
-        
+
         // Perform the next processing step
         pushDataToNetwork(bytesRead);
+
+        // Perform data collection for flow progress
+        collectTransferFromStorageDelay(readResp);
 
         // Cleanup the originating request
         delete static_cast<cMessage*>(msg->contextPointer());
@@ -102,10 +105,13 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
             static_cast<spfsOSFileWriteResponse*>(msg);
         addStorageProgress(writeResp->getBytesWritten());
 
+        // Perform data collection for flow progress
+        collectTransferToStorageDelay(writeResp);
+
         // Cleanup the originating request
         delete static_cast<cMessage*>(msg->contextPointer());
     }
-    
+
     // If this is the last flow message response, send the final response
     if (isComplete())
     {
@@ -143,7 +149,7 @@ void BMIListIODataFlow::pushDataToNetwork(FSSize pushSize)
     pushRequest->setHandle(startMsg->getHandle());
     pushRequest->setDataSize(pushSize);
     pushRequest->setByteLength(pushSize);
-    
+
     // Send the push request
     module_->send(pushRequest, "netOut");
     //cerr << "Pushing data to network" << endl;
@@ -160,7 +166,7 @@ void BMIListIODataFlow::pullDataFromStorage(FSSize pullSize)
         vector<FileRegion> regions = layout_.getSubRegions(pullSubregionOffset_,
                                                            bufferSize);
         pullSubregionOffset_ += bufferSize;
-        
+
         // Construct the list i/o request
         spfsOSFileReadRequest* fileRead =
             new spfsOSFileReadRequest(0, SPFS_OS_FILE_READ_REQUEST);
@@ -187,7 +193,7 @@ void BMIListIODataFlow::pushDataToStorage(FSSize pushSize)
     vector<FileRegion> regions = layout_.getSubRegions(pushSubregionOffset_,
                                                        pushSize);
     pushSubregionOffset_ += pushSize;
-    
+
     // Construct the list I/O request
     spfsOSFileWriteRequest* fileWrite =
         new spfsOSFileWriteRequest(0, SPFS_OS_FILE_WRITE_REQUEST);
@@ -225,7 +231,7 @@ void BMIListIODataFlow::sendPushAck(FSSize amountRecvd)
     assert(0 != partner);
     cModule* partnerModule = partner->parentModule();
     assert(0 != partnerModule);
-    
+
     // Send the acknowledgement directly to module
     parentModule()->sendDirect(pushResponse, 0.0, partnerModule, "directIn");
 }

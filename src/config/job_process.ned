@@ -30,8 +30,8 @@ module JobProcess
         middlewareCacheType : string;
 
     gates:
-        in: in[];
-        out: out[];
+        in: in;
+        out: out;
 
     submodules:
         mpi: MPIProcess;
@@ -60,15 +60,8 @@ module JobProcess
         fsClient.netIn <-- clientJobManager.pfsOut;
 
         // Connect the client job manager's network ports to the network
-        clientJobManager.netOut -->out++;
-        clientJobManager.netIn <-- in++;
-
-        // Connect the MPI process messaging network to the network
-        // (The connection order here is important)
-        mpi.mpiClientOut --> out++;
-        mpi.mpiClientIn <-- in++;
-        mpi.mpiServerOut --> out++;
-        mpi.mpiServerIn <-- in++;
+        clientJobManager.netOut --> out;
+        clientJobManager.netIn <-- in;
 
     display: "o=white";
 endmodule
