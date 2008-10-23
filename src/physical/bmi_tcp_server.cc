@@ -39,11 +39,11 @@ class BMITcpServer : public BMIEndpoint, public TCPSocket::CallbackInterface
 public:
     /** @return a BMIExpected message encapsulating msg */
     virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg);
-    
+
     /** @return a BMIUnexpected message encapsulating msg */
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
         spfsRequest* request);
-    
+
 protected:
     /** Implementation of initialize */
     virtual void initializeEndpoint();
@@ -56,24 +56,27 @@ protected:
 
     /** Send a BMIExpected message over the network */
     virtual void sendOverNetwork(spfsBMIExpectedMessage* expectedMsg);
-    
+
     /** Send a BMIExpected message over the network */
     virtual void sendOverNetwork(spfsBMIUnexpectedMessage* unexpectedMsg);
-    
+
     /** Extract the domain message from a BMI message */
     virtual cMessage* extractBMIPayload(spfsBMIMessage* bmiMsg);
 
     /** Implementation of TCPSocket::CallbackInterface::socketDataArrived */
     virtual void socketDataArrived(int connId, void* ptr, cMessage* msg,
                                    bool urgent);
-    
+
+    /** Handle the arrival of a socket failure message */
+    virtual void socketFailure(int connId, void *yourPtr, int code);
+
 private:
     /** @return a socket with an open connection to a remote server */
     TCPSocket* getConnectedSocket(const FSHandle& handle);
-    
+
     /** Gate id for tcpIn */
     int tcpInGateId_;
-    
+
     /** Gate id for tcpOut */
     int tcpOutGateId_;
 
@@ -88,9 +91,9 @@ private:
 
     /** Mapping from a messages socketId to the socket */
     std::map<int,TCPSocket*> requestToSocketMap_;
-    
+
     /** Mapping of Server IP's to connected server sockets */
-    IPSocketMap remoteServerConnectionMap_;    
+    IPSocketMap remoteServerConnectionMap_;
 };
 
 // OMNet Registriation Method
@@ -105,11 +108,11 @@ void BMITcpServer::initializeEndpoint()
     // Extract the port information
     listenPort_ = par("listenPort").longValue();
     assert (0 <= listenPort_);
-    
+
     // Setup the socket receive stuff
     listenSocket_.setOutputGate(gate("tcpOut"));
     listenSocket_.setCallbackObject(this, 0);
-    
+
     // Open the server side socket
     listenSocket_.bind(listenPort_);
     listenSocket_.listen();
@@ -143,7 +146,7 @@ void BMITcpServer::handleMessage(cMessage* msg)
     else
     {
         BMIEndpoint::handleMessage(msg);
-    }    
+    }
 }
 
 spfsBMIUnexpectedMessage* BMITcpServer::createUnexpectedMessage(
@@ -166,13 +169,13 @@ spfsBMIExpectedMessage* BMITcpServer::createExpectedMessage(
 
     // Retrieve the connection id used for the originating request
     spfsRequest* req = static_cast<spfsRequest*>(msg->contextPointer());
-    
+
     spfsBMIExpectedMessage* pkt = new spfsBMIExpectedMessage();
     pkt->setConnectionId(req->getBmiConnectionId());
     pkt->encapsulate(msg);
 
     // Add the send overhead
-    msg->addByteLength(BMI_EXPECTED_MSG_BYTES);    
+    msg->addByteLength(BMI_EXPECTED_MSG_BYTES);
     return pkt;
 }
 
@@ -180,12 +183,12 @@ void BMITcpServer::sendOverNetwork(spfsBMIExpectedMessage* msg)
 {
     assert(0 != msg);
     assert(0 < msg->byteLength());
-    
+
     // Find the already open socket
     map<int,TCPSocket*>::iterator pos =
         requestToSocketMap_.find(msg->getConnectionId());
     assert(requestToSocketMap_.end() != pos);
-        
+
     TCPSocket* responseSocket = pos->second;
     assert(0 != responseSocket);
 
@@ -213,11 +216,11 @@ cMessage* BMITcpServer::extractBMIPayload(spfsBMIMessage* bmiMsg)
 
     // Find the socket for this message
     TCPSocket* responseSocket = socketMap_.findSocketFor(bmiMsg);
-    
+
     // Decapsulate the payload and call handleMessage with the payload
     cMessage* payload = bmiMsg->decapsulate();
     assert(0 != payload);
-    
+
     // If this is a request, store the socket for use during the response
     if (spfsRequest* request = dynamic_cast<spfsRequest*>(payload))
     {
@@ -261,9 +264,16 @@ void BMITcpServer::socketDataArrived(int, void *, cMessage *msg, bool)
     BMIEndpoint::handleMessage(msg);
 }
 
+void BMITcpServer::socketFailure(int connId, void *yourPtr, int code)
+{
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Socket Failure: ConnId: " << connId
+         << " Code: " << code << endl;
+}
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

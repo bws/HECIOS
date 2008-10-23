@@ -66,10 +66,13 @@ protected:
     virtual void sendOverNetwork(spfsBMIUnexpectedMessage* unexpectedMsg);
 
     /** Extract the payload from a completed socket message */
-    void socketDataArrived(int, void *, cMessage *msg, bool);
+    virtual void socketDataArrived(int, void *, cMessage *msg, bool);
+
+    /** Handle the arrival of a socket failure message */
+    virtual void socketFailure(int connId, void *yourPtr, int code);
 
     /** Handle the arrival of status messages to note when a msg is recvd */
-    void socketStatusArrived(int connId, void *yourPtr, TCPStatusInfo *status);
+    virtual void socketStatusArrived(int connId, void *yourPtr, TCPStatusInfo *status);
 
 private:
 
@@ -207,6 +210,13 @@ TCPSocket* BMITcpClient::getConnectedSocket(const FSHandle& handle)
 void BMITcpClient::socketDataArrived(int, void *, cMessage *msg, bool)
 {
     BMIEndpoint::handleMessage(msg);
+}
+
+void BMITcpClient::socketFailure(int connId, void *yourPtr, int code)
+{
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Socket Failure: ConnId: " << connId
+         << " Code: " << code << endl;
 }
 
 void BMITcpClient::socketStatusArrived(int connId,
