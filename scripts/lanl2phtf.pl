@@ -147,11 +147,18 @@ sub main
     {
         my $traceFilename = basename($filename);
         my $rank = $g_traceFilenameToRank{$traceFilename};
-        print "System Call(lanl_trace_parser, $filename, $outputDir/, $rank)\n";
-        my $rc = system("lanl_trace_parser", $filename, "$outputDir/", $rank);
-        if (0 ne $rc)
+        print "System Call(lanl_trace_parser, $filename, $outputDir, $rank)\n";
+        my $rc = system("lanl_trace_parser", $filename, "$outputDir", $rank);
+        if (-1 eq $rc)
         {
-            print "ERROR: Parser returned: $rc\n";
+            print "The executable: lanl_trace_parser was not in the PATH.\n";
+        }
+        elsif (0 ne $rc)
+        {
+            my $exitValue = $? >> 8;
+            my $signalNum = $? & 127;
+            my $dumpedCore = $? & 128;
+            print "ERROR: Parser returned: $rc Exit: $exitValue Sig: $signalNum Core: $dumpedCore\n";
         }
     }
     
