@@ -42,6 +42,7 @@ DOC_DIR = doc
 SRC_DIR = src
 INET_DIR = INET
 CLIENT_DIR = $(SRC_DIR)/client
+CLIENT_CACHE_DIR = $(SRC_DIR)/client/cache
 COMMON_DIR = $(SRC_DIR)/common
 CONFIG_DIR = $(SRC_DIR)/config
 IO_DIR = $(SRC_DIR)/io
@@ -74,8 +75,9 @@ default: $(DEFAULT_TARGETS)
 # Include path (directories to search for include files)
 #
 INCLUDES = $(OMNET_DIR)/include \
-	$(HECIOS_DIR) \
+        $(HECIOS_DIR) \
         $(CLIENT_DIR) \
+        $(CLIENT_CACHE_DIR) \
         $(COMMON_DIR) \
         $(CONFIG_DIR) \
         $(IO_DIR) \
@@ -96,10 +98,10 @@ INCLUDES = $(OMNET_DIR)/include \
         $(INET_DIR)/Network/Contract \
         $(INET_DIR)/Network/IPv4 \
         $(INET_DIR)/Network/Queue \
-	$(INET_DIR)/NetworkInterfaces/Contract \
-	$(INET_DIR)/NetworkInterfaces/EtherSwitch \
-	$(INET_DIR)/NetworkInterfaces/Ethernet \
-	$(INET_DIR)/NetworkInterfaces/PPP \
+        $(INET_DIR)/NetworkInterfaces/Contract \
+        $(INET_DIR)/NetworkInterfaces/EtherSwitch \
+        $(INET_DIR)/NetworkInterfaces/Ethernet \
+        $(INET_DIR)/NetworkInterfaces/PPP \
         $(INET_DIR)/Nodes/INET \
         $(INET_DIR)/Transport/Contract \
         $(INET_DIR)/Transport/TCP \
@@ -142,6 +144,7 @@ TOOLS_SRC :=
 include $(HECIOS_DIR)/mf/inet.mk
 include $(DOC_DIR)/module.mk
 include $(CLIENT_DIR)/module.mk
+include $(CLIENT_CACHE_DIR)/module.mk
 include $(COMMON_DIR)/module.mk
 include $(CONFIG_DIR)/module.mk
 include $(IO_DIR)/module.mk
