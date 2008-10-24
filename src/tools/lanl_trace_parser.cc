@@ -259,14 +259,17 @@ void LanlTraceParser::enterProcT()
         {
 
         }
-        else if(!type.compare("COMM_RANK") || !type.compare("COMM_SPLIT") || !type.compare("COMM_DUP"))
+        else if(!type.compare("COMM_RANK") ||
+                !type.compare("COMM_SPLIT") ||
+                !type.compare("COMM_DUP") ||
+                !type.compare("COMM_CREATE"))
         {
-
+            // Do nothing in order to prevent bogus error
         }
         else
         {
             cerr << "Error: unsupported datatype! " << type << endl;
-            exit(0);
+            exit(29);
         }
 
         smTriggerFlag_ = 1;
@@ -632,7 +635,7 @@ void LanlTraceParser::enterProcL()
     if(re.recordOp() == INVALID && op.find("MPI_INIT") != 0)
     {
         cerr << "Error: unsupported operations: " << op << endl;
-        exit(0);
+        exit(25);
     }
     else if (OPEN == re.recordOp())
     {
