@@ -867,10 +867,10 @@ cMessage* PHTFIOApplication::createCPUPhaseMessage(
 spfsMPIFileCloseRequest* PHTFIOApplication::createCloseMessage(
     const PHTFEventRecord* closeRecord)
 {
-    // Extract the file name
-    int handle = closeRecord->paramAsDescriptor(0, *phtfEvent_);
-
     // Retrieve the descriptor
+    int handle = closeRecord->paramAsDescriptor(0, *phtfEvent_);
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Open file id: " << handle << endl;
     FileDescriptor* fd = getDescriptor(handle);
     assert(0 != fd);
 
@@ -906,6 +906,8 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
 
     // Extract the descriptor id
     int fileId = openRecord->paramAsDescriptor(4, *phtfEvent_);
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Open file id: " << fileId << endl;
 
     // Retrieve the descriptor
     FileDescriptor* fd = getDescriptor(fileId);

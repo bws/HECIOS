@@ -673,7 +673,17 @@ void LanlTraceParser::enterProcL()
         re.recordOp() == WRITE_AT_ALL ||
         re.recordOp() == READ_AT_ALL)
     {
+        // This writes the pointer contents value for the last file open
+        // If we open more then one file at a time, obviously, this
+        // will not work
         event->memValue("Pointer", currentEventPtrAddr_, re.paramAt(0));
+    }
+    else if (re.recordOp() == CLOSE)
+    {
+        // Extract the pointer value based on the accompanying open
+        string memRef = createContext(re.paramAt(0), currentEventCount_ - 1);
+        string lastPointerOpened = event->memValue("Pointer", currentEventPtrAddr_);
+        event->memValue("Pointer", memRef, lastPointerOpened);
     }
 }
 
