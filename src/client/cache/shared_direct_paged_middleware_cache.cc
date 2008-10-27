@@ -29,6 +29,10 @@ SharedDirectPagedMiddlewareCache::SharedCacheMap
 SharedDirectPagedMiddlewareCache::SharedRequestMap
     SharedDirectPagedMiddlewareCache::sharedPendingRequestMap_;
 
+// Static variable initialization
+SharedDirectPagedMiddlewareCache::SharedOpenFileMap
+    SharedDirectPagedMiddlewareCache::sharedOpenFileMap_;
+
 SharedDirectPagedMiddlewareCache::SharedDirectPagedMiddlewareCache()
 {
 
@@ -42,13 +46,8 @@ void SharedDirectPagedMiddlewareCache::initialize()
 DirectPagedMiddlewareCache::FileDataPageCache*
 SharedDirectPagedMiddlewareCache::createFileDataPageCache(size_t cacheSize)
 {
-    // Extract the compute node model
-    cModule* mpiProcess = parentModule();
-    assert(0 != mpiProcess);
-    cModule* jobProcess = mpiProcess->parentModule();
-    assert(0 != jobProcess);
-    cModule* cpun = jobProcess->parentModule();
-    assert(0 != cpun);
+    // Retrieve the compute node model
+    cModule* cpun = findParentComputeNode();
 
     // If a cache for this node exists, return it
     // Otherwise, create it
@@ -70,13 +69,8 @@ SharedDirectPagedMiddlewareCache::createFileDataPageCache(size_t cacheSize)
 DirectPagedMiddlewareCache::RequestMap*
 SharedDirectPagedMiddlewareCache::createPendingRequestMap()
 {
-    // Extract the compute node model
-    cModule* mpiProcess = parentModule();
-    assert(0 != mpiProcess);
-    cModule* jobProcess = mpiProcess->parentModule();
-    assert(0 != jobProcess);
-    cModule* cpun = jobProcess->parentModule();
-    assert(0 != cpun);
+    // Retrieve the compute node model
+    cModule* cpun = findParentComputeNode();
 
     // If a request map for this node exists, return it
     // Otherwise, create it
@@ -92,9 +86,41 @@ SharedDirectPagedMiddlewareCache::createPendingRequestMap()
         sharedPendingRequestMap_[cpun] = pendingRequests;
     }
     return pendingRequests;
-
 }
 
+DirectPagedMiddlewareCache::OpenFileMap*
+SharedDirectPagedMiddlewareCache::createOpenFileMap()
+{
+    // Retrieve the compute node model
+    cModule* cpun = findParentComputeNode();
+
+    // If a request map for this node exists, return it
+    // Otherwise, create it
+    DirectPagedMiddlewareCache::OpenFileMap* openFileCounts = 0;
+    SharedOpenFileMap::iterator iter = sharedOpenFileMap_.find(cpun);
+    if (iter != sharedOpenFileMap_.end())
+    {
+        openFileCounts = iter->second;
+    }
+    else
+    {
+        openFileCounts = new DirectPagedMiddlewareCache::OpenFileMap();
+        sharedOpenFileMap_[cpun] = openFileCounts;
+    }
+    return openFileCounts;
+}
+
+cModule* SharedDirectPagedMiddlewareCache::findParentComputeNode() const
+{
+    // Extract the compute node model
+    cModule* mpiProcess = parentModule();
+    assert(0 != mpiProcess);
+    cModule* jobProcess = mpiProcess->parentModule();
+    assert(0 != jobProcess);
+    cModule* cpun = jobProcess->parentModule();
+    assert(0 != cpun);
+    return cpun;
+}
 /*
  * Local variables:
  *  indent-tabs-mode: nil

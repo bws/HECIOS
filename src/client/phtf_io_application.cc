@@ -867,8 +867,16 @@ cMessage* PHTFIOApplication::createCPUPhaseMessage(
 spfsMPIFileCloseRequest* PHTFIOApplication::createCloseMessage(
     const PHTFEventRecord* closeRecord)
 {
+    // Extract the file name
+    int handle = closeRecord->paramAsDescriptor(0, *phtfEvent_);
+
+    // Retrieve the descriptor
+    FileDescriptor* fd = getDescriptor(handle);
+    assert(0 != fd);
+
     spfsMPIFileCloseRequest* close = new spfsMPIFileCloseRequest(
         0, SPFS_MPI_FILE_CLOSE_REQUEST);
+    close->setFileDes(fd);
     return close;
 }
 
@@ -888,21 +896,20 @@ spfsMPIFileDeleteRequest* PHTFIOApplication::createDeleteRequest(
 spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
     const PHTFEventRecord* openRecord)
 {
-    // Extract the descriptor id
+    // Extract the communicator id
+    string gstr = openRecord->paramAt(0);
+    gstr = getAlias(gstr);
+    int communicatorId = (int)strtol(gstr.c_str(), NULL, 0);
 
+    // Extract the open mode
+    int mode = openRecord->paramAsSizeT(2);
+
+    // Extract the descriptor id
     int fileId = openRecord->paramAsDescriptor(4, *phtfEvent_);
 
     // Retrieve the descriptor
     FileDescriptor* fd = getDescriptor(fileId);
     assert(0 != fd);
-
-    // Extract the open mode
-    int mode = openRecord->paramAsSizeT(2);
-
-    // Extract the communicator id
-    string gstr = openRecord->paramAt(0);
-    gstr = getAlias(gstr);
-    int communicatorId = (int)strtol(gstr.c_str(), NULL, 0);
 
     // Fill out the open request
     spfsMPIFileOpenRequest* open = new spfsMPIFileOpenRequest(

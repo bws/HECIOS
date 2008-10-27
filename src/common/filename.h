@@ -32,7 +32,7 @@
 class Filename
 {
 public:
-    
+
     /** Create a filename from an absolute path */
     explicit Filename(const std::string& absolutePath);
 
@@ -41,13 +41,13 @@ public:
 
     /** Create a filename from a unique file handle */
     explicit Filename(const FSHandle& handle);
-    
+
     /** @return the filename as a string */
     std::string str() const { return path_; };
 
     /** @return the filename as a char* */
     const char* c_str() const { return path_.c_str(); };
-    
+
     /** @return the number of path segments (including the root directory) */
     std::size_t getNumPathSegments() const;
 
@@ -61,12 +61,12 @@ public:
      *  is the root directory (/)
      */
     Filename getParent() const;
-        
+
 private:
 
     /** Perform initialization tasks */
     void initialize(const std::string& absolutePath);
-    
+
     /** Path data */
     std::string path_;
 };
@@ -93,6 +93,7 @@ inline std::ostream& operator<<(std::ostream& ost, const Filename& f)
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

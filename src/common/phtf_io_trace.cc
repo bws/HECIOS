@@ -177,13 +177,15 @@ size_t PHTFEventRecord::paramAsSizeT(size_t idx) const
 /** @return The paramindex-th parameter as a file descriptor */
 int PHTFEventRecord::paramAsDescriptor(size_t paramindex, const PHTFEvent & event) const
 {
-    stringstream ss("");
     assert(paramindex < paraNum());
 
     string hpt = paramAt(paramindex);
+    ostringstream ss;
     ss << hpt << "@" << recordId();
 
     string hstr = event.memValue("Pointer", ss.str());
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Parameter: " << ss.str() << " MemVal: " << hstr << endl;
     assert(0 != hstr.size());
     int fileId = strtol(hstr.c_str(), NULL, 16);
 

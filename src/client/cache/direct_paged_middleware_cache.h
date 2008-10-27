@@ -44,15 +44,26 @@ protected:
     /** Typedef of the type used to store file data internally */
     typedef LRUCache<PagedCache::Key, FilePageId> FileDataPageCache;
 
-    /** Typedef mapping read requests to its pending pages */
+    /** Typedef mapping a pending request to its pending pages */
     typedef std::map<spfsMPIFileRequest*, std::set<FilePageId> > RequestMap;
+
+    /** Typedef mapping filenames to the number of current openers */
+    typedef std::map<Filename, std::size_t> OpenFileMap;
 
     /** Perform module initialization */
     virtual void initialize();
 
+    /** @return the file data page cache for this middleware */
     virtual FileDataPageCache* createFileDataPageCache(size_t cacheSize);
 
+    /** @return the map of pending requests for this middleware */
     virtual RequestMap* createPendingRequestMap();
+
+    /**
+     * @return the map of the number of times each file has been opened for
+     *   this middleware
+     */
+    virtual OpenFileMap* createOpenFileMap();
 
 private:
     /** Handle messages received from the application */
@@ -60,6 +71,15 @@ private:
 
     /** Handle messages received from the file system */
     virtual void handleFileSystemMessage(cMessage* msg);
+
+    /** Increment the file open count */
+    void processFileOpen(const Filename& openName);
+
+    /**
+     * Decrement the file open count and flush dirty file data to disk if
+     * this is the last close for this file
+     */
+    void processFileClose(const Filename& closeName);
 
     /**
      * @return Pages that must be requested for this read.  Note that pages
@@ -126,6 +146,9 @@ private:
 
     /** Map of request to the total pending pages */
     RequestMap* pendingRequests_;
+
+    /** Map of the number of opens for each file */
+    OpenFileMap* openFileCounts_;
 };
 
 #endif /* DIRECT_PAGED_MIDDLEWARE_CACHE_H_ */

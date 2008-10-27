@@ -42,6 +42,9 @@ void DirectPagedMiddlewareCache::initialize()
 
     // Initialize the pending request map
     pendingRequests_ = createPendingRequestMap();
+
+    // Initialize the open file map
+    openFileCounts_ = createOpenFileMap();
 }
 
 DirectPagedMiddlewareCache::FileDataPageCache*
@@ -56,9 +59,29 @@ DirectPagedMiddlewareCache::createPendingRequestMap()
     return new RequestMap();
 }
 
+DirectPagedMiddlewareCache::OpenFileMap*
+DirectPagedMiddlewareCache::createOpenFileMap()
+{
+    return new OpenFileMap();
+}
+
 void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
 {
-    if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind())
+    if (SPFS_MPI_FILE_OPEN_REQUEST == msg->kind())
+    {
+        spfsMPIFileOpenRequest* open = static_cast<spfsMPIFileOpenRequest*>(msg);
+        Filename openFile(open->getFileName());
+        processFileOpen(openFile);
+        send(msg, fsOutGateId());
+    }
+    else if (SPFS_MPI_FILE_CLOSE_REQUEST == msg->kind())
+    {
+        spfsMPIFileCloseRequest* close = static_cast<spfsMPIFileCloseRequest*>(msg);
+        FileDescriptor* fd = close->getFileDes();
+        processFileClose(fd->getFilename());
+        send(msg, fsOutGateId());
+    }
+    else if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind())
     {
         spfsMPIFileReadAtRequest* readAt =
             static_cast<spfsMPIFileReadAtRequest*>(msg);
@@ -128,10 +151,18 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
                 dynamic_cast<spfsMPIFileReadAtResponse*>(msg);
             assert(0 != cacheRead);
             updateCache(cacheRead);
+
+            // Clean up the request-response pair
+            cMessage* request = static_cast<cMessage*>(msg->contextPointer());
+            delete request;
+            delete msg;
         }
         else if (SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->kind())
         {
-            // Do nothing
+            // Clean up the request-response pair
+            cMessage* request = static_cast<cMessage*>(msg->contextPointer());
+            delete request;
+            delete msg;
         }
         else
         {
@@ -145,6 +176,36 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
 
     // Complete any requests satisfied by this response
     completeRequests();
+}
+
+void DirectPagedMiddlewareCache::processFileOpen(const Filename& openName)
+{
+    if (0 == openFileCounts_->count(openName))
+    {
+        (*openFileCounts_)[openName] = 1;
+    }
+    else
+    {
+        (*openFileCounts_)[openName]++;
+    }
+}
+
+void DirectPagedMiddlewareCache::processFileClose(const Filename& closeName)
+{
+    assert(0 != openFileCounts_->count(closeName));
+
+    // Decrement the count
+    size_t activeHandles = --((*openFileCounts_)[closeName]);
+
+    // Flush cache data if this is the final close
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "After close, num active handles is: " << activeHandles << endl;
+    if (0 == activeHandles)
+    {
+        // TODO: Flush the data here somehow
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "TODO: Need to flush file data on close!!" << endl;
+    }
 }
 
 set<FilePageId> DirectPagedMiddlewareCache::resolveRequest(
@@ -303,11 +364,17 @@ void DirectPagedMiddlewareCache::completeRequests()
                 new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
             resp->setContextPointer(req);
         }
-        else
+        else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == req->kind())
         {
-            assert(SPFS_MPI_FILE_WRITE_AT_REQUEST == req->kind());
             resp =
                 new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
+            resp->setContextPointer(req);
+        }
+        else
+        {
+            assert(SPFS_MPI_FILE_CLOSE_REQUEST == req->kind());
+            resp =
+                new spfsMPIFileCloseResponse(0, SPFS_MPI_FILE_CLOSE_RESPONSE);
             resp->setContextPointer(req);
         }
         assert(0 != resp);

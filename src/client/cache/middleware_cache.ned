@@ -50,9 +50,9 @@ simple DirectPagedMiddlewareCache
 endsimple
 
 //
-// Middleware cache using pages of fully associative cache
+// Middleware cache using pages of direct cache
 //
-simple FullyPagedMiddlewareCache
+simple SharedDirectMiddlewareCache
     parameters:
     	pageSize: const,
     	pageCapacity: const;
@@ -63,15 +63,15 @@ simple FullyPagedMiddlewareCache
 endsimple
 
 //
-// Middleware cache using pages of direct cache
+// Middleware cache using pages of fully associative cache
 //
-simple SharedDirectMiddlewareCache
+simple FullyPagedMiddlewareCache
     parameters:
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn;
+        pageSize: const,
+        pageCapacity: const;
+        
+    gates:
+        in: appIn, fsIn;
         out: appOut, fsOut;
 endsimple
 

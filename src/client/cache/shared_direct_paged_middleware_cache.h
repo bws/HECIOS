@@ -34,20 +34,36 @@ protected:
     /** Perform module initialization */
     virtual void initialize();
 
+    /** @return the file data cache for this compute node */
     virtual DirectPagedMiddlewareCache::FileDataPageCache* createFileDataPageCache(std::size_t cacheSize);
 
+    /** @return The pending request map for this compute node */
     virtual DirectPagedMiddlewareCache::RequestMap* createPendingRequestMap();
 
+    /** @return The open file map for this compute node */
+    virtual DirectPagedMiddlewareCache::OpenFileMap* createOpenFileMap();
+
 private:
+    /** @return the parent compute node for this middleware */
+    cModule* findParentComputeNode() const;
+
+    /** Type for storing caches indexed by the compute node */
     typedef std::map<cModule*, DirectPagedMiddlewareCache::FileDataPageCache*> SharedCacheMap;
 
+    /** Type for storing requests indexed by compute node */
     typedef std::map<cModule*, DirectPagedMiddlewareCache::RequestMap*> SharedRequestMap;
+
+    /** Type for storing open file counts indexed by compute node */
+    typedef std::map<cModule*, DirectPagedMiddlewareCache::OpenFileMap*> SharedOpenFileMap;
 
     /** The current cached file data for each compute node cache */
     static SharedCacheMap sharedCacheMap_;
 
     /** The current outstanding requests for each compute node cache */
     static SharedRequestMap sharedPendingRequestMap_;
+
+    /** The current open files for each compute node cache */
+    static SharedOpenFileMap sharedOpenFileMap_;
 };
 
 

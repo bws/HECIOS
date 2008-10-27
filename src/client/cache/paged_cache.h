@@ -40,10 +40,13 @@ public:
     class Key
     {
     public:
+        /** Constructor */
         Key(const Filename& fn, std::size_t k) : filename(fn), key(k) {};
 
+        /** Filename to store data in cache for */
         Filename filename;
 
+        /** Key to identify a page (usually just the page id) */
         std::size_t key;
     };
 
