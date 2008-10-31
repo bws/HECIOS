@@ -32,6 +32,7 @@
 #include "filename.h"
 #include "file_builder.h"
 #include "file_descriptor.h"
+#include "middleware_cache.h"
 #include "mpi_proto_m.h"
 #include "storage_layout_manager.h"
 #include "phtf_io_trace.h"
@@ -57,7 +58,7 @@ void PHTFIOApplication::initialize()
     IOApplication::initialize();
 
     // Retrieve the resource describing the trace location
-    string dirStr = par("dirPHTF").stringValue();
+    traceDirectory_ = par("traceFile").stringValue();
 
     // PHTF stuff not able to support single initialization, so
     // enforce that locally
@@ -67,11 +68,11 @@ void PHTFIOApplication::initialize()
         // Set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration
         // in fs.ini
         string commWorldValue =
-            PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_WORLD");
+            PHTFTrace::getInstance(traceDirectory_)->getFs()->consts("MPI_COMM_WORLD");
         CommMan::instance().setCommWorld(strtol(commWorldValue.c_str(), 0, 0));
 
         string commSelfValue =
-            PHTFTrace::getInstance(dirStr)->getFs()->consts("MPI_COMM_SELF");
+            PHTFTrace::getInstance(traceDirectory_)->getFs()->consts("MPI_COMM_SELF");
         CommMan::instance().setCommSelf(strtol(commSelfValue.c_str(), 0, 0));
 
         // Build a singleton map of mpi operation IDs (string => ID)
@@ -82,8 +83,9 @@ void PHTFIOApplication::initialize()
     }
 
     // Schedule the kick start message
+    double maxBeginTime = par("maxBeginTime").doubleValue();
     cMessage* kickStart = new cMessage();
-    double kickStartTime = uniform(0.0, 0.0000001);
+    double kickStartTime = uniform(0.0, maxBeginTime);
     scheduleAt(kickStartTime, kickStart);
 }
 
@@ -165,9 +167,8 @@ bool PHTFIOApplication::scheduleNextMessage()
 {
     if(!phtfEvent_)
     {
-        string dirStr = par("dirPHTF").stringValue();
         // get event file for this ioapp
-        phtfEvent_ = PHTFTrace::getInstance(dirStr)->getEvent(getRank());
+        phtfEvent_ = PHTFTrace::getInstance(traceDirectory_)->getEvent(getRank());
         phtfEvent_->open();
     }
 
@@ -234,6 +235,10 @@ bool PHTFIOApplication::scheduleNextMessage()
             }
             else
             {
+                //perform the open for the non-leader nodes
+                performFakeOpenProcessing(eventRecord);
+
+                // Perform the broadcast to complete the open
                 cMessage* msg = createBcastRequest(commId);
                 send(msg, mpiOutGate_);
             }
@@ -336,6 +341,7 @@ spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
             break;
         }
         case READ:
+        case READ_ALL:
         {
             mpiMsg = createReadMessage(rec);
             break;
@@ -347,6 +353,7 @@ spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
             break;
         }
         case WRITE:
+        case WRITE_ALL:
         {
             mpiMsg = createWriteMessage(rec);
             break;
@@ -384,9 +391,7 @@ spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
 void PHTFIOApplication::populateFileSystem()
 {
     cerr << "Populating file system . . . ";
-
-    string dirStr = par("dirPHTF").stringValue();
-    PHTFFs *fs = PHTFTrace::getInstance(dirStr)->getFs();
+    PHTFFs *fs = PHTFTrace::getInstance(traceDirectory_)->getFs();
     FileSystemMap fsm;
     for(int i = 0; i < fs->fileNum(); i ++)
     {
@@ -394,6 +399,29 @@ void PHTFIOApplication::populateFileSystem()
     }
     FileBuilder::instance().populateFileSystem(fsm);
     cerr << "Done." << endl;
+}
+
+void PHTFIOApplication::performFakeOpenProcessing(const PHTFEventRecord& openRecord)
+{
+    // Extract the descriptor number from the event record
+    int handle = openRecord.paramAsDescriptor(4, *phtfEvent_);
+    FileDescriptor* fd = getDescriptor(handle);
+    assert(0 != fd);
+
+    // This is a brutal hack to work around the open-bcast optimization
+    // In effect, we'll simply tell the cache directly to open the file
+    // for its own record keeping
+    cModule* mpiProcess = parentModule();
+    assert(0 != mpiProcess);
+    cModule* jobProcess = mpiProcess->parentModule();
+    assert(0 != jobProcess);
+    cModule* cacheModule = jobProcess->submodule("cache");
+    assert(0 != cacheModule);
+    MiddlewareCache* middlewareCache = dynamic_cast<MiddlewareCache*>(cacheModule);
+    assert(0 != middlewareCache);
+
+    // Inform the cache of the open
+    middlewareCache->processFileOpen(fd->getFilename());
 }
 
 void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
@@ -418,8 +446,6 @@ void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
 
 void PHTFIOApplication::performSeekProcessing(PHTFEventRecord* seekRecord)
 {
-    string dirStr = par("dirPHTF").stringValue();
-
     uint64_t handle = seekRecord->paramAsAddress(0);
 
     size_t offset = seekRecord->paramAsSizeT(1);
@@ -428,7 +454,7 @@ void PHTFIOApplication::performSeekProcessing(PHTFEventRecord* seekRecord)
 
     // Determine the seek whence values
     int MPI_SEEK_SET, MPI_SEEK_CUR, MPI_SEEK_END;
-    PHTFTrace* trace = PHTFTrace::getInstance(dirStr);
+    PHTFTrace* trace = PHTFTrace::getInstance(traceDirectory_);
     istringstream seekSetStream(trace->getFs()->consts("MPI_SEEK_SET"));
     seekSetStream >> MPI_SEEK_SET;
     istringstream seekCurStream(trace->getFs()->consts("MPI_SEEK_CUR"));
@@ -627,8 +653,7 @@ void PHTFIOApplication::performCreateBasicDataType(std::string typeId)
 {
     // get parameter
     size_t size;
-    string dirStr = par("dirPHTF").stringValue();
-    string ssize = PHTFTrace::getInstance(dirStr)->getFs()->consts(typeId);
+    string ssize = PHTFTrace::getInstance(traceDirectory_)->getFs()->consts(typeId);
     if(!ssize.compare(""))
     {
         ssize = phtfEvent_->memValue(typeId, "size");

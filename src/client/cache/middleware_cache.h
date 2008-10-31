@@ -21,6 +21,7 @@
 //
 #include <cstddef>
 #include <omnetpp.h>
+class Filename;
 
 /**
  * An abstract model of a middleware file system data cache.
@@ -45,6 +46,15 @@ public:
 
     /** @return the fsOut gate id */
     int fsOutGateId() const { return fsOutGateId_; };
+
+    /** Increment the file open count */
+    virtual void processFileOpen(const Filename& openName) = 0;
+
+    /**
+     * Decrement the file open count and flush dirty file data to disk if
+     * this is the last close for this file
+     */
+    virtual void processFileClose(const Filename& closeName) = 0;
 
 
 protected:
@@ -87,6 +97,15 @@ class NoMiddlewareCache : public MiddlewareCache
 public:
     /** Constructor */
     NoMiddlewareCache();
+
+    /** Increment the file open count */
+    void processFileOpen(const Filename& openName) {};
+
+    /**
+     * Decrement the file open count and flush dirty file data to disk if
+     * this is the last close for this file
+     */
+    void processFileClose(const Filename& closeName) {};
 
 private:
     /** Forward application messages to file system */

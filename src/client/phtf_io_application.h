@@ -25,6 +25,7 @@
 #include "io_application.h"
 #include "phtf_io_trace.h"
 class FileDescriptor;
+class Filename;
 class spfsCacheInvalidateRequest;
 class spfsMPIBarrierRequest;
 class spfsMPIBcastRequest;
@@ -81,6 +82,9 @@ private:
 
     /** Dealing with barrier message */
     void handleBarrier(cMessage *msg, bool active = false);
+
+    /** Add an open entry into the cache directly */
+    void performFakeOpenProcessing(const PHTFEventRecord& openRecord);
 
     /** Perform the application processing to do an open */
     void performOpenProcessing(PHTFEventRecord* openRecord,
@@ -168,6 +172,9 @@ private:
     /** @return an MPI File IWrite request */
     spfsMPIFileWriteAtRequest * createIWriteMessage(
         const PHTFEventRecord* writeRecord);
+
+    /** Trace file location */
+    std::string traceDirectory_;
 
     /** PHTF Event File */
     PHTFEvent* phtfEvent_;

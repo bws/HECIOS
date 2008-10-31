@@ -57,19 +57,16 @@ bool FSReadSM::updateState(cFSM& currentState, cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            assert(0 != dynamic_cast<spfsMPIFileReadAtRequest*>(msg));
             FSM_Goto(currentState, READ);
             break;
         }
         case FSM_Enter(READ):
         {
-            assert(0 != dynamic_cast<spfsMPIFileReadAtRequest*>(msg));
             enterRead();
             break;
         }
         case FSM_Exit(READ):
         {
-            assert(0 != dynamic_cast<spfsMPIFileReadAtRequest*>(msg));
             if (isReadComplete())
             {
                 FSM_Goto(currentState, FINISH);

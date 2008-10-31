@@ -65,13 +65,6 @@ protected:
      */
     virtual OpenFileMap* createOpenFileMap();
 
-private:
-    /** Handle messages received from the application */
-    virtual void handleApplicationMessage(cMessage* msg);
-
-    /** Handle messages received from the file system */
-    virtual void handleFileSystemMessage(cMessage* msg);
-
     /** Increment the file open count */
     void processFileOpen(const Filename& openName);
 
@@ -80,6 +73,13 @@ private:
      * this is the last close for this file
      */
     void processFileClose(const Filename& closeName);
+
+private:
+    /** Handle messages received from the application */
+    virtual void handleApplicationMessage(cMessage* msg);
+
+    /** Handle messages received from the file system */
+    virtual void handleFileSystemMessage(cMessage* msg);
 
     /**
      * @return Pages that must be requested for this read.  Note that pages

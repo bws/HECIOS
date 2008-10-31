@@ -4456,17 +4456,17 @@ fi
 
 case "$comp_mode" in
     debug)
-        	        CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror -ansi"
+        	            CONFIG_CXXFLAGS="-g -Wno-unused -Wall -Werror -ansi -femit-class-debug-always"
         CONFIG_UNSAFE_CXXFLAGS="-g"
-	CONFIG_LDFLAGS="-g"
+	    CONFIG_LDFLAGS="-g"
         ;;
     release)
         CONFIG_CXXFLAGS="-O2 -DNDEBUG"
         CONFIG_UNSAFE_CXXFLAGS="-O2 -DNDEBUG"
-	CONFIG_LDFLAGS=""
+	    CONFIG_LDFLAGS=""
         ;;
     strict)
-	CONFIG_CXXFLAGS="-g -Wno-deprecated -Wno-unused -Wall -Werror -ansi -pedantic"
+	    CONFIG_CXXFLAGS="-g -Wno-deprecated -Wno-unused -Wall -Werror -ansi -pedantic"
         CONFIG_UNSAFE_CXXFLAGS="-g"
         CONFIG_LDFLAGS="-g"
         ;;

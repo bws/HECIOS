@@ -57,19 +57,16 @@ bool FSWriteSM::updateState(cFSM& currentState, cMessage* msg)
     {
         case FSM_Exit(INIT):
         {
-            assert(0 != dynamic_cast<spfsMPIFileWriteAtRequest*>(msg));
             FSM_Goto(currentState, WRITE);
             break;
         }
         case FSM_Enter(WRITE):
         {
-            assert(0 != dynamic_cast<spfsMPIFileWriteAtRequest*>(msg));
             beginWrite();
             break;
         }
         case FSM_Exit(WRITE):
         {
-            assert(0 != dynamic_cast<spfsMPIFileWriteAtRequest*>(msg));
             FSM_Goto(currentState, COUNT);
             break;
         }
