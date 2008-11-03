@@ -24,6 +24,7 @@ class LRUCacheTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testGetLRU);
     CPPUNIT_TEST(testSize);
     CPPUNIT_TEST(testLRUPolicy);
+    CPPUNIT_TEST(testPercentDirty);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -53,6 +54,8 @@ public:
     void testSize();
 
     void testLRUPolicy();
+
+    void testPercentDirty();
 
 private:
     LRUCache<int, std::string>* cache1_;
@@ -283,6 +286,46 @@ void LRUCacheTest::testLRUPolicy()
     CPPUNIT_ASSERT(!cache1_->exists(644));
     CPPUNIT_ASSERT(cache1_->exists(652));
     CPPUNIT_ASSERT(cache1_->exists(653));
+}
+
+void LRUCacheTest::testPercentDirty()
+{
+    // Check the beginning cache
+    CPPUNIT_ASSERT_EQUAL(0.0, cache1_->percentDirty());
+
+    // Fill the cache
+    cache1_->insert(640, "val640", true);
+    cache1_->insert(641, "val641", true);
+    cache1_->insert(642, "val642", true);
+    cache1_->insert(643, "val643", true);
+    cache1_->insert(644, "val644", true);
+    cache1_->insert(645, "val645", true);
+    cache1_->insert(646, "val646", true);
+    cache1_->insert(647, "val647", true);
+    cache1_->insert(648, "val648", true);
+    cache1_->insert(649, "val649", true);
+
+    // Test percent dirty after inserts
+    CPPUNIT_ASSERT_EQUAL(1.0, cache1_->percentDirty());
+
+    // Test percent dirty after non-dirty insertion
+    cache1_->insert(650, "val650", false);
+    CPPUNIT_ASSERT_EQUAL(9.0/10.0, cache1_->percentDirty());
+
+    // Test percent dirty after non-dirty insertion
+    cache1_->insert(651, "val651", false);
+    cache1_->insert(651, "val651", false);
+    CPPUNIT_ASSERT_EQUAL(8.0/10.0, cache1_->percentDirty());
+
+    // Test percent dirty after non-dirty insertion
+    cache1_->insert(652, "val652", false);
+    CPPUNIT_ASSERT_EQUAL(7.0/10.0, cache1_->percentDirty());
+
+    // Test percent dirty after dirty insertion
+    cache1_->insert(653, "val653", false);
+    CPPUNIT_ASSERT_EQUAL(6.0/10.0, cache1_->percentDirty());
+    cache1_->insert(653, "val653", true);
+    CPPUNIT_ASSERT_EQUAL(7.0/10.0, cache1_->percentDirty());
 }
 
 #endif

@@ -143,18 +143,23 @@ public:
      */
     std::size_t size() const;
 
+    /** @return the percentage of the cache capacity that is dirty */
+    double percentDirty() const;
+
 private:
 
     std::map<KeyType, EntryType*> keyEntryMap_;
     std::list<KeyType> lruList_;
 
     const std::size_t maxEntries_;
+    std::size_t numDirtyEntries_;
     std::size_t numEntries_;
 };
 
 template <class KeyType, class ValueType>
 LRUCache<KeyType,ValueType>::LRUCache(int capacity)
     : maxEntries_(capacity),
+      numDirtyEntries_(0),
       numEntries_(0)
 {
     assert(0 < maxEntries_);
@@ -186,6 +191,12 @@ void LRUCache<KeyType,ValueType>::insert(const KeyType& key,
     pos = keyEntryMap_.find(key);
     if (pos != keyEntryMap_.end())
     {
+        // Update the number of dirty entries if necessary
+        if (isDirty && !pos->second->isDirty)
+        {
+            numDirtyEntries_++;
+        }
+
         // Entry already exists, update it
         pos->second->data = value;
         pos->second->isDirty = isDirty;
@@ -216,6 +227,12 @@ void LRUCache<KeyType,ValueType>::insert(const KeyType& key,
         // Insert the cache entry
         keyEntryMap_.insert(std::make_pair(key, entry));
         numEntries_++;
+
+        // Update the number of dirty entries if necessary
+        if (isDirty)
+        {
+            numDirtyEntries_++;
+        }
     }
 }
 
@@ -234,6 +251,12 @@ void LRUCache<KeyType,ValueType>::insertAndRecall(const KeyType& key,
     pos = keyEntryMap_.find(key);
     if (pos != keyEntryMap_.end())
     {
+        // Update the number of dirty entries if necessary
+        if (isDirty && !pos->second->isDirty)
+        {
+            numDirtyEntries_++;
+        }
+
         // Entry already exists, update it
         pos->second->data = value;
         pos->second->isDirty = isDirty;
@@ -276,6 +299,12 @@ void LRUCache<KeyType,ValueType>::insertAndRecall(const KeyType& key,
         // Insert the cache entry
         keyEntryMap_.insert(std::make_pair(key, entry));
         numEntries_++;
+
+        // Update the number of dirty entries if necessary
+        if (isDirty)
+        {
+            numDirtyEntries_++;
+        }
     }
 
     if (!hasEviction)
@@ -295,12 +324,18 @@ void LRUCache<KeyType,ValueType>::remove(const KeyType& key)
         // Cleanup the lru list
         lruList_.erase(pos->second->lruRef);
 
+        // Update bookkeeping
+        numEntries_--;
+        if (getDirtyBit(key))
+        {
+            numDirtyEntries_--;
+        }
+
         // Cleanup the EntryType memory
         delete pos->second;
 
         // Remove from the map
         keyEntryMap_.erase(pos);
-        numEntries_--;
     }
     else
     {
@@ -428,6 +463,17 @@ std::size_t LRUCache<KeyType,ValueType>::size() const
     assert(lruList_.size() == keyEntryMap_.size());
     assert(lruList_.size() == numEntries_);
     return numEntries_;
+}
+
+template<class KeyType, class ValueType>
+double LRUCache<KeyType,ValueType>::percentDirty() const
+{
+    assert(numDirtyEntries_ <= maxEntries_);
+    assert(numDirtyEntries_ <= numEntries_);
+    //std::cerr << __FILE__ << ":" << __LINE__ << ":"
+    //          << "Num Dirty: " << numDirtyEntries_ << " Max: " << maxEntries_ << endl;
+    double percentDirty = double(numDirtyEntries_) / double(maxEntries_);
+    return percentDirty;
 }
 
 #endif

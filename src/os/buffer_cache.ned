@@ -42,7 +42,8 @@ endsimple
 //
 simple LRUBufferCache
     parameters:
-        numEntries : const;
+        numEntries : const,
+        dirtyThreshold: const;
 
     gates:
         in: in, response;

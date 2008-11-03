@@ -73,10 +73,6 @@ void HardDisk::handleMessage(cMessage *msg)
         assert(0);
     }
 
-    // Update collection data
-    //cerr << "Disk delay: " << delay <<endl;
-    totalDelay_ += delay;
-    
     // Schedule response at the end of service period
     resp->setContextPointer(msg);
     sendDelayed(resp, delay, outGateId_);
@@ -87,6 +83,14 @@ long HardDisk::getBasicBlockSize() const
     long size = basicBlockSize();
     assert(0 == (size % 2));
     return size;
+}
+
+void HardDisk::registerDiskDelay(double diskTime)
+{
+    // Update collection data
+    totalDelay_ += diskTime;
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Disk delay: " << diskTime << " Total Delay: " << totalDelay_ << endl;
 }
 
 //
@@ -104,7 +108,7 @@ void BasicModelDisk::initialize()
 {
     // Initialize parent
     HardDisk::initialize();
-    
+
     // Drive layout parameters
     numCylinders_ = par("numCylinders").longValue();
     numHeads_ = par("numHeads").longValue();
@@ -134,6 +138,9 @@ void BasicModelDisk::initialize()
 
     // Park the head at the central cylinder to begin with
     lastCylinder_ = numCylinders_/2;
+
+    // Set the time of the last service completion
+    lastCompletionTime_ = 0.0;
 }
 
 double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
@@ -190,15 +197,22 @@ double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
         }
         totalDelay += sectorsToMove * timePerSector_;
     }
-    
+
     // Add delay to transfer the data off the media
     totalDelay += timePerSector_;
 
     // Update disk state
     lastCylinder_ = destCylinder;
     lastHead_ = destHead;
-    
-    return totalDelay;
+
+    // Modify the delay to take into account that the disk can only service
+    // one request at a time
+    registerDiskDelay(totalDelay);
+
+    simtime_t currentTime = simTime();
+    lastCompletionTime_ = max(lastCompletionTime_, currentTime) + totalDelay;
+    simtime_t completionDelay = (lastCompletionTime_ - currentTime) + totalDelay;
+    return completionDelay;
 }
 
 uint32_t BasicModelDisk::basicBlockSize() const

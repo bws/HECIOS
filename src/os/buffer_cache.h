@@ -39,15 +39,6 @@ public:
 
 protected:
     /**
-     *
-     */
-    struct Entry
-    {
-        LogicalBlockAddress lba;
-        bool isDirty;
-    }; 
-    
-    /**
      *  This is the initialization routine for this simulation module.
      */
     virtual void initialize();
@@ -84,50 +75,26 @@ protected:
      *  @param msg (in) is the message to be processed.
      *
      *  @note This method is a hook function which is assumed to be
-     *  provided by a derived class to (re)define the behaviour.
+     *  provided by a derived class to (re)define the behavior.
      */
     virtual void finalizeCache() = 0;
 
-    /**
-     *  @param msg (in) is the message to be processed.
-     *
-     *  @note This method is a hook function which is assumed to be
-     *  provided by a derived class to (re)define the behaviour.
-     */
-    virtual bool isCached(LogicalBlockAddress address) = 0;
+    /** Register a buffer cache hit */
+    void registerHit();
 
-    /**
-     * @return true if the cache is filled to capacity
-     */
-    virtual bool isFull() = 0;
-    
-    /**
-     * Add an entry to the cache
-     *
-     * @return the address value of the cache entry that is evicted
-     *
-     */
-    virtual void insertEntry(const Entry& entry) = 0;
+    /** Register a buffer cache miss */
+    void registerMiss();
 
-    /**
-     * @return the next
-     */
-    virtual Entry getNextEviction() = 0;
-    
+    /** Register a write through */
+    void registerWriteThrough();
+
 private:
-
     /** Handle caching for incoming block requests from the file system */
-    void handleBlockRequest(cMessage* msg);
+    virtual void handleBlockRequest(cMessage* msg) = 0;
 
     /** Handle caching for incoming block device responses */
-    void handleBlockResponse(cMessage* msg);
+    virtual void handleBlockResponse(cMessage* msg) = 0;
 
-    /**
-     * Evict a cache entry if the cache is full and write the block to disk
-     * if it is marked dirty
-     */
-    void evictCacheEntry(LogicalBlockAddress lba);
-    
     /** in gate id */
     int inGateId_;
 
@@ -135,6 +102,7 @@ private:
     double statNumRequests_;
     double statNumHits_;
     double statNumMisses_;
+    double statNumWriteThroughs_;
 };
 
 /**
@@ -149,28 +117,18 @@ class NoBufferCache : public BufferCache
     NoBufferCache();
 
 protected:
-
     /** No-op */
     virtual void initializeCache();
 
     /** No-op */
     virtual void finalizeCache();
 
-    /** @return false */
-    virtual bool isCached(LogicalBlockAddress address);
+private:
+    /** Handle caching for incoming block requests from the file system */
+    virtual void handleBlockRequest(cMessage* msg);
 
-    /** @return false */
-    virtual bool isFull();
-
-    /** No-op */
-    virtual void insertEntry(const Entry& newEntry);
-
-    /**
-     * @return an invalid LogicalBlockAddress
-     * @throw logic_error if invoked
-     */
-    virtual Entry getNextEviction();
-
+    /** Handle caching for incoming block device responses */
+    virtual void handleBlockResponse(cMessage* msg);
 };
 
 /**
@@ -186,11 +144,18 @@ public:
 
 protected:
     /**
+     *
      */
+    struct Entry
+    {
+        LogicalBlockAddress lba;
+        bool isDirty;
+    };
+
+    /** Initialize this cache */
     virtual void initializeCache();
 
-    /**
-     */
+    /** Finalize this cache */
     virtual void finalizeCache();
 
     /**
@@ -200,24 +165,34 @@ protected:
     /** @return true if the cache is full */
     virtual bool isFull();
 
-    /**
-     * Add an entry to the cache performing an eviction if neccesary
-     */
-    virtual void insertEntry(const Entry& newEntry);
-
     /** @return the least recently used entry */
     virtual Entry getNextEviction();
 
 private:
+    /** Handle caching for incoming block requests from the file system */
+    virtual void handleBlockRequest(cMessage* msg);
+
+    /** Handle caching for incoming block device responses */
+    virtual void handleBlockResponse(cMessage* msg);
+
+    /**
+     * Evict a cache entry if the cache is full and write the block to disk
+     * if it is marked dirty
+     */
+    void evictCacheEntry(LogicalBlockAddress lba);
+
+    /** Dirty percent threshold parameter */
+    double dirtyThreshold_;
 
     /** Cache helper class */
-    LRUCache<LogicalBlockAddress, bool>* cache_;
+    LRUCache<LogicalBlockAddress, char>* cache_;
 };
 
 #endif
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

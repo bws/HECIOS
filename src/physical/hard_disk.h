@@ -55,9 +55,12 @@ protected:
     /** @return the disks basic block size in bytes */
     long getBasicBlockSize() const;
 
+    /** Register the time spent in disk service for this request */
+    void registerDiskDelay(double delay);
+
 private:
-    
-    /** @return the disk service time for the message */
+
+    /** @return the disk service *completion* time for the message */
     virtual double service(LogicalBlockAddress blockNumber, bool isRead) = 0;
 
     /** @return the basic block size for the disk model */
@@ -65,10 +68,10 @@ private:
 
     /** Out gate id */
     int outGateId_;
-    
+
     /** Total time spent accessing the disk */
     double totalDelay_;
-    
+
 };
 
 /**
@@ -89,9 +92,9 @@ public:
     virtual void initialize();
 
 protected:
-    
+
     virtual void handleMessage(cMessage* msg);
-    
+
 private:
 
     /** Concrete implementation of service method */
@@ -106,7 +109,7 @@ private:
     double trackSwitchTimeSecs_;
     double averageReadSeekSecs_;
     double averageWriteSeekSecs_;
-    
+
     uint64_t capacity_;
     uint32_t numCylinders_;
     uint32_t numHeads_;
@@ -122,7 +125,7 @@ private:
     // Disk state
     uint32_t lastCylinder_;
     uint32_t lastHead_;
-    double lastTime_;
+    simtime_t lastCompletionTime_;
 };
 
 #endif

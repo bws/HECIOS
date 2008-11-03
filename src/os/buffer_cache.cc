@@ -34,10 +34,11 @@ BufferCache::BufferCache()
 
 void BufferCache::initialize()
 {
-    // Initialize 
+    // Initialize
     statNumRequests_ = 0;
     statNumHits_ = 0;
     statNumMisses_ = 0;
+    statNumWriteThroughs_ = 0;
 
     // Store gate ids
     inGateId_ = gate("in")->id();
@@ -52,8 +53,10 @@ void BufferCache::finish()
     finalizeCache();
 
     // Record statistics
-    double statHitRate = (double)statNumHits_ / (double) statNumRequests_;
+    double totalReads = double(statNumHits_) + double(statNumMisses_);
+    double statHitRate = (double)statNumHits_ / totalReads;
     recordScalar("SPFS Buffer Cache Requests", statNumRequests_);
+    recordScalar("SPFS Buffer Cache Write Through", statNumWriteThroughs_);
     recordScalar("SPFS Buffer Cache Hits", statNumHits_);
     recordScalar("SPFS Buffer Cache Misses", statNumMisses_);
     recordScalar("SPFS Buffer Cache Hit Rate", statHitRate);
@@ -66,6 +69,7 @@ void BufferCache::handleMessage(cMessage *msg)
     //  to a disk access request made as the result of a miss.
     if ( msg->arrivalGateId() == inGateId_ )
     {
+        statNumRequests_++;
         handleBlockRequest(msg);
     }
     else
@@ -74,29 +78,97 @@ void BufferCache::handleMessage(cMessage *msg)
     }
 }
 
-void BufferCache::handleBlockRequest(cMessage* msg)
+void BufferCache::registerHit()
+{
+    statNumHits_++;
+}
+
+void BufferCache::registerMiss()
+{
+    statNumMisses_++;
+}
+
+void BufferCache::registerWriteThrough()
+{
+    statNumWriteThroughs_++;
+}
+
+//=============================================================================
+//
+// NoBufferCache implementation (concrete BufferCache)
+//
+//=============================================================================
+Define_Module(NoBufferCache)
+
+NoBufferCache::NoBufferCache()
+{
+}
+
+void NoBufferCache::initializeCache()
+{
+}
+
+void NoBufferCache::finalizeCache()
+{
+}
+
+void NoBufferCache::handleBlockRequest(cMessage* blockRequest)
+{
+    // Forward request to next module
+    send(blockRequest, "request");
+}
+
+void NoBufferCache::handleBlockResponse(cMessage* blockResponse)
+{
+    // Forward response to next module
+    send(blockResponse, "out");
+}
+
+//=============================================================================
+//
+// LRUBufferCache implementation (concrete BufferCache)
+//
+//=============================================================================
+Define_Module(LRUBufferCache)
+
+LRUBufferCache::LRUBufferCache()
+    : cache_(0)
+{
+}
+
+void LRUBufferCache::initializeCache()
+{
+    dirtyThreshold_ = par("dirtyThreshold");
+
+    long numEntries = par("numEntries");
+    cache_ = new LRUCache<LogicalBlockAddress, char>(numEntries);
+}
+
+void LRUBufferCache::finalizeCache()
+{
+    assert(0 != cache_);
+    delete cache_;
+}
+
+void LRUBufferCache::handleBlockRequest(cMessage* msg)
 {
     if (spfsOSReadDeviceRequest* read =
         dynamic_cast<spfsOSReadDeviceRequest*>(msg))
     {
-        // Update statistics
-        statNumRequests_++;
-        
         if (isCached(read->getAddress()))
         {
             // Update statistics
-            statNumHits_++;
+            registerHit();
 
             // Create and send response
-            spfsOSReadDeviceResponse* resp =
-                new spfsOSReadDeviceResponse();
+            spfsOSReadDeviceResponse* resp = new spfsOSReadDeviceResponse();
             resp->setContextPointer(msg);
-            send(resp, "out"); 
+            send(resp, "out");
         }
         else
         {
             // Update statistics
-            statNumMisses_++;
+            registerMiss();
 
             // Forward request to next module
             send(msg, "request");
@@ -105,17 +177,24 @@ void BufferCache::handleBlockRequest(cMessage* msg)
     else if (spfsOSWriteDeviceRequest* write =
              dynamic_cast<spfsOSWriteDeviceRequest*>(msg))
     {
+        // If the cache has too many dirty entries, switch to write-through
+        if (cache_->percentDirty() > dirtyThreshold_)
+        {
+            registerWriteThrough();
+            write->setWriteThrough(true);
+        }
+
+        // Retrieve the write through status
         bool isWriteThrough = write->getWriteThrough();
-        
+
         // Perform cache eviction if needed
         evictCacheEntry(write->getAddress());
-            
+
         // Add an entry to the cache with dirty status determined by write
         // through status
-        Entry newEntry;
-        newEntry.lba = write->getAddress();
-        newEntry.isDirty = !isWriteThrough;
-        insertEntry(newEntry);
+        LogicalBlockAddress writeLBA = write->getAddress();
+        bool isDirty = !isWriteThrough;
+        cache_->insert(writeLBA, 0, isDirty);
 
         // Perform write though if necessary
         if (isWriteThrough)
@@ -128,7 +207,7 @@ void BufferCache::handleBlockRequest(cMessage* msg)
             // Create and send response
             spfsOSWriteDeviceResponse* resp = new spfsOSWriteDeviceResponse();
             resp->setContextPointer(msg);
-            send(resp, "out");        
+            send(resp, "out");
         }
     }
     else
@@ -137,7 +216,7 @@ void BufferCache::handleBlockRequest(cMessage* msg)
     }
 }
 
-void BufferCache::handleBlockResponse(cMessage* msg)
+void LRUBufferCache::handleBlockResponse(cMessage* msg)
 {
     // Add data read from the disk to the cache
     cMessage* req = static_cast<cMessage*>(msg->contextPointer());
@@ -152,12 +231,9 @@ void BufferCache::handleBlockResponse(cMessage* msg)
         {
             // Perform cache eviction if needed
             evictCacheEntry(lba);
-            
+
             // Add block to cache
-            Entry newEntry;
-            newEntry.lba = lba;
-            newEntry.isDirty = false;
-            insertEntry(newEntry);
+            cache_->insert(lba, 0, false);
         }
 
         // Forward completed response up the chain
@@ -182,10 +258,10 @@ void BufferCache::handleBlockResponse(cMessage* msg)
             delete msg;
         }
     }
-             
+
 }
 
-void BufferCache::evictCacheEntry(LogicalBlockAddress lba)
+void LRUBufferCache::evictCacheEntry(LogicalBlockAddress lba)
 {
     if (isFull() && !isCached(lba))
     {
@@ -197,71 +273,6 @@ void BufferCache::evictCacheEntry(LogicalBlockAddress lba)
             send(write, "request");
         }
     }
-}
-
-//=============================================================================
-//
-// NoBufferCache implementation (concrete BufferCache)
-//
-//=============================================================================
-Define_Module(NoBufferCache)
-
-NoBufferCache::NoBufferCache()
-{
-}
-
-void NoBufferCache::initializeCache()
-{
-}
-
-void NoBufferCache::finalizeCache()
-{
-}
-
-bool NoBufferCache::isFull()
-{
-    return false;
-}
-
-bool NoBufferCache::isCached(LogicalBlockAddress address)
-{
-    return false;
-}
-
-void NoBufferCache::insertEntry(const BufferCache::Entry& newEntry)
-{
-}
-
-BufferCache::Entry NoBufferCache::getNextEviction()
-{
-    logic_error e("Illegal to invoke getNextEviction");
-    throw e;
-    Entry* null = 0;
-    return *null;
-}
-
-//=============================================================================
-//
-// LRUBufferCache implementation (concrete BufferCache)
-//
-//=============================================================================
-Define_Module(LRUBufferCache)
-
-LRUBufferCache::LRUBufferCache()
-    : cache_(0)
-{
-}
-
-void LRUBufferCache::initializeCache()
-{
-    long numEntries = par("numEntries");
-    cache_ = new LRUCache<LogicalBlockAddress, bool>(numEntries);
-}
-
-void LRUBufferCache::finalizeCache()
-{
-    assert(0 != cache_);
-    delete cache_;
 }
 
 bool LRUBufferCache::isCached(LogicalBlockAddress address)
@@ -283,19 +294,14 @@ bool LRUBufferCache::isFull()
     return (cache_->capacity() == cache_->size());
 }
 
-void LRUBufferCache::insertEntry(const BufferCache::Entry& entry)
-{
-    cache_->insert(entry.lba, entry.isDirty);
-}
-
-BufferCache::Entry LRUBufferCache::getNextEviction()
+LRUBufferCache::Entry LRUBufferCache::getNextEviction()
 {
     // Retrieve the LRU item to be evicted
-    pair<LogicalBlockAddress,bool> lruEntry = cache_->getLRU();
-    
+    pair<LogicalBlockAddress,char> lruEntry = cache_->getLRU();
+
     Entry evictee;
     evictee.lba = lruEntry.first;
-    evictee.isDirty = lruEntry.second;
+    evictee.isDirty = cache_->getDirtyBit(evictee.lba);
     return evictee;
 }
 
