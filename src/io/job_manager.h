@@ -103,6 +103,10 @@ private:
 
     /** The size of flow buffers */
     FSSize flowBufferSize_;
+
+    /** Collection statistics */
+    double totalFlowNetworkBytes_;
+    double totalFlowStorageBytes_;
 };
 
 #endif

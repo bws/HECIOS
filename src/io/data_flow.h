@@ -84,18 +84,18 @@ public:
     /** Handle data flow messages */
     void handleServerMessage(cMessage* msg);
 
+    /** @return the amount of data sent/received from the network */
+    FSSize getNetworkProgress() const { return networkTransferTotal_; };
+
+    /** @return the amount of data committed/retrieved from storage */
+    FSSize getStorageProgress() const { return storageTransferTotal_; };
+
 protected:
     /** Add dataTransferred to the transfer to the network total */
     void addNetworkProgress(FSSize dataTransferred);
 
     /** Add dataTransferred to the transfer to storage total */
     void addStorageProgress(FSSize dataTransferred);
-
-    /** @return the amount of data sent/received from the network */
-    FSSize getNetworkProgress() const { return networkTransferTotal_; };
-
-    /** @return the amount of data committed/retrieved from storage */
-    FSSize getStorageProgress() const { return storageTransferTotal_; };
 
     /** Start the flow of data */
     virtual void startTransfer() = 0;

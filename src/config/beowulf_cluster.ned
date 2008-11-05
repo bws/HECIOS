@@ -54,13 +54,6 @@ channel FortyGigE
     datarate 40000000000.0 // bit/sec
 endchannel
 
-// Data channel modified to act like the GigE channel on Palmetto
-channel PalmettoGigE
-    delay 0.0   // sec
-    error 0.0
-    datarate 1100000000.0 // bit/sec
-endchannel
-
 module BeowulfCluster
 
     parameters:
@@ -96,13 +89,13 @@ module BeowulfCluster
     connections:
 
         for i = 0..numCPUNodes-1 do
-            cpun[i].ethOut --> PalmettoGigE --> switch.in++;
-            cpun[i].ethIn <-- PalmettoGigE <-- switch.out++;
+            cpun[i].ethOut --> GigE --> switch.in++;
+            cpun[i].ethIn <-- GigE <-- switch.out++;
         endfor;
 
         for i = 0..numIONodes - 1 do
-            ion[i].ethOut --> PalmettoGigE --> switch.in++;
-            ion[i].ethIn <-- PalmettoGigE <-- switch.out++;
+            ion[i].ethOut --> GigE --> switch.in++;
+            ion[i].ethIn <-- GigE <-- switch.out++;
         endfor;
 
     display: "o=white"; // affects background

@@ -105,8 +105,9 @@ void IOApplication::finish()
     recordScalar("SPFS Total Write Bandwidth", writeBandwidth);
 
     // Write some out to the terminal for easy verification
-    cerr << "Total Read Bandwdith : " << readBandwidth << " MB/s" << endl;
+    cerr << "Process Completion Time: " << applicationCompletionTime_ << endl;
     cerr << "Total Write Bandwdith : " << writeBandwidth << " MB/s" << endl;
+    cerr << "Total Read Bandwdith : " << readBandwidth << " MB/s" << endl;
 }
 
 /**
@@ -130,8 +131,8 @@ void IOApplication::handleMessage(cMessage* msg)
     bool messageScheduled = scheduleNextMessage();
     if (!messageScheduled)
     {
-        cerr << "Rank " << rank_ << " IOApplication Time: " << simTime()
-             << ": No more messages to post or blocked." << endl;
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "No more messages to schedule." << endl;
         applicationCompletionTime_ = simTime();
     }
 }
@@ -256,10 +257,12 @@ void IOApplication::handleIOMessage(cMessage* msg)
             break;
         }
         default:
+        {
             cerr << "ERROR: " << __FILE__ << ":" << __LINE__
                  << ":handleMessage not yet implemented for kind: "
                  << msg->kind() << endl;
             break;
+        }
     }
 
     // Delete the originating request

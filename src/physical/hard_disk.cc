@@ -169,23 +169,25 @@ double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
             totalDelay += averageWriteSeekSecs_;
     }
 
-    // Account for head switch time/fixed controller overhead
+    // Account for head switch time/fixed controller overhead if the
+    // controller is not currently active
     if (isRead)
     {
-      totalDelay += fixedControllerReadOverheadSecs_;
+        totalDelay += fixedControllerReadOverheadSecs_;
     }
     else
     {
-      totalDelay += fixedControllerWriteOverheadSecs_;
+        totalDelay += fixedControllerWriteOverheadSecs_;
     }
 
     // Account for the sector switching/rotational delay
+    simtime_t currentTime = simTime();
     long sectorsToMove = 0;
     long currentSector =
-        static_cast<long>(fmod(simTime(), timePerRevolution_)/timePerSector_);
-    if ( currentSector != destSector )
+        static_cast<long>(fmod(currentTime, timePerRevolution_)/timePerSector_);
+    if (currentSector != destSector)
     {
-        if ( currentSector < destSector )
+        if (currentSector < destSector)
         {
             sectorsToMove = destSector - currentSector;
         }
@@ -200,17 +202,15 @@ double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
 
     // Add delay to transfer the data off the media
     totalDelay += timePerSector_;
+    registerDiskDelay(totalDelay);
 
     // Update disk state
     lastCylinder_ = destCylinder;
     lastHead_ = destHead;
+    lastCompletionTime_ = max(lastCompletionTime_, currentTime) + totalDelay;
 
     // Modify the delay to take into account that the disk can only service
     // one request at a time
-    registerDiskDelay(totalDelay);
-
-    simtime_t currentTime = simTime();
-    lastCompletionTime_ = max(lastCompletionTime_, currentTime) + totalDelay;
     simtime_t completionDelay = (lastCompletionTime_ - currentTime) + totalDelay;
     return completionDelay;
 }

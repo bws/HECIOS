@@ -45,10 +45,16 @@ void JobManager::initialize()
     pfsOutGateId_ = findGate("pfsOut");
     storageInGateId_ = findGate("storageIn");
     storageOutGateId_ = findGate("storageOut");
+
+    // Initialize collection statistics
+    totalFlowNetworkBytes_ = 0.0;
+    totalFlowStorageBytes_ = 0.0;
 }
 
 void JobManager::finish()
 {
+    recordScalar("SPFS Flow Network Total", totalFlowNetworkBytes_);
+    recordScalar("SPFS Flow Storage Total", totalFlowStorageBytes_);
 }
 
 DataFlow* JobManager::createDataFlow(spfsDataFlowStart* flowStart)
@@ -132,12 +138,18 @@ void JobManager::handleMessage(cMessage* msg)
 
 void JobManager::handleSelfMessage(cMessage* msg)
 {
-    // Cleanup the flow job resources
+    // Locate the flow for this flow finish message
     spfsDataFlowFinish* flowFinish = dynamic_cast<spfsDataFlowFinish*>(msg);
     assert(0 != flowFinish);
     int flowId = flowFinish->getFlowId();
     DataFlow* flow = lookupDataFlow(flowId);
     assert(0 != flow);
+
+    // Collect statistics
+    totalFlowNetworkBytes_ += flow->getNetworkProgress();
+    totalFlowStorageBytes_ += flow->getStorageProgress();
+
+    // Cleanup the flow job resources
     //unsubscribeDataFlow(flow);
     deregisterDataFlow(flowId);
     delete flow;

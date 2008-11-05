@@ -160,7 +160,7 @@ void BMIMemoryDataFlow::sendPushAck(spfsBMIPushDataRequest* request)
     cModule* partnerModule = partner->parentModule();
     assert(0 != partnerModule);
 
-    // Send the acknowledgement directly to module
+    // Send the acknowledgment directly to module
     parentModule()->sendDirect(pushResponse, 0.0, partnerModule, "directIn");
 }
 
