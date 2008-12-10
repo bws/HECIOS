@@ -28,6 +28,40 @@
 #include "mpi_proto_m.h"
 using namespace std;
 
+set<PagedCache::Key> PagedCache::convertPagesToCacheKeys(const Filename& filename,
+                                                         set<FilePageId> pageIds)
+{
+    set<PagedCache::Key> keys;
+    set<FilePageId>::const_iterator iter = pageIds.begin();
+    set<FilePageId>::const_iterator end = pageIds.end();
+    while (iter != end)
+    {
+        PagedCache::Key key(filename, *iter);
+        keys.insert(key);
+        iter++;
+    }
+    return keys;
+}
+
+/** @return the Page Ids for filename in the set of cache keys */
+set<FilePageId> PagedCache::convertCacheKeysToPages(const Filename& filename,
+                                                    set<PagedCache::Key> keys)
+{
+    set<FilePageId> pages;
+    set<PagedCache::Key>::const_iterator iter = keys.begin();
+    set<PagedCache::Key>::const_iterator end = keys.end();
+    while (iter != end)
+    {
+        if (filename == iter->filename)
+        {
+            pages.insert(iter->key);
+        }
+        iter++;
+    }
+    return pages;
+}
+
+
 PagedCache::PagedCache()
 {
 }
@@ -43,7 +77,7 @@ FSOffset PagedCache::pageBeginOffset(const FilePageId& pageId) const
 
 set<FilePageId> PagedCache::determineRequestPages(const FSOffset& offset,
                                                   const FSSize& size,
-                                                  const FileView& view)
+                                                  const FileView& view) const
 {
     // Flatten view into file regions for the correct size
     vector<FileRegion> requestRegions =
@@ -55,7 +89,7 @@ set<FilePageId> PagedCache::determineRequestPages(const FSOffset& offset,
 
 set<FilePageId> PagedCache::determineRequestFullPages(const FSOffset& offset,
                                                       const FSSize& size,
-                                                      const FileView& view)
+                                                      const FileView& view) const
 {
     set<FilePageId> allPageIds = determineRequestPages(offset, size, view);
     set<FilePageId> partialPageIds = determineRequestPartialPages(offset, size, view);
@@ -71,7 +105,7 @@ set<FilePageId> PagedCache::determineRequestFullPages(const FSOffset& offset,
 
 set<FilePageId> PagedCache::determineRequestPartialPages(const FSOffset& offset,
                                                          const FSSize& size,
-                                                         const FileView& view)
+                                                         const FileView& view) const
 {
     set<FilePageId> partialPageIds;
 
@@ -138,7 +172,6 @@ spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
     spfsMPIFileRequest* origRequest) const
 {
     assert(!pageIds.empty());
-    assert(0 != origRequest);
 
     // Construct a descriptor that views only the correct pages
     FileDescriptor* fd = getPageViewDescriptor(filename, pageIds);
@@ -155,7 +188,7 @@ spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
     return writeRequest;
 }
 
-set<FilePageId> PagedCache::regionsToPageIds(const vector<FileRegion>& fileRegions)
+set<FilePageId> PagedCache::regionsToPageIds(const vector<FileRegion>& fileRegions) const
 {
     set<FilePageId> spanningPageIds;
     for (size_t i = 0; i < fileRegions.size(); i++)
@@ -174,7 +207,7 @@ set<FilePageId> PagedCache::regionsToPageIds(const vector<FileRegion>& fileRegio
     return spanningPageIds;
 }
 
-set<FilePage> PagedCache::regionsToPages(const vector<FileRegion>& fileRegions)
+set<FilePage> PagedCache::regionsToPages(const vector<FileRegion>& fileRegions) const
 {
     set<FilePage> spanningPages;
     set<FilePageId> spanningIds = regionsToPageIds(fileRegions);

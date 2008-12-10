@@ -96,6 +96,37 @@ void PHTFIOApplication::finish()
 {
     IOApplication::finish();
 
+    // Aggregate accumulation statistics
+    static size_t numResults = 0;
+    static double aggReadTime = 0.0;
+    static double aggReadBytes = 0.0;
+    static double aggWriteTime = 0.0;
+    static double aggWriteBytes = 0.0;
+    static double maxReadTime = 0.0;
+    static double maxWriteTime = 0.0;
+
+    // Accumulate the aggregate bandwidth
+    numResults++;
+    aggReadBytes += getNumReadBytes();
+    aggReadTime += getReadTime();
+    aggWriteBytes += getNumWriteBytes();
+    aggWriteTime += getWriteTime();
+    maxReadTime = max(maxReadTime, getReadTime());
+    maxWriteTime = max(maxWriteTime, getWriteTime());
+
+    // Write out the aggregate statistic on the final process
+    if (numResults == CommMan::instance().commSize(SPFS_COMM_WORLD))
+    {
+        double aggWriteBandwidth = aggWriteBytes / (1.0e6 * maxWriteTime);
+        recordScalar("SPFS Aggregate Write Bandwidth", aggWriteBandwidth);
+        cerr << "Aggregated Write bandwidth: " << aggWriteBandwidth << endl;
+
+        double aggReadBandwidth = aggReadBytes / (1.0e6 * maxReadTime);
+        recordScalar("SPFS Aggregate Read Bandwidth", aggReadBandwidth);
+        cerr << "Aggregated Read bandwidth: " << aggReadBandwidth << endl;
+    }
+
+    // Cleanup trace resources
     phtfEvent_->close();
 }
 
@@ -403,6 +434,7 @@ void PHTFIOApplication::populateFileSystem()
 
 void PHTFIOApplication::performFakeOpenProcessing(const PHTFEventRecord& openRecord)
 {
+    /*
     // Extract the descriptor number from the event record
     int handle = openRecord.paramAsDescriptor(4, *phtfEvent_);
     FileDescriptor* fd = getDescriptor(handle);
@@ -419,9 +451,7 @@ void PHTFIOApplication::performFakeOpenProcessing(const PHTFEventRecord& openRec
     assert(0 != cacheModule);
     MiddlewareCache* middlewareCache = dynamic_cast<MiddlewareCache*>(cacheModule);
     assert(0 != middlewareCache);
-
-    // Inform the cache of the open
-    middlewareCache->processFileOpen(fd->getFilename());
+*/
 }
 
 void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,

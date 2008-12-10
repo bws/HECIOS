@@ -37,7 +37,7 @@ class PagedCache : public MiddlewareCache
 {
 public:
     /** Key used to locate a page in the cache */
-    class Key
+    struct Key
     {
     public:
         /** Constructor */
@@ -49,6 +49,25 @@ public:
         /** Key to identify a page (usually just the page id) */
         std::size_t key;
     };
+
+    /** Sets of pages currently being read or written */
+    struct InProcessPages
+    {
+    public:
+        /** Pages in the process of being read */
+        std::set<PagedCache::Key> readPages;
+
+        /** Pages in the process of being written */
+        std::set<PagedCache::Key> writePages;
+    };
+
+    /** @return the Cache Keys for the page set */
+    static std::set<PagedCache::Key> convertPagesToCacheKeys(const Filename& filename,
+                                                             std::set<FilePageId> pageIds);
+
+    /** @return the Page Ids for filename in the set of cache keys */
+    static std::set<FilePageId> convertCacheKeysToPages(const Filename& filename,
+                                                        std::set<PagedCache::Key> keys);
 
     /** Constructor */
     PagedCache();
@@ -68,7 +87,7 @@ public:
     /** @return Array of pages ids spanning the supplied file regions */
     std::set<FilePageId> determineRequestPages(const FSOffset& offset,
                                                const FSSize& size,
-                                               const FileView& view);
+                                               const FileView& view) const;
 
     /**
      * @return Array of pages ids that are fully covered by
@@ -76,7 +95,7 @@ public:
      */
     std::set<FilePageId> determineRequestFullPages(const FSOffset& offset,
                                                    const FSSize& size,
-                                                   const FileView& view);
+                                                   const FileView& view) const;
 
     /**
      * @return Array of pages ids that are only partially covered by
@@ -84,7 +103,7 @@ public:
      */
     std::set<FilePageId> determineRequestPartialPages(const FSOffset& offset,
                                                       const FSSize& size,
-                                                      const FileView& view);
+                                                      const FileView& view) const;
 
 protected:
     /** Module initialization */
@@ -105,11 +124,11 @@ protected:
 private:
     /** @return Array of page ids spanning the supplied file regions */
     std::set<FilePageId> regionsToPageIds(
-        const std::vector<FileRegion>& fileRegions);
+        const std::vector<FileRegion>& fileRegions) const;
 
     /** @return Array of pages spanning the supplied file regions */
     std::set<FilePage> regionsToPages(
-        const std::vector<FileRegion>& fileRegions);
+        const std::vector<FileRegion>& fileRegions) const;
 
     /** @return a file descriptor for filename with the page view applied */
     FileDescriptor* getPageViewDescriptor(
@@ -128,8 +147,6 @@ private:
 
 /** @return true if the lhs key is ordered before the rhs key */
 bool operator<(const PagedCache::Key& lhs, const PagedCache::Key& rhs);
-
-
 
 #endif /* PAGED_CACHE_H_ */
 

@@ -20,6 +20,8 @@
 #include "direct_paged_middleware_cache.h"
 #include <algorithm>
 #include <cassert>
+#include <functional>
+#include "comm_man.h"
 #include "mpi_proto_m.h"
 using namespace std;
 
@@ -40,8 +42,8 @@ void DirectPagedMiddlewareCache::initialize()
     assert(0 != cacheCapacity());
     lruCache_ = createFileDataPageCache(cacheCapacity());
 
-    // Initialize the pending request map
-    pendingRequests_ = createPendingRequestMap();
+    // Initialize the pending request maps
+    pendingPages_ = createPendingPageMap();
 
     // Initialize the open file map
     openFileCounts_ = createOpenFileMap();
@@ -54,7 +56,7 @@ DirectPagedMiddlewareCache::createFileDataPageCache(size_t cacheSize)
 }
 
 DirectPagedMiddlewareCache::RequestMap*
-DirectPagedMiddlewareCache::createPendingRequestMap()
+DirectPagedMiddlewareCache::createPendingPageMap()
 {
     return new RequestMap();
 }
@@ -67,58 +69,12 @@ DirectPagedMiddlewareCache::createOpenFileMap()
 
 void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
 {
-    if (SPFS_MPI_FILE_OPEN_REQUEST == msg->kind())
+    if (SPFS_MPI_FILE_OPEN_REQUEST == msg->kind() ||
+        SPFS_MPI_FILE_CLOSE_REQUEST == msg->kind() ||
+        SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind() ||
+        SPFS_MPI_FILE_WRITE_AT_REQUEST == msg->kind())
     {
-        spfsMPIFileOpenRequest* open = static_cast<spfsMPIFileOpenRequest*>(msg);
-        Filename openFile(open->getFileName());
-        processFileOpen(openFile);
-        send(msg, fsOutGateId());
-    }
-    else if (SPFS_MPI_FILE_CLOSE_REQUEST == msg->kind())
-    {
-        spfsMPIFileCloseRequest* close = static_cast<spfsMPIFileCloseRequest*>(msg);
-        FileDescriptor* fd = close->getFileDes();
-        processFileClose(fd->getFilename());
-        send(msg, fsOutGateId());
-    }
-    else if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind())
-    {
-        spfsMPIFileReadAtRequest* readAt =
-            static_cast<spfsMPIFileReadAtRequest*>(msg);
-
-        // Determine the pages remaining for this request
-        set<FilePageId> remainingPages = resolveRequest(readAt);
-
-        // Request unresolved pages
-        if (!remainingPages.empty())
-        {
-            spfsMPIFileReadAtRequest* pageRead =
-                createPageReadRequest(readAt->getFileDes()->getFilename(),
-                                      remainingPages,
-                                      readAt);
-            send(pageRead, fsOutGateId());
-        }
-    }
-    else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == msg->kind())
-    {
-        spfsMPIFileWriteAtRequest* writeAt =
-            static_cast<spfsMPIFileWriteAtRequest*>(msg);
-
-        // Retrieve any partial pages written by this request
-        set<FilePageId> requestPages = resolveRequest(writeAt);
-
-        // Update the cache with the full pages
-        updateCache(writeAt);
-
-        // If partial pages exist, read those pages
-        if (!requestPages.empty())
-        {
-            spfsMPIFileReadAtRequest* pageRead =
-                createPageReadRequest(writeAt->getFileDes()->getFilename(),
-                                      requestPages,
-                                      writeAt);
-            send(pageRead, fsOutGateId());
-        }
+        processRequest(msg, msg);
     }
     else
     {
@@ -128,9 +84,6 @@ void DirectPagedMiddlewareCache::handleApplicationMessage(cMessage* msg)
         // Forward messages not handled by the cache
         send(msg, fsOutGateId());
     }
-
-    // Complete any requests satisfied by this request
-    completeRequests();
 }
 
 void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
@@ -144,24 +97,15 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
     }
     else
     {
-        if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind())
+        if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind() ||
+            SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->kind())
         {
-            // Update the cache and any pending requests
-            spfsMPIFileReadAtResponse* cacheRead =
-                dynamic_cast<spfsMPIFileReadAtResponse*>(msg);
-            assert(0 != cacheRead);
-            updateCache(cacheRead);
+            assert(0 != dynamic_cast<spfsMPIFileReadAtResponse*>(msg));
+            cMessage* cacheRequest = static_cast<cMessage*>(msg->contextPointer());
+            cMessage* appRequest = static_cast<cMessage*>(cacheRequest->contextPointer());
+            processRequest(appRequest, msg);
 
-            // Clean up the request-response pair
-            cMessage* request = static_cast<cMessage*>(msg->contextPointer());
-            delete request;
-            delete msg;
-        }
-        else if (SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->kind())
-        {
-            // Clean up the request-response pair
-            cMessage* request = static_cast<cMessage*>(msg->contextPointer());
-            delete request;
+            delete cacheRequest;
             delete msg;
         }
         else
@@ -178,176 +122,394 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
     completeRequests();
 }
 
-void DirectPagedMiddlewareCache::processFileOpen(const Filename& openName)
+void DirectPagedMiddlewareCache::processRequest(cMessage* request, cMessage* msg)
 {
-    if (0 == openFileCounts_->count(openName))
+    if (SPFS_MPI_FILE_OPEN_REQUEST == request->kind())
     {
-        (*openFileCounts_)[openName] = 1;
+        spfsMPIFileOpenRequest* open = static_cast<spfsMPIFileOpenRequest*>(request);
+        processFileOpen(open, msg);
+    }
+    else if (SPFS_MPI_FILE_CLOSE_REQUEST == request->kind())
+    {
+        spfsMPIFileCloseRequest* close = static_cast<spfsMPIFileCloseRequest*>(request);
+        processFileClose(close, msg);
+    }
+    else if (SPFS_MPI_FILE_READ_AT_REQUEST == request->kind())
+    {
+        spfsMPIFileReadAtRequest* readAt =
+            static_cast<spfsMPIFileReadAtRequest*>(request);
+        processFileRead(readAt, msg);
+    }
+    else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == request->kind())
+    {
+        spfsMPIFileWriteAtRequest* writeAt =
+            static_cast<spfsMPIFileWriteAtRequest*>(request);
+        processFileWrite(writeAt, msg);
     }
     else
     {
-        (*openFileCounts_)[openName]++;
-    }
-}
-
-void DirectPagedMiddlewareCache::processFileClose(const Filename& closeName)
-{
-    assert(0 != openFileCounts_->count(closeName));
-
-    // Decrement the count
-    size_t activeHandles = --((*openFileCounts_)[closeName]);
-
-    // Flush cache data if this is the final close
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "After close, num active handles is: " << activeHandles << endl;
-    if (0 == activeHandles)
-    {
-        // TODO: Flush the data here somehow
         cerr << __FILE__ << ":" << __LINE__ << ":"
-             << "TODO: Need to flush file data on close!!" << endl;
+             << "ERROR: Unknown request type: " << request->kind()
+             << " Message: " << msg->info() << endl;
+        assert(0);
     }
+
+    // Complete any requests satisfied by this message
+    completeRequests();
 }
 
-set<FilePageId> DirectPagedMiddlewareCache::resolveRequest(
-    spfsMPIFileReadAtRequest* readAt)
+void DirectPagedMiddlewareCache::processFileOpen(spfsMPIFileOpenRequest* open,
+                                                 cMessage* msg)
 {
-    // Convert regions into file pages
-    FileDescriptor* fd = readAt->getFileDes();
-    FSSize readSize = readAt->getDataType()->getExtent() * readAt->getCount();
-    set<FilePageId> requestPages = determineRequestPages(readAt->getOffset(),
-                                                         readSize,
-                                                         fd->getFileView());
-
-    // Cull pages already in the cache
-    set<FilePageId>::iterator iter;
-    for (iter = requestPages.begin(); requestPages.end() != iter; /* nothing */)
+    if (msg == open)
     {
-        PagedCache::Key k(fd->getFilename(), *iter);
-        if (lruCache_->exists(k))
+        // Increment the open file count by the number of members in the
+        // communicator
+        int communicatorId = open->getCommunicator();
+        size_t commCount = CommMan::instance().commSize(communicatorId);
+        Filename openName(open->getFileName());
+        if (0 == openFileCounts_->count(openName))
         {
-            // The call to erase invalidates the iterator, thus we have to
-            // use post-increment in the erase call.  See item 9 in
-            // Effective STL.
-            requestPages.erase(iter++);
+            (*openFileCounts_)[openName] = commCount;
         }
         else
         {
-            ++iter;
+            (*openFileCounts_)[openName] += commCount;
+        }
+
+        // Send the open request on to the file system
+        send(msg, fsOutGateId());
+    }
+    else
+    {
+        // Send the open response on to the file system
+        send(msg, appOutGateId());
+    }
+}
+
+void DirectPagedMiddlewareCache::processFileClose(spfsMPIFileCloseRequest* close, cMessage* msg)
+{
+    if (msg == close)
+    {
+        assert(0 != openFileCounts_->count(closeName));
+
+        // Decrement the open count
+        Filename closeName = close->getFileDes()->getFilename();
+        size_t openCount = --((*openFileCounts_)[closeName]);
+
+        // If this is the last close, flush the dirty cache data to disk
+        if (0 == openCount)
+        {
+            set<PagedCache::Key> readPages;
+            set<PagedCache::Key> writePages = lookupDirtyPagesInCache(closeName);
+            registerPendingPages(close, readPages, writePages);
+
+            beginWritebackEvictions(writePages, close);
+            flushCache(closeName);
+        }
+        else
+        {
+            // Send the close request on to the file system
+            send(msg, fsOutGateId());
+        }
+    }
+    else
+    {
+        assert(0 == dynamic_cast<spfsMPIFileCloseResponse*>(msg));
+
+        // Send the close response on to the file system
+        send(msg, appOutGateId());
+    }
+
+}
+
+void DirectPagedMiddlewareCache::processFileRead(spfsMPIFileReadAtRequest* read, cMessage* msg)
+{
+    if (msg == read)
+    {
+        // Determine the cache pages requested
+        set<PagedCache::Key> requestPages;
+        getRequestCachePages(read, requestPages);
+
+        // Cull read pages that are already requested
+        set<PagedCache::Key> trimmedPages = trimPendingReadPages(requestPages);
+
+        // Begin the read
+        beginRead(trimmedPages, read);
+
+        // Register the request's pending pages
+        set<PagedCache::Key> writePages;
+        registerPendingPages(read, requestPages, writePages);
+    }
+    else
+    {
+        assert(0 == dynamic_cast<spfsMPIFileReadAtResponse*>(msg));
+
+        // Determine the set of read pages
+        spfsMPIFileReadAtRequest* cacheRead =
+            static_cast<spfsMPIFileReadAtRequest*>(msg->contextPointer());
+
+        // Determine the cache pages read
+        set<PagedCache::Key> requestPages;
+        getRequestCachePages(cacheRead, requestPages);
+
+        // Update the cache
+        set<PagedCache::Key> writebackPages;
+        updateCache(requestPages, false, writebackPages);
+
+        // Begin the writebacks
+        beginWritebackEvictions(writebackPages, read);
+
+        // TODO: If the writebuffer is not infinite, the request will need
+        // to pause while writebacks occur
+        //addPendingWrites(read, writebackPages);
+    }
+}
+
+void DirectPagedMiddlewareCache::processFileWrite(spfsMPIFileWriteAtRequest* write, cMessage* msg)
+{
+    // Cache write state machine states
+    enum {
+        INIT = 0,
+        BEGIN_CACHE_BYPASS_WRITE = FSM_Steady(1),
+        COMPLETE_CACHE_BYPASS_WRITE = FSM_Steady(2),
+        REQUEST_PARTIAL_PAGES = FSM_Transient(3),
+        FINISH_PARTIAL_PAGE_READ = FSM_Steady(4),
+        BEGIN_FILE_WRITE = FSM_Steady(5),
+        COMPLETE_FILE_WRITE = FSM_Steady(6),
+    };
+
+    cFSM currentState = write->getCacheState();
+    FSM_Switch(currentState)
+    {
+        case FSM_Exit(INIT):
+        {
+            // Determine the cache pages requested
+            set<PagedCache::Key> requestPages;
+            getRequestCachePages(write, requestPages);
+
+            if (requestPages.size() < lruCache_->capacity())
+            {
+                FSM_Goto(currentState, BEGIN_CACHE_BYPASS_WRITE);
+            }
+            else
+            {
+                FSM_Goto(currentState, REQUEST_PARTIAL_PAGES);
+            }
+            break;
+        }
+        case FSM_Enter(BEGIN_CACHE_BYPASS_WRITE):
+        {
+            assert(write == msg);
+            // Set the message context to this message so that it processes
+            // correctly
+            msg->setContextPointer(msg);
+            send(msg, fsOutGateId());
+            break;
+        }
+        case FSM_Exit(BEGIN_CACHE_BYPASS_WRITE):
+        {
+            FSM_Goto(currentState, COMPLETE_CACHE_BYPASS_WRITE);
+            break;
+        }
+        case FSM_Enter(COMPLETE_CACHE_BYPASS_WRITE):
+        {
+            send(msg, appOutGateId());
+            break;
+        }
+        case FSM_Exit(COMPLETE_CACHE_BYPASS_WRITE):
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "ERROR: Illegal state reached: " << msg->info() << endl;
+            assert(0);
+            break;
+        }
+        case FSM_Enter(REQUEST_PARTIAL_PAGES):
+        {
+            break;
+        }
+        case FSM_Exit(REQUEST_PARTIAL_PAGES):
+        {
+              break;
+        }
+        case FSM_Enter(FINISH_PARTIAL_PAGE_READ):
+        {
+            break;
+        }
+        case FSM_Exit(FINISH_PARTIAL_PAGE_READ):
+        {
+              break;
+        }
+        case FSM_Enter(BEGIN_FILE_WRITE):
+        {
+            break;
+        }
+        case FSM_Exit(BEGIN_FILE_WRITE):
+        {
+              break;
+        }
+        case FSM_Enter(COMPLETE_FILE_WRITE):
+        {
+            break;
+        }
+        case FSM_Exit(COMPLETE_FILE_WRITE):
+        {
+              break;
         }
     }
 
-    // Remove pages already requested (must be done before registering this
-    // request)
-    set<FilePageId> trimmedPages = removeRequestedPages(requestPages);
-
-    // Register the request's pending pages
-    registerPendingRequest(readAt, requestPages);
-
-    return trimmedPages;
+    // Set the cache fsm state back into the request
+    write->setCacheState(currentState);
 }
 
-set<FilePageId> DirectPagedMiddlewareCache::resolveRequest(
-    spfsMPIFileWriteAtRequest* writeAt)
+template<class spfsMPIFileIORequest>
+void DirectPagedMiddlewareCache::getRequestCachePages(
+    const spfsMPIFileIORequest* ioRequest,
+    std::set<PagedCache::Key>& outRequestPages) const
 {
     // Convert regions into file pages
-    FileDescriptor* fd = writeAt->getFileDes();
-    FSSize writeSize = writeAt->getDataType()->getExtent() * writeAt->getCount();
-    set<FilePageId> partialPages =
-        determineRequestPartialPages(writeAt->getOffset(),
-                                     writeSize,
-                                     fd->getFileView());
-
-    // Remove pages already requested
-    set<FilePageId> trimmedPages = removeRequestedPages(partialPages);
-
-    // Register the request's pending pages
-    registerPendingRequest(writeAt, partialPages);
-    return trimmedPages;
-}
-
-void DirectPagedMiddlewareCache::updateCache(
-    spfsMPIFileReadAtResponse* readAtResponse)
-{
-    // Extract the originating request
-    cMessage* msg = static_cast<cMessage*>(readAtResponse->contextPointer());
-    spfsMPIFileReadAtRequest* readAt = dynamic_cast<spfsMPIFileReadAtRequest*>(msg);
-    assert(0 != readAt);
-
-    // Convert regions into file pages
-    FileDescriptor* fd = readAt->getFileDes();
-    FSSize readSize = readAt->getDataType()->getExtent() * readAt->getCount();
-    set<FilePageId> requestPages = determineRequestPages(readAt->getOffset(),
-                                                         readSize,
+    FileDescriptor* fd = ioRequest->getFileDes();
+    FSSize ioSize = ioRequest->getDataType()->getExtent() * ioRequest->getCount();
+    set<FilePageId> requestPages = determineRequestPages(ioRequest->getOffset(),
+                                                         ioSize,
                                                          fd->getFileView());
 
-    // Update the cache and pending requests
-    set<PagedCache::Key> writeBacks;
-    updateCache(fd->getFilename(), requestPages, false, writeBacks);
-
-    // Construct a request for the write-back pages
-    completeWriteBacks(writeBacks, readAt);
+    outRequestPages = PagedCache::convertPagesToCacheKeys(fd->getFilename(),
+                                                          requestPages);
 }
 
-void DirectPagedMiddlewareCache::updateCache(
-    spfsMPIFileWriteAtRequest* writeAt)
+void DirectPagedMiddlewareCache::beginWritebackEvictions(
+    const std::set<PagedCache::Key>& writebackPages,
+    spfsMPIFileRequest* parentRequest)
 {
-    // Convert regions into file pages
-    FileDescriptor* fd = writeAt->getFileDes();
-    FSSize writeSize = writeAt->getDataType()->getExtent() * writeAt->getCount();
-    set<FilePageId> fullPages =
-        determineRequestFullPages(writeAt->getOffset(),
-                                  writeSize,
-                                  fd->getFileView());
+    if (!writebackPages.empty())
+    {
+        // Accumulate the pages for each file and issue a writeback
+        set<FilePageId> pages;
+        Filename currentName = writebackPages.begin()->filename;
+        set<PagedCache::Key>::iterator iter;
+        for (iter = writebackPages.begin(); iter != writebackPages.end(); ++iter)
+        {
+            // TODO: need to ensure that pages are stably sorted by current name
+            if (currentName == iter->filename)
+            {
+                pages.insert(iter->key);
+            }
+            else
+            {
+                // Write back the accumulated pages for currentName
+                spfsMPIFileWriteAtRequest* writebackRequest =
+                    createPageWriteRequest(currentName, pages, parentRequest);
+                send(writebackRequest, fsOutGateId());
 
-    // Update the cache and pending requests
-    set<PagedCache::Key> writeBacks;
-    updateCache(fd->getFilename(), fullPages, true, writeBacks);
+                // Reset the loop state and append the page to the new set
+                pages.clear();
+                currentName = iter->filename;
+                pages.insert(iter->key);
+            }
+        }
 
-    // Construct a request for the write-back pages
-    completeWriteBacks(writeBacks, writeAt);
+        // Write back the final set of accumulated pages
+        spfsMPIFileWriteAtRequest* writeBackRequest =
+            createPageWriteRequest(currentName, pages, parentRequest);
+        send(writeBackRequest, fsOutGateId());
+    }
 }
 
-void DirectPagedMiddlewareCache::updateCache(const Filename& filename,
-                                             const set<FilePageId>& updatePages,
+void DirectPagedMiddlewareCache::beginRead(
+    const std::set<PagedCache::Key>& readPages,
+    spfsMPIFileRequest* parentRequest)
+{
+    if (0 < readPages.size())
+    {
+        set<PagedCache::Key>::iterator iter = readPages.begin();
+        set<PagedCache::Key>::iterator end = readPages.end();
+        Filename filename = iter->filename;
+        set<FilePageId> pages;
+        while (iter != end)
+        {
+            assert(filename == iter->filename);
+            pages.insert(iter->key);
+            ++iter;
+        }
+        spfsMPIFileReadAtRequest* readRequest =
+            createPageReadRequest(filename, pages, parentRequest);
+        send(readRequest, fsOutGateId());
+    }
+}
+
+set<PagedCache::Key> DirectPagedMiddlewareCache::lookupDirtyPagesInCache(const Filename& filename) const
+{
+        DirtyPageFilter filter(filename);
+        return lruCache_->getFilteredEntries(filter);
+}
+
+void DirectPagedMiddlewareCache::updateCache(set<PagedCache::Key>& updatePages,
                                              bool updatesDirty,
                                              set<PagedCache::Key>& outWriteBacks)
 {
     // Update the cache and accumulate any writebacks required
-    set<FilePageId>::const_iterator iter;
+    set<PagedCache::Key>::const_iterator iter;
     for (iter = updatePages.begin(); iter != updatePages.end(); iter++)
     {
         try {
-            PagedCache::Key evictedKey(Filename("/"), 0);
-            FilePageId evictedValue = 0;
-            bool isDirty = false;
             // If the updates are dirty, then insert them into the cache
             // otherwise, if an existing entry isn't already dirty then
             //   insert the entry into the cache
-            PagedCache::Key insertKey(filename, *iter);
+            PagedCache::Key evictedKey(Filename("/"), 0);
+            FilePageId evictedValue = 0;
+            bool isEvictedDirty = false;
             if (updatesDirty)
             {
                 // Insert dirty entries
-                lruCache_->insertAndRecall(insertKey, *iter, true,
-                                           evictedKey, evictedValue, isDirty);
+                lruCache_->insertAndRecall(*iter, iter->key, true,
+                                           evictedKey, evictedValue, isEvictedDirty);
             }
-            else if (!lruCache_->exists(insertKey) ||
-                     false == lruCache_->getDirtyBit(insertKey))
+            else if (!lruCache_->exists(*iter) ||
+                     false == lruCache_->getDirtyBit(*iter))
             {
                 // Insert clean entries that don't conflict with an existing
                 // dirty entry
-                lruCache_->insertAndRecall(insertKey, *iter, false,
-                                           evictedKey, evictedValue, isDirty);
+                lruCache_->insertAndRecall(*iter, iter->key, false,
+                                           evictedKey, evictedValue, isEvictedDirty);
             }
 
-            if (isDirty)
+            // Only add writeback if the eviction is dirty
+            if (isEvictedDirty)
             {
                 outWriteBacks.insert(evictedKey);
             }
-        } catch (const NoSuchEntry& e) {}
+        } catch (const NoSuchEntry& e)
+        {
+            // No eviction was necessary
+        }
     }
+}
 
-    // Update pending requests with these pages
-    updatePendingRequests(updatePages);
+void DirectPagedMiddlewareCache::flushCache(const Filename& flushName)
+{
+    if (0 == (*openFileCounts_)[flushName])
+    {
+        FilePageFilter filter(flushName);
+        set<PagedCache::Key> flushEntries = lruCache_->getFilteredEntries(filter);
+        set<PagedCache::Key>::const_iterator begin = flushEntries.begin();
+        set<PagedCache::Key>::const_iterator end = flushEntries.end();
+        while (begin != end)
+        {
+            try
+            {
+                lruCache_->remove(*begin);
+                begin++;
+            }
+            catch(NoSuchEntry& nse)
+            {
+                cerr << __FILE__ << ":" << __LINE__ << ":"
+                     << "No such entry while flushing a file from the cache: "
+                     << begin->filename << " " << begin->key << endl;
+                assert(0);
+            }
+        }
+    }
 }
 
 void DirectPagedMiddlewareCache::completeRequests()
@@ -373,82 +535,103 @@ void DirectPagedMiddlewareCache::completeRequests()
         else
         {
             assert(SPFS_MPI_FILE_CLOSE_REQUEST == req->kind());
-            resp =
-                new spfsMPIFileCloseResponse(0, SPFS_MPI_FILE_CLOSE_RESPONSE);
+            resp = new spfsMPIFileCloseResponse(0, SPFS_MPI_FILE_CLOSE_RESPONSE);
             resp->setContextPointer(req);
         }
-        assert(0 != resp);
         send(resp, appOutGateId());
     }
 }
 
-void DirectPagedMiddlewareCache::completeWriteBacks(const set<PagedCache::Key>& writeBacks,
-                                                    spfsMPIFileRequest* req)
+void DirectPagedMiddlewareCache::registerPendingPages(
+    spfsMPIFileRequest* fileRequest,
+    const set<PagedCache::Key>& readPages,
+    const set<PagedCache::Key>& writePages)
 {
-    if (!writeBacks.empty())
+    PagedCache::InProcessPages& inProcess = (*pendingPages_)[fileRequest];
+    inProcess.readPages.insert(readPages.begin(), readPages.end());
+    inProcess.writePages.insert(writePages.begin(), writePages.end());
+}
+
+void DirectPagedMiddlewareCache::resolvePendingReadPage(const PagedCache::Key& resolvedPage)
+{
+    RequestMap::iterator iter;
+    for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
     {
-        // Accumulate the pages for each file and issue a writeback
-        set<FilePageId> pages;
-        Filename currentName = writeBacks.begin()->filename;
-        set<PagedCache::Key>::iterator iter;
-        for (iter = writeBacks.begin(); iter != writeBacks.end(); ++iter)
-        {
-            if (currentName == iter->filename)
-            {
-                pages.insert(iter->key);
-            }
-            else
-            {
-                // Write back the accumulated pages
-                spfsMPIFileWriteAtRequest* writeBackRequest =
-                    createPageWriteRequest(currentName, pages, req);
-                send(writeBackRequest, fsOutGateId());
-
-                // Reset the loop state and append the page to the new set
-                pages.clear();
-                currentName = iter->filename;
-                pages.insert(iter->key);
-            }
-        }
-
-        // Write back the pages
-        spfsMPIFileWriteAtRequest* writeBackRequest =
-            createPageWriteRequest(currentName, pages, req);
-        send(writeBackRequest, fsOutGateId());
+        iter->second.readPages.erase(resolvedPage);
     }
 }
 
-void DirectPagedMiddlewareCache::registerPendingRequest(
-    spfsMPIFileRequest* fileRequest, const set<FilePageId>& pendingPages)
-{
-    (*pendingRequests_)[fileRequest] = pendingPages;
-}
-
-void DirectPagedMiddlewareCache::updatePendingRequests(const set<FilePageId>& pageIds)
+void DirectPagedMiddlewareCache::resolvePendingReadPages(const set<PagedCache::Key>& resolvedPages)
 {
     RequestMap::iterator iter;
-    for (iter = pendingRequests_->begin(); pendingRequests_->end() != iter; ++iter)
+    for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
     {
-        set<FilePageId> result;
-        set_difference(iter->second.begin(), iter->second.end(),
-                       pageIds.begin(), pageIds.end(),
+        set<PagedCache::Key> result;
+        set<PagedCache::Key>& inProcessReads = iter->second.readPages;
+        set_difference(inProcessReads.begin(), inProcessReads.end(),
+                       resolvedPages.begin(), resolvedPages.end(),
                        inserter(result, result.begin()));
 
         // Assign the resulting set as the new pending requests
-        iter->second = result;
+        inProcessReads = result;
+    }
+}
+
+void DirectPagedMiddlewareCache::resolvePendingWritePage(const PagedCache::Key& resolvedPage)
+{
+    RequestMap::iterator iter;
+    for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
+    {
+        iter->second.writePages.erase(resolvedPage);
+    }
+}
+
+void DirectPagedMiddlewareCache::resolvePendingWritePages(const set<PagedCache::Key>& resolvedPages)
+{
+    RequestMap::iterator iter;
+    for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
+    {
+        set<PagedCache::Key> result;
+        set<PagedCache::Key>& inProcessWrites = iter->second.writePages;
+        set_difference(inProcessWrites.begin(), inProcessWrites.end(),
+                       resolvedPages.begin(), resolvedPages.end(),
+                       inserter(result, result.begin()));
+
+        // Assign the resulting set as the new pending requests
+        inProcessWrites = result;
     }
 }
 
 vector<spfsMPIFileRequest*> DirectPagedMiddlewareCache::popCompletedRequests()
 {
     vector<spfsMPIFileRequest*> completeRequests;
+
+    // Iterate through the requests to find completed requests
     RequestMap::iterator iter;
-    for (iter = pendingRequests_->begin(); pendingRequests_->end() != iter; /* nothing */)
+    for (iter = pendingPages_->begin(); pendingPages_->end() != iter; /* nothing */)
     {
-        if (iter->second.empty())
+
+        PagedCache::InProcessPages& inProcess = iter->second;
+        if (inProcess.readPages.size() == 0 &&
+            inProcess.writePages.size() == 0)
         {
-            completeRequests.push_back(iter->first);
-            pendingRequests_->erase(iter++);
+            // Remove completed requests
+            if (0 == dynamic_cast<spfsMPIFileCloseRequest*>(iter->first))
+            {
+                completeRequests.push_back(iter->first);
+                pendingPages_->erase(iter++);
+            }
+            else
+            {
+                // If this is a close, we need to additionally ensure that
+                // no other reads or writes for this file are ongoing
+                Filename closeName = iter->first->getFileDes()->getFilename();
+                if (!hasPendingPages(closeName))
+                {
+                    completeRequests.push_back(iter->first);
+                    pendingPages_->erase(iter++);
+                }
+            }
         }
         else
         {
@@ -458,16 +641,17 @@ vector<spfsMPIFileRequest*> DirectPagedMiddlewareCache::popCompletedRequests()
     return completeRequests;
 }
 
-set<FilePageId> DirectPagedMiddlewareCache::removeRequestedPages(set<FilePageId>& pageIds) const
+set<PagedCache::Key> DirectPagedMiddlewareCache::trimPendingReadPages(const set<PagedCache::Key>& pageIds)
 {
-    if (!pendingRequests_->empty())
+    if (!pendingPages_->empty())
     {
-        set<FilePageId> result;
+        set<PagedCache::Key> result;
         RequestMap::const_iterator iter;
-        for (iter = pendingRequests_->begin(); pendingRequests_->end() != iter; ++iter)
+        for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
         {
+            const PagedCache::InProcessPages& inProcess = iter->second;
             set_difference(pageIds.begin(), pageIds.end(),
-                           iter->second.begin(), iter->second.end(),
+                           inProcess.readPages.begin(), inProcess.readPages.end(),
                            inserter(result, result.begin()));
         }
         // Return the resulting set as the new set of trimmed pages
@@ -476,6 +660,38 @@ set<FilePageId> DirectPagedMiddlewareCache::removeRequestedPages(set<FilePageId>
     return pageIds;
 }
 
+bool DirectPagedMiddlewareCache::hasPendingPages(const Filename& filename) const
+{
+    RequestMap::const_iterator requestIter;
+    RequestMap::const_iterator requestMapEnd = pendingPages_->end();;
+    for (requestIter = pendingPages_->begin(); requestIter != requestMapEnd; requestIter++)
+    {
+        const set<PagedCache::Key>& pendingReads = requestIter->second.readPages;
+        set<PagedCache::Key>::const_iterator iter = pendingReads.begin();
+        set<PagedCache::Key>::const_iterator end = pendingReads.end();
+        while (iter != end)
+        {
+            if (filename == iter->filename)
+            {
+                return true;
+            }
+            ++iter;
+        }
+
+        const set<PagedCache::Key>& pendingWrites = requestIter->second.writePages;
+        iter = pendingWrites.begin();
+        end = pendingWrites.end();
+        while (iter != end)
+        {
+            if (filename == iter->filename)
+            {
+                return true;
+            }
+            ++iter;
+        }
+    }
+    return false;
+}
 
 /*
  * Local variables:

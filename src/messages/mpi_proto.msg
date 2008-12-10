@@ -110,8 +110,9 @@ message spfsMPIRequest
 {
     fields:
         // internal fields
-        cFSM state;
+        //cFSM state;
         FSOperationState opState;
+        cFSM cacheState;
         unsigned int numResolvedSegments = 1;
         int remainingResponses = 0;
         int socketId = -1;

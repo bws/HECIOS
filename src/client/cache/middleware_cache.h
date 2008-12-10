@@ -47,16 +47,6 @@ public:
     /** @return the fsOut gate id */
     int fsOutGateId() const { return fsOutGateId_; };
 
-    /** Increment the file open count */
-    virtual void processFileOpen(const Filename& openName) = 0;
-
-    /**
-     * Decrement the file open count and flush dirty file data to disk if
-     * this is the last close for this file
-     */
-    virtual void processFileClose(const Filename& closeName) = 0;
-
-
 protected:
     /** Implementation of initialize */
     virtual void initialize();

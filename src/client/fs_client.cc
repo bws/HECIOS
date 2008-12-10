@@ -546,6 +546,8 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         }
         case SPFS_MPI_FILE_WRITE_AT_REQUEST:
         {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "Processing write: " << request->info() << " for: " << msg->info() << endl;
             FSWriteOperation write(this,
                                    static_cast<spfsMPIFileWriteAtRequest*>(request));
             write.processMessage(msg);

@@ -21,11 +21,17 @@
 //
 
 #include <cassert>
+#include <functional>
 #include <list>
 #include <map>
 #include <utility>
 #include <vector>
 #include "spfs_exceptions.h"
+
+/**
+ * A helper class for filtering LRUCache entries
+ */
+
 /**
  * A simple fixed size cache using LRU replacement.
  */
@@ -44,10 +50,23 @@ public:
         typename std::list<KeyType>::iterator lruRef;
     };
 
-    /** Convencience typedef of the key-value map */
-    typedef std::map<KeyType,EntryType*> MapType;
+    /**
+     * Function object that filter cache entries based on the key
+     */
+    struct FilterFunctor : std::binary_function<KeyType, EntryType, bool>
+    {
+        bool operator()(const KeyType& key, const EntryType& entry) const
+        {
+            return filter(key, entry.data, entry.isDirty);
+        }
 
-    /** Convencience typedef of the lru list */
+        virtual bool filter(const KeyType& key, const ValueType& val, bool isDirty) const = 0;
+    };
+
+    /** Convenience typedef of the key-value map */
+    typedef std::map<KeyType, EntryType*> MapType;
+
+    /** Convenience typedef of the lru list */
     typedef std::list<KeyType> LRUListType;
 
     /**
@@ -125,6 +144,12 @@ public:
      *         the LRU status
      */
     std::vector<KeyType> getDirtyEntries() const;
+
+    /**
+     * @return a vector of all the cache values that the filter returns
+     *   true for.
+     */
+    std::set<KeyType> getFilteredEntries(const FilterFunctor& filter) const;
 
     /**
      * @return the next entry that will be evicted on a new insertion
@@ -428,6 +453,26 @@ std::vector<KeyType> LRUCache<KeyType,ValueType>::getDirtyEntries() const
     }
 
     return dirtyEntries;
+}
+
+template<class KeyType, class ValueType>
+std::set<KeyType> LRUCache<KeyType,ValueType>::getFilteredEntries(
+    const LRUCache<KeyType,ValueType>::FilterFunctor& filterFunc) const
+{
+    std::set<KeyType> filteredEntries;
+
+    // Loop thru the map to find all of the dirty entries
+    typename MapType::const_iterator mapEnd = keyEntryMap_.end();
+    typename MapType::const_iterator mapIter;
+    for (mapIter = keyEntryMap_.begin(); mapIter != mapEnd; mapIter++)
+    {
+        if (filterFunc(mapIter->first, *mapIter->second))
+        {
+            filteredEntries.insert(mapIter->first);
+        }
+    }
+
+    return filteredEntries;
 }
 
 template<class KeyType, class ValueType>

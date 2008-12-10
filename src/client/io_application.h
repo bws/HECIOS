@@ -42,6 +42,18 @@ public:
     /** @return the MPI application's canonical process rank */
     int getRank() const { return rank_; };
 
+    /** @return the application process' total file read data size */
+    double getNumReadBytes() const { return totalBytesRead_; };
+
+    /** @return the application process' total file write data size */
+    double getNumWriteBytes() const { return totalBytesWritten_; };
+
+    /** @return the application process' total file read time */
+    double getReadTime() const { return totalReadTime_; };
+
+    /** @return the application process' total file write time */
+    double getWriteTime() const { return totalWriteTime_; };
+
 protected:
     /** Associate the fileId with a file descriptor */
     void setDescriptor(int fileId, FileDescriptor* descriptor);
@@ -100,6 +112,8 @@ private:
     double totalBytesWritten_;
     double totalReadTime_;
     double totalWriteTime_;
+    double totalReadBandwidth_;
+    double totalWriteBandwidth_;
 
     /** Temporal timing data collections */
     cOutVector cpuPhaseDelay_;

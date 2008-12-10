@@ -43,7 +43,14 @@ protected:
     /** @return The open file map for this compute node */
     virtual DirectPagedMiddlewareCache::OpenFileMap* createOpenFileMap();
 
+    /** @return The writeback count file map for this compute node */
+    virtual DirectPagedMiddlewareCache::OpenFileMap* createWritebackCountMap();
+
 private:
+    /** @ return The shared resource */
+    template<class SharedResource>
+    SharedResource* createSharedResource(std::map<cModule*, SharedResource*>& sharedResourceMap);
+
     /** @return the parent compute node for this middleware */
     cModule* findParentComputeNode() const;
 
@@ -56,6 +63,9 @@ private:
     /** Type for storing open file counts indexed by compute node */
     typedef std::map<cModule*, DirectPagedMiddlewareCache::OpenFileMap*> SharedOpenFileMap;
 
+    /** Type for storing open file counts indexed by compute node */
+    typedef std::map<cModule*, DirectPagedMiddlewareCache::WritebackCountMap*> SharedWritebackCountMap;
+
     /** The current cached file data for each compute node cache */
     static SharedCacheMap sharedCacheMap_;
 
@@ -64,6 +74,10 @@ private:
 
     /** The current open files for each compute node cache */
     static SharedOpenFileMap sharedOpenFileMap_;
+
+    /** The current open files for each compute node cache */
+    static SharedWritebackCountMap sharedWritebackCountMap_;
+
 };
 
 

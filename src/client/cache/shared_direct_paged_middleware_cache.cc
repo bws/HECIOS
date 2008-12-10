@@ -33,6 +33,10 @@ SharedDirectPagedMiddlewareCache::SharedRequestMap
 SharedDirectPagedMiddlewareCache::SharedOpenFileMap
     SharedDirectPagedMiddlewareCache::sharedOpenFileMap_;
 
+// Static variable initialization
+SharedDirectPagedMiddlewareCache::SharedWritebackCountMap
+    SharedDirectPagedMiddlewareCache::sharedWritebackCountMap_;
+
 SharedDirectPagedMiddlewareCache::SharedDirectPagedMiddlewareCache()
 {
 
@@ -108,6 +112,55 @@ SharedDirectPagedMiddlewareCache::createOpenFileMap()
         sharedOpenFileMap_[cpun] = openFileCounts;
     }
     return openFileCounts;
+}
+
+DirectPagedMiddlewareCache::WritebackCountMap*
+SharedDirectPagedMiddlewareCache::createWritebackCountMap()
+{
+/*    // Retrieve the compute node model
+    cModule* cpun = findParentComputeNode();
+
+    // If a request map for this node exists, return it
+    // Otherwise, create it
+    DirectPagedMiddlewareCache::WritebackCountMap* writebackCounts = 0;
+    SharedWritebackCountMap::iterator iter = sharedWritebackCountMap_.find(cpun);
+    if (iter != sharedWritebackCountMap_.end())
+    {
+        writebackCounts = iter->second;
+    }
+    else
+    {
+        writebackCounts = new DirectPagedMiddlewareCache::WritebackCountMap();
+        sharedWritebackCountMap_[cpun] = writebackCounts;
+    }
+    return writebackCounts;
+*/
+    return createSharedResource(sharedWritebackCountMap_);
+}
+
+template<class SharedResource>
+SharedResource*
+SharedDirectPagedMiddlewareCache::createSharedResource(map<cModule*, SharedResource*>& sharedResourceMap)
+{
+    typedef map<cModule*, SharedResource*> SharedResourceMap;
+
+    // Retrieve the compute node model
+    cModule* cpun = findParentComputeNode();
+
+    // If a shared resource for this node exists, return it
+    // Otherwise, create and return it
+    SharedResource* sharedResource = 0;
+    typename SharedResourceMap::iterator iter = sharedResourceMap.find(cpun);
+    if (iter != sharedResourceMap.end())
+    {
+        sharedResource = iter->second;
+    }
+    else
+    {
+        sharedResource = new SharedResource();
+        sharedResourceMap[cpun] = sharedResource;
+    }
+    return sharedResource;
 }
 
 cModule* SharedDirectPagedMiddlewareCache::findParentComputeNode() const

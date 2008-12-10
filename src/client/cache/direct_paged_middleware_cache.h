@@ -28,10 +28,12 @@
 #include "filename.h"
 #include "lru_cache.h"
 #include "paged_cache.h"
+class spfsMPIFileCloseRequest;
+class spfsMPIFileOpenRequest;
 class spfsMPIFileReadAtRequest;
 class spfsMPIFileReadAtResponse;
 class spfsMPIFileWriteAtRequest;
-class spfsMPIFileWriteAtRequest;
+class spfsMPIFileWriteAtResponse;
 
 /** A Direct paged cache for a single node */
 class DirectPagedMiddlewareCache : public PagedCache
@@ -44,11 +46,14 @@ protected:
     /** Typedef of the type used to store file data internally */
     typedef LRUCache<PagedCache::Key, FilePageId> FileDataPageCache;
 
-    /** Typedef mapping a pending request to its pending pages */
-    typedef std::map<spfsMPIFileRequest*, std::set<FilePageId> > RequestMap;
+    /** Typedef mapping a pending request to its pending cache pages */
+    typedef std::map<spfsMPIFileRequest*, PagedCache::InProcessPages> RequestMap;
 
     /** Typedef mapping filenames to the number of current openers */
     typedef std::map<Filename, std::size_t> OpenFileMap;
+
+    /** Typedef mapping filenames to the number of outstanding writebacks */
+    typedef std::map<Filename, std::size_t> WritebackCountMap;
 
     /** Perform module initialization */
     virtual void initialize();
@@ -56,23 +61,14 @@ protected:
     /** @return the file data page cache for this middleware */
     virtual FileDataPageCache* createFileDataPageCache(size_t cacheSize);
 
-    /** @return the map of pending requests for this middleware */
-    virtual RequestMap* createPendingRequestMap();
+    /** @return the map of pending reads indexed by request */
+    virtual RequestMap* createPendingPageMap();
 
     /**
      * @return the map of the number of times each file has been opened for
      *   this middleware
      */
     virtual OpenFileMap* createOpenFileMap();
-
-    /** Increment the file open count */
-    void processFileOpen(const Filename& openName);
-
-    /**
-     * Decrement the file open count and flush dirty file data to disk if
-     * this is the last close for this file
-     */
-    void processFileClose(const Filename& closeName);
 
 private:
     /** Handle messages received from the application */
@@ -81,40 +77,54 @@ private:
     /** Handle messages received from the file system */
     virtual void handleFileSystemMessage(cMessage* msg);
 
-    /**
-     * @return Pages that must be requested for this read.  Note that pages
-     * in cache or currently in-flight for this request are not returned.
-     *
-     * @side Registers the unsatisfied pages for the request
-     */
-    std::set<FilePageId> resolveRequest(spfsMPIFileReadAtRequest* readRequest);
+    void processRequest(cMessage* request, cMessage* msg);
+
+    void processFileOpen(spfsMPIFileOpenRequest* open, cMessage* msg);
+
+    void processFileClose(spfsMPIFileCloseRequest* close, cMessage* msg);
+
+    void processFileRead(spfsMPIFileReadAtRequest* read, cMessage* msg);
+
+    void processFileWrite(spfsMPIFileWriteAtRequest* write, cMessage* msg);
+
+    /** Determine the set of pages for this read request */
+    template<class spfsMPIFileIORequest> void getRequestCachePages(
+        const spfsMPIFileIORequest* ioRequest,
+        std::set<PagedCache::Key>& outRequestPages) const;
+
+    /** Remove pages already registered and requested as pending from the set */
+    std::set<PagedCache::Key> trimPendingReadPages(const std::set<PagedCache::Key>& readPages);
+
+    void findEvictions(const std::set<PagedCache::Key> newPages,
+                       std::set<PagedCache::Key>& outWritebacks) const;
+
+    /** Evict pages from the cache and write them to the file system */
+    void beginWritebackEvictions(const std::set<PagedCache::Key>& writebackPages,
+                                 spfsMPIFileRequest* parentRequest);
+
+    /** Read pages from the file system */
+    void beginRead(const std::set<PagedCache::Key>& readPages,
+                   spfsMPIFileRequest* parentRequest);
+
+    /** @return All the dirty cache entries for filename*/
+    std::set<PagedCache::Key> lookupDirtyPagesInCache(const Filename& fileame) const;
 
     /**
-     * @return Pages that must be requested for this write.  Only partial pages
-     * not in the cache or currently in-flight
-     *
-     * @side Registers the unsatisfied pages for the request
+     * Remove all cache entries for the name flushFile
      */
-    std::set<FilePageId> resolveRequest(spfsMPIFileWriteAtRequest* writeRequest);
-
-    /**
-     * Update the cache with pages that are fully written by this request
-     */
-    void updateCache(spfsMPIFileWriteAtRequest* writeRequest);
-
-    /**
-     * Update the cache with pages that have been read from the file system
-     */
-    void updateCache(spfsMPIFileReadAtResponse* readResponse);
+    void flushCache(const Filename& flushFile);
 
     /**
      * Update the cache with pages marking the dirty status.  The resulting
      * writeback pages are returned in outWritebacks.
      */
-    void updateCache(const Filename& filename,
-                     const std::set<FilePageId>& updatePages,
+    void updateCache(std::set<PagedCache::Key>& requestPages,
                      bool updatesDirty,
                      std::set<PagedCache::Key>& outWriteBacks);
+
+    /** Begin writing back the set of cache keys */
+    void beginWritebacks(const std::set<PagedCache::Key>& writeBacks,
+                            spfsMPIFileRequest* req);
 
     /**
      * Send application responses for all of the pending requests in the
@@ -122,33 +132,75 @@ private:
      */
     void completeRequests();
 
-    /**
-     * Complete the writebacks contained in the set of page keys
-     */
-    void completeWriteBacks(const std::set<PagedCache::Key>& writeBacks,
-                            spfsMPIFileRequest* req);
-
     /** Register all the pages pending to satisfy a request */
-    void registerPendingRequest(spfsMPIFileRequest* request,
-                                const std::set<FilePageId>& pendingPages);
+    void registerPendingPages(spfsMPIFileRequest* request,
+                                const std::set<PagedCache::Key>& pendingReads,
+                                const std::set<PagedCache::Key>& pendingWrites);
 
-    /** Mark pages as no longer pending for requests */
-    void updatePendingRequests(const std::set<FilePageId>& pageIds);
+    /** Mark page as read for requests */
+    void resolvePendingReadPage(const PagedCache::Key& readPage);
+
+    /** Mark pages as read for requests */
+    void resolvePendingReadPages(const std::set<PagedCache::Key>& readPages);
+
+    /** Mark page as written for requests */
+    void resolvePendingWritePage(const PagedCache::Key& writePage);
+
+    /** Mark pages as written for requests */
+    void resolvePendingWritePages(const std::set<PagedCache::Key>& writePages);
 
     /** @return Removes and returns requests with no more pages remaining */
     std::vector<spfsMPIFileRequest*> popCompletedRequests();
 
-    /** Remove pages already registered and requested as pending from the set */
-    std::set<FilePageId> removeRequestedPages(std::set<FilePageId>& pageIds) const;
+    /** @return true if there are pending read or write pages for this file */
+    bool hasPendingPages(const Filename& filename) const;
 
     /** Data structure for holding the cached data */
     LRUCache<PagedCache::Key, FilePageId>* lruCache_;
 
     /** Map of request to the total pending pages */
-    RequestMap* pendingRequests_;
+    RequestMap* pendingPages_;
 
     /** Map of the number of opens for each file */
     OpenFileMap* openFileCounts_;
+};
+
+/** Functor for finding all pages for a cached file */
+class FilePageFilter : public LRUCache<PagedCache::Key, FilePageId>::FilterFunctor
+{
+public:
+    /** Constructor */
+    FilePageFilter(const Filename& filename) : filename_(filename) {};
+
+    /** @return true if the page belongs to this file */
+    virtual bool filter(const PagedCache::Key& key,
+                        const FilePageId& pageId,
+                        bool isDirty) const
+    {
+        return (key.filename == filename_);
+    }
+
+private:
+    Filename filename_;
+};
+
+/** Functor for finding dirty pages for a cached file */
+class DirtyPageFilter : public LRUCache<PagedCache::Key, FilePageId>::FilterFunctor
+{
+public:
+    /** Constructor */
+    DirtyPageFilter(const Filename& filename) : filename_(filename) {};
+
+    /** @return true if the page belongs to this file and is dirty */
+    virtual bool filter(const PagedCache::Key& key,
+                        const FilePageId& pageId,
+                        bool isDirty) const
+    {
+        return ((key.filename == filename_) && isDirty);
+    }
+
+private:
+    Filename filename_;
 };
 
 #endif /* DIRECT_PAGED_MIDDLEWARE_CACHE_H_ */

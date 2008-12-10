@@ -106,8 +106,8 @@ void IOApplication::finish()
 
     // Write some out to the terminal for easy verification
     cerr << "Process Completion Time: " << applicationCompletionTime_ << endl;
-    cerr << "Total Write Bandwdith : " << writeBandwidth << " MB/s" << endl;
-    cerr << "Total Read Bandwdith : " << readBandwidth << " MB/s" << endl;
+    cerr << "Process Total Write Bandwidth : " << writeBandwidth << " MB/s" << endl;
+    cerr << "Process Total Read Bandwidth : " << readBandwidth << " MB/s" << endl;
 }
 
 /**
