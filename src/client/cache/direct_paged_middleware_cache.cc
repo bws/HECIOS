@@ -105,8 +105,11 @@ void DirectPagedMiddlewareCache::handleFileSystemMessage(cMessage* msg)
             cMessage* appRequest = static_cast<cMessage*>(cacheRequest->contextPointer());
             processRequest(appRequest, msg);
 
-            delete cacheRequest;
-            delete msg;
+            if (appRequest != cacheRequest)
+            {
+                delete cacheRequest;
+                delete msg;
+            }
         }
         else
         {
@@ -257,6 +260,9 @@ void DirectPagedMiddlewareCache::processFileRead(spfsMPIFileReadAtRequest* read,
         set<PagedCache::Key> writebackPages;
         updateCache(requestPages, false, writebackPages);
 
+        // Update the pending requests
+        resolvePendingReadPages(requestPages);
+
         // Begin the writebacks
         beginWritebackEvictions(writebackPages, read);
 
@@ -288,7 +294,7 @@ void DirectPagedMiddlewareCache::processFileWrite(spfsMPIFileWriteAtRequest* wri
             set<PagedCache::Key> requestPages;
             getRequestCachePages(write, requestPages);
 
-            if (requestPages.size() < lruCache_->capacity())
+            if (requestPages.size() < lruCache_->capacity() || true)
             {
                 FSM_Goto(currentState, BEGIN_CACHE_BYPASS_WRITE);
             }
