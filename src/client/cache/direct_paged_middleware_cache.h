@@ -52,9 +52,6 @@ protected:
     /** Typedef mapping filenames to the number of current openers */
     typedef std::map<Filename, std::size_t> OpenFileMap;
 
-    /** Typedef mapping filenames to the number of outstanding writebacks */
-    typedef std::map<Filename, std::size_t> WritebackCountMap;
-
     /** Perform module initialization */
     virtual void initialize();
 
@@ -87,13 +84,21 @@ private:
 
     void processFileWrite(spfsMPIFileWriteAtRequest* write, cMessage* msg);
 
-    /** Determine the set of pages for this read request */
+    /** Determine the set of pages for this I/O request */
     template<class spfsMPIFileIORequest> void getRequestCachePages(
         const spfsMPIFileIORequest* ioRequest,
         std::set<PagedCache::Key>& outRequestPages) const;
 
-    /** Remove pages already registered and requested as pending from the set */
+    /** Determine the set of partial pages for this I/O request */
+    template<class spfsMPIFileIORequest> void getRequestPartialCachePages(
+        const spfsMPIFileIORequest* ioRequest,
+        std::set<PagedCache::Key>& outRequestPages) const;
+
+    /** @return pages from readPages not already scheduled for reading */
     std::set<PagedCache::Key> trimPendingReadPages(const std::set<PagedCache::Key>& readPages);
+
+    /** @return pages from writePages not already scheduled for writing */
+    std::set<PagedCache::Key> trimPendingWritePages(const std::set<PagedCache::Key>& writePages);
 
     void findEvictions(const std::set<PagedCache::Key> newPages,
                        std::set<PagedCache::Key>& outWritebacks) const;
@@ -106,8 +111,11 @@ private:
     void beginRead(const std::set<PagedCache::Key>& readPages,
                    spfsMPIFileRequest* parentRequest);
 
-    /** @return All the dirty cache entries for filename*/
+    /** @return All the dirty cache entries for filename */
     std::set<PagedCache::Key> lookupDirtyPagesInCache(const Filename& fileame) const;
+
+    /** Remove request pages satisfied in the cache */
+    void lookupPagesInCache(std::set<PagedCache::Key>& requestPages);
 
     /**
      * Remove all cache entries for the name flushFile

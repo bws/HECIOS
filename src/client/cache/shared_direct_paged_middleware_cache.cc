@@ -21,6 +21,9 @@
 #include <cassert>
 using namespace std;
 
+// OMNet Registriation Method
+Define_Module(SharedDirectPagedMiddlewareCache);
+
 // Static variable initialization
 SharedDirectPagedMiddlewareCache::SharedCacheMap
     SharedDirectPagedMiddlewareCache::sharedCacheMap_;
@@ -32,10 +35,6 @@ SharedDirectPagedMiddlewareCache::SharedRequestMap
 // Static variable initialization
 SharedDirectPagedMiddlewareCache::SharedOpenFileMap
     SharedDirectPagedMiddlewareCache::sharedOpenFileMap_;
-
-// Static variable initialization
-SharedDirectPagedMiddlewareCache::SharedWritebackCountMap
-    SharedDirectPagedMiddlewareCache::sharedWritebackCountMap_;
 
 SharedDirectPagedMiddlewareCache::SharedDirectPagedMiddlewareCache()
 {
@@ -73,69 +72,13 @@ SharedDirectPagedMiddlewareCache::createFileDataPageCache(size_t cacheSize)
 DirectPagedMiddlewareCache::RequestMap*
 SharedDirectPagedMiddlewareCache::createPendingRequestMap()
 {
-    // Retrieve the compute node model
-    cModule* cpun = findParentComputeNode();
-
-    // If a request map for this node exists, return it
-    // Otherwise, create it
-    DirectPagedMiddlewareCache::RequestMap* pendingRequests = 0;
-    SharedRequestMap::iterator iter = sharedPendingRequestMap_.find(cpun);
-    if (iter != sharedPendingRequestMap_.end())
-    {
-        pendingRequests = iter->second;
-    }
-    else
-    {
-        pendingRequests = new DirectPagedMiddlewareCache::RequestMap();
-        sharedPendingRequestMap_[cpun] = pendingRequests;
-    }
-    return pendingRequests;
+    return createSharedResource(sharedPendingRequestMap_);
 }
 
 DirectPagedMiddlewareCache::OpenFileMap*
 SharedDirectPagedMiddlewareCache::createOpenFileMap()
 {
-    // Retrieve the compute node model
-    cModule* cpun = findParentComputeNode();
-
-    // If a request map for this node exists, return it
-    // Otherwise, create it
-    DirectPagedMiddlewareCache::OpenFileMap* openFileCounts = 0;
-    SharedOpenFileMap::iterator iter = sharedOpenFileMap_.find(cpun);
-    if (iter != sharedOpenFileMap_.end())
-    {
-        openFileCounts = iter->second;
-    }
-    else
-    {
-        openFileCounts = new DirectPagedMiddlewareCache::OpenFileMap();
-        sharedOpenFileMap_[cpun] = openFileCounts;
-    }
-    return openFileCounts;
-}
-
-DirectPagedMiddlewareCache::WritebackCountMap*
-SharedDirectPagedMiddlewareCache::createWritebackCountMap()
-{
-/*    // Retrieve the compute node model
-    cModule* cpun = findParentComputeNode();
-
-    // If a request map for this node exists, return it
-    // Otherwise, create it
-    DirectPagedMiddlewareCache::WritebackCountMap* writebackCounts = 0;
-    SharedWritebackCountMap::iterator iter = sharedWritebackCountMap_.find(cpun);
-    if (iter != sharedWritebackCountMap_.end())
-    {
-        writebackCounts = iter->second;
-    }
-    else
-    {
-        writebackCounts = new DirectPagedMiddlewareCache::WritebackCountMap();
-        sharedWritebackCountMap_[cpun] = writebackCounts;
-    }
-    return writebackCounts;
-*/
-    return createSharedResource(sharedWritebackCountMap_);
+    return createSharedResource(sharedOpenFileMap_);
 }
 
 template<class SharedResource>

@@ -52,7 +52,7 @@ endsimple
 //
 // Middleware cache using pages of direct cache
 //
-simple SharedDirectMiddlewareCache
+simple SharedDirectPagedMiddlewareCache
     parameters:
     	pageSize: const,
     	pageCapacity: const;
