@@ -22,6 +22,7 @@
 
 #include <omnetpp.h>
 #include <map>
+#include "comm_man.h"
 #include "io_application.h"
 #include "phtf_io_trace.h"
 class FileDescriptor;
@@ -101,7 +102,11 @@ private:
 
     /** Perform the application processing to create a new communicator */
     void performCommProcessing(PHTFEventRecord* commRecord);
+
     void performCreateCommunicator(std::string newcomm);
+
+    void performDuplicateCommunicator(const Communicator& oldComm,
+                                      Communicator& newComm);
 
     /** Perform the application processing to do create a new datatype */
     void performTypeProcessing(PHTFEventRecord* typeRecord);

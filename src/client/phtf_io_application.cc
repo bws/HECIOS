@@ -209,7 +209,7 @@ bool PHTFIOApplication::scheduleNextMessage()
         PHTFEventRecord eventRecord;
         *phtfEvent_ >> eventRecord;
 
-        cerr << eventRecord.recordStr() << endl;
+        cerr << "[" << getRank() << "] " << eventRecord.recordStr() << endl;
 
         rec_id_ = eventRecord.recordId();
 
@@ -541,26 +541,51 @@ void PHTFIOApplication::performSetViewProcessing(PHTFEventRecord* setViewRecord)
 void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
 {
     int op = commRecord->recordOp();
-    string newcomm;
     switch(op)
     {
         case COMM_DUP:
-            newcomm = commRecord->paramAt(1);
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "Comm Dup( "
+                 << "oldComm=" << commRecord->paramAt(0)
+                 << " newComm=" << commRecord->paramAt(1) << ")" << endl;
+            Communicator oldComm = commRecord->paramAsAddress(0);
+            Communicator newComm = commRecord->paramAsAddress(1);
+
+            performDuplicateCommunicator(oldComm, newComm);
             break;
+        }
         case COMM_CREATE:
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "ERROR: Comm Create requires group support." << endl;
+            assert(false);
+            //string newcomm comm;
+            //performCreateCommunicator(newcomm);
             break;
+        }
         case COMM_SPLIT:
-            newcomm = commRecord->paramAt(3);
+        {
+            assert(false);
+            string newcomm = commRecord->paramAt(3);
             break;
+        }
         case COMM_RANK:
-            newcomm = commRecord->paramAt(0);
+        {
+            // TODO: It should be possible to make sure the rank matches
+            // the communicator rank here
+            //Communicator comm = commRecord->paramAsAddress(0);
+            //assert(CommMan::instance().exists(comm));
             break;
+        }
         default:
-            cerr << "Error: unsupported comm op type: " << op << endl;
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "Error: unsupported comm op type: " << op << endl;
             assert(false);
             break;
+        }
     }
-    performCreateCommunicator(newcomm);
 }
 
 void PHTFIOApplication::performCreateCommunicator(string newcomm)
@@ -599,6 +624,14 @@ void PHTFIOApplication::performCreateCommunicator(string newcomm)
         }
     }
     cerr << ": " << CommMan::instance().commSize(comm) << endl;
+}
+
+void PHTFIOApplication::performDuplicateCommunicator(const Communicator& oldComm,
+                                                     Communicator& newComm)
+{
+    assert(true == CommMan::instance().exists(oldComm));
+    assert(false == CommMan::instance().exists(newComm));
+    CommMan::instance().dupComm(oldComm, newComm);
 }
 
 void PHTFIOApplication::performTypeProcessing(PHTFEventRecord* typeRecord)

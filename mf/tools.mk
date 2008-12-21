@@ -8,6 +8,7 @@ MKDIR = mkdir -p
 RM = rm -f
 CXX = g++
 LD = g++
+LEX = flex
 
 #
 # OmNet++ tools
@@ -66,3 +67,15 @@ $(BIN_DIR)/lanl_trace_parser: $(TOOLS_LANL_TRACE_PARSER_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(LD) $(LDFLAGS) $(TOOLS_LANL_TRACE_PARSER_OBJS) -o $@
 
+#
+# Build LANL Trace Scanning tool
+#
+TOOLS_LANL_TRACE_SCANNER_OBJS = $(SRC_DIR)/common/phtf_io_trace.o \
+								$(SRC_DIR)/tools/lanl_trace_scan_actions.o \
+								$(SRC_DIR)/tools/lanl_trace_scanner.o \
+								$(SRC_DIR)/tools/lanl_trace_scanner_main.o
+
+
+$(BIN_DIR)/lanl_trace_scanner: $(TOOLS_LANL_TRACE_SCANNER_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(LD) $(LDFLAGS) $(TOOLS_LANL_TRACE_SCANNER_OBJS) -lfl -o $@

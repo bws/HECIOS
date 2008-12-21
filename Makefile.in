@@ -205,7 +205,7 @@ include $(HECIOS_DIR)/mf/tests.mk
 #
 # Top level psuedo targets
 #
-all: $(BIN_DIR)/hecios_cmd $(BIN_DIR)/hecios $(BIN_DIR)/lanl_trace_parser $(BUILD_DIR)/omnetpp.ini
+all: $(BIN_DIR)/hecios_cmd $(BIN_DIR)/hecios $(BIN_DIR)/lanl_trace_scanner $(BUILD_DIR)/omnetpp.ini
 
 gui: $(BIN_DIR)/hecios $(BUILD_DIR)/omnetpp.ini
 
@@ -239,7 +239,7 @@ install:
 	$(INSTALL) -d $(INSTALL_DIR)/examples
 	$(INSTALL) -d $(INSTALL_DIR)/lib/ned
 	$(INSTALL) -c bin/hecios* $(INSTALL_DIR)/bin
-	$(INSTALL) -c bin/lanl_trace_parser $(INSTALL_DIR)/bin
+	$(INSTALL) -c bin/lanl_trace_scanner $(INSTALL_DIR)/bin
 	$(INSTALL) -c lib/*.* $(INSTALL_DIR)/lib
 	$(INSTALL) -c ini/*.ini $(INSTALL_DIR)/examples
 	find . -name *.ned -exec $(INSTALL) -c {} $(INSTALL_DIR)/lib/ned \;
