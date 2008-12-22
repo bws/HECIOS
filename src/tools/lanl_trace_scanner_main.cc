@@ -141,7 +141,7 @@ int main(int argc, char** argv)
     if (0 == yyin)
     {
         cerr << "ERROR: Unable to open trace file: " << traceFilename << endl;
-        _Exit(4);
+        _Exit(2);
     }
 
     char timestamp[16] = {0};
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
         {
             cerr << "ERROR: Unable to create directory: "
                  << outputDirectory << endl;
-            _Exit(2);
+            _Exit(3);
         }
     }
 

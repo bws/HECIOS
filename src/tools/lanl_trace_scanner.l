@@ -39,6 +39,15 @@ char* beginLine = 0;
 %}
 %option yylineno
 
+/**
+ * Note that we're using the paradigm of a begin match and end match (with
+ * an accompanying start state) because Lex/Flex has exponential runtime
+ * when I try to match the whole expression with a single regular expression.
+ * It may be a fault with the particular regular expressions I am trying to
+ * use, but this works well and is easy enough to extend.  Note that if
+ * it doesn't find the correct end condition it will silently eat the call
+ * it found.  A relatively serious limitation that needs to be worked on.
+ */
 %s allreduce
 %s barrier
 %s bcast
