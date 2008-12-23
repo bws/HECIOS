@@ -24,6 +24,7 @@ class CommManTest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(CommManTest);
     CPPUNIT_TEST(testCommSize);
+    CPPUNIT_TEST(testDupComm);
     CPPUNIT_TEST(testJoinComm);
     CPPUNIT_TEST(testCommRank);
     CPPUNIT_TEST_SUITE_END();
@@ -36,9 +37,10 @@ public:
     void tearDown();
 
     void testCommSize();
+    void testDupComm();
     void testJoinComm();
     void testCommRank();
-    
+
 };
 
 void CommManTest::setUp()
@@ -66,16 +68,33 @@ void CommManTest::testCommSize()
     CPPUNIT_ASSERT_EQUAL(size_t(4), cm.commSize(SPFS_COMM_WORLD));
 }
 
+void CommManTest::testDupComm()
+{
+    CommMan& cm = CommMan::instance();
+
+    // Copy COMM_SELF and make sure results are identical
+    Communicator selfCopy = 10;
+    cm.dupComm(SPFS_COMM_SELF, selfCopy);
+    CPPUNIT_ASSERT_EQUAL(cm.commSize(SPFS_COMM_SELF), cm.commSize(selfCopy));
+    CPPUNIT_ASSERT_EQUAL(size_t(1), cm.commSize(selfCopy));
+
+    // Copy COMM_WORLD and make sure results are identical
+    Communicator worldCopy = 11;
+    cm.dupComm(SPFS_COMM_WORLD, worldCopy);
+    CPPUNIT_ASSERT_EQUAL(cm.commSize(SPFS_COMM_WORLD), cm.commSize(worldCopy));
+    CPPUNIT_ASSERT_EQUAL(size_t(4), cm.commSize(worldCopy));
+}
+
 void CommManTest::testJoinComm()
 {
     CommMan& cm = CommMan::instance();
     Communicator id = 3;
-    
+
     // 1st node joins communicator, rank should be 0
     int rank0 = cm.joinComm(id, 1);
     CPPUNIT_ASSERT_EQUAL(0, rank0);
     CPPUNIT_ASSERT_EQUAL(size_t(1), cm.commSize(id));
-    
+
     // 2nd node joins communicator, rank should be 1
     int rank1 = cm.joinComm(id, 4);
     CPPUNIT_ASSERT_EQUAL(1, rank1);
@@ -93,7 +112,7 @@ void CommManTest::testCommRank()
     CPPUNIT_ASSERT_EQUAL(cm.commRank(SPFS_COMM_WORLD, 2), 2);
 
     // rank in communicator should be groupRank
-    int id = 3;    
+    int id = 3;
     int groupRank = cm.joinComm(id, 3);
     CPPUNIT_ASSERT_EQUAL(0, groupRank);
 }

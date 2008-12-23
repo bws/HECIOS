@@ -237,11 +237,13 @@ all_clean: clean inet_clean tests_clean
 install:
 	$(INSTALL) -d $(INSTALL_DIR)/bin
 	$(INSTALL) -d $(INSTALL_DIR)/examples
-	$(INSTALL) -d $(INSTALL_DIR)/lib/ned
+    $(INSTALL) -d $(INSTALL_DIR)/lib/ned
+    $(INSTALL) -d $(INSTALL_DIR)/scripts
 	$(INSTALL) -c bin/hecios* $(INSTALL_DIR)/bin
 	$(INSTALL) -c bin/lanl_trace_scanner $(INSTALL_DIR)/bin
 	$(INSTALL) -c lib/*.* $(INSTALL_DIR)/lib
-	$(INSTALL) -c ini/*.ini $(INSTALL_DIR)/examples
+    $(INSTALL) -c ini/*.ini $(INSTALL_DIR)/examples
+    $(INSTALL) -c scripts/*.pl $(INSTALL_DIR)/scripts
 	find . -name *.ned -exec $(INSTALL) -c {} $(INSTALL_DIR)/lib/ned \;
 	find $(INSTALL_DIR) -name *.ned > $(INSTALL_DIR)/lib/ned/hecios_ned.lst
 	sed -e "s|@NEDINCLUDES@|@$(INSTALL_DIR)/lib/ned/hecios_ned.lst|" \

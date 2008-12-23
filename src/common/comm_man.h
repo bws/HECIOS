@@ -20,6 +20,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <map>
+#include <vector>
 #include "singleton.h"
 #include "pfs_types.h"
 
@@ -120,6 +121,9 @@ private:
      */
     int addRank(int worldRank, Communicator comm);
 
+    /** Add world rank as new rank to the communicator */
+    int addRank(Communicator comm, int worldRank, int newRank);
+
     /** Rank mappings indexed by the communicator */
     CommunicatorMap rankMapByCommunicator_;
 
@@ -128,7 +132,6 @@ private:
 
     /** Communicator id for the all process communicator */
     Communicator commWorld_;
-
 };
 
 /** Process local communicator */

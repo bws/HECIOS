@@ -98,8 +98,8 @@ void emitFileSystemConfigFile(const string& configFilename,
     fs->consts("0x8c000004", "20");
 
     // Other global constants
-    fs->consts("MPI_COMM_WORLD", "91");
-    fs->consts("MPI_COMM_SELF", "92");
+    fs->consts("MPI_COMM_WORLD", "0x44000000");
+    fs->consts("MPI_COMM_SELF", "0x44000001");
     fs->consts("MPI_SEEK_SET", "600");
     fs->consts("MPI_SEEK_CUR", "602");
     fs->consts("MPI_SEEK_END", "604");

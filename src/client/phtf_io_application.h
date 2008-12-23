@@ -36,6 +36,7 @@ class spfsMPIFileDeleteRequest;
 class spfsMPIFileOpenRequest;
 class spfsMPIFileReadAtRequest;
 class spfsMPIFileReadRequest;
+class spfsMPIFileStatRequest;
 class spfsMPIFileUpdateTimeRequest;
 class spfsMPIFileWriteAtRequest;
 class spfsMPIFileWriteRequest;
@@ -78,6 +79,23 @@ private:
     /** Create the file system files for this trace */
     void populateFileSystem();
 
+    /**
+     * Perform event record processing
+     * @return whether a message was scheduled
+     */
+    bool processEvent(PHTFEventRecord& event);
+
+    /**
+     * Perform event record processing for events that involve
+     * weird processing
+     *
+     * @return whether a message was scheduled
+     */
+    bool processIrregularEvent(PHTFEventRecord* event);
+
+    /** @return the request for the event record */
+    cMessage* createMessage(const PHTFEventRecord* record);
+
     /** Schedule a self message as a trigger after CPU_PHASE */
     void scheduleCPUMessage(cMessage *msg);
 
@@ -119,12 +137,17 @@ private:
     void performCreateSubarrayDataType(std::string typeId);
     void performCreateVectorDataType(std::string typeId);
 
-    /** @return a Barrier request */
-    spfsMPIBarrierRequest* createBarrierMessage(
-        const PHTFEventRecord* barrierRecord);
+    /** @return a ALL_REDUCE request */
+    spfsMPIBarrierRequest* createAllReduceMessage(
+        const PHTFEventRecord* allreduce);
 
-    /** @return a Bcast request */
-    spfsMPIBcastRequest* createBcastRequest(int communicatorId);
+    /** @return a BARRIER request */
+    spfsMPIBarrierRequest* createBarrierMessage(
+        const PHTFEventRecord* barrier);
+
+    /** @return a BCAST request */
+    spfsMPIBcastRequest* createBcastMessage(
+        const PHTFEventRecord* bcast);
 
     /** @return an CPU Phase Message */
     cMessage* createCPUPhaseMessage(
@@ -134,49 +157,60 @@ private:
     cMessage* createWaitMessage(
         const PHTFEventRecord* waitRecord);
 
-    /** @return an MPI File Seek Message */
-    cMessage* createSeekMessage(
-        const PHTFEventRecord* seekRecord);
-
     /** @return an MPI File Close request */
-    spfsMPIFileCloseRequest* createCloseMessage(
+    spfsMPIFileCloseRequest* createFileCloseMessage(
         const PHTFEventRecord* closeRecord);
 
     /** @return an MPI File Delete request */
-    spfsMPIFileDeleteRequest* createDeleteRequest(
+    spfsMPIFileDeleteRequest* createFileDeleteMessage(
         const PHTFEventRecord* deleteRecord);
 
-    /** @return an MPI File Open request */
-    spfsMPIFileOpenRequest* createOpenMessage(
-        const PHTFEventRecord* openRecord);
+    /** @return an MPI_FILE_GET_INFO request */
+    spfsMPIFileStatRequest* createFileGetInfoMessage(
+        const PHTFEventRecord* getInfoRecord);
 
-    /** @return an MPI File Read At request */
-    spfsMPIFileReadAtRequest* createReadAtMessage(
-        const PHTFEventRecord* readAtRecord);
-
-    /** @return an MPI File Update Time request */
-    spfsMPIFileUpdateTimeRequest* createUpdateTimeMessage(
-        const PHTFEventRecord* utimeRecord);
-
-    /** @return an MPI File Write At request */
-    spfsMPIFileWriteAtRequest* createWriteAtMessage(
-        const PHTFEventRecord* writeAtRecord);
-
-    /** @return an MPI File Read request */
-    spfsMPIFileReadAtRequest * createReadMessage(
-        const PHTFEventRecord* readRecord);
-
-    /** @return an MPI File Write request */
-    spfsMPIFileWriteAtRequest * createWriteMessage(
-        const PHTFEventRecord* writeRecord);
+    /** @return an MPI_FILE_GET_SIZE */
+    spfsMPIFileStatRequest* createFileGetSizeMessage(
+        const PHTFEventRecord* getSizeRecord);
 
     /** @return an MPI File IRead request */
-    spfsMPIFileReadAtRequest * createIReadMessage(
+    spfsMPIFileReadAtRequest * createFileIReadMessage(
         const PHTFEventRecord* readRecord);
 
     /** @return an MPI File IWrite request */
-    spfsMPIFileWriteAtRequest * createIWriteMessage(
+    spfsMPIFileWriteAtRequest * createFileIWriteMessage(
         const PHTFEventRecord* writeRecord);
+
+    /** @return an MPI File Open request */
+    spfsMPIFileOpenRequest* createFileOpenMessage(
+        const PHTFEventRecord* openRecord);
+
+    /** @return an MPI File Read At request */
+    spfsMPIFileReadAtRequest* createFileReadAtMessage(
+        const PHTFEventRecord* readAtRecord);
+
+    /** @return an MPI File Read request */
+    spfsMPIFileReadAtRequest * createFileReadMessage(
+        const PHTFEventRecord* readRecord);
+
+    /** @return an MPI File Set Size Message */
+    spfsMPIFileStatRequest* createFileSetSizeMessage(
+        const PHTFEventRecord* setSizeRecord);
+
+    /** @return an MPI File Update Time request */
+    spfsMPIFileUpdateTimeRequest* createFileUpdateTimeMessage(
+        const PHTFEventRecord* utimeRecord);
+
+    /** @return an MPI File Write At request */
+    spfsMPIFileWriteAtRequest* createFileWriteAtMessage(
+        const PHTFEventRecord* writeAtRecord);
+
+    /** @return an MPI File Write request */
+    spfsMPIFileWriteAtRequest * createFileWriteMessage(
+        const PHTFEventRecord* writeRecord);
+
+    /** @return a BCAST for the communicator */
+    spfsMPIBcastRequest* createBcastRequest(int communicatorId);
 
     /** Trace file location */
     std::string traceDirectory_;

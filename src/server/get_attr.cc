@@ -89,7 +89,7 @@ void GetAttr::enterReadAttr()
     fileRead->setOffset(0, 0);
     fileRead->setExtent(0, module_->getDefaultAttrSize());
     fileRead->setContextPointer(getAttrReq_);
-    
+
     // Send the write request
     module_->send(fileRead);
 }
@@ -116,7 +116,7 @@ void GetAttr::enterFinish()
     {
         responseSize = FSServer::DATAFILE_ATTRIBUTES_BYTE_SIZE;
     }
-    
+
     // Send the final response
     spfsGetAttrResponse* resp = new spfsGetAttrResponse(
         0, SPFS_GET_ATTR_RESPONSE);

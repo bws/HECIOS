@@ -69,7 +69,8 @@ void HardDisk::handleMessage(cMessage *msg)
     }
     else
     {
-        cerr << "Error in Hard Disk Module!!!" << endl;
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "ERROR in hard disk for message:" << msg->info() << endl;
         assert(0);
     }
 

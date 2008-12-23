@@ -19,6 +19,7 @@
 //
 #include "comm_man.h"
 #include <cassert>
+#include <set>
 using namespace std;
 
 /** Declare the self communicator available for external linkage */
@@ -45,15 +46,18 @@ Communicator CommMan::commWorld() const
 
 size_t CommMan::commSize(Communicator comm) const
 {
-    size_t size = 1;
-
-    if (commSelf_ != comm)
+    // Have to use a complicated algorithm here because of COMM_SELF
+    // We have to count the unique ranks in the communicator
+    set<int> uniqueRanks;
+    const RankMap& rankMap = getRankMap(comm);
+    RankMap::const_iterator first = rankMap.begin();
+    RankMap::const_iterator last = rankMap.end();
+    while (first != last)
     {
-        assert(exists(comm));
-        const RankMap& rankMap = getRankMap(comm);
-        size = rankMap.size();
+        uniqueRanks.insert(first->second);
+        first++;
     }
-    return size;
+    return uniqueRanks.size();
 }
 
 void CommMan::setCommSelf(Communicator self)
@@ -62,6 +66,10 @@ void CommMan::setCommSelf(Communicator self)
          << "DIAGNOSTIC: Setting commSelf to: " << self << endl;
     commSelf_ = self;
     SPFS_COMM_SELF = commSelf_;
+
+    // Create an empty communicator for COMM_SELF
+    rankMapByCommunicator_[commSelf_];
+
 }
 
 void CommMan::setCommWorld(Communicator world)
@@ -71,23 +79,26 @@ void CommMan::setCommWorld(Communicator world)
     commWorld_ = world;
     SPFS_COMM_WORLD = commWorld_;
 
-    // Create an empty communicator for commWorld
+    // Create an empty communicator for COMM_WORLD
     rankMapByCommunicator_[commWorld_];
 }
 
 void CommMan::registerRank(int rank)
 {
     assert(false == worldRankExists(commWorld_, rank));
+
     // Add the rank to the all process communicator
-    addRank(rank, commWorld_);
+    addRank(commWorld_, rank, rank);
+
+    // Add the rank to the self communicator
+    addRank(commSelf_, rank, 0);
 }
 
 bool CommMan::exists(Communicator comm) const
 {
     bool doesExist = false;
 
-    if(commSelf_ == comm ||
-       0 != rankMapByCommunicator_.count(comm))
+    if(0 != rankMapByCommunicator_.count(comm))
     {
         doesExist = true;
     }
@@ -98,10 +109,9 @@ bool CommMan::commRankExists(Communicator comm, int commRank) const
 {
     assert(exists(comm));
 
-    const RankMap& rankMap = getRankMap(comm);
-
     // If the rank is less than the size, it exists
     // otherwise, it does not
+    const RankMap& rankMap = getRankMap(comm);
     return (size_t(commRank) < rankMap.size());
 }
 
@@ -129,37 +139,22 @@ int CommMan::joinComm(Communicator comm, int worldRank)
 
 int CommMan::commRank(Communicator comm, int worldRank) const
 {
-    int rank = -1;
-    if (commSelf_ == comm)
-    {
-        rank = 0;
-    }
-    else if (commWorld_ == comm)
-    {
-        rank = worldRank;
-    }
-    else
-    {
-        assert(exists(comm));
-        assert(worldRankExists(comm, worldRank));
-        const RankMap& rankMap = getRankMap(comm);
-        RankMap::const_iterator iter = rankMap.find(worldRank);
-        rank = iter->second;
-    }
-    return rank;
+    assert(exists(comm));
+    assert(worldRankExists(comm, worldRank));
+    const RankMap& rankMap = getRankMap(comm);
+    RankMap::const_iterator iter = rankMap.find(worldRank);
+    return iter->second;
 }
 
 void CommMan::dupComm(Communicator comm, Communicator comm2)
 {
     assert(exists(comm));
-    assert(!exists(comm2));
     RankMap map = getRankMap(comm);
     rankMapByCommunicator_[comm2] = map;
 }
 
 CommMan::RankMap CommMan::getRankMap(Communicator comm) const
 {
-    assert(commSelf_ != comm);
     assert(exists(comm));
     CommunicatorMap::const_iterator iter = rankMapByCommunicator_.find(comm);
     assert(iter != rankMapByCommunicator_.end());
@@ -170,6 +165,12 @@ int CommMan::addRank(int worldRank, Communicator comm)
 {
     assert(commSelf_ != comm);
     int newRank = rankMapByCommunicator_[comm].size();
+    (rankMapByCommunicator_[comm])[worldRank] = newRank;
+    return newRank;
+}
+
+int CommMan::addRank(Communicator comm, int worldRank, int newRank)
+{
     (rankMapByCommunicator_[comm])[worldRank] = newRank;
     return newRank;
 }

@@ -130,6 +130,29 @@ void PHTFIOApplication::finish()
     phtfEvent_->close();
 }
 
+void PHTFIOApplication::rankChanged(int oldRank)
+{
+    // Ensure we only join the communicator once
+    assert(-1 == oldRank);
+
+    // Join the world communicator on rank initialization
+    CommMan::instance().registerRank(getRank());
+}
+
+
+void PHTFIOApplication::populateFileSystem()
+{
+    cerr << "Populating file system . . . ";
+    PHTFFs *fs = PHTFTrace::getInstance(traceDirectory_)->getFs();
+    FileSystemMap fsm;
+    for(int i = 0; i < fs->fileNum(); i ++)
+    {
+        fsm[fs->fileName(i)] = fs->fileSize(i);
+    }
+    FileBuilder::instance().populateFileSystem(fsm);
+    cerr << "Done." << endl;
+}
+
 void PHTFIOApplication::handleMessage(cMessage* msg)
 {
     // Add code to allow opens to finish by broadcasting result
@@ -196,9 +219,10 @@ void PHTFIOApplication::handleIOMessage(cMessage* msg)
 
 bool PHTFIOApplication::scheduleNextMessage()
 {
+    // Open the trace if this is the first invokation
     if(!phtfEvent_)
     {
-        // get event file for this ioapp
+        // get event file for this process
         phtfEvent_ = PHTFTrace::getInstance(traceDirectory_)->getEvent(getRank());
         phtfEvent_->open();
     }
@@ -208,28 +232,136 @@ bool PHTFIOApplication::scheduleNextMessage()
     {
         PHTFEventRecord eventRecord;
         *phtfEvent_ >> eventRecord;
-
         cerr << "[" << getRank() << "] " << eventRecord.recordStr() << endl;
-
         rec_id_ = eventRecord.recordId();
+        msgScheduled = processEvent(eventRecord);
+    }
+    return msgScheduled;
+}
 
-        int opcode = eventRecord.recordOp();
-        if (CPU_PHASE == opcode)
+bool PHTFIOApplication::processEvent(PHTFEventRecord& eventRecord)
+{
+    bool msgScheduled = false;
+    int opType = eventRecord.recordOp();
+    if (CPU_PHASE == opType || OPEN == opType ||
+        IREAD == opType || IWRITE == opType || WAIT == opType ||
+        COMM_DUP == opType || COMM_RANK == opType)
+    {
+        msgScheduled = processIrregularEvent(&eventRecord);
+    }
+    else if (ALLREDUCE == opType || BARRIER == opType || BCAST == opType)
+    {
+        cMessage* request = createMessage(&eventRecord);
+        send(request, mpiOutGate_);
+        msgScheduled = true;
+    }
+    else
+    {
+        cMessage* request = createMessage(&eventRecord);
+        send(request, ioOutGate_);
+        msgScheduled = true;
+    }
+    return msgScheduled;
+}
+
+bool PHTFIOApplication::processIrregularEvent(PHTFEventRecord* eventRecord)
+{
+    bool msgScheduled = false;
+    int opType = eventRecord->recordOp();
+    switch(opType)
+    {
+        case CPU_PHASE:
         {
-            cMessage* msg = createCPUPhaseMessage(&eventRecord);
+            cMessage* msg = createCPUPhaseMessage(eventRecord);
             scheduleCPUMessage(msg);
             msgScheduled = true;
+            break;
         }
-        else if (GET_INFO == opcode)
+        case COMM_CREATE:
+        case COMM_DUP:
+        //case COMM_JOIN:
+        case COMM_RANK:
+        //case COMM_SIZE:
+        case COMM_SPLIT:
         {
-            // Currently exists as a no-op
+            // Perform communicator create operation
+            performCommProcessing(eventRecord);
+
+            // Retrieve the next operation, as this one is local
             msgScheduled = scheduleNextMessage();
+            break;
         }
-        else if (WAIT == opcode)
+        case OPEN:
         {
-            // Perform wait operation
+            // Perform the open processing
+            uint64_t commId = 0;
+            performOpenProcessing(eventRecord, commId);
+            assert(0 != commId);
+
+            // Determine if this is first rank for the communicator
+            int openRank = CommMan::instance().commRank(commId, getRank());
+            if (0 == openRank)
+            {
+                cMessage* msg = createFileOpenMessage(eventRecord);
+                send(msg, ioOutGate_);
+            }
+            else
+            {
+                //perform the open for the non-leader nodes
+                performFakeOpenProcessing(*eventRecord);
+
+                // Perform the broadcast to complete the open
+                cMessage* msg = createBcastRequest(commId);
+                send(msg, mpiOutGate_);
+            }
+            msgScheduled = true;
+            break;
+        }
+        case SEEK:
+        {
+            // Perform seek operation
+            performSeekProcessing(eventRecord);
+
+            // Retrieve the next operation, as this one is local
+            msgScheduled = scheduleNextMessage();
+            break;
+        }
+        case SET_VIEW:
+        {
+            performSetViewProcessing(eventRecord);
+            msgScheduled = scheduleNextMessage();
+            break;
+        }
+        case TYPE_CONTIGUOUS:
+        case TYPE_STRUCT:
+        case TYPE_CREATE_SUBARRAY:
+        case TYPE_VECTOR:
+        {
+            // Perform type_contiguous operation
+            performTypeProcessing(eventRecord);
+            msgScheduled = scheduleNextMessage();
+            break;
+        }
+        case IREAD:
+        {
+            // Start the non-blocking operation
+            cMessage* msg = createFileIReadMessage(eventRecord);
+            send(msg, ioOutGate_);
+            msgScheduled = scheduleNextMessage();
+            break;
+        }
+        case IWRITE:
+        {
+            // Start the non-blocking operation
+            cMessage* msg = createFileIWriteMessage(eventRecord);
+            send(msg, ioOutGate_);
+            msgScheduled = scheduleNextMessage();
+            break;
+        }
+        case WAIT:
+        {
             bool waitIsComplete = false;
-            performWaitProcessing(&eventRecord, waitIsComplete);
+            performWaitProcessing(eventRecord, waitIsComplete);
 
             // If the wait operation completes immediately, schedule the
             // next message now, otherwise just wait on the response
@@ -241,195 +373,107 @@ bool PHTFIOApplication::scheduleNextMessage()
             {
                 msgScheduled = true;
             }
+            break;
         }
-        else if (SEEK == opcode)
+        default:
         {
-            // Perform seek operation
-            performSeekProcessing(&eventRecord);
-
-            // Retrieve the next operation, as this one is local
-            msgScheduled = scheduleNextMessage();
-        }
-        else if (OPEN == opcode)
-        {
-            // Perform the open processing
-            uint64_t commId = 0;
-            performOpenProcessing(&eventRecord, commId);
-            assert(0 != commId);
-
-            // Determine if this is first rank for the communicator
-            int openRank = CommMan::instance().commRank(commId, getRank());
-            if (0 == openRank)
-            {
-                cMessage* msg = createRequest(&eventRecord);
-                send(msg, ioOutGate_);
-            }
-            else
-            {
-                //perform the open for the non-leader nodes
-                performFakeOpenProcessing(eventRecord);
-
-                // Perform the broadcast to complete the open
-                cMessage* msg = createBcastRequest(commId);
-                send(msg, mpiOutGate_);
-            }
-            msgScheduled = true;
-        }
-        else if (BARRIER == opcode)
-        {
-            cMessage* msg = createRequest(&eventRecord);
-            send(msg, mpiOutGate_);
-            msgScheduled = true;
-        }
-        else if (TYPE_CONTIGUOUS == opcode || TYPE_STRUCT == opcode || TYPE_CREATE_SUBARRAY == opcode || TYPE_VECTOR == opcode)
-        {
-            // Perform type_contiguous operation
-            performTypeProcessing(&eventRecord);
-
-            // Retrieve the next operation, as this one is local
-            msgScheduled = scheduleNextMessage();
-        }
-        else if (COMM_DUP == opcode || COMM_CREATE == opcode || COMM_SPLIT == opcode || COMM_RANK == opcode)
-        {
-            // Perform communicator create operation
-            performCommProcessing(&eventRecord);
-
-            // Retrieve the next operation, as this one is local
-            msgScheduled = scheduleNextMessage();
-        }
-        else if (SET_VIEW == opcode)
-        {
-            performSetViewProcessing(&eventRecord);
-            msgScheduled = scheduleNextMessage();
-        }
-        else if (GET_SIZE == opcode || SET_SIZE == opcode)
-        {
-            msgScheduled = scheduleNextMessage();
-        }
-        else
-        {
-            // Start the non-blocking operation
-            cMessage* msg = createRequest(&eventRecord);
-            send(msg, ioOutGate_);
-
-            // Handle non-blocking operations by scheduling another request
-            if (IREAD == opcode || IWRITE == opcode)
-            {
-                msgScheduled = scheduleNextMessage();
-            }
-            else
-            {
-                msgScheduled = true;
-            }
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "ERROR: Unable to handle irregular event: "
+                 << eventRecord->recordStr() << endl;
+            assert(0);
+            _Exit(25);
         }
     }
     return msgScheduled;
+}
+
+cMessage* PHTFIOApplication::createMessage(const PHTFEventRecord* eventRecord)
+{
+    // Create the request for each event record type
+    cMessage* request = 0;
+    int opType = eventRecord->recordOp();
+    switch(opType)
+    {
+        case ALLREDUCE:
+        {
+            request = createAllReduceMessage(eventRecord);
+            break;
+        }
+        case BARRIER:
+        {
+            request = createBarrierMessage(eventRecord);
+            break;
+        }
+        case BCAST:
+        {
+            request = createBcastMessage(eventRecord);
+            break;
+        }
+        case CLOSE:
+        {
+            request = createFileCloseMessage(eventRecord);
+            break;
+        }
+        case DELETE:
+        {
+            request = createFileDeleteMessage(eventRecord);
+            break;
+        }
+        case GET_INFO:
+        {
+            request = createFileGetInfoMessage(eventRecord);
+            break;
+        }
+        case GET_SIZE:
+        {
+            request = createFileGetSizeMessage(eventRecord);
+            break;
+        }
+        case READ:
+        case READ_ALL:
+        {
+            request = createFileReadMessage(eventRecord);
+            break;
+        }
+        case READ_AT:
+        case READ_AT_ALL:
+        {
+            request = createFileReadAtMessage(eventRecord);
+            break;
+        }
+        case SET_SIZE:
+        {
+            request = createFileSetSizeMessage(eventRecord);
+            break;
+        }
+        case WRITE:
+        case WRITE_ALL:
+        {
+            request = createFileWriteMessage(eventRecord);
+            break;
+        }
+        case WRITE_AT:
+        case WRITE_AT_ALL:
+        {
+            request = createFileWriteAtMessage(eventRecord);
+            break;
+        }
+        default:
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "ERROR: Unable to handle event: "
+                 << eventRecord->recordStr() << endl;
+            _Exit(25);
+        }
+    }
+    assert(0 != request);
+    return request;
 }
 
 void PHTFIOApplication::scheduleCPUMessage(cMessage *msg)
 {
     double schTime = simTime() + msg->par("Delay").doubleValue();
     scheduleAt(schTime , msg);
-}
-
-void PHTFIOApplication::rankChanged(int oldRank)
-{
-    // Ensure we only join the communicator once
-    assert(-1 == oldRank);
-
-    // Join the world communicator on rank initialization
-    CommMan::instance().registerRank(getRank());
-}
-
-spfsMPIRequest* PHTFIOApplication::createRequest(PHTFEventRecord* rec)
-{
-    assert(0 != rec);
-    assert(rec->recordOp() != CPU_PHASE);
-    assert(rec->recordOp() != SEEK);
-    assert(rec->recordOp() != WAIT);
-
-    spfsMPIRequest* mpiMsg = 0;
-    switch(rec->recordOp())
-    {
-        case BARRIER:
-        {
-            mpiMsg = createBarrierMessage(rec);
-            break;
-        }
-        case OPEN:
-        {
-            mpiMsg = createOpenMessage(rec);
-            break;
-        }
-        case CLOSE:
-        {
-            mpiMsg = createCloseMessage(rec);
-            break;
-        }
-        case DELETE:
-        {
-            mpiMsg = createDeleteRequest(rec);
-            break;
-        }
-        case READ:
-        case READ_ALL:
-        {
-            mpiMsg = createReadMessage(rec);
-            break;
-        }
-        case READ_AT:
-        case READ_AT_ALL:
-        {
-            mpiMsg = createReadAtMessage(rec);
-            break;
-        }
-        case WRITE:
-        case WRITE_ALL:
-        {
-            mpiMsg = createWriteMessage(rec);
-            break;
-        }
-        case WRITE_AT:
-        case WRITE_AT_ALL:
-        {
-            mpiMsg = createWriteAtMessage(rec);
-            break;
-        }
-        case IREAD:
-        {
-            mpiMsg = createIReadMessage(rec);
-            break;
-        }
-        case IWRITE:
-        {
-            mpiMsg = createIWriteMessage(rec);
-            break;
-        }
-        default:
-        {
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "ERROR: Invalid PHTF Record Op: " << rec->recordOp()
-                 << " -> " << rec->recordStr()
-                 << endl;
-            assert(false);
-            break;
-        }
-    }
-
-    return mpiMsg;
-}
-
-void PHTFIOApplication::populateFileSystem()
-{
-    cerr << "Populating file system . . . ";
-    PHTFFs *fs = PHTFTrace::getInstance(traceDirectory_)->getFs();
-    FileSystemMap fsm;
-    for(int i = 0; i < fs->fileNum(); i ++)
-    {
-        fsm[fs->fileName(i)] = fs->fileSize(i);
-    }
-    FileBuilder::instance().populateFileSystem(fsm);
-    cerr << "Done." << endl;
 }
 
 void PHTFIOApplication::performFakeOpenProcessing(const PHTFEventRecord& openRecord)
@@ -547,8 +591,8 @@ void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
         {
             cerr << __FILE__ << ":" << __LINE__ << ":"
                  << "Comm Dup( "
-                 << "oldComm=" << commRecord->paramAt(0)
-                 << " newComm=" << commRecord->paramAt(1) << ")" << endl;
+                 << "oldComm=" << commRecord->paramAsAddress(0)
+                 << " newComm=" << commRecord-> paramAsAddress(1)<< ")" << endl;
             Communicator oldComm = commRecord->paramAsAddress(0);
             Communicator newComm = commRecord->paramAsAddress(1);
 
@@ -630,7 +674,6 @@ void PHTFIOApplication::performDuplicateCommunicator(const Communicator& oldComm
                                                      Communicator& newComm)
 {
     assert(true == CommMan::instance().exists(oldComm));
-    assert(false == CommMan::instance().exists(newComm));
     CommMan::instance().dupComm(oldComm, newComm);
 }
 
@@ -918,6 +961,17 @@ void PHTFIOApplication::performCreateVectorDataType(std::string typeId)
          << "Data Type Width: " << dataTypeById_.size() << endl;
 }
 
+spfsMPIBarrierRequest* PHTFIOApplication::createAllReduceMessage(
+    const PHTFEventRecord* allReduceRecord)
+{
+    uint64_t communicatorId = allReduceRecord->paramAsAddress(5);
+
+    spfsMPIBarrierRequest* barrier =
+        new spfsMPIBarrierRequest(0, SPFS_MPI_BARRIER_REQUEST);
+    barrier->setCommunicator(communicatorId);
+    return barrier;
+}
+
 spfsMPIBarrierRequest* PHTFIOApplication::createBarrierMessage(
     const PHTFEventRecord* barrierRecord)
 {
@@ -929,10 +983,10 @@ spfsMPIBarrierRequest* PHTFIOApplication::createBarrierMessage(
     return barrier;
 }
 
-spfsMPIBcastRequest* PHTFIOApplication::createBcastRequest(
-    int communicatorId)
+spfsMPIBcastRequest* PHTFIOApplication::createBcastMessage(
+    const PHTFEventRecord* bcastRecord)
 {
-    assert(-1 != communicatorId);
+    uint64_t communicatorId = bcastRecord->paramAsAddress(4);
 
     spfsMPIBcastRequest* bcast =
         new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
@@ -952,13 +1006,11 @@ cMessage* PHTFIOApplication::createCPUPhaseMessage(
     return msg;
 }
 
-spfsMPIFileCloseRequest* PHTFIOApplication::createCloseMessage(
+spfsMPIFileCloseRequest* PHTFIOApplication::createFileCloseMessage(
     const PHTFEventRecord* closeRecord)
 {
     // Retrieve the descriptor
     int handle = closeRecord->paramAsDescriptor(0, *phtfEvent_);
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Open file id: " << handle << endl;
     FileDescriptor* fd = getDescriptor(handle);
     assert(0 != fd);
 
@@ -968,7 +1020,7 @@ spfsMPIFileCloseRequest* PHTFIOApplication::createCloseMessage(
     return close;
 }
 
-spfsMPIFileDeleteRequest* PHTFIOApplication::createDeleteRequest(
+spfsMPIFileDeleteRequest* PHTFIOApplication::createFileDeleteMessage(
     const PHTFEventRecord* deleteRecord)
 {
     // Extract the file name
@@ -981,7 +1033,61 @@ spfsMPIFileDeleteRequest* PHTFIOApplication::createDeleteRequest(
     return deleteRequest;
 }
 
-spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
+spfsMPIFileStatRequest* PHTFIOApplication::createFileGetInfoMessage(
+    const PHTFEventRecord* getSizeRecord)
+{
+    // Retrieve the descriptor
+    int handle = getSizeRecord->paramAsDescriptor(0, *phtfEvent_);
+    FileDescriptor* fd = getDescriptor(handle);
+
+    spfsMPIFileStatRequest* stat = new spfsMPIFileStatRequest(
+        0, SPFS_MPI_FILE_STAT_REQUEST);
+    stat->setFileName(fd->getFilename().c_str());
+    stat->setDetermineFileSize(false);
+    return stat;
+}
+
+spfsMPIFileStatRequest* PHTFIOApplication::createFileGetSizeMessage(
+    const PHTFEventRecord* getSizeRecord)
+{
+    // Retrieve the descriptor
+    int handle = getSizeRecord->paramAsDescriptor(0, *phtfEvent_);
+    FileDescriptor* fd = getDescriptor(handle);
+
+    spfsMPIFileStatRequest* stat = new spfsMPIFileStatRequest(
+        0, SPFS_MPI_FILE_STAT_REQUEST);
+    stat->setFileName(fd->getFilename().c_str());
+    stat->setDetermineFileSize(true);
+    return stat;
+}
+
+spfsMPIFileReadAtRequest* PHTFIOApplication::createFileIReadMessage(
+    const PHTFEventRecord* readRecord)
+{
+    uint64_t requestId = readRecord->paramAsAddress(4);
+
+    spfsMPIFileReadAtRequest* iread = createFileReadMessage(readRecord);
+    iread->setReqId(requestId);
+
+    // Update the list of non-blocking operations still pending
+    pendingRequestsById_[requestId] = iread;
+    return iread;
+}
+
+spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileIWriteMessage(
+    const PHTFEventRecord* writeRecord)
+{
+    uint64_t requestId = writeRecord->paramAsAddress(4);
+
+    spfsMPIFileWriteAtRequest* iwrite = createFileWriteMessage(writeRecord);
+    iwrite->setReqId(requestId);
+
+    // Update the list of non-blocking operations still pending
+    pendingRequestsById_[requestId] = iwrite;
+    return iwrite;
+}
+
+spfsMPIFileOpenRequest* PHTFIOApplication::createFileOpenMessage(
     const PHTFEventRecord* openRecord)
 {
     // Extract the communicator id
@@ -1012,10 +1118,10 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createOpenMessage(
 }
 
 
-spfsMPIFileReadAtRequest* PHTFIOApplication::createReadAtMessage(
+spfsMPIFileReadAtRequest* PHTFIOApplication::createFileReadAtMessage(
     const PHTFEventRecord* readAtRecord)
 {
-    uint64_t handle = readAtRecord->paramAsAddress(0);
+    int handle = readAtRecord->paramAsDescriptor(0, *phtfEvent_);
     FileDescriptor* fd = getDescriptor(handle);
 
     size_t offset = readAtRecord->paramAsSizeT(1);
@@ -1034,10 +1140,10 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadAtMessage(
     return read;
 }
 
-spfsMPIFileReadAtRequest* PHTFIOApplication::createReadMessage(
+spfsMPIFileReadAtRequest* PHTFIOApplication::createFileReadMessage(
     const PHTFEventRecord* readRecord)
 {
-    uint64_t handle = readRecord->paramAsAddress(0);
+    int handle = readRecord->paramAsDescriptor(0, *phtfEvent_);
     FileDescriptor* fd = getDescriptor(handle);
 
     size_t count = readRecord->paramAsSizeT(2);
@@ -1060,24 +1166,24 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createReadMessage(
     return read;
 }
 
-spfsMPIFileReadAtRequest* PHTFIOApplication::createIReadMessage(
-    const PHTFEventRecord* readRecord)
+spfsMPIFileStatRequest* PHTFIOApplication::createFileSetSizeMessage(
+    const PHTFEventRecord* setSizeRecord)
 {
-    uint64_t requestId = readRecord->paramAsAddress(4);
+    // Retrieve the descriptor
+    int handle = setSizeRecord->paramAsDescriptor(0, *phtfEvent_);
+    FileDescriptor* fd = getDescriptor(handle);
 
-    spfsMPIFileReadAtRequest* iread = createReadMessage(readRecord);
-    iread->setReqId(requestId);
-
-    // Update the list of non-blocking operations still pending
-    pendingRequestsById_[requestId] = iread;
-    return iread;
+    spfsMPIFileStatRequest* stat = new spfsMPIFileStatRequest(
+        0, SPFS_MPI_FILE_STAT_REQUEST);
+    stat->setFileName(fd->getFilename().c_str());
+    stat->setDetermineFileSize(false);
+    return stat;
 }
 
-spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteAtMessage(
+spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteAtMessage(
     const PHTFEventRecord* writeAtRecord)
 {
-    string hstr = writeAtRecord->paramAt(0);
-    long handle = strtol(hstr.c_str(), NULL, 16);
+    int handle = writeAtRecord->paramAsDescriptor(0, *phtfEvent_);
     FileDescriptor* fd = getDescriptor(handle);
 
     size_t offset = writeAtRecord->paramAsSizeT(1);
@@ -1098,10 +1204,10 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteAtMessage(
     return write;
 }
 
-spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
+spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteMessage(
     const PHTFEventRecord* writeRecord)
 {
-    uint64_t handle = writeRecord->paramAsAddress(0);
+    int handle = writeRecord->paramAsDescriptor(0, *phtfEvent_);
     FileDescriptor* fd = getDescriptor(handle);
 
     size_t count = writeRecord->paramAsSizeT(2);
@@ -1123,19 +1229,6 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createWriteMessage(
     fd->moveFilePointer(count * dataType->getExtent());
 
     return write;
-}
-
-spfsMPIFileWriteAtRequest* PHTFIOApplication::createIWriteMessage(
-    const PHTFEventRecord* writeRecord)
-{
-    uint64_t requestId = writeRecord->paramAsAddress(4);
-
-    spfsMPIFileWriteAtRequest* iwrite = createWriteMessage(writeRecord);
-    iwrite->setReqId(requestId);
-
-    // Update the list of non-blocking operations still pending
-    pendingRequestsById_[requestId] = iwrite;
-    return iwrite;
 }
 
 string PHTFIOApplication::getAlias(string id)
@@ -1165,6 +1258,18 @@ string PHTFIOApplication::getAlias(string id)
         }
     }
 }
+
+spfsMPIBcastRequest* PHTFIOApplication::createBcastRequest(
+    int communicatorId)
+{
+    assert(-1 != communicatorId);
+
+    spfsMPIBcastRequest* bcast =
+        new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
+    bcast->setCommunicator(communicatorId);
+    return bcast;
+}
+
 
 /*
  * Local variables:

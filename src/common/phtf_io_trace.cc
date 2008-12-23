@@ -178,16 +178,11 @@ size_t PHTFEventRecord::paramAsSizeT(size_t idx) const
 int PHTFEventRecord::paramAsDescriptor(size_t paramindex, const PHTFEvent & event) const
 {
     assert(paramindex < paraNum());
-
-    string hpt = paramAt(paramindex);
-    ostringstream ss;
-    ss << hpt << "@" << recordId();
-
-    string hstr = event.memValue("Pointer", ss.str());
-    assert(0 != hstr.size());
-    int fileId = strtol(hstr.c_str(), NULL, 16);
-
-    return fileId;
+    string s = paramAt(paramindex);
+    istringstream iss(s);
+    int descriptor;
+    iss >> descriptor;
+    return descriptor;
 }
 
 string PHTFEventRecord::paramAsFilename(size_t paramindex, const PHTFEvent & event) const
@@ -256,6 +251,14 @@ void PHTFEventRecord::params(vector<string> paras)
 /** Initialize the op-to-str map */
 void PHTFEventRecord::buildOpMap()
 {
+    PHTFEventRecord::_opmap["CPU_PHASE"] = CPU_PHASE;
+    PHTFEventRecord::_opmap["MPI_ALLREDUCE"] = ALLREDUCE;
+    PHTFEventRecord::_opmap["MPI_BARRIER"] = BARRIER;
+    PHTFEventRecord::_opmap["MPI_BCAST"] = BCAST;
+    PHTFEventRecord::_opmap["MPI_COMM_DUP"] = COMM_DUP;
+    PHTFEventRecord::_opmap["MPI_COMM_CREATE"] = COMM_CREATE;
+    PHTFEventRecord::_opmap["MPI_COMM_SPLIT"] = COMM_SPLIT;
+    PHTFEventRecord::_opmap["MPI_COMM_RANK"] = COMM_RANK;
     PHTFEventRecord::_opmap["MPI_FILE_OPEN"] = OPEN;
     PHTFEventRecord::_opmap["MPI_FILE_CLOSE"] = CLOSE;
     PHTFEventRecord::_opmap["MPI_FILE_DELETE"] = DELETE;
@@ -308,18 +311,12 @@ void PHTFEventRecord::buildOpMap()
     PHTFEventRecord::_opmap["MPI_FILE_SYNC"] = SYNC;
     PHTFEventRecord::_opmap["MPI_FILE_READ"] = READ;
     PHTFEventRecord::_opmap["MPI_FILE_WRITE"] = WRITE;
-    PHTFEventRecord::_opmap["MPI_BARRIER"] = BARRIER;
-    PHTFEventRecord::_opmap["CPU_PHASE"] = CPU_PHASE;
     PHTFEventRecord::_opmap["MPIO_WAIT"] = WAIT;
     PHTFEventRecord::_opmap["MPI_TYPE_CONTIGUOUS"] = TYPE_CONTIGUOUS;
     PHTFEventRecord::_opmap["MPI_TYPE_STRUCT"] = TYPE_STRUCT;
     PHTFEventRecord::_opmap["MPI_TYPE_VECTOR"] = TYPE_VECTOR;
     PHTFEventRecord::_opmap["MPI_TYPE_CREATE_SUBARRAY"] = TYPE_CREATE_SUBARRAY;
     PHTFEventRecord::_opmap["MPI_TYPE_COMMIT"] = TYPE_COMMIT;
-    PHTFEventRecord::_opmap["MPI_COMM_DUP"] = COMM_DUP;
-    PHTFEventRecord::_opmap["MPI_COMM_CREATE"] = COMM_CREATE;
-    PHTFEventRecord::_opmap["MPI_COMM_SPLIT"] = COMM_SPLIT;
-    PHTFEventRecord::_opmap["MPI_COMM_RANK"] = COMM_RANK;
 }
 
 /** @return the operation id */
@@ -366,21 +363,32 @@ void PHTFEventRecord::buildRecordFields()
 {
     stringstream ss(_recordstr);
     string opstr;
-    string pa;
 
     ss >> _id >> opstr >> _sttime >> _duration;
 
     ss >>_ret;
 
     _parameters.resize(0);
+    int failsafe = 25;
     while(!ss.eof())
     {
-        pa = "";
+        string pa = "";
         ss >> pa;
         if(pa != "")
         {
             _parameters.push_back(pa);
         }
+
+        if (0 == failsafe)
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "WARNING: Reached infinite loop failsafe catch "
+                 << "Record: " << _recordstr << " "
+                 << "PA String: >" << pa << "<"
+                 << " Remaining in stream >" << ss << "<" << endl;
+            _Exit(1);
+        }
+        failsafe--;
     }
 
     _opid = strToOp(opstr);

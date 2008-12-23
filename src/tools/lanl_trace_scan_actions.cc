@@ -497,7 +497,7 @@ void LanlTraceScanActions::handleMPIFileGetSize(const string& text)
     size_t begin = text.find("MPI_File_get_size(") + strlen("MPI_File_get_size(");
     size_t end = text.find(",", begin);
     begin = end + 2;
-    end = text.find(",", begin);
+    end = text.find(" ", begin);
     string sizeAddr = text.substr(begin, end - begin);
 
     // Create the trace call

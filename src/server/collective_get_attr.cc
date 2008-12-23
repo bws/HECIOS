@@ -143,7 +143,7 @@ void CollectiveGetAttr::getLocalAttributes()
     readRequest->setExtentArraySize(1);
     readRequest->setOffset(0, 0);
     readRequest->setExtent(0, module_->getDefaultAttrSize());
-    
+
     // Send the request to the storage layer
     module_->send(readRequest);
 
@@ -157,7 +157,7 @@ void CollectiveGetAttr::sendCollectiveRequests()
     // Divide the list of data handles into two partitions
     //   Send the second partition to another server
     //   Repeat process with first half of the list
-    int numRemainingHandles = getAttrReq_->getDataHandlesArraySize(); 
+    int numRemainingHandles = getAttrReq_->getDataHandlesArraySize();
     while (0 < numRemainingHandles)
     {
         // Determine the next partition
@@ -216,7 +216,7 @@ spfsCollectiveGetAttrRequest*
 CollectiveGetAttr::createChildCollectiveRequest(int idx, int numHandles) const
 {
     assert(0 < numHandles);
-    
+
     spfsCollectiveGetAttrRequest* childGetAttr =
         new spfsCollectiveGetAttrRequest(0, SPFS_COLLECTIVE_GET_ATTR_REQUEST);
     childGetAttr->setObjectType(SPFS_DATA_OBJECT);
@@ -225,7 +225,7 @@ CollectiveGetAttr::createChildCollectiveRequest(int idx, int numHandles) const
     childGetAttr->setHandle(getAttrReq_->getDataHandles(idx));
     idx++;
     numHandles--;
-    
+
     // The remaining handles are sent as data
     childGetAttr->setDataHandlesArraySize(numHandles);
     for (int i = 0; i < numHandles; i++)
