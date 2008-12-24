@@ -232,7 +232,9 @@ bool PHTFIOApplication::scheduleNextMessage()
     {
         PHTFEventRecord eventRecord;
         *phtfEvent_ >> eventRecord;
-        cerr << "[" << getRank() << "] " << eventRecord.recordStr() << endl;
+
+        // TODO: Use this to look at the actual events
+        //cerr << "[" << getRank() << "] " << eventRecord.recordStr() << endl;
         rec_id_ = eventRecord.recordId();
         msgScheduled = processEvent(eventRecord);
     }
@@ -478,7 +480,6 @@ void PHTFIOApplication::scheduleCPUMessage(cMessage *msg)
 
 void PHTFIOApplication::performFakeOpenProcessing(const PHTFEventRecord& openRecord)
 {
-    /*
     // Extract the descriptor number from the event record
     int handle = openRecord.paramAsDescriptor(4, *phtfEvent_);
     FileDescriptor* fd = getDescriptor(handle);
@@ -495,7 +496,7 @@ void PHTFIOApplication::performFakeOpenProcessing(const PHTFEventRecord& openRec
     assert(0 != cacheModule);
     MiddlewareCache* middlewareCache = dynamic_cast<MiddlewareCache*>(cacheModule);
     assert(0 != middlewareCache);
-*/
+    middlewareCache->performFakeOpen(fd->getFilename());
 }
 
 void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
@@ -589,10 +590,6 @@ void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
     {
         case COMM_DUP:
         {
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "Comm Dup( "
-                 << "oldComm=" << commRecord->paramAsAddress(0)
-                 << " newComm=" << commRecord-> paramAsAddress(1)<< ")" << endl;
             Communicator oldComm = commRecord->paramAsAddress(0);
             Communicator newComm = commRecord->paramAsAddress(1);
 

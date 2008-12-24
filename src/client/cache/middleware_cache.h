@@ -33,7 +33,7 @@ public:
     MiddlewareCache();
 
     /** Abstract destructor */
-    ~MiddlewareCache() = 0;
+    virtual ~MiddlewareCache() = 0;
 
     /** @return the appIn gate id */
     int appInGateId() const { return appInGateId_; };
@@ -46,6 +46,11 @@ public:
 
     /** @return the fsOut gate id */
     int fsOutGateId() const { return fsOutGateId_; };
+
+    /** Workaround for the MPI open/broadcast optimization.
+     *  Allow caches to increment the open count another way.
+     */
+    virtual void performFakeOpen(const Filename& openName) = 0;
 
 protected:
     /** Implementation of initialize */
@@ -89,13 +94,7 @@ public:
     NoMiddlewareCache();
 
     /** Increment the file open count */
-    void processFileOpen(const Filename& openName) {};
-
-    /**
-     * Decrement the file open count and flush dirty file data to disk if
-     * this is the last close for this file
-     */
-    void processFileClose(const Filename& closeName) {};
+    void performFakeOpen(const Filename& openName) {};
 
 private:
     /** Forward application messages to file system */

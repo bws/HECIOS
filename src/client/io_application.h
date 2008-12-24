@@ -120,6 +120,7 @@ private:
     cOutVector directoryCreateDelay_;
     cOutVector directoryReadDelay_;
     cOutVector directoryRemoveDelay_;
+    cOutVector fileCloseDelay_;
     cOutVector fileDeleteDelay_;
     cOutVector fileOpenDelay_;
     cOutVector fileReadDelay_;

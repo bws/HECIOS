@@ -63,9 +63,9 @@ void MPICommunicationHelper::performCollective(
     {
         numParticipants = 1 + iter->second;
     }
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Coll Size: " << CommMan::instance().commSize(commId)
-         << " Parts Arrived: " << numParticipants << endl;
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Coll Size: " << CommMan::instance().commSize(commId)
+    //     << " Parts Arrived: " << numParticipants << endl;
 
     // Update the number of participants
     numParticipantsByCommunicator_[commId] = numParticipants;

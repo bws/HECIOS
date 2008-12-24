@@ -42,6 +42,7 @@ IOApplication::IOApplication()
       directoryCreateDelay_("SPFS MPI Directory Create Delay"),
       directoryReadDelay_("SPFS MPI Directory Read Delay"),
       directoryRemoveDelay_("SPFS MPI Directory Remove Delay"),
+      fileCloseDelay_("SPFS MPI File Close Delay"),
       fileDeleteDelay_("SPFS MPI File Delete Delay"),
       fileOpenDelay_("SPFS MPI File Open Delay"),
       fileReadDelay_("SPFS MPI File Read Delay"),
@@ -190,6 +191,7 @@ void IOApplication::handleIOMessage(cMessage* msg)
         }
         case SPFS_MPI_FILE_CLOSE_RESPONSE:
         {
+            fileCloseDelay_.record(delay);
             break;
         }
         case SPFS_MPI_FILE_DELETE_RESPONSE:

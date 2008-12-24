@@ -39,11 +39,11 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
       uniqueId_(simulation.getUniqueNumber()),
       flowSize_(0),
       networkTransferTotal_(0),
-      storageTransferTotal_(0),
-      transferFromNetworkDelay_("SPFS Flow from Network Delay"),
-      transferFromStorageDelay_("SPFS Flow from Storage Delay"),
-      transferToNetworkDelay_("SPFS Flow to Network Delay"),
-      transferToStorageDelay_("SPFS Flow to Storage Delay")
+      storageTransferTotal_(0)
+//      transferFromNetworkDelay_("SPFS Flow from Network Delay"),
+//      transferFromStorageDelay_("SPFS Flow from Storage Delay"),
+//      transferToNetworkDelay_("SPFS Flow to Network Delay"),
+//      transferToStorageDelay_("SPFS Flow to Storage Delay")
 {
     // Create the data type layout
     if (CLIENT_READ == mode_ || CLIENT_WRITE == mode_)
@@ -123,25 +123,25 @@ void DataFlow::addStorageProgress(FSSize dataTransferred)
 void DataFlow::collectTransferFromNetworkDelay(cMessage* response)
 {
     simtime_t delay = getRoundTripDelay(response);
-    transferFromNetworkDelay_.record(delay);
+//    transferFromNetworkDelay_.record(delay);
 }
 
 void DataFlow::collectTransferFromStorageDelay(cMessage* response)
 {
     simtime_t delay = getRoundTripDelay(response);
-    transferFromStorageDelay_.record(delay);
+//    transferFromStorageDelay_.record(delay);
 }
 
 void DataFlow::collectTransferToNetworkDelay(cMessage* response)
 {
     simtime_t delay = getRoundTripDelay(response);
-    transferToNetworkDelay_.record(delay);
+//    transferToNetworkDelay_.record(delay);
 }
 
 void DataFlow::collectTransferToStorageDelay(cMessage* response)
 {
     simtime_t delay = getRoundTripDelay(response);
-    transferToStorageDelay_.record(delay);
+//    transferToStorageDelay_.record(delay);
 }
 
 simtime_t DataFlow::getRoundTripDelay(cMessage* response) const

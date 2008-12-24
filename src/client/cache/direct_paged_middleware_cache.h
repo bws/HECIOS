@@ -67,6 +67,12 @@ protected:
      */
     virtual OpenFileMap* createOpenFileMap();
 
+    /**
+     * Allow processes that don't send an actual MPI_FILE_OPEN call to the
+     * cache to still increment the file open count.
+     */
+    virtual void performFakeOpen(const Filename& openName);
+
 private:
     /** Handle messages received from the application */
     virtual void handleApplicationMessage(cMessage* msg);
