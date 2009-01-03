@@ -107,19 +107,15 @@ bool FSReadSM::updateState(cFSM& currentState, cMessage* msg)
         case FSM_Exit(COUNT_SERVER_RESPONSE):
         {
             assert(0 != dynamic_cast<spfsReadResponse*>(msg));
+            countResponse();
 
-            // Need a quick workaround in case there isn't a need for a
-            // flow here
-            spfsReadRequest* readRequest =
-                static_cast<spfsReadRequest*>(msg->contextPointer());
-            if (true == readRequest->getHasReadData())
+            if (isReadComplete())
             {
-                countResponse();
-                FSM_Goto(currentState, COUNT);
+                FSM_Goto(currentState, FINISH);
             }
             else
             {
-                FSM_Goto(currentState, FINISH);
+                FSM_Goto(currentState, COUNT);
             }
             break;
         }
