@@ -145,6 +145,7 @@ message spfsRemoveResponse extends spfsResponse
 message spfsReadRequest extends spfsRequest
 {
     fields:
+    	bool hasReadData;
         FSOffset offset;
         FSSize dataSize;
         FileViewPtr view;

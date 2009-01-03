@@ -81,7 +81,7 @@ public:
      * @return the number of entries in the cache
      */
     int size() const;
-    
+
 private:
 
     std::map<KeyType, EntryType*> keyEntryMap_;
@@ -213,6 +213,7 @@ int LRUTimeoutCache<KeyType,ValueType>::size() const
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

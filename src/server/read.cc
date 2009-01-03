@@ -41,7 +41,7 @@ Read::~Read()
 {
     if (cleanupRequest_)
     {
-        // FIXME: Fix this leak
+        // TODO: Fix this leak
         //delete readReq_->getView();
         delete readReq_->getDist();
         delete readReq_;
@@ -68,7 +68,14 @@ void Read::handleServerMessage(cMessage* msg)
         {
             assert(0 != dynamic_cast<spfsReadRequest*>(msg));
             module_->recordRead();
-            FSM_Goto(currentState, START_DATA_FLOW);
+            if (readReq_->getHasReadData())
+            {
+                FSM_Goto(currentState, START_DATA_FLOW);
+            }
+            else
+            {
+                FSM_Goto(currentState, SEND_FINAL_RESPONSE);
+            }
             break;
         }
         case FSM_Enter(START_DATA_FLOW):
@@ -143,10 +150,14 @@ void Read::sendFinalResponse()
 
 void Read::finish()
 {
-    // Set the flag so that the originating request is cleaned up during
-    // object destruction.  Don't simply delete it because the state is
-    // updated after this call to finish()
-    cleanupRequest_ = true;
+    // If a flow was initiated for this request
+    if (readReq_->getHasReadData())
+    {
+        // Set the flag so that the originating request is cleaned up during
+        // object destruction.  Don't simply delete it because the state is
+        // updated after this call to finish()
+        cleanupRequest_ = true;
+    }
 }
 
 /*

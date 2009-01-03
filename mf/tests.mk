@@ -26,6 +26,7 @@ TEST_DIR := tests
 #
 # Testing directories
 #
+TEST_CLIENT_CACHE_DIR := $(TEST_DIR)/client/cache
 TEST_CLIENT_DIR := $(TEST_DIR)/client
 TEST_COMMON_DIR := $(TEST_DIR)/common
 TEST_IO_DIR := $(TEST_DIR)/io
@@ -48,6 +49,7 @@ TEST_INCLUDES = $(TEST_SUPPORT_DIR)
 # Testing module includes
 #
 SIM_TEST_SRC :=
+include $(TEST_CLIENT_CACHE_DIR)/module.mk
 include $(TEST_CLIENT_DIR)/module.mk
 include $(TEST_COMMON_DIR)/module.mk
 include $(TEST_IO_DIR)/module.mk
@@ -81,6 +83,7 @@ SIM_TEST_OBJS := $(patsubst %.cc, %.o, $(filter %.cc, $(SIM_TEST_SRC)))
 # Build unit test drivers
 #
 TEST_EXES = $(BIN_DIR)/common_test \
+	$(BIN_DIR)/client_cache_test \
 	$(BIN_DIR)/client_test \
 	$(BIN_DIR)/io_test \
 	$(BIN_DIR)/layout_test \
@@ -106,6 +109,17 @@ tests_clean:
 	@echo "Derived files deleted."
 
 .PHONY: tests_clean
+
+#
+# client cache package unit tests
+#
+CLIENT_CACHE_TEST_OBJS = $(TEST_CLIENT_CACHE_DIR)/unit_test.o \
+	$(TEST_SUPPORT_DIR)/csimple_module_tester.o \
+	$(TEST_SUPPORT_DIR)/test_cenvir.o
+
+$(BIN_DIR)/client_cache_test: $(CLIENT_CACHE_TEST_OBJS) $(SIM_MSG_OBJS) $(SIM_OBJS) lib/inet.o
+	@mkdir -p $(BIN_DIR)
+	$(LD) $(LDFLAGS) $^ $(TEST_LIBS) -o $@
 
 #
 # client package unit tests

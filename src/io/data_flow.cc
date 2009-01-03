@@ -122,25 +122,25 @@ void DataFlow::addStorageProgress(FSSize dataTransferred)
 
 void DataFlow::collectTransferFromNetworkDelay(cMessage* response)
 {
-    simtime_t delay = getRoundTripDelay(response);
+//    simtime_t delay = getRoundTripDelay(response);
 //    transferFromNetworkDelay_.record(delay);
 }
 
 void DataFlow::collectTransferFromStorageDelay(cMessage* response)
 {
-    simtime_t delay = getRoundTripDelay(response);
+//    simtime_t delay = getRoundTripDelay(response);
 //    transferFromStorageDelay_.record(delay);
 }
 
 void DataFlow::collectTransferToNetworkDelay(cMessage* response)
 {
-    simtime_t delay = getRoundTripDelay(response);
+//    simtime_t delay = getRoundTripDelay(response);
 //    transferToNetworkDelay_.record(delay);
 }
 
 void DataFlow::collectTransferToStorageDelay(cMessage* response)
 {
-    simtime_t delay = getRoundTripDelay(response);
+//    simtime_t delay = getRoundTripDelay(response);
 //    transferToStorageDelay_.record(delay);
 }
 

@@ -24,6 +24,7 @@
 #include "data_type_processor.h"
 #include "file_builder.h"
 #include "file_descriptor.h"
+#include "file_region_set.h"
 #include "file_view.h"
 #include "mpi_proto_m.h"
 using namespace std;
@@ -134,6 +135,53 @@ set<FilePageId> PagedCache::determineRequestPartialPages(const FSOffset& offset,
         }
     }
     return partialPageIds;
+}
+
+FileRegionSet* PagedCache::determinePartialPageRegions(const FilePageId& pageId,
+                                                        const FSOffset& offset,
+                                                        const FSSize& size,
+                                                        const FileView& view) const
+{
+    FileRegionSet* pageRegions = new FileRegionSet();
+
+    // Flatten view into file regions for the correct size
+    vector<FileRegion> requestRegions =
+        DataTypeProcessor::locateFileRegions(offset, size, view);
+
+    for (size_t i = 0; i < requestRegions.size(); i++)
+    {
+        // Either the beginning or the end of the region must reside on the
+        // requested page in order for it to be partial to the page
+        // Find the regions for this page, truncate parts not on the page
+        // and add them to the list
+        FSOffset begin = requestRegions[i].offset;
+        FSOffset end = begin + requestRegions[i].extent;
+        FilePageId beginPage = begin / pageSize_;
+        FilePageId endPage = end / pageSize_;
+        if (pageId == beginPage)
+        {
+            // This region starts at offset and continues to the minimum
+            // of the extent or the page end;
+            size_t pageEnd = (pageId + 1) * pageSize_;
+            size_t minEnd = min(end, pageEnd);
+
+            FileRegion partial;
+            partial.offset = begin;
+            partial.extent = minEnd - begin;
+            pageRegions->insert(partial);
+        }
+        else if (pageId == endPage)
+        {
+            // This region starts at page begin and continues to the end
+            // of the extent
+            size_t pageBegin = pageId * pageSize_;
+            FileRegion partial;
+            partial.offset = pageBegin;
+            partial.offset = end - pageBegin;
+            pageRegions->insert(partial);
+        }
+    }
+    return pageRegions;
 }
 
 void PagedCache::initialize()

@@ -45,6 +45,12 @@ private:
     /**  Construct server read requests */
     virtual void enterRead();
 
+    /**
+     * @return true if the read data exists in the file
+     * TODO: The implementation of this function is currently naive/wrong
+     */
+    bool fileHasReadData(std::size_t reqBytes);
+
     /** Count a finished flow */
     void countFlowFinish(spfsDataFlowFinish* finishMsg);
 

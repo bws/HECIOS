@@ -27,6 +27,7 @@
 #include "filename.h"
 #include "middleware_cache.h"
 class FileDescriptor;
+class FileRegionSet;
 class FileView;
 class spfsMPIFileRequest;
 class spfsMPIFileReadAtRequest;
@@ -105,7 +106,15 @@ public:
                                                       const FSSize& size,
                                                       const FileView& view) const;
 
-protected:
+    /**
+     * @return The file regions residing on the partial page
+     */
+    FileRegionSet* determinePartialPageRegions(const FilePageId& pageId,
+                                               const FSOffset& offset,
+                                               const FSSize& size,
+                                               const FileView& view) const;
+
+    protected:
     /** Module initialization */
     void initialize();
 

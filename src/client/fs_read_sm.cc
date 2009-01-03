@@ -93,14 +93,34 @@ bool FSReadSM::updateState(cFSM& currentState, cMessage* msg)
         case FSM_Enter(COUNT_SERVER_RESPONSE):
         {
             assert(0 != dynamic_cast<spfsReadResponse*>(msg));
-            startFlow(dynamic_cast<spfsReadResponse*>(msg));
+
+            // Need a quick workaround in case there isn't a need for a
+            // flow here
+            spfsReadRequest* readRequest =
+                static_cast<spfsReadRequest*>(msg->contextPointer());
+            if (true == readRequest->getHasReadData())
+            {
+                startFlow(dynamic_cast<spfsReadResponse*>(msg));
+            }
             break;
         }
         case FSM_Exit(COUNT_SERVER_RESPONSE):
         {
             assert(0 != dynamic_cast<spfsReadResponse*>(msg));
-            countResponse();
-            FSM_Goto(currentState, COUNT);
+
+            // Need a quick workaround in case there isn't a need for a
+            // flow here
+            spfsReadRequest* readRequest =
+                static_cast<spfsReadRequest*>(msg->contextPointer());
+            if (true == readRequest->getHasReadData())
+            {
+                countResponse();
+                FSM_Goto(currentState, COUNT);
+            }
+            else
+            {
+                FSM_Goto(currentState, FINISH);
+            }
             break;
         }
         case FSM_Exit(COUNT_FLOW_FINISH):
@@ -138,13 +158,13 @@ void FSReadSM::enterRead()
     // Note: The read request is NOT deleted here as one would expect.
     // Because the server side flow completes after the client, the request
     // is deleted on the server
-    read.setAutoCleanup(false);
     read.setContextPointer(readRequest_);
     read.setOffset(readRequest_->getOffset());
     read.setView(new FileView(fd->getFileView()));
 
     // Send request to each server
     int numRequests = 0;
+    int numFlows = 0;
     int numServers = metaData->dataHandles.size();
     for (int i = 0; i < numServers; i++)
     {
@@ -159,10 +179,36 @@ void FSReadSM::enterRead()
             *metaData->dist,
             aggregateSize);
 
-        if (0 != reqBytes && 0 != aggregateSize)
+        if (!fileHasReadData(readRequest_->getOffset() + reqBytes))
         {
-             // Set the server specific request data
+            // Create a request that the server will not flow data for
+            // because the read data is not present in the file
             spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
+            req->setAutoCleanup(true);
+            req->setHasReadData(false);
+            req->setHandle(metaData->dataHandles[i]);
+            req->setDataSize(aggregateSize);
+
+            // Set the message size in bytes
+            req->setByteLength(8 + 8 + 4 + 4 + 4 +
+                               //FSClient::CREDENTIALS_SIZE +
+                               fd->getFileView().getRepresentationByteLength() +
+                               8 + 8);
+            client_->send(req, client_->getNetOutGate());
+
+            // Add to the number of requests sent
+            numRequests++;
+        }
+        else if (0 != reqBytes && 0 != aggregateSize)
+        {
+            // Note: The read request is NOT deleted here as one would expect.
+            // Because the server side flow completes after the client, the request
+            // is deleted on the server
+            spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
+            req->setAutoCleanup(false);
+
+            // Set the server specific request data
+            req->setHasReadData(true);
             req->setHandle(metaData->dataHandles[i]);
             req->setDist(metaData->dist->clone());
             req->setDataSize(aggregateSize);
@@ -176,14 +222,25 @@ void FSReadSM::enterRead()
                                8 + 8);
             client_->send(req, client_->getNetOutGate());
 
-            // Add to the number of requests sent
+            // Add to the number of requests and flows sent
             numRequests++;
+            numFlows++;
         }
     }
 
     // Set the number of outstanding responses and flows
     readRequest_->setRemainingResponses(numRequests);
-    readRequest_->setRemainingFlows(numRequests);
+    readRequest_->setRemainingFlows(numFlows);
+}
+
+bool FSReadSM::fileHasReadData(size_t reqBytes)
+{
+    // TODO: This is not a correct implementation, but it works for now
+    // Extract the file descriptor
+    FileDescriptor* fd = readRequest_->getFileDes();
+    assert(0 != fd);
+    FSSize fileSize = fd->getMetaData()->size;
+    return (reqBytes <= fileSize);
 }
 
 void FSReadSM::startFlow(spfsReadResponse* readResponse)

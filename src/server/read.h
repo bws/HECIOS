@@ -35,7 +35,7 @@ public:
 
     /** Destructor */
     ~Read();
-    
+
     /**
      * Perform server side read processing
      */
@@ -43,11 +43,14 @@ public:
 
 protected:
 
+    /** @return true if the file contains the offset/extent to be read */
+    bool hasReadData();
+
     /**
      * Create and send the data flow requests
      */
     void startDataFlow();
-    
+
     /**
      * Create and send the final read response
      */
@@ -57,12 +60,12 @@ protected:
      * No-op for now.
      */
     void finish();
-    
+
 private:
 
     /** The parent module */
     FSServer* module_;
-    
+
     /** The originating read request */
     spfsReadRequest* readReq_;
 

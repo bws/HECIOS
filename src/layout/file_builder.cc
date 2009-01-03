@@ -58,10 +58,10 @@ int FileBuilder::registerFSServer(const HandleRange& range, bool isMetaServer)
     assert(nextServerNumber_ == nextHandleByServer_.size());
     handlesByServer_.push_back(range);
     nextHandleByServer_.push_back(range.first);
-    
+
     if (isMetaServer)
         metaServers_.push_back(nextServerNumber_);
-    
+
     return nextServerNumber_++;
 }
 
@@ -88,7 +88,7 @@ FSMetaData* FileBuilder::getMetaData(const Filename& fileName) const
         p2 = handleToMetaMap_.find(p1->second);
         md = p2->second;
     }
-    
+
     return md;
 }
 
@@ -170,7 +170,7 @@ void FileBuilder::createDirectory(const Filename& dirName,
         // Construct the storage layout for the PFS file
         Filename direntName(directoryDataHandle);
         layoutManager.addFile(metaServer, direntName, meta->size);
-        
+
         // Record bookkeeping information
         nameToHandleMap_[dirName.str()] = meta->handle;
         handleToMetaMap_[meta->handle] = meta;
@@ -196,7 +196,7 @@ void FileBuilder::createFile(const Filename& fileName,
                             nextMeta,
                             layoutManager);
         }
-        
+
         // Create the MetaData for the file
         FSMetaData* meta = new FSMetaData();
         meta->mode = 777;
@@ -211,7 +211,7 @@ void FileBuilder::createFile(const Filename& fileName,
         Filename storageMeta(meta->handle);
         layoutManager.addFile((size_t)metaServer, storageMeta,
                               defaultMetaDataSize_);
-        
+
         // Construct the data handles
         int firstServer = rand() % nextServerNumber_;
         vector<FSHandle> dataHandles;
@@ -260,20 +260,13 @@ void FileBuilder::populateFileSystem(const FileSystemMap& traceFS)
         Filename filename(iter->first);
         FSSize fileSize(iter->second);
         assert(0 <= fileSize);
-        if (0 == fileSize)
-        {
-            // Create the directory
-            createDirectory(filename, metaServers_[metaIdx], layoutManager);
-        }
-        else
-        {
-            // Create the file using all of the data servers
-            createFile(filename, fileSize,
-                       metaServers_[metaIdx],
-                       getNumDataServers(),
-                       layoutManager);
-        }
-        
+
+        // Create the file using all of the data servers
+        createFile(filename, fileSize,
+                   metaServers_[metaIdx],
+                   getNumDataServers(),
+                   layoutManager);
+
         // Increment to next file
         ++iter;
     }
@@ -284,7 +277,7 @@ void FileBuilder::populateFileSystem(const FileSystemMap& traceDirs,
 {
     StorageLayoutManager layoutManager;
     size_t totalCount = 0;
-    
+
     // First build the directories
     FileSystemMap::const_iterator dirIter = traceDirs.begin();
     cerr << "DIAGNOSTIC: Trace file system contains: "
@@ -299,7 +292,7 @@ void FileBuilder::populateFileSystem(const FileSystemMap& traceDirs,
 
         // Create the directory
         createDirectory(dirName, metaServers_[metaIdx], layoutManager);
-        
+
         // Increment to next directory
         ++dirIter;
     }
@@ -321,12 +314,12 @@ void FileBuilder::populateFileSystem(const FileSystemMap& traceDirs,
                    metaServers_[metaIdx],
                    getNumDataServers(),
                    layoutManager);
-        
+
         // Increment to next file
         ++fileIter;
     }
 
-    
+
 }
 
 /*

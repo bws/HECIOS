@@ -45,8 +45,34 @@ struct FileRegion
     FSOffset offset;
     FSSize extent;
 };
-    
-/** A contguous handle range beginning at first and ending at last */
+
+/** Equality operator for File Regions */
+inline bool operator==(const FileRegion& lhs, const FileRegion& rhs)
+{
+    return (lhs.offset == rhs.offset && lhs.extent == rhs.extent);
+}
+
+/** Less than operator for File Regions */
+inline bool operator<(const FileRegion& lhs, const FileRegion& rhs)
+{
+    if (lhs.offset != rhs.offset)
+    {
+        return (lhs.offset < rhs.offset);
+    }
+    else
+    {
+        return (lhs.extent < rhs.extent);
+    }
+}
+
+/** Add the file region to the stream */
+inline std::ostream& operator<<(std::ostream& ost, const FileRegion& fr)
+{
+    ost << "[" << fr.offset << "," << fr.extent << "]";
+    return ost;
+}
+
+/** A contiguous handle range beginning at first and ending at last */
 struct HandleRange
 {
     FSHandle first;
