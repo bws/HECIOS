@@ -41,6 +41,9 @@ MiddlewareCache::~MiddlewareCache()
 
 void MiddlewareCache::initialize()
 {
+    // Retrieve parameters
+    byteCopyTime_ = par("byteCopyTime").doubleValue();
+
     // Find gate ids
     appInGateId_ = findGate("appIn");
     appOutGateId_ = findGate("appOut");
@@ -81,11 +84,16 @@ void MiddlewareCache::handleMessage(cMessage* msg)
      }
 }
 
-void MiddlewareCache::sendApplicationResponse(cMessage* response)
+void MiddlewareCache::sendApplicationResponse(double delay, cMessage* response)
 {
     // Determine the original sender
     cMessage* origRequest = static_cast<cMessage*>(response->contextPointer());
     cModule* originator = origRequest->senderModule();
+
+    // Add the delay to the message
+    cPar* delayParameter = new cPar("Delay");
+    *delayParameter = delay;
+    response->addPar(delayParameter);
 
     // Locate the correct IOApplication
     IOApplication* ioApp = dynamic_cast<IOApplication*>(originator);

@@ -22,6 +22,9 @@
 // Template for middleware MPI-IO process caching
 //
 simple MiddlewareCache
+	parameters:
+		byteCopyTime: const;
+		
     gates:
         in: appIn, fsIn;
         out: appOut, fsOut;
@@ -31,6 +34,9 @@ endsimple
 // Passthrough/No-op middleware cache
 //
 simple NoMiddlewareCache
+	parameters:
+		byteCopyTime: const;
+		
     gates:
         in: appIn, fsIn;
         out: appOut, fsOut;
@@ -41,6 +47,7 @@ endsimple
 //
 simple DirectPagedMiddlewareCache
     parameters:
+    	byteCopyTime: const,
     	pageSize: const,
     	pageCapacity: const;
     	
@@ -54,6 +61,7 @@ endsimple
 //
 simple SharedDirectPagedMiddlewareCache
     parameters:
+    	byteCopyTime: const,
     	pageSize: const,
     	pageCapacity: const;
     	
@@ -81,6 +89,7 @@ endsimple
 //
 simple PagedMiddlewareCacheWithTwin
     parameters:
+    	byteCopyTime: const,
     	pageSize: const,
     	pageCapacity: const;
     	
@@ -95,6 +104,7 @@ endsimple
 //
 simple SharedPagedMiddlewareCacheWithTwin
     parameters:
+    	byteCopyTime: const,
     	pageSize: const,
     	pageCapacity: const;
     	

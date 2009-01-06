@@ -64,6 +64,8 @@ void IOApplication::directMessage(cMessage* msg)
 {
     Enter_Method("Application is receving a direct message");
     take(msg);
+    //double delay = msg->par("Delay");
+    //scheduleAt(simTime(), msg);
     handleMessage(msg);
 }
 

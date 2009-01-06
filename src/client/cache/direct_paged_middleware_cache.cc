@@ -637,7 +637,7 @@ void DirectPagedMiddlewareCache::completeRequests()
 
         // Ensure we send the application response back to the application
         // that actually originated the response
-        sendApplicationResponse(resp);
+        sendApplicationResponse(0.0, resp);
     }
 }
 

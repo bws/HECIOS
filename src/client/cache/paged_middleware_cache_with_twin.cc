@@ -391,9 +391,24 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
                 if (!partialPagesTrimmed.empty())
                 {
                     FSM_Goto(currentState, BEGIN_PARTIAL_PAGE_READ);
+
+                    // Figure out the memory copy delay for the read and write
+                    double readBytes = partialPagesTrimmed.size() * pageSize();
+                    double writeBytes = write->getCount() * write->getDataType()->getExtent();
+                    double delay = (readBytes + writeBytes) * byteCopyTime();
+                    cPar* delayPar = new cPar("Delay");
+                    delayPar->setDoubleValue(delay);
+                    write->addPar(delayPar);
                 }
                 else
                 {
+                    // Figure out the memory copy delay for the write only
+                    double writeBytes = write->getCount() * write->getDataType()->getExtent();
+                    double delay = (writeBytes) * byteCopyTime();
+                    cPar* delayPar = new cPar("Delay");
+                    delayPar->setDoubleValue(delay);
+                    write->addPar(delayPar);
+
                     if (0 != allPartialPages.size())
                     {
                         cerr << __FILE__ << ":" << __LINE__ << ":"
@@ -829,6 +844,7 @@ void PagedMiddlewareCacheWithTwin::completeRequests()
     {
         spfsMPIResponse* resp = 0;
         spfsMPIFileRequest* req = completedRequests[i];
+        double delay = 0.0;
         if (SPFS_MPI_FILE_READ_AT_REQUEST == req->kind())
         {
             resp =
@@ -837,6 +853,7 @@ void PagedMiddlewareCacheWithTwin::completeRequests()
         }
         else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == req->kind())
         {
+            delay = req->par("Delay").doubleValue();
             resp =
                 new spfsMPIFileWriteAtResponse(0, SPFS_MPI_FILE_WRITE_AT_RESPONSE);
             resp->setContextPointer(req);
@@ -850,7 +867,7 @@ void PagedMiddlewareCacheWithTwin::completeRequests()
 
         // Ensure we send the application response back to the application
         // that actually originated the response
-        sendApplicationResponse(resp);
+        sendApplicationResponse(delay, resp);
     }
 }
 

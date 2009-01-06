@@ -35,6 +35,9 @@ public:
     /** Abstract destructor */
     virtual ~MiddlewareCache() = 0;
 
+    /** @return the byte copy time */
+    double byteCopyTime() const { return byteCopyTime_; };
+
     /** @return the appIn gate id */
     int appInGateId() const { return appInGateId_; };
 
@@ -66,7 +69,7 @@ protected:
      * Send the application response directly to the application
      * that originated the message.
      */
-    virtual void sendApplicationResponse(cMessage* response);
+    virtual void sendApplicationResponse(double delay, cMessage* response);
 
 private:
     /** Interface for handling messages from the application */
@@ -74,6 +77,9 @@ private:
 
     /** Interface for handling messages from the file system */
     virtual void handleFileSystemMessage(cMessage* msg) = 0;
+
+    /** The time to copy a byte of data to/from the cache */
+    double byteCopyTime_;
 
     /** Gate ids */
     int appInGateId_;
