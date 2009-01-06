@@ -40,7 +40,7 @@
 
 using namespace std;
 
-// OMNet Registriation Method
+// OMNet Registration Method
 Define_Module(PHTFIOApplication);
 
 PHTFIOApplication::PHTFIOApplication()
@@ -54,7 +54,7 @@ PHTFIOApplication::PHTFIOApplication()
  */
 void PHTFIOApplication::initialize()
 {
-    // Parent class initilization
+    // Parent class initialization
     IOApplication::initialize();
 
     // Retrieve the resource describing the trace location
@@ -84,7 +84,7 @@ void PHTFIOApplication::initialize()
 
     // Schedule the kick start message
     double maxBeginTime = par("maxBeginTime").doubleValue();
-    cMessage* kickStart = new cMessage();
+    cMessage* kickStart = new cMessage(CPU_PHASE_MESSAGE_NAME);
     double kickStartTime = uniform(0.0, maxBeginTime);
     scheduleAt(kickStartTime, kickStart);
 }
@@ -234,7 +234,7 @@ bool PHTFIOApplication::scheduleNextMessage()
         *phtfEvent_ >> eventRecord;
 
         // TODO: Use this to look at the actual events
-        //cerr << "[" << getRank() << "] " << eventRecord.recordStr() << endl;
+        cerr << "[" << getRank() << "] " << eventRecord.recordStr() << endl;
         rec_id_ = eventRecord.recordId();
         msgScheduled = processEvent(eventRecord);
     }
@@ -996,7 +996,7 @@ cMessage* PHTFIOApplication::createCPUPhaseMessage(
 {
     double delay = cpuRecord->duration();
 
-    cMessage *msg = new cMessage("CPU Phase");
+    cMessage *msg = new cMessage(CPU_PHASE_MESSAGE_NAME);
     cPar *cp = new cPar("Delay");
     *cp = delay;
     msg->addPar(cp);

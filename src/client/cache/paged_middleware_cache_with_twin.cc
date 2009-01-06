@@ -22,6 +22,7 @@
 #include <cassert>
 #include <functional>
 #include "comm_man.h"
+#include "file_builder.h"
 #include "mpi_proto_m.h"
 using namespace std;
 
@@ -63,8 +64,12 @@ private:
     Filename filename_;
 };
 
-// OMNet Registriation Method
+// OMNet Registration Method
 Define_Module(PagedMiddlewareCacheWithTwin);
+
+const string PagedMiddlewareCacheWithTwin::PAGE_WRITEBACK_NAME("Page Writeback");
+
+const string PagedMiddlewareCacheWithTwin::PARTIAL_PAGE_WRITEBACK_NAME = "PartialPage Writeback";
 
 PagedMiddlewareCacheWithTwin::PagedMiddlewareCacheWithTwin()
     : lruCache_(0),
@@ -84,6 +89,7 @@ void PagedMiddlewareCacheWithTwin::initialize()
 
     // Initialize the pending request maps
     pendingPages_ = createPendingPageMap();
+    pendingPartialPages_ = createPendingPartialPageMap();
 
     // Initialize the open file map
     openFileCounts_ = createOpenFileMap();
@@ -99,6 +105,12 @@ PagedMiddlewareCacheWithTwin::RequestMap*
 PagedMiddlewareCacheWithTwin::createPendingPageMap()
 {
     return new RequestMap();
+}
+
+PagedMiddlewareCacheWithTwin::PartialRequestMap*
+PagedMiddlewareCacheWithTwin::createPendingPartialPageMap()
+{
+    return new PartialRequestMap();
 }
 
 PagedMiddlewareCacheWithTwin::OpenFileMap*
@@ -174,7 +186,7 @@ void PagedMiddlewareCacheWithTwin::processRequest(cMessage* request, cMessage* m
         spfsMPIFileWriteAtRequest* writeback =
             static_cast<spfsMPIFileWriteAtRequest*>(msg->contextPointer());
 
-        // Determine the cache pages requested
+        // Resolve this set of pending pages
         set<PagedCache::Key> writtenPages;
         getRequestCachePages(writeback, writtenPages);
         resolvePendingWritePages(writtenPages);
@@ -254,8 +266,8 @@ void PagedMiddlewareCacheWithTwin::processFileClose(spfsMPIFileCloseRequest* clo
         // If this is the last close, flush the dirty cache data to disk
         if (0 == openCount)
         {
+            cerr << "Last close: Evictions are on" << endl;
             vector<CacheEntry> writeEntries = lookupDirtyPagesInCache(closeName);
-
             beginWritebackEvictions(writeEntries, close);
             flushCache(closeName);
             registerPendingWritePages(close, writeEntries);
@@ -272,10 +284,19 @@ void PagedMiddlewareCacheWithTwin::processFileClose(spfsMPIFileCloseRequest* clo
         spfsMPIFileWriteAtRequest* flushReq =
             static_cast<spfsMPIFileWriteAtRequest*>(msg->contextPointer());
 
-        // Resolve the pending pages
-        set<PagedCache::Key> flushPages;
-        getRequestCachePages(flushReq, flushPages);
-        resolvePendingWritePages(flushPages);
+        // If this is a partial page writeback, resolve it that way
+        // Otherwise, resolve the pages normally
+        if (PARTIAL_PAGE_WRITEBACK_NAME == flushReq->name())
+        {
+            resolvePendingPartialWrite(close);
+        }
+        else
+        {
+            // Resolve the pending pages
+            set<PagedCache::Key> flushPages;
+            getRequestCachePages(flushReq, flushPages);
+            resolvePendingWritePages(flushPages);
+        }
     }
 }
 
@@ -319,9 +340,10 @@ void PagedMiddlewareCacheWithTwin::processFileRead(spfsMPIFileReadAtRequest* rea
         // Update the pending requests
         resolvePendingReadPages(requestPages);
 
+        beginWritebackEvictions(writebackPages, 0);
+
         // TODO: If the writebuffer is not infinite, the request will need
         // to pause while writebacks occur
-        beginWritebackEvictions(writebackPages, 0);
         //addPendingWrites(read, writebackPages);
     }
 }
@@ -372,7 +394,18 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
                 }
                 else
                 {
-                    FSM_Goto(currentState, UPDATE_CACHE);
+                    if (0 != allPartialPages.size())
+                    {
+                        cerr << __FILE__ << ":" << __LINE__ << ":"
+                             << "WARNING: No partial reads need performing, but some are pending"
+                             << " Perform one partial page read to waste time." << endl;
+                        partialPagesTrimmed.insert(*(allPartialPages.begin()));
+                        FSM_Goto(currentState, BEGIN_PARTIAL_PAGE_READ);
+                    }
+                    else
+                    {
+                        FSM_Goto(currentState, UPDATE_CACHE);
+                    }
                 }
             }
             break;
@@ -405,44 +438,47 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
         case FSM_Enter(BEGIN_PARTIAL_PAGE_READ):
         {
             // Begin the read
+            cerr << "Beginning partial read." << endl;
             beginRead(partialPagesTrimmed, write);
             break;
         }
         case FSM_Exit(BEGIN_PARTIAL_PAGE_READ):
         {
-            // Extract the read pages to resolve them for pending requests
-            assert(0 != dynamic_cast<spfsMPIFileReadAtResponse*>(msg));
-            spfsMPIFileReadAtRequest* read =
-                static_cast<spfsMPIFileReadAtRequest*>(msg->contextPointer());
-            set<PagedCache::Key> readPages;
-            getRequestCachePages(read, readPages);
-
-            // Should we resolve here, or in the next step?
-            resolvePendingReadPages(readPages);
-
             // Transition to next state
             FSM_Goto(currentState, UPDATE_CACHE);
             break;
         }
         case FSM_Enter(UPDATE_CACHE):
         {
-            // TODO: In theory, some partial pages from other writes
-            // may still be pending here, but this should be fine
-            // Update the cache with write data
-            set<PagedCache::Key> updatePages;
-            getRequestCachePages(write, updatePages);
+            // Get the full and partial pages this request spans
+            vector<MultiCache::Page*> fullPages;
+            vector<MultiCache::PartialPage*> partialPages;
+            getRequestCachePages(write, fullPages, partialPages);
+
+            // First insert the just read pages as original copies
+            vector<CacheEntry> writebackPages;
+            if (0 != dynamic_cast<spfsMPIFileReadAtResponse*>(msg))
+            {
+                spfsMPIFileReadAtRequest* read =
+                    static_cast<spfsMPIFileReadAtRequest*>(msg->contextPointer());
+                set<PagedCache::Key> readPages;
+                getRequestCachePages(read, readPages);
+                updateCacheWithReadPages(readPages, writebackPages);
+                resolvePendingReadPages(readPages);
+            }
 
             // Update the cache and acquire any necessary writebacks
-            vector<CacheEntry> writebackPages;
-            updateCacheWithWritePages(updatePages, writebackPages);
+            Filename filename = write->getFileDes()->getFilename();
+            updateCacheWithWritePages(filename, fullPages, partialPages, writebackPages);
 
-            // Update the pending requests
-            resolvePendingReadPages(updatePages);
+            // Update the pending requests with the pages fully written here
+            resolvePendingReadPages(filename, fullPages);
+
+            beginWritebackEvictions(writebackPages, 0);
 
             // TODO: If the writebuffer is not infinite, the request will need
             // to pause while writebacks occur
-            beginWritebackEvictions(writebackPages, 0);
-            registerPendingWritePages(write, writebackPages);
+            //registerPendingWritePages(write, writebackPages);
             break;
         }
         case FSM_Exit(UPDATE_CACHE):
@@ -470,6 +506,51 @@ void PagedMiddlewareCacheWithTwin::getRequestCachePages(
     outRequestPages = PagedCache::convertPagesToCacheKeys(fd->getFilename(),
                                                           requestPages);
 }
+
+void PagedMiddlewareCacheWithTwin::getRequestCachePages(
+    const spfsMPIFileWriteAtRequest* ioRequest,
+    vector<MultiCache::Page*>& outFullPages,
+    vector<MultiCache::PartialPage*>& outPartialPages) const
+{
+    // Convert regions into file pages
+    FileDescriptor* fd = ioRequest->getFileDes();
+    FSSize ioSize = ioRequest->getDataType()->getExtent() * ioRequest->getCount();
+
+    // Construct the pages for full regions
+    set<FilePageId> fullPages =
+        determineRequestFullPages(ioRequest->getOffset(),
+                                  ioSize,
+                                  fd->getFileView());
+    set<FilePageId>::const_iterator first = fullPages.begin();
+    set<FilePageId>::const_iterator last = fullPages.end();
+    while (first != last)
+    {
+        MultiCache::Page* page = new MultiCache::Page();
+        page->id = *first;
+        outFullPages.push_back(page);
+        first++;
+    }
+
+    // Construct the pages for partial regions
+    set<FilePageId> partialPages =
+        determineRequestPartialPages(ioRequest->getOffset(),
+                                     ioSize,
+                                     fd->getFileView());
+    first = partialPages.begin();
+    last = partialPages.end();
+    while (first != last)
+    {
+        MultiCache::PartialPage* page = new MultiCache::PartialPage();
+        page->id = *first;
+        page->regions = determinePartialPageRegions(page->id,
+                                                    ioRequest->getOffset(),
+                                                    ioSize,
+                                                    fd->getFileView());
+        outPartialPages.push_back(page);
+        first++;
+    }
+}
+
 template<class spfsMPIFileIORequest>
 void PagedMiddlewareCacheWithTwin::getRequestPartialCachePages(
     const spfsMPIFileIORequest* ioRequest,
@@ -494,38 +575,69 @@ void PagedMiddlewareCacheWithTwin::beginWritebackEvictions(
 {
     if (!writebackPages.empty())
     {
-        // Add the writeback as a pending request
-        registerPendingWritePages(parentRequest, writebackPages);
-
-/*        // Accumulate the pages for each file and issue a writeback
-        set<FilePageId> pages;
-        Filename currentName = writebackPages.begin()->filename;
-        set<PagedCache::Key>::iterator iter;
-        for (iter = writebackPages.begin(); iter != writebackPages.end(); ++iter)
+        // Sort the pages into two sets, full pages and partial pages
+        map<Filename, set<FilePageId> > fullPagesMap;
+        vector<CacheEntry> partialPages;
+        for (size_t i = 0; i < writebackPages.size(); i++)
         {
-            // TODO: need to ensure that pages are stably sorted by current name
-            if (currentName == iter->filename)
+            MultiCache::Page* page = writebackPages[i].second;
+            assert(0 != page);
+            if (0 == dynamic_cast<MultiCache::PartialPage*>(page))
             {
-                pages.insert(iter->key);
+                Filename filename = writebackPages[i].first.filename;
+                fullPagesMap[filename].insert(page->id);
             }
             else
             {
-                // Write back the accumulated pages for currentName
-                spfsMPIFileWriteAtRequest* writebackRequest =
-                    createPageWriteRequest(currentName, pages, parentRequest);
-                send(writebackRequest, fsOutGateId());
-                // Reset the loop state and append the page to the new set
-                pages.clear();
-                currentName = iter->filename;
-                pages.insert(iter->key);
+                partialPages.push_back(writebackPages[i]);
             }
         }
 
-        // Write back the final set of accumulated pages
-        spfsMPIFileWriteAtRequest* writeBackRequest =
-            createPageWriteRequest(currentName, pages, parentRequest);
-        send(writeBackRequest, fsOutGateId());
-*/
+        // Create and send the requests for the partial pages
+        for (size_t i = 0; i < partialPages.size(); i++)
+        {
+            Filename filename = partialPages[i].first.filename;
+            MultiCache::PartialPage* page =
+                static_cast<MultiCache::PartialPage*>(partialPages[i].second);
+            FileRegionSet::iterator regIter = page->regions->begin();
+            FileRegionSet::iterator regEnd = page->regions->end();
+            while (regIter != regEnd)
+            {
+                // Create the file descriptor
+                FileDescriptor* fd = FileBuilder::instance().getDescriptor(filename);
+                spfsMPIFileWriteAtRequest* partialPageWriteback =
+                    new spfsMPIFileWriteAtRequest(PARTIAL_PAGE_WRITEBACK_NAME.c_str(),
+                                                  SPFS_MPI_FILE_WRITE_AT_REQUEST);
+                partialPageWriteback->setContextPointer(parentRequest);
+                partialPageWriteback->setFileDes(fd);
+                partialPageWriteback->setDataType(new ByteDataType());
+                partialPageWriteback->setOffset(regIter->offset);
+                partialPageWriteback->setCount(regIter->extent);
+                send(partialPageWriteback, fsOutGateId());
+                regIter++;
+            }
+        }
+
+        // Create and send the requests for the full pages
+        map<Filename, set<FilePageId> >::iterator iter = fullPagesMap.begin();
+        map<Filename, set<FilePageId> >::iterator last = fullPagesMap.end();
+        while (iter != last)
+        {
+            spfsMPIFileWriteAtRequest* writebackRequest =
+                createPageWriteRequest(iter->first,
+                                           iter->second,
+                                           parentRequest);
+            send(writebackRequest, fsOutGateId());
+            iter++;
+        }
+
+        // TODO: Should probably now loop thru all of the cache entries and free
+        // the related memory
+    }
+    else
+    {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "The writeback set was empty." << endl;
     }
 }
 
@@ -587,40 +699,6 @@ void PagedMiddlewareCacheWithTwin::lookupPagesInCache(set<PagedCache::Key>& requ
 }
 
 void PagedMiddlewareCacheWithTwin::updateCacheWithReadPages(set<PagedCache::Key>& updatePages,
-                                                           vector<CacheEntry>& outWriteBacks)
-{
-    // Update the cache and accumulate any writebacks required
-    set<PagedCache::Key>::const_iterator iter;
-    for (iter = updatePages.begin(); iter != updatePages.end(); iter++)
-    {
-        try {
-            // Create an entry for the clean page even if the dirty page
-            // already exists
-            MultiCache::Key key(iter->filename, iter->key);
-            MultiCache::Page* page = new MultiCache::Page();
-            page->id = iter->key;
-
-            MultiCache::Key evictedKey(Filename("/"), 0);
-            MultiCache::Page* evictedPage = 0;
-            bool isEvictedDirty = false;
-            lruCache_->insertFullPageAndRecall(key, page, false,
-                                               evictedKey,
-                                               evictedPage,
-                                               isEvictedDirty);
-
-            // Only add writeback if the eviction is dirty
-            if (isEvictedDirty)
-            {
-                outWriteBacks.push_back(make_pair(evictedKey, evictedPage));
-            }
-        } catch (const NoSuchEntry& e)
-        {
-            // No eviction was necessary
-        }
-    }
-}
-
-void PagedMiddlewareCacheWithTwin::updateCacheWithWritePages(set<PagedCache::Key>& updatePages,
                                                             vector<CacheEntry>& outWriteBacks)
 {
     // Update the cache and accumulate any writebacks required
@@ -645,11 +723,73 @@ void PagedMiddlewareCacheWithTwin::updateCacheWithWritePages(set<PagedCache::Key
             // Only add writeback if the eviction is dirty
             if (isEvictedDirty)
             {
+                assert(0 != evictedPage);
                 outWriteBacks.push_back(make_pair(evictedKey, evictedPage));
             }
         } catch (const NoSuchEntry& e)
         {
             // No eviction was necessary
+        }
+    }
+}
+
+void PagedMiddlewareCacheWithTwin::updateCacheWithWritePages(
+    const Filename& filename,
+    const vector<MultiCache::Page*>& fullPages,
+    const vector<MultiCache::PartialPage*>& partialPages,
+    vector<CacheEntry>& outWritebacks)
+{
+    cerr << "Write Updates for cache Full: " << fullPages.size()
+         << " Partial: " << partialPages.size() << endl;;
+
+    // Update the cache with full pages and accumulate any writebacks
+    for (size_t i = 0; i < fullPages.size(); i++)
+    {
+        MultiCache::Key key(filename, fullPages[i]->id);
+        MultiCache::Key evictedKey(Filename("/"), 0);
+        MultiCache::Page* evictedPage = 0;
+        bool isEvictedDirty = false;
+        try {
+            lruCache_->insertFullPageAndRecall(key, fullPages[i], true,
+                                               evictedKey,
+                                               evictedPage,
+                                               isEvictedDirty);
+
+            // Add the writeback entry
+            if (isEvictedDirty)
+            {
+                assert(0 != evictedPage);
+                outWritebacks.push_back(make_pair(evictedKey, evictedPage));
+            }
+        } catch(NoSuchEntry& e)
+        {
+            // No eviction occurred
+        }
+    }
+
+    // Update the cache with partial pages
+    for (size_t i = 0; i < partialPages.size(); i++)
+    {
+        MultiCache::Key key(filename, partialPages[i]->id);
+        MultiCache::Key evictedKey(Filename("/"), 0);
+        MultiCache::Page* evictedPage = 0;
+        bool isEvictedDirty = false;
+        try {
+            // Then we insert the dirty partials
+            lruCache_->insertDirtyPartialPageAndRecall(key, partialPages[i],
+                                                       evictedKey,
+                                                       evictedPage,
+                                                       isEvictedDirty);
+
+            // Add the writeback entry
+            if (isEvictedDirty)
+            {
+                assert(0 != evictedPage);
+                outWritebacks.push_back(make_pair(evictedKey, evictedPage));
+            }
+        } catch(NoSuchEntry& e)
+        {
+            // No eviction occurred
         }
     }
 }
@@ -707,7 +847,10 @@ void PagedMiddlewareCacheWithTwin::completeRequests()
             resp = new spfsMPIFileCloseResponse(0, SPFS_MPI_FILE_CLOSE_RESPONSE);
             resp->setContextPointer(req);
         }
-        send(resp, appOutGateId());
+
+        // Ensure we send the application response back to the application
+        // that actually originated the response
+        sendApplicationResponse(resp);
     }
 }
 
@@ -737,15 +880,16 @@ void PagedMiddlewareCacheWithTwin::registerPendingWritePages(spfsMPIFileRequest*
         }
         else
         {
-            cerr << "Registering a partial page. " << endl;
-
             // Simply count the the partials
-            partialCount++;
+            MultiCache::PartialPage* partial = dynamic_cast<MultiCache::PartialPage*>(page);
+            assert(0 != partial);
+            partialCount += partial->regions->size();
         }
     }
     if (0 != partialCount)
     {
-        pendingPartialPages_[request] = partialCount;
+        (*pendingPartialPages_)[request] = partialCount;
+        cerr << "Partials registered: " << (*pendingPartialPages_)[request] << endl;
     }
 }
 
@@ -774,6 +918,18 @@ void PagedMiddlewareCacheWithTwin::resolvePendingReadPages(const set<PagedCache:
     }
 }
 
+void PagedMiddlewareCacheWithTwin::resolvePendingReadPages(const Filename& filename,
+                                                           const vector<MultiCache::Page*>& readPages)
+{
+    set<PagedCache::Key> readKeys;
+    for (size_t i = 0; i < readPages.size(); i++)
+    {
+        PagedCache::Key key(filename, readPages[i]->id);
+        readKeys.insert(key);
+    }
+    resolvePendingReadPages(readKeys);
+}
+
 void PagedMiddlewareCacheWithTwin::resolvePendingWritePage(const PagedCache::Key& resolvedPage)
 {
     RequestMap::iterator iter;
@@ -799,6 +955,14 @@ void PagedMiddlewareCacheWithTwin::resolvePendingWritePages(const set<PagedCache
     }
 }
 
+void PagedMiddlewareCacheWithTwin::resolvePendingPartialWrite(spfsMPIFileRequest* request)
+{
+    assert(0 != pendingPartialPages_->count(request));
+    --((*pendingPartialPages_)[request]);
+    cerr << "Resolved partial, new count: " << (*pendingPartialPages_)[request] << endl;
+}
+
+
 vector<spfsMPIFileRequest*> PagedMiddlewareCacheWithTwin::popCompletedRequests()
 {
     vector<spfsMPIFileRequest*> completeRequests;
@@ -822,12 +986,16 @@ vector<spfsMPIFileRequest*> PagedMiddlewareCacheWithTwin::popCompletedRequests()
             else
             {
                 // If this is a close, we need to additionally ensure that
-                // no other reads or writes for this file are ongoing
-                Filename closeName = currentEle->first->getFileDes()->getFilename();
-                if (!hasPendingPages(closeName))
+                // no other reads or writes for this file are ongoing and the
+                // partial count is zero
+                spfsMPIFileRequest* request = currentEle->first;
+                Filename closeName = request->getFileDes()->getFilename();
+                if (!hasPendingPages(closeName) &&
+                    0 == (*pendingPartialPages_)[request])
                 {
                     completeRequests.push_back(currentEle->first);
                     pendingPages_->erase(currentEle);
+                    pendingPartialPages_->erase(request);
                 }
             }
         }

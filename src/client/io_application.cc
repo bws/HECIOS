@@ -34,6 +34,7 @@
 using namespace std;
 
 // OMNet Registriation Method
+const char* IOApplication::CPU_PHASE_MESSAGE_NAME = "CPU Phase";
 
 IOApplication::IOApplication()
     : cSimpleModule(),
@@ -57,6 +58,13 @@ void IOApplication::setRank(int rank)
     int oldRank = rank_;
     rank_ = rank;
     rankChanged(oldRank);
+}
+
+void IOApplication::directMessage(cMessage* msg)
+{
+    Enter_Method("Application is receving a direct message");
+    take(msg);
+    handleMessage(msg);
 }
 
 /**
@@ -128,6 +136,13 @@ void IOApplication::handleMessage(cMessage* msg)
     {
         handleMPIMessage(msg);
     }
+    else
+    {
+        // Assume direct messages are I/O responses
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "ERROR: Unidentified message type received." << endl;
+        assert(0);
+    }
 
     bool messageScheduled = scheduleNextMessage();
     if (!messageScheduled)
@@ -149,7 +164,7 @@ void IOApplication::handleSelfMessage(cMessage* msg)
     }
 
     // Record the length of this CPU Phase
-    if (0 == strcmp("CPU Phase", msg->name()))
+    if (0 == strcmp(CPU_PHASE_MESSAGE_NAME, msg->name()))
     {
         // Determine the request response roundtrip time
         simtime_t phaseBeginTime = msg->creationTime();
@@ -157,10 +172,16 @@ void IOApplication::handleSelfMessage(cMessage* msg)
         simtime_t delay = phaseEndTime - phaseBeginTime;
         cpuPhaseDelay_.record(delay);
         totalCpuPhaseTime_ += delay;
-    }
 
-    // Cleanup the message
-    delete msg;
+        // Cleanup the message
+        delete msg;
+
+    }
+    else
+    {
+        // This is a file system response sent directly from the cache
+        handleIOMessage(msg);
+    }
 }
 
 void IOApplication::handleIOMessage(cMessage* msg)

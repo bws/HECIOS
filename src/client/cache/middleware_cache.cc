@@ -21,6 +21,7 @@
 #include <cassert>
 #include <iostream>
 #include <omnetpp.h>
+#include "io_application.h"
 using namespace std;
 
 MiddlewareCache::MiddlewareCache()
@@ -78,6 +79,18 @@ void MiddlewareCache::handleMessage(cMessage* msg)
               <<  "message arrived through illegal gate: "
               << msg->info() << endl;
      }
+}
+
+void MiddlewareCache::sendApplicationResponse(cMessage* response)
+{
+    // Determine the original sender
+    cMessage* origRequest = static_cast<cMessage*>(response->contextPointer());
+    cModule* originator = origRequest->senderModule();
+
+    // Locate the correct IOApplication
+    IOApplication* ioApp = dynamic_cast<IOApplication*>(originator);
+    assert(0 != ioApp);
+    ioApp->directMessage(response);
 }
 
 //

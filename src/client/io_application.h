@@ -19,8 +19,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
 #include <omnetpp.h>
+#include <string>
 #include "io_trace.h"
 class FileDescriptor;
 
@@ -30,6 +30,9 @@ class FileDescriptor;
 class IOApplication : public cSimpleModule
 {
 public:
+    /** Name string for CPU Phase Messages */
+    static const char* CPU_PHASE_MESSAGE_NAME;
+
     /** Constructor */
     IOApplication();
 
@@ -53,6 +56,9 @@ public:
 
     /** @return the application process' total file write time */
     double getWriteTime() const { return totalWriteTime_; };
+
+    /** Interface to send a message directly to this IOApplication */
+    void directMessage(cMessage* msg);
 
 protected:
     /** Associate the fileId with a file descriptor */

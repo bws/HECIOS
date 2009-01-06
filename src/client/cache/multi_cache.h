@@ -112,7 +112,7 @@ public:
                                  Page* page,
                                  bool isDirty,
                                  Key& outEvictedKey,
-                                 Page* outEvictedPage,
+                                 Page*& outEvictedPage,
                                  bool& outEvictedDirtyBit);
 
     /**
@@ -124,7 +124,7 @@ public:
     void insertDirtyPartialPageAndRecall(const Key& key,
                                          PartialPage* partialPage,
                                          Key& outEvictedKey,
-                                         Page* outEvictedPage,
+                                         Page*& outEvictedPage,
                                          bool& outEvictedDirtyBit);
 
     /**
@@ -176,7 +176,7 @@ protected:
      * or return the dirty entry if both a clean and dirty entry exist
      */
     void performEviction(Key& outEvictedKey,
-                         Page* outEvictedPage,
+                         Page*& outEvictedPage,
                          bool& outEvictedDirtyBit);
 
 private:

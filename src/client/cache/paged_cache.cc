@@ -148,37 +148,44 @@ FileRegionSet* PagedCache::determinePartialPageRegions(const FilePageId& pageId,
     vector<FileRegion> requestRegions =
         DataTypeProcessor::locateFileRegions(offset, size, view);
 
+    FSOffset pageBegin = pageId * pageSize_;
+    FSOffset pageEnd = pageBegin + pageSize_;
     for (size_t i = 0; i < requestRegions.size(); i++)
     {
-        // Either the beginning or the end of the region must reside on the
+        //cerr << "Next Page: " << pageId << " paginate reg: " << requestRegions[i] << endl;
+
+        // The beginning and/or the end of the region must reside on the
         // requested page in order for it to be partial to the page
         // Find the regions for this page, truncate parts not on the page
         // and add them to the list
-        FSOffset begin = requestRegions[i].offset;
-        FSOffset end = begin + requestRegions[i].extent;
-        FilePageId beginPage = begin / pageSize_;
-        FilePageId endPage = end / pageSize_;
-        if (pageId == beginPage)
+        FSOffset regionBegin = requestRegions[i].offset;
+        FSOffset regionEnd = regionBegin + requestRegions[i].extent;
+        if (regionBegin >= pageBegin && regionBegin < pageEnd)
         {
             // This region starts at offset and continues to the minimum
             // of the extent or the page end;
-            size_t pageEnd = (pageId + 1) * pageSize_;
-            size_t minEnd = min(end, pageEnd);
-
             FileRegion partial;
-            partial.offset = begin;
-            partial.extent = minEnd - begin;
+            partial.offset = regionBegin;
+            partial.extent = min(pageEnd, regionEnd) - partial.offset;
+            //cerr << "Begin Partial region result: " << partial << endl;
             pageRegions->insert(partial);
         }
-        else if (pageId == endPage)
+        else if (regionEnd >= pageBegin && regionEnd < pageEnd)
         {
             // This region starts at page begin and continues to the end
             // of the extent
-            size_t pageBegin = pageId * pageSize_;
             FileRegion partial;
             partial.offset = pageBegin;
-            partial.offset = end - pageBegin;
+            partial.extent = regionEnd - partial.offset;
+            //cerr << "End Partial region result: " << partial << endl;
             pageRegions->insert(partial);
+        }
+        else
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "ERROR: Region: " << requestRegions[i]
+                 << " does not have a partial region on page: " << pageId << endl;
+            assert(0);
         }
     }
     return pageRegions;

@@ -59,6 +59,12 @@ protected:
     /** Typedef mapping filenames to the number of current openers */
     typedef std::map<Filename, std::size_t> OpenFileMap;
 
+    /** Message name for full page writeback requests */
+    static const std::string PAGE_WRITEBACK_NAME;
+
+    /** Message name for partial page writeback requests */
+    static const std::string PARTIAL_PAGE_WRITEBACK_NAME;
+
     /** Perform module initialization */
     virtual void initialize();
 
@@ -67,6 +73,9 @@ protected:
 
     /** @return the map of pending reads indexed by request */
     virtual RequestMap* createPendingPageMap();
+
+    /** @return the map of pending reads indexed by request */
+    virtual PartialRequestMap* createPendingPartialPageMap();
 
     /**
      * @return the map of the number of times each file has been opened for
@@ -101,6 +110,12 @@ private:
     template<class spfsMPIFileIORequest> void getRequestCachePages(
         const spfsMPIFileIORequest* ioRequest,
         std::set<PagedCache::Key>& outRequestPages) const;
+
+    /** Determine the set of pages for this I/O request */
+    void getRequestCachePages(
+        const spfsMPIFileWriteAtRequest* writeAt,
+        std::vector<MultiCache::Page*>& outFullPages,
+        std::vector<MultiCache::PartialPage*>& outPartialPages) const;
 
     /** Determine the set of partial pages for this I/O request */
     template<class spfsMPIFileIORequest> void getRequestPartialCachePages(
@@ -144,8 +159,10 @@ private:
     /**
      * Update the cache with pages that have been read.
      */
-    void updateCacheWithWritePages(std::set<PagedCache::Key>& requestPages,
-                                  std::vector<CacheEntry>& outWriteBacks);
+    void updateCacheWithWritePages(const Filename& filename,
+                                   const std::vector<MultiCache::Page*>& fullPages,
+                                   const std::vector<MultiCache::PartialPage*>& partialPages,
+                                   std::vector<CacheEntry>& outWriteBacks);
 
     /** Begin writing back the set of cache keys */
     void beginWritebacks(const std::vector<CacheEntry>& writeBacks,
@@ -172,11 +189,18 @@ private:
     /** Mark pages as read for requests */
     void resolvePendingReadPages(const std::set<PagedCache::Key>& readPages);
 
+    /** Mark pages as read for requests */
+    void resolvePendingReadPages(const Filename& filename,
+                                 const std::vector<MultiCache::Page*>& readPages);
+
     /** Mark page as written for requests */
     void resolvePendingWritePage(const PagedCache::Key& writePage);
 
     /** Mark pages as written for requests */
     void resolvePendingWritePages(const std::set<PagedCache::Key>& writePages);
+
+    /** Decrement the partial count for the request */
+    void resolvePendingPartialWrite(spfsMPIFileRequest* request);
 
     /** @return Removes and returns requests with no more pages remaining */
     std::vector<spfsMPIFileRequest*> popCompletedRequests();
@@ -190,11 +214,12 @@ private:
     /** Map of request to the total pending pages */
     RequestMap* pendingPages_;
 
+    /** Map of request to the total pending pages */
+    PartialRequestMap* pendingPartialPages_;
+
     /** Map of the number of opens for each file */
     OpenFileMap* openFileCounts_;
 
-    /** Map of request to the total pending pages */
-    PartialRequestMap pendingPartialPages_;
 };
 
 #endif /* DIRECT_PAGED_MIDDLEWARE_CACHE_H_ */

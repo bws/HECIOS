@@ -30,6 +30,9 @@ public:
     /** Convenience typedef for iterator type */
     typedef std::set<FileRegion>::const_iterator const_iterator;
 
+    /** Convenience typedef for iterator type */
+    typedef std::set<FileRegion>::iterator iterator;
+
     /** Default constructor */
     FileRegionSet();
 
@@ -47,6 +50,12 @@ public:
 
     /** @return an iterator to the end of the set */
     const_iterator end() const;
+
+    /** @return an iterator to the beginning of the set */
+    iterator begin();
+
+    /** @return an iterator to the end of the set */
+    iterator end();
 
     /** @return the number of bytes in all of the regions */
     std::size_t numBytes() const;

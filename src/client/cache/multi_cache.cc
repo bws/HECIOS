@@ -59,9 +59,11 @@ void MultiCache::insertFullPageAndRecall(const Key& key,
                                          Page* fullPage,
                                          bool isDirty,
                                          Key& outEvictedKey,
-                                         Page* outEvictedPage,
+                                         Page*& outEvictedPage,
                                          bool& outEvictedDirtyBit)
 {
+    assert(0 != fullPage);
+
     // If this is a dirty full page insertion, we can get rid of any existing
     // copies safely
     if (isDirty)
@@ -93,9 +95,14 @@ void MultiCache::insertFullPageAndRecall(const Key& key,
         lruList_.push_front(key);
         std::pair<MapType::iterator, MapType::iterator> range;
         range = keyEntryMap_.equal_range(key);
+        bool erased = false;
         while (range.first != range.second)
         {
-            lruList_.erase(range.first->second->lruRef);
+            if (!erased)
+            {
+                lruList_.erase(range.first->second->lruRef);
+                erased = true;
+            }
             range.first->second->lruRef = lruList_.begin();
             range.first++;
         }
@@ -123,9 +130,10 @@ void MultiCache::insertFullPageAndRecall(const Key& key,
 void MultiCache::insertDirtyPartialPageAndRecall(const Key& key,
                                                  PartialPage* partialPage,
                                                  Key& outEvictedKey,
-                                                 Page* outEvictedPage,
+                                                 Page*& outEvictedPage,
                                                  bool& outEvictedDirtyBit)
 {
+    assert(0 != partialPage);
     // A dirty partial page can occur in 3 cases.  The dirty full page exists,
     // The clean page exists, or the clean and dirty page exist
 
@@ -167,12 +175,33 @@ void MultiCache::insertDirtyPartialPageAndRecall(const Key& key,
         {
             if (iter->second->isDirty)
             {
+                // Merge the file regions together
+                FileRegionSet* newRegions = partialPage->regions;
+                FileRegionSet::iterator frsIter = newRegions->begin();
+                FileRegionSet::iterator frsEnd = newRegions->end();
+                while (frsIter != frsEnd)
+                {
+                    PartialPage* existingPage =
+                        dynamic_cast<PartialPage*>(iter->second->page);
+                    assert(0 != existingPage);
+                    existingPage->regions->insert(*frsIter);
+                    frsIter++;
+                }
+
+                // Remove the old LRU for the partial page, this must
+                // be done once, sp just do it for the dirty copy
                 lruList_.erase(iter->second->lruRef);
             }
+
+            // Update the LRU
             iter->second->lruRef = lruList_.begin();
             iter++;
         }
 
+        // TODO: Cleanup the inserted page
+        //delete partialPage->regions;
+        //delete partialPage;
+        //partialPage = 0;
     }
 
     // If the cache was full, retrieve and perform the next eviction
@@ -198,10 +227,15 @@ void MultiCache::remove(const Key& key)
 {
     std::pair<MapType::iterator, MapType::iterator> range = keyEntryMap_.equal_range(key);
     MapType::iterator iter = range.first;
+    bool lruErased = false;
     while (iter != range.second)
     {
         // Cleanup the lru list
-        lruList_.erase(iter->second->lruRef);
+        if (!lruErased)
+        {
+            lruList_.erase(iter->second->lruRef);
+            lruErased = true;
+        }
 
         // Cleanup the EntryType memory
         delete iter->second;
@@ -236,14 +270,21 @@ std::vector<MultiCache::Page*> MultiCache::lookup(const Key& key)
     if (first != last)
     {
         lruList_.push_front(key);
+        bool erased = false;
         while (first != last)
         {
             // Retrieve the value
             EntryType* entry = first->second;
             values.push_back(entry->page);
 
+            // Remove the LRU ref exactly once
+            if (!erased)
+            {
+                lruList_.erase(entry->lruRef);
+                erased = true;
+            }
+
             // Refresh the LRU list
-            lruList_.erase(entry->lruRef);
             entry->lruRef = lruList_.begin();
 
             // Move to the next element for this key
@@ -252,8 +293,8 @@ std::vector<MultiCache::Page*> MultiCache::lookup(const Key& key)
     }
     else
     {
-        //NoSuchEntry e;
-        //throw e;
+        NoSuchEntry e;
+        throw e;
     }
     return values;
 }
@@ -306,7 +347,7 @@ std::size_t MultiCache::size() const
 }
 
 void MultiCache::performEviction(Key& outEvictedKey,
-                                 Page* outEvictedPage,
+                                 Page*& outEvictedPage,
                                  bool& outEvictedDirtyBit)
 {
     assert(keyEntryMap_.size() > maxEntries_);
@@ -320,7 +361,13 @@ void MultiCache::performEviction(Key& outEvictedKey,
     MapType::iterator iter = range.first;
     MapType::iterator last = range.second;
 
-    // Find the dirty entry and exit the loop prematurely
+    // Set the eviction to the first entry
+    outEvictedKey = iter->first;
+    outEvictedPage = iter->second->page;
+    outEvictedDirtyBit = iter->second->isDirty;
+    iter++;
+
+    // If there is a dirty entry, overwrite the retrieved values
     while (iter != last)
     {
         if (iter->second->isDirty)
@@ -330,15 +377,13 @@ void MultiCache::performEviction(Key& outEvictedKey,
             outEvictedDirtyBit = iter->second->isDirty;
             break;
         }
-        else
-        {
-            iter++;
-        }
+        iter++;
     }
-    assert(iter != last);
+    assert(0 != outEvictedPage);
 
     // Remove the entr(y/ies)
-    this->remove(lruKey);
+    remove(lruKey);
+
 }
 
 /*

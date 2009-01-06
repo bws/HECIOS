@@ -62,6 +62,12 @@ protected:
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
 
+    /**
+     * Send the application response directly to the application
+     * that originated the message.
+     */
+    virtual void sendApplicationResponse(cMessage* response);
+
 private:
     /** Interface for handling messages from the application */
     virtual void handleApplicationMessage(cMessage* msg) = 0;

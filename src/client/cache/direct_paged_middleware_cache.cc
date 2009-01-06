@@ -634,7 +634,10 @@ void DirectPagedMiddlewareCache::completeRequests()
             resp = new spfsMPIFileCloseResponse(0, SPFS_MPI_FILE_CLOSE_RESPONSE);
             resp->setContextPointer(req);
         }
-        send(resp, appOutGateId());
+
+        // Ensure we send the application response back to the application
+        // that actually originated the response
+        sendApplicationResponse(resp);
     }
 }
 

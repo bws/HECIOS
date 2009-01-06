@@ -9,5 +9,6 @@ SIM_SRC +=  $(DIR)/direct_paged_middleware_cache.cc \
 		$(DIR)/multi_cache.cc \
 		$(DIR)/paged_cache.cc \
 		$(DIR)/paged_middleware_cache_with_twin.cc \
-		$(DIR)/shared_direct_paged_middleware_cache.cc
+		$(DIR)/shared_direct_paged_middleware_cache.cc \
+		$(DIR)/shared_paged_middleware_cache_with_twin.cc
 		

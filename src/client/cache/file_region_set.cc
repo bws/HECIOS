@@ -51,6 +51,16 @@ set<FileRegion>::const_iterator FileRegionSet::end() const
     return regions_.end();
 }
 
+set<FileRegion>::iterator FileRegionSet::begin()
+{
+    return regions_.begin();
+}
+
+set<FileRegion>::iterator FileRegionSet::end()
+{
+    return regions_.end();
+}
+
 size_t FileRegionSet::numBytes() const
 {
     size_t numBytes = 0;
@@ -99,6 +109,8 @@ void FileRegionSet::print(ostream& ost) const
 
 void FileRegionSet::insert(const FileRegion& region)
 {
+    cerr << "Attempting to insert region: " << region << endl;
+
     // Create a modifiable copy of the region to be inserted
     FileRegion newRegion(region);
 
@@ -117,6 +129,7 @@ void FileRegionSet::insert(const FileRegion& region)
                 newRegion.offset = itLow->offset;
                 newRegion.extent = maxEnd - newRegion.offset;
                 regions_.erase(itLow);
+                cerr << "Inserted region: " << newRegion << endl;
             }
         }
     }
@@ -130,6 +143,7 @@ void FileRegionSet::insert(const FileRegion& region)
         FSOffset nextRegionEnd = itUpper->offset + itUpper->extent;
         FSOffset maxEnd = max(newRegionEnd, nextRegionEnd);
         newRegion.extent = maxEnd - newRegion.offset;
+        cerr << "Region extent modded: " << newRegion << endl;
         regions_.erase(itUpper++);
     }
 
