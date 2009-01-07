@@ -234,7 +234,7 @@ bool PHTFIOApplication::scheduleNextMessage()
         *phtfEvent_ >> eventRecord;
 
         // TODO: Use this to look at the actual events
-        cerr << "[" << getRank() << "] " << eventRecord.recordStr() << endl;
+        //cerr << "[" << getRank() << "] " << eventRecord.recordStr() << endl;
         rec_id_ = eventRecord.recordId();
         msgScheduled = processEvent(eventRecord);
     }

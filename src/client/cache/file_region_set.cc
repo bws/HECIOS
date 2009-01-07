@@ -109,8 +109,6 @@ void FileRegionSet::print(ostream& ost) const
 
 void FileRegionSet::insert(const FileRegion& region)
 {
-    cerr << "Attempting to insert region: " << region << endl;
-
     // Create a modifiable copy of the region to be inserted
     FileRegion newRegion(region);
 
@@ -129,7 +127,6 @@ void FileRegionSet::insert(const FileRegion& region)
                 newRegion.offset = itLow->offset;
                 newRegion.extent = maxEnd - newRegion.offset;
                 regions_.erase(itLow);
-                cerr << "Inserted region: " << newRegion << endl;
             }
         }
     }

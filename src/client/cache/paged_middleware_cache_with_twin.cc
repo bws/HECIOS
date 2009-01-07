@@ -453,7 +453,6 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
         case FSM_Enter(BEGIN_PARTIAL_PAGE_READ):
         {
             // Begin the read
-            cerr << "Beginning partial read." << endl;
             beginRead(partialPagesTrimmed, write);
             break;
         }
@@ -754,9 +753,6 @@ void PagedMiddlewareCacheWithTwin::updateCacheWithWritePages(
     const vector<MultiCache::PartialPage*>& partialPages,
     vector<CacheEntry>& outWritebacks)
 {
-    cerr << "Write Updates for cache Full: " << fullPages.size()
-         << " Partial: " << partialPages.size() << endl;;
-
     // Update the cache with full pages and accumulate any writebacks
     for (size_t i = 0; i < fullPages.size(); i++)
     {
@@ -906,7 +902,6 @@ void PagedMiddlewareCacheWithTwin::registerPendingWritePages(spfsMPIFileRequest*
     if (0 != partialCount)
     {
         (*pendingPartialPages_)[request] = partialCount;
-        cerr << "Partials registered: " << (*pendingPartialPages_)[request] << endl;
     }
 }
 
@@ -976,7 +971,6 @@ void PagedMiddlewareCacheWithTwin::resolvePendingPartialWrite(spfsMPIFileRequest
 {
     assert(0 != pendingPartialPages_->count(request));
     --((*pendingPartialPages_)[request]);
-    cerr << "Resolved partial, new count: " << (*pendingPartialPages_)[request] << endl;
 }
 
 
