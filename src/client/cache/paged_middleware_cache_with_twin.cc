@@ -487,11 +487,10 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
             // Update the pending requests with the pages fully written here
             resolvePendingReadPages(filename, fullPages);
 
-            beginWritebackEvictions(writebackPages, 0);
-
             // TODO: If the writebuffer is not infinite, the request will need
             // to pause while writebacks occur
             //registerPendingWritePages(write, writebackPages);
+            beginWritebackEvictions(writebackPages, 0);
             break;
         }
         case FSM_Exit(UPDATE_CACHE):
@@ -598,8 +597,10 @@ void PagedMiddlewareCacheWithTwin::beginWritebackEvictions(
             if (0 == dynamic_cast<MultiCache::PartialPage*>(page))
             {
                 Filename filename = writebackPages[i].first.filename;
-                fullPagesMap[filename].insert(page->id);
-                delete page;
+                FilePageId pageId = page->id;
+                fullPagesMap[filename].insert(pageId);
+                // This doesn't jibe, there must be dupes
+                // delete page;
             }
             else
             {
