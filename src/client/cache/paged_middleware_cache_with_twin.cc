@@ -190,6 +190,11 @@ void PagedMiddlewareCacheWithTwin::processRequest(cMessage* request, cMessage* m
         set<PagedCache::Key> writtenPages;
         getRequestCachePages(writeback, writtenPages);
         resolvePendingWritePages(writtenPages);
+
+        // Perform cleanup on writeback requests
+        cMessage* writebackReq = static_cast<cMessage*>(request->contextPointer());
+        delete writebackReq;
+        delete msg;
     }
     else if (SPFS_MPI_FILE_OPEN_REQUEST == request->kind())
     {
@@ -266,11 +271,11 @@ void PagedMiddlewareCacheWithTwin::processFileClose(spfsMPIFileCloseRequest* clo
         // If this is the last close, flush the dirty cache data to disk
         if (0 == openCount)
         {
-            cerr << "Last close: Evictions are on" << endl;
+            //cerr << "Last close: Evictions are on" << endl;
             vector<CacheEntry> writeEntries = lookupDirtyPagesInCache(closeName);
-            beginWritebackEvictions(writeEntries, close);
             flushCache(closeName);
             registerPendingWritePages(close, writeEntries);
+            beginWritebackEvictions(writeEntries, close);
         }
         else
         {
@@ -292,7 +297,6 @@ void PagedMiddlewareCacheWithTwin::processFileClose(spfsMPIFileCloseRequest* clo
         }
         else
         {
-            // Resolve the pending pages
             set<PagedCache::Key> flushPages;
             getRequestCachePages(flushReq, flushPages);
             resolvePendingWritePages(flushPages);
@@ -600,6 +604,7 @@ void PagedMiddlewareCacheWithTwin::beginWritebackEvictions(
             {
                 Filename filename = writebackPages[i].first.filename;
                 fullPagesMap[filename].insert(page->id);
+                delete page;
             }
             else
             {
@@ -630,6 +635,7 @@ void PagedMiddlewareCacheWithTwin::beginWritebackEvictions(
                 send(partialPageWriteback, fsOutGateId());
                 regIter++;
             }
+            delete page;
         }
 
         // Create and send the requests for the full pages
@@ -650,8 +656,8 @@ void PagedMiddlewareCacheWithTwin::beginWritebackEvictions(
     }
     else
     {
-        cerr << __FILE__ << ":" << __LINE__ << ":"
-             << "The writeback set was empty." << endl;
+        //cerr << __FILE__ << ":" << __LINE__ << ":"
+        //     << "The writeback set was empty." << endl;
     }
 }
 
