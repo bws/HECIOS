@@ -190,11 +190,6 @@ void PagedMiddlewareCacheWithTwin::processRequest(cMessage* request, cMessage* m
         set<PagedCache::Key> writtenPages;
         getRequestCachePages(writeback, writtenPages);
         resolvePendingWritePages(writtenPages);
-
-        // Perform cleanup on writeback requests
-        cMessage* writebackReq = static_cast<cMessage*>(request->contextPointer());
-        delete writebackReq;
-        delete msg;
     }
     else if (SPFS_MPI_FILE_OPEN_REQUEST == request->kind())
     {
