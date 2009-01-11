@@ -137,12 +137,12 @@ set<FilePageId> PagedCache::determineRequestPartialPages(const FSOffset& offset,
     return partialPageIds;
 }
 
-FileRegionSet* PagedCache::determinePartialPageRegions(const FilePageId& pageId,
-                                                        const FSOffset& offset,
-                                                        const FSSize& size,
-                                                        const FileView& view) const
+FileRegionSet PagedCache::determinePartialPageRegions(const FilePageId& pageId,
+                                                      const FSOffset& offset,
+                                                      const FSSize& size,
+                                                      const FileView& view) const
 {
-    FileRegionSet* pageRegions = new FileRegionSet();
+    FileRegionSet pageRegions;
 
     // Flatten view into file regions for the correct size
     vector<FileRegion> requestRegions =
@@ -168,7 +168,7 @@ FileRegionSet* PagedCache::determinePartialPageRegions(const FilePageId& pageId,
             partial.offset = regionBegin;
             partial.extent = min(pageEnd, regionEnd) - partial.offset;
             //cerr << "Begin Partial region result: " << partial << endl;
-            pageRegions->insert(partial);
+            pageRegions.insert(partial);
         }
         else if (regionEnd >= pageBegin && regionEnd < pageEnd)
         {
@@ -178,7 +178,7 @@ FileRegionSet* PagedCache::determinePartialPageRegions(const FilePageId& pageId,
             partial.offset = pageBegin;
             partial.extent = regionEnd - partial.offset;
             //cerr << "End Partial region result: " << partial << endl;
-            pageRegions->insert(partial);
+            pageRegions.insert(partial);
         }
         else
         {
@@ -210,12 +210,13 @@ spfsMPIFileReadAtRequest* PagedCache::createPageReadRequest(
     FileDescriptor* fd = getPageViewDescriptor(filename, pageIds);
 
     // Create the read request
+    static DataType* byteType = new ByteDataType();
     spfsMPIFileReadAtRequest* readRequest =
         new spfsMPIFileReadAtRequest("PagedCache Read Request",
                                      SPFS_MPI_FILE_READ_AT_REQUEST);
     readRequest->setContextPointer(origRequest);
     readRequest->setFileDes(fd);
-    readRequest->setDataType(new ByteDataType());
+    readRequest->setDataType(byteType);
     readRequest->setCount(pageIds.size() * pageSize_);
     readRequest->setOffset(0);
     return readRequest;
@@ -232,12 +233,13 @@ spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
     FileDescriptor* fd = getPageViewDescriptor(filename, pageIds);
 
     // Create the read request
+    static DataType* byteType = new ByteDataType();
     spfsMPIFileWriteAtRequest* writeRequest =
         new spfsMPIFileWriteAtRequest("PagedCache Write Request",
                                       SPFS_MPI_FILE_WRITE_AT_REQUEST);
     writeRequest->setContextPointer(origRequest);
     writeRequest->setFileDes(fd);
-    writeRequest->setDataType(new ByteDataType());
+    writeRequest->setDataType(byteType);
     writeRequest->setCount(pageIds.size() * pageSize_);
     writeRequest->setOffset(0);
     return writeRequest;

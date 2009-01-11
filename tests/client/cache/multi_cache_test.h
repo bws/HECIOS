@@ -61,7 +61,7 @@ void MultiCacheTest::testSize()
     CPPUNIT_ASSERT_EQUAL(size_t(0), cache1.size());
 
     // Check that insertion modifies size correctly
-    MultiCache::Page* page1 = new MultiCache::Page();
+    MultiCache::Page page1;
     MultiCache::Key outKey(Filename("/out"), 1000);
     MultiCache::Page* outPage;
     bool outDirtyStatus;
@@ -88,7 +88,7 @@ void MultiCacheTest::testSize()
         cache1.insertFullPageAndRecall(key4, page1, false, outKey, outPage, outDirtyStatus);
         CPPUNIT_ASSERT_EQUAL(size_t(4), cache1.size());
 
-        MultiCache::PartialPage* partialPage = new MultiCache::PartialPage();
+        MultiCache::PartialPage partialPage;
         cache1.insertDirtyPartialPageAndRecall(key4, partialPage, outKey, outPage, outDirtyStatus);
         CPPUNIT_ASSERT_EQUAL(size_t(5), cache1.size());
     } catch(...) {}

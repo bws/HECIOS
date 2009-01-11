@@ -163,7 +163,11 @@ void PagedMiddlewareCacheWithTwin::handleFileSystemMessage(cMessage* msg)
         // Don't delete bypass writes
         if (appRequest != cacheRequest)
         {
-            delete cacheRequest;
+            spfsMPIFileRequest* fileRequest =
+                dynamic_cast<spfsMPIFileRequest*>(cacheRequest);
+            assert(0 != fileRequest);
+            delete fileRequest->getFileDes();
+            delete fileRequest;
             delete msg;
         }
     }
@@ -464,8 +468,8 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
         case FSM_Enter(UPDATE_CACHE):
         {
             // Get the full and partial pages this request spans
-            vector<MultiCache::Page*> fullPages;
-            vector<MultiCache::PartialPage*> partialPages;
+            vector<MultiCache::Page> fullPages;
+            vector<MultiCache::PartialPage> partialPages;
             getRequestCachePages(write, fullPages, partialPages);
 
             // First insert the just read pages as original copies
@@ -521,8 +525,8 @@ void PagedMiddlewareCacheWithTwin::getRequestCachePages(
 
 void PagedMiddlewareCacheWithTwin::getRequestCachePages(
     const spfsMPIFileWriteAtRequest* ioRequest,
-    vector<MultiCache::Page*>& outFullPages,
-    vector<MultiCache::PartialPage*>& outPartialPages) const
+    vector<MultiCache::Page>& outFullPages,
+    vector<MultiCache::PartialPage>& outPartialPages) const
 {
     // Convert regions into file pages
     FileDescriptor* fd = ioRequest->getFileDes();
@@ -537,8 +541,8 @@ void PagedMiddlewareCacheWithTwin::getRequestCachePages(
     set<FilePageId>::const_iterator last = fullPages.end();
     while (first != last)
     {
-        MultiCache::Page* page = new MultiCache::Page();
-        page->id = *first;
+        MultiCache::Page page;
+        page.id = *first;
         outFullPages.push_back(page);
         first++;
     }
@@ -552,12 +556,12 @@ void PagedMiddlewareCacheWithTwin::getRequestCachePages(
     last = partialPages.end();
     while (first != last)
     {
-        MultiCache::PartialPage* page = new MultiCache::PartialPage();
-        page->id = *first;
-        page->regions = determinePartialPageRegions(page->id,
-                                                    ioRequest->getOffset(),
-                                                    ioSize,
-                                                    fd->getFileView());
+        MultiCache::PartialPage page;
+        page.id = *first;
+        page.regions = determinePartialPageRegions(page.id,
+                                                   ioRequest->getOffset(),
+                                                   ioSize,
+                                                   fd->getFileView());
         outPartialPages.push_back(page);
         first++;
     }
@@ -599,8 +603,7 @@ void PagedMiddlewareCacheWithTwin::beginWritebackEvictions(
                 Filename filename = writebackPages[i].first.filename;
                 FilePageId pageId = page->id;
                 fullPagesMap[filename].insert(pageId);
-                // This doesn't jibe, there must be dupes
-                // delete page;
+                delete page;
             }
             else
             {
@@ -614,18 +617,19 @@ void PagedMiddlewareCacheWithTwin::beginWritebackEvictions(
             Filename filename = partialPages[i].first.filename;
             MultiCache::PartialPage* page =
                 static_cast<MultiCache::PartialPage*>(partialPages[i].second);
-            FileRegionSet::iterator regIter = page->regions->begin();
-            FileRegionSet::iterator regEnd = page->regions->end();
+            FileRegionSet::iterator regIter = page->regions.begin();
+            FileRegionSet::iterator regEnd = page->regions.end();
             while (regIter != regEnd)
             {
                 // Create the file descriptor
+                static DataType* byteType = new ByteDataType();
                 FileDescriptor* fd = FileBuilder::instance().getDescriptor(filename);
                 spfsMPIFileWriteAtRequest* partialPageWriteback =
                     new spfsMPIFileWriteAtRequest(PARTIAL_PAGE_WRITEBACK_NAME.c_str(),
                                                   SPFS_MPI_FILE_WRITE_AT_REQUEST);
                 partialPageWriteback->setContextPointer(parentRequest);
                 partialPageWriteback->setFileDes(fd);
-                partialPageWriteback->setDataType(new ByteDataType());
+                partialPageWriteback->setDataType(byteType);
                 partialPageWriteback->setOffset(regIter->offset);
                 partialPageWriteback->setCount(regIter->extent);
                 send(partialPageWriteback, fsOutGateId());
@@ -689,8 +693,21 @@ PagedMiddlewareCacheWithTwin::lookupDirtyPagesInCache(const Filename& filename) 
     vector<MultiCache::Page*> dirtyPages = lruCache_->getFilteredEntries(filter);
     for (size_t i = 0; i < dirtyPages.size(); i++)
     {
-        MultiCache::Key key(filename, dirtyPages[i]->id);
-        dirtyEntries.push_back(make_pair(key, dirtyPages[i]));
+        // Copy the pages
+        MultiCache::Page* original = dirtyPages[i];
+        MultiCache::Page* pageCopy = 0;
+        if (0 == dynamic_cast<MultiCache::PartialPage*>(original))
+        {
+            pageCopy = new MultiCache::Page(*original);
+        }
+        else
+        {
+            MultiCache::PartialPage* partial = static_cast<MultiCache::PartialPage*>(original);
+            pageCopy = new MultiCache::PartialPage(*partial);
+        }
+
+        MultiCache::Key key(filename, pageCopy->id);
+        dirtyEntries.push_back(make_pair(key, pageCopy));
     }
     return dirtyEntries;
 }
@@ -725,8 +742,8 @@ void PagedMiddlewareCacheWithTwin::updateCacheWithReadPages(set<PagedCache::Key>
             // Create an entry for the clean page even if the dirty page
             // already exists
             MultiCache::Key key(iter->filename, iter->key);
-            MultiCache::Page* page = new MultiCache::Page();
-            page->id = iter->key;
+            MultiCache::Page page;
+            page.id = iter->key;
 
             MultiCache::Key evictedKey(Filename("/"), 0);
             MultiCache::Page* evictedPage = 0;
@@ -751,14 +768,14 @@ void PagedMiddlewareCacheWithTwin::updateCacheWithReadPages(set<PagedCache::Key>
 
 void PagedMiddlewareCacheWithTwin::updateCacheWithWritePages(
     const Filename& filename,
-    const vector<MultiCache::Page*>& fullPages,
-    const vector<MultiCache::PartialPage*>& partialPages,
+    const vector<MultiCache::Page>& fullPages,
+    const vector<MultiCache::PartialPage>& partialPages,
     vector<CacheEntry>& outWritebacks)
 {
     // Update the cache with full pages and accumulate any writebacks
     for (size_t i = 0; i < fullPages.size(); i++)
     {
-        MultiCache::Key key(filename, fullPages[i]->id);
+        MultiCache::Key key(filename, fullPages[i].id);
         MultiCache::Key evictedKey(Filename("/"), 0);
         MultiCache::Page* evictedPage = 0;
         bool isEvictedDirty = false;
@@ -783,7 +800,7 @@ void PagedMiddlewareCacheWithTwin::updateCacheWithWritePages(
     // Update the cache with partial pages
     for (size_t i = 0; i < partialPages.size(); i++)
     {
-        MultiCache::Key key(filename, partialPages[i]->id);
+        MultiCache::Key key(filename, partialPages[i].id);
         MultiCache::Key evictedKey(Filename("/"), 0);
         MultiCache::Page* evictedPage = 0;
         bool isEvictedDirty = false;
@@ -813,23 +830,24 @@ void PagedMiddlewareCacheWithTwin::flushCache(const Filename& flushName)
     {
         FilePageFilter filter(flushName);
         vector<MultiCache::Page*> flushPages = lruCache_->getFilteredEntries(filter);
+
+        // First, construct a set of the unique page ids
         vector<MultiCache::Page*>::const_iterator begin = flushPages.begin();
         vector<MultiCache::Page*>::const_iterator end = flushPages.end();
+        set<FilePageId> pageIds;
         while (begin != end)
         {
-            try
-            {
-                MultiCache::Key removeKey(flushName, (*begin)->id);
-                lruCache_->remove(removeKey);
-                begin++;
-            }
-            catch(NoSuchEntry& nse)
-            {
-                cerr << __FILE__ << ":" << __LINE__ << ":"
-                     << "No such entry while flushing a file from the cache: "
-                     << flushName << " " << (*begin)->id << endl;
-                assert(0);
-            }
+            pageIds.insert((*begin)->id);
+            begin++;
+        }
+
+        set<FilePageId>::const_iterator pageBegin = pageIds.begin();
+        set<FilePageId>::const_iterator pageEnd = pageIds.end();
+        while (pageBegin != pageEnd)
+        {
+            MultiCache::Key removeKey(flushName, *pageBegin);
+            lruCache_->remove(removeKey);
+            pageBegin++;
         }
     }
 }
@@ -898,7 +916,7 @@ void PagedMiddlewareCacheWithTwin::registerPendingWritePages(spfsMPIFileRequest*
             // Simply count the the partials
             MultiCache::PartialPage* partial = dynamic_cast<MultiCache::PartialPage*>(page);
             assert(0 != partial);
-            partialCount += partial->regions->size();
+            partialCount += partial->regions.size();
         }
     }
     if (0 != partialCount)
@@ -933,12 +951,12 @@ void PagedMiddlewareCacheWithTwin::resolvePendingReadPages(const set<PagedCache:
 }
 
 void PagedMiddlewareCacheWithTwin::resolvePendingReadPages(const Filename& filename,
-                                                           const vector<MultiCache::Page*>& readPages)
+                                                           const vector<MultiCache::Page>& readPages)
 {
     set<PagedCache::Key> readKeys;
     for (size_t i = 0; i < readPages.size(); i++)
     {
-        PagedCache::Key key(filename, readPages[i]->id);
+        PagedCache::Key key(filename, readPages[i].id);
         readKeys.insert(key);
     }
     resolvePendingReadPages(readKeys);

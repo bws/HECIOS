@@ -62,9 +62,9 @@ public:
     /** A partial cache page */
     struct PartialPage : public Page
     {
-        virtual ~PartialPage() { delete regions; };
+        virtual ~PartialPage() {};
 
-        FileRegionSet* regions;
+        FileRegionSet regions;
     };
 
     /** A cache entry */
@@ -109,7 +109,7 @@ public:
      * @throw NoSuchEntry if no eviction occurs
      */
     void insertFullPageAndRecall(const Key& key,
-                                 Page* page,
+                                 const Page& page,
                                  bool isDirty,
                                  Key& outEvictedKey,
                                  Page*& outEvictedPage,
@@ -122,7 +122,7 @@ public:
      * @throw NoSuchEntry if no eviction occurs
      */
     void insertDirtyPartialPageAndRecall(const Key& key,
-                                         PartialPage* partialPage,
+                                         const PartialPage& partialPage,
                                          Key& outEvictedKey,
                                          Page*& outEvictedPage,
                                          bool& outEvictedDirtyBit);

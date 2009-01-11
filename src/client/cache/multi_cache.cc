@@ -56,14 +56,12 @@ MultiCache::~MultiCache()
 
 
 void MultiCache::insertFullPageAndRecall(const Key& key,
-                                         Page* fullPage,
+                                         const Page& fullPage,
                                          bool isDirty,
                                          Key& outEvictedKey,
                                          Page*& outEvictedPage,
                                          bool& outEvictedDirtyBit)
 {
-    assert(0 != fullPage);
-
     // If this is a dirty full page insertion, we can get rid of any existing
     // copies safely
     if (isDirty)
@@ -78,7 +76,7 @@ void MultiCache::insertFullPageAndRecall(const Key& key,
     {
         // Perform the insertion
         EntryType* entry = new EntryType();
-        entry->page = fullPage;
+        entry->page = new Page(fullPage);
         entry->isDirty = isDirty;
 
         // Add to the LRU list
@@ -128,12 +126,11 @@ void MultiCache::insertFullPageAndRecall(const Key& key,
 }
 
 void MultiCache::insertDirtyPartialPageAndRecall(const Key& key,
-                                                 PartialPage* partialPage,
+                                                 const PartialPage& partialPage,
                                                  Key& outEvictedKey,
                                                  Page*& outEvictedPage,
                                                  bool& outEvictedDirtyBit)
 {
-    assert(0 != partialPage);
     // A dirty partial page can occur in 3 cases.  The dirty full page exists,
     // The clean page exists, or the clean and dirty page exist
 
@@ -154,7 +151,7 @@ void MultiCache::insertDirtyPartialPageAndRecall(const Key& key,
         {
             // Insert the dirty partial page alongside the clean page
             EntryType* entry = new EntryType();
-            entry->page = partialPage;
+            entry->page = new PartialPage(partialPage);
             entry->isDirty = true;
             entry->lruRef = lruList_.begin();
 
@@ -176,20 +173,19 @@ void MultiCache::insertDirtyPartialPageAndRecall(const Key& key,
             if (iter->second->isDirty)
             {
                 // Merge the file regions together
-                FileRegionSet* newRegions = partialPage->regions;
-                FileRegionSet::iterator frsIter = newRegions->begin();
-                FileRegionSet::iterator frsEnd = newRegions->end();
+                FileRegionSet::iterator frsIter = partialPage.regions.begin();
+                FileRegionSet::iterator frsEnd = partialPage.regions.end();
                 while (frsIter != frsEnd)
                 {
                     PartialPage* existingPage =
                         dynamic_cast<PartialPage*>(iter->second->page);
                     assert(0 != existingPage);
-                    existingPage->regions->insert(*frsIter);
+                    existingPage->regions.insert(*frsIter);
                     frsIter++;
                 }
 
                 // Remove the old LRU for the partial page, this must
-                // be done once, sp just do it for the dirty copy
+                // be done once, so just do it for the dirty copy
                 lruList_.erase(iter->second->lruRef);
             }
 
@@ -197,11 +193,6 @@ void MultiCache::insertDirtyPartialPageAndRecall(const Key& key,
             iter->second->lruRef = lruList_.begin();
             iter++;
         }
-
-        // TODO: Cleanup the inserted page
-        //delete partialPage->regions;
-        //delete partialPage;
-        //partialPage = 0;
     }
 
     // If the cache was full, retrieve and perform the next eviction
@@ -238,6 +229,7 @@ void MultiCache::remove(const Key& key)
         }
 
         // Cleanup the EntryType memory
+        delete iter->second->page;
         delete iter->second;
 
         // Remove from the map
@@ -365,7 +357,6 @@ void MultiCache::performEviction(Key& outEvictedKey,
     outEvictedKey = iter->first;
     outEvictedPage = iter->second->page;
     outEvictedDirtyBit = iter->second->isDirty;
-    iter++;
 
     // If there is a dirty entry, overwrite the retrieved values
     while (iter != last)
@@ -375,13 +366,16 @@ void MultiCache::performEviction(Key& outEvictedKey,
             outEvictedKey = iter->first;
             outEvictedPage = iter->second->page;
             outEvictedDirtyBit = iter->second->isDirty;
+
+            // Page ownership is now transferred, remove the page reference
+            iter->second->page = 0;
             break;
         }
         iter++;
     }
     assert(0 != outEvictedPage);
 
-    // Remove the entr(y/ies)
+    // Remove the entry/entries
     remove(lruKey);
 
 }

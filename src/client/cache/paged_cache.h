@@ -109,10 +109,10 @@ public:
     /**
      * @return The file regions residing on the partial page
      */
-    FileRegionSet* determinePartialPageRegions(const FilePageId& pageId,
-                                               const FSOffset& offset,
-                                               const FSSize& size,
-                                               const FileView& view) const;
+    FileRegionSet determinePartialPageRegions(const FilePageId& pageId,
+                                              const FSOffset& offset,
+                                              const FSSize& size,
+                                              const FileView& view) const;
 
     protected:
     /** Module initialization */

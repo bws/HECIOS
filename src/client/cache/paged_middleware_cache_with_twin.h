@@ -114,8 +114,8 @@ private:
     /** Determine the set of pages for this I/O request */
     void getRequestCachePages(
         const spfsMPIFileWriteAtRequest* writeAt,
-        std::vector<MultiCache::Page*>& outFullPages,
-        std::vector<MultiCache::PartialPage*>& outPartialPages) const;
+        std::vector<MultiCache::Page>& outFullPages,
+        std::vector<MultiCache::PartialPage>& outPartialPages) const;
 
     /** Determine the set of partial pages for this I/O request */
     template<class spfsMPIFileIORequest> void getRequestPartialCachePages(
@@ -160,8 +160,8 @@ private:
      * Update the cache with pages that have been read.
      */
     void updateCacheWithWritePages(const Filename& filename,
-                                   const std::vector<MultiCache::Page*>& fullPages,
-                                   const std::vector<MultiCache::PartialPage*>& partialPages,
+                                   const std::vector<MultiCache::Page>& fullPages,
+                                   const std::vector<MultiCache::PartialPage>& partialPages,
                                    std::vector<CacheEntry>& outWriteBacks);
 
     /** Begin writing back the set of cache keys */
@@ -191,7 +191,7 @@ private:
 
     /** Mark pages as read for requests */
     void resolvePendingReadPages(const Filename& filename,
-                                 const std::vector<MultiCache::Page*>& readPages);
+                                 const std::vector<MultiCache::Page>& readPages);
 
     /** Mark page as written for requests */
     void resolvePendingWritePage(const PagedCache::Key& writePage);
