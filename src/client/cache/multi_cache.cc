@@ -377,7 +377,22 @@ void MultiCache::performEviction(Key& outEvictedKey,
 
     // Remove the entry/entries
     remove(lruKey);
+}
 
+void MultiCache::print(ostream& ost) const
+{
+    ost << "MultiCache Contents" << endl;
+    MapType::const_iterator iter = keyEntryMap_.begin();
+    MapType::const_iterator last = keyEntryMap_.end();
+    while (iter != last)
+    {
+        ost << "\t";
+        ost << "[" << iter->first.filename << "," << iter->first.key;
+        ost << " -> ";
+        ost << "[" << iter->second->page->id << "," << iter->second->isDirty << "]";
+        ost << endl;
+        iter++;
+    }
 }
 
 /*

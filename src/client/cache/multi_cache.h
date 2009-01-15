@@ -22,6 +22,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <iostream>
 #include <list>
 #include <map>
 #include <vector>
@@ -170,6 +171,9 @@ public:
      */
     std::size_t size() const;
 
+    /** Print cache contents into ost */
+    virtual void print(std::ostream& ost) const;
+
 protected:
     /**
      * Remove the lru entry and return the clean entry if only it exists,
@@ -189,6 +193,13 @@ private:
 
 /** @return true if the lhs key is ordered before the rhs key */
 bool operator<(const MultiCache::Key& lhs, const MultiCache::Key& rhs);
+
+/** Add multicache to the ostream */
+inline std::ostream& operator<<(std::ostream& ost, const MultiCache& cache)
+{
+    cache.print(ost);
+    return ost;
+}
 
 #endif
 

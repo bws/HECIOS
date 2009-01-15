@@ -160,12 +160,19 @@ private:
                                   std::vector<CacheEntry>& outWriteBacks);
 
     /**
-     * Update the cache with pages that have been read.
+     * Update the cache with pages that have been written.
      */
     void updateCacheWithWritePages(const Filename& filename,
                                    const std::vector<MultiCache::Page>& fullPages,
                                    const std::vector<MultiCache::PartialPage>& partialPages,
                                    std::vector<CacheEntry>& outWriteBacks);
+
+    /**
+     * Update the cache with pages that have been partially updated
+     */
+    void updateCacheWithReadPageUpdates(spfsMPIFileWriteAtRequest* writeAt,
+                                        std::set<PagedCache::Key>& requestPages,
+                                        std::vector<CacheEntry>& outWriteBacks);
 
     /** Begin writing back the set of cache keys */
     void beginWritebacks(const std::vector<CacheEntry>& writeBacks,
