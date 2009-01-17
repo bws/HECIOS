@@ -143,7 +143,7 @@ private:
     std::vector<CacheEntry> lookupDirtyPagesInCache(const Filename& fileame) const;
 
     /** Remove request pages satisfied in the cache */
-    void lookupPagesInCache(std::set<PagedCache::Key>& requestPages);
+    std::set<PagedCache::Key> lookupPagesInCache(std::set<PagedCache::Key>& requestPages);
 
     /**
      * Remove all cache entries for the name flushFile
@@ -155,6 +155,13 @@ private:
      */
     void updateCacheWithReadPages(std::set<PagedCache::Key>& requestPages,
                                   std::vector<CacheEntry>& outWriteBacks);
+
+    /**
+     * Update the cache with pages that have been partially updated
+     */
+    void updateCacheWithReadPageUpdates(spfsMPIFileWriteAtRequest* writeAt,
+                                        std::set<PagedCache::Key>& requestPages,
+                                        std::vector<CacheEntry>& outWriteBacks);
 
     /**
      * Update the cache with pages that have been read.
