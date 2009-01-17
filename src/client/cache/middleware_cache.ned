@@ -129,6 +129,22 @@ simple SharedPagedMiddlewareCacheWithTwin
 endsimple
 
 //
+// Middleware cache using pages with Treadmarks twin diffing false sharing
+// avoidance
+//
+simple SharedPagedMiddlewareCacheWithTwinNoBlockIndexed
+    parameters:
+    	byteCopyTime: const,
+    	pageSize: const,
+    	pageCapacity: const;
+    	
+	gates:
+		in: appIn, fsIn;
+        out: appOut, fsOut;
+endsimple
+
+
+//
 // Local variables:
 //  indent-tabs-mode: nil
 //  c-indent-level: 4

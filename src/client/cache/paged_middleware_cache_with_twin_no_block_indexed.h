@@ -146,7 +146,7 @@ private:
     std::vector<CacheEntry> lookupDirtyPagesInCache(const Filename& fileame) const;
 
     /** Remove request pages satisfied in the cache */
-    void lookupPagesInCache(std::set<PagedCache::Key>& requestPages);
+    std::set<PagedCache::Key> lookupPagesInCache(std::set<PagedCache::Key>& requestPages);
 
     /**
      * Remove all cache entries for the name flushFile

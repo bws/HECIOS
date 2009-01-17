@@ -360,13 +360,15 @@ void PagedMiddlewareCacheWithTwinNoBlockIndexed::processFileWrite(spfsMPIFileWri
         INIT = 0,
         BEGIN_CACHE_BYPASS_WRITE = FSM_Steady(1),
         COMPLETE_CACHE_BYPASS_WRITE = FSM_Steady(2),
-        BEGIN_PARTIAL_PAGE_READ = FSM_Steady(3),
-        UPDATE_CACHE = FSM_Steady(4),
-        BEGIN_WRITEBACK = FSM_Steady(5),
+        UPDATE_CACHED_PAGES = FSM_Transient(3),
+        BEGIN_PARTIAL_PAGE_READ = FSM_Steady(4),
+        UPDATE_CACHE = FSM_Steady(5),
+        BEGIN_WRITEBACK = FSM_Steady(6),
     };
 
     // Variables needed for multiple states
     set<PagedCache::Key> partialPagesTrimmed;
+    set<PagedCache::Key> cachedPages;
 
     cFSM currentState = write->getCacheState();
     FSM_Switch(currentState)
@@ -386,15 +388,19 @@ void PagedMiddlewareCacheWithTwinNoBlockIndexed::processFileWrite(spfsMPIFileWri
                 // Determine if partial pages need to be read
                 set<PagedCache::Key> allPartialPages;
                 getRequestPartialCachePages(write, allPartialPages);
-                lookupPagesInCache(allPartialPages);
-                partialPagesTrimmed = trimPendingReadPages(allPartialPages);
+                cachedPages = lookupPagesInCache(allPartialPages);
+
+                // TODO: These steps are removed so that a shared cache will function properly
+                partialPagesTrimmed = allPartialPages;
+                //partialPagesTrimmed = trimPendingReadPages(allPartialPages);
+
                 // Register the request for completion
                 set<PagedCache::Key> noPages;
                 registerPendingPages(write, allPartialPages, noPages);
 
                 if (!partialPagesTrimmed.empty())
                 {
-                    FSM_Goto(currentState, BEGIN_PARTIAL_PAGE_READ);
+                    FSM_Goto(currentState, UPDATE_CACHED_PAGES);
 
                     // Figure out the memory copy delay for the read and write
                     double readBytes = partialPagesTrimmed.size() * pageSize();
@@ -413,13 +419,9 @@ void PagedMiddlewareCacheWithTwinNoBlockIndexed::processFileWrite(spfsMPIFileWri
                     delayPar->setDoubleValue(delay);
                     write->addPar(delayPar);
 
-                    if (0 != allPartialPages.size())
+                    if (0 != cachedPages.size())
                     {
-                        cerr << __FILE__ << ":" << __LINE__ << ":"
-                             << "WARNING: No partial reads need performing, but some are pending"
-                             << " Perform one partial page read to waste time." << endl;
-                        partialPagesTrimmed.insert(*(allPartialPages.begin()));
-                        FSM_Goto(currentState, BEGIN_PARTIAL_PAGE_READ);
+                        FSM_Goto(currentState, UPDATE_CACHED_PAGES);
                     }
                     else
                     {
@@ -452,6 +454,31 @@ void PagedMiddlewareCacheWithTwinNoBlockIndexed::processFileWrite(spfsMPIFileWri
             cerr << __FILE__ << ":" << __LINE__ << ":"
                  << "ERROR: Illegal state reached: " << msg->info() << endl;
             assert(0);
+            break;
+        }
+        case FSM_Enter(UPDATE_CACHED_PAGES):
+        {
+            // Perform the partial write to the cached pages
+            if (0 != cachedPages.size())
+            {
+                vector<CacheEntry> writebackPages;
+                updateCacheWithReadPageUpdates(write, cachedPages, writebackPages);
+                beginWritebackEvictions(writebackPages, 0);
+            }
+            break;
+        }
+        case FSM_Exit(UPDATE_CACHED_PAGES):
+        {
+            // If partial pages need to be read do that, otherwise
+            // update the full pages and perform writebacks
+            if (0 != partialPagesTrimmed.size())
+            {
+                FSM_Goto(currentState, BEGIN_PARTIAL_PAGE_READ);
+            }
+            else
+            {
+                FSM_Goto(currentState, BEGIN_WRITEBACK);
+            }
             break;
         }
         case FSM_Enter(BEGIN_PARTIAL_PAGE_READ):
@@ -777,8 +804,9 @@ PagedMiddlewareCacheWithTwinNoBlockIndexed::lookupDirtyPagesInCache(const Filena
     return dirtyEntries;
 }
 
-void PagedMiddlewareCacheWithTwinNoBlockIndexed::lookupPagesInCache(set<PagedCache::Key>& requestPages)
+set<PagedCache::Key> PagedMiddlewareCacheWithTwinNoBlockIndexed::lookupPagesInCache(set<PagedCache::Key>& requestPages)
 {
+    set<PagedCache::Key> foundPages;
     set<PagedCache::Key>::iterator iter = requestPages.begin();
     set<PagedCache::Key>::iterator end = requestPages.end();
     while (iter != end)
@@ -787,6 +815,7 @@ void PagedMiddlewareCacheWithTwinNoBlockIndexed::lookupPagesInCache(set<PagedCac
         {
             MultiCache::Key key(iter->filename, iter->key);
             lruCache_->lookup(key);
+            foundPages.insert(*iter);
             requestPages.erase(iter++);
         } catch (NoSuchEntry& e)
         {
@@ -794,6 +823,7 @@ void PagedMiddlewareCacheWithTwinNoBlockIndexed::lookupPagesInCache(set<PagedCac
             iter++;
         }
     }
+    return foundPages;
 }
 
 void PagedMiddlewareCacheWithTwinNoBlockIndexed::updateCacheWithReadPages(set<PagedCache::Key>& updatePages,
