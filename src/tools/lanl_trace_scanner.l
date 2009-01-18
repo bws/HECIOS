@@ -104,7 +104,7 @@ MPI_BARRIER_BEGIN ^.*\ MPI_Barrier\(
 MPI_BARRIER_END ^.*MPI_Barrier\ resumed.*\n
 
 MPI_BCAST_BEGIN ^.*\ MPI_Bcast\(
-MPI_BCAST_END ^.*MPI_Bcast\ resumed.*\n
+MPI_BCAST_END \n
 
 MPI_COMM_CREATE_BEGIN ^.*\ MPI_Comm_create\(
 MPI_COMM_CREATE_END ^.*MPI_Comm_create\ resumed.*\n
@@ -231,6 +231,7 @@ UNMATCHED_MPI_CALL ^[0-9.:]+\ MPI_.*\(
 <bcast>{MPI_BCAST_END} {
         collectInput = false;
         handleMPIBcast(yytext);
+		BEGIN 0;
         }
 
 {MPI_COMM_CREATE_BEGIN} {

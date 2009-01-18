@@ -339,7 +339,9 @@ void LanlTraceScanActions::handleMPIBcast(const string& text)
 
     // Extract the start time and duration
     string startTime = extractStartTime(text);
-    string duration = extractDuration(text);
+    // TODO: This definitely needs to be fixed ASAP
+    //string duration = extractDuration(text);
+    string duration = "0.0";
 
     // Extract the buffer address
     size_t begin = text.find("MPI_Bcast(") + 10;
