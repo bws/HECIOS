@@ -438,16 +438,18 @@ void PHTFEvent::filePath(std::string filepath)
 /** @return Whether event file has reached the end */
 bool PHTFEvent::eof()
 {
+    assert(file_.is_open());
+
     // We allow the very last line of the file to be an empty line due to
     // a bug in the trace generator.  Empty lines in the middle of the file
     // lead to an abort.
-    char c = _ifs.peek();
+    char c = file_.peek();
     if ('\n' == c)
     {
         string empty;
-        getline(_ifs, empty);
-        assert(_ifs.eof());
-        if (false == _ifs.eof())
+        getline(file_, empty);
+        assert(file_.eof());
+        if (false == file_.eof())
         {
             cerr << __FILE__ << ":" << __LINE__ << ":"
                  << "ERROR: Trace is corrupt, it contains an empty line near\n";
@@ -455,7 +457,8 @@ bool PHTFEvent::eof()
         }
     }
 
-    return _ifs.eof();
+    assert(false == file_.fail());
+    return file_.eof();
 }
 
 /**
@@ -465,101 +468,62 @@ bool PHTFEvent::eof()
  */
 int PHTFEvent::open(bool write)
 {
+    const char* filename = _filepath.c_str();
     _runtime->init(write);
-
-    if(write)
+    if (write)
     {
-        if(_ofs.is_open())
-        {
-            _ofs.close();
-        }
-
-        _ofs.open(_filepath.c_str());
-        if(_ofs.is_open())
-        {
-            return 0;
-        }
-        else return -1;
+        file_.open(filename, fstream::out | fstream::app);
+        assert(file_.is_open());
     }
     else
     {
-        if(_ifs.is_open())
-        {
-            _ifs.close();
-        }
-        _ifs.open(_filepath.c_str());
-
-        if(_ifs.is_open())
-        {
-            return 0;
-        }
-        else
-        {
-            return -1;
-        }
+        file_.open(filename, fstream::in);
+        assert(file_.is_open());
     }
+
+    int rc = 0;
+    if (!file_.is_open())
+    {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "ERROR: Unable to open file: " << filename << endl;
+        rc = -1;
+    }
+    return rc;
 }
 
 /** Close the event file */
 void PHTFEvent::close()
 {
-    if(_ofs.is_open())_ofs.close();
-    if(_ifs.is_open())_ifs.close();
+    if (file_.is_open())
+        file_.close();
 }
 
 /** Extract a record from the event file */
 PHTFEvent& PHTFEvent::operator>>(PHTFEventRecord& rec)
 {
-    string line;
+    assert(file_.is_open());
 
-    if(_ifs.is_open())
-    {
-        getline(_ifs, line);
-        rec = PHTFEventRecord(line);
-    }
+    string line;
+    getline(file_, line);
+    rec = PHTFEventRecord(line);
+
+    assert(false == file_.fail());
     return *this;
 }
 
 /** Write a record into the event file */
 PHTFEvent& PHTFEvent::operator<<(const PHTFEventRecord & rec)
 {
-    if(_ofs.is_open())
-    {
-        string str(const_cast<PHTFEventRecord &>(rec).recordStr());
-        _ofs << str << endl;
-    }
+    assert(file_.is_open());
+    string str(const_cast<PHTFEventRecord &>(rec).recordStr());
+    file_ << str << endl;
+    assert(false == file_.fail());
     return *this;
 }
 
-/**
- * Constructor
- * @param dirpath String contains the path to the trace directory
- */
-PHTFTrace::PHTFTrace(std::string dirpath)
+PHTFTrace::PHTFTrace()
+    : _fsfile(0)
 {
-    dirPath(dirpath);
-    buildEvents();
-
-    stringstream ss("");
-    ss << dirPath() << "/" << PHTFTrace::fsFileName;
-    _fsfile = new PHTFFs(ss.str());
-}
-
-/** Build the event object vector */
-void PHTFTrace::buildEvents()
-{
-    int size = 32; // number of events files, temporily use 32, should be implemented in PHTFArch
-
-    destroyEvents();
-    for(int i = 0; i < size; i ++)
-        {
-            stringstream ss("");
-            stringstream ss2("");
-            ss << dirPath() << "/" << PHTFTrace::eventFileNamePrefix << i;
-            ss2 << dirPath() << "/" << PHTFTrace::runtimeFileNamePrefix << i;
-            PHTFEvent *ev = new PHTFEvent(ss.str(), ss2.str());
-            _events.push_back(ev);
-        }
 }
 
 void PHTFTrace::destroyEvents()
@@ -576,16 +540,15 @@ void PHTFTrace::destroyEvents()
  * Get the event object
  * @param pid The process id
  */
-PHTFEvent * PHTFTrace::getEvent(long pid)
+PHTFEvent * PHTFTrace::getEvent(long int rank)
 {
-    if(pid < (long)_events.size())
-        {
-            return _events.at(pid);
-        }
-    else
-        {
-            return (PHTFEvent *)NULL;
-        }
+    ostringstream eventFilename;
+    ostringstream runtimeFilename;
+    eventFilename << dirPath() << "/" << PHTFTrace::eventFileNamePrefix << rank;
+    runtimeFilename << dirPath() << "/" << PHTFTrace::runtimeFileNamePrefix << rank;
+    PHTFEvent* event = new PHTFEvent(eventFilename.str(), runtimeFilename.str());
+    _events.push_back(event);
+    return event;
 }
 
 PHTFFs * PHTFTrace::getFs()
@@ -603,23 +566,17 @@ std::string PHTFTrace::dirPath()
 void PHTFTrace::dirPath(string dirpath)
 {
     _dirpath = dirpath;
-}
 
-PHTFTrace* PHTFTrace::getInstance(string dirpath)
-{
-    if(!PHTFTrace::_trace)
-        {
-            PHTFTrace::_trace = new PHTFTrace(dirpath);
-        }
-    else
-        {
-            if(dirpath.compare(PHTFTrace::_trace->dirPath()))
-                {
-                    PHTFTrace::_trace->dirPath(dirpath);
-                    PHTFTrace::_trace->buildEvents();
-                }
-        }
-    return PHTFTrace::_trace;
+    // Create the file system configuration in this directory
+    if (0 != _fsfile)
+    {
+        delete _fsfile;
+        _fsfile = 0;
+    }
+    string iniFilename = dirpath;
+    iniFilename.append("/");
+    iniFilename.append(PHTFTrace::fsFileName);
+    _fsfile = new PHTFFs(iniFilename);
 }
 
 PHTFIni::PHTFIni(const string& filename)
@@ -661,14 +618,15 @@ void PHTFIni::readIni()
     ifstream ifs;
     ifs.open(fileName_.c_str());
 
+    assert(ifs.is_open());
     if (!ifs.is_open())
     {
         cerr << __FILE__ << ":" << __LINE__ << ":"
-             << "ERROR: PHTF Trace file could not be opened: " << fileName_
+             << "ERROR: PHTF Trace Ini file could not be opened: " << fileName_
              << endl;
-        assert(false);
     }
 
+    // Remove any existing INI file entries
     clear();
 
     string section;
@@ -677,9 +635,13 @@ void PHTFIni::readIni()
     PHTFIniItem *item = 0;
     while(!ifs.eof())
     {
+        // Get the first line of the file
         string line;
         getline(ifs, line);
-        if(line[0] == ';')continue;
+        //assert(false == ifs.fail());
+
+        if(line[0] == ';')
+            continue;
 
         if(line[0] == '[')
         {

@@ -65,14 +65,15 @@ void PHTFIOApplication::initialize()
     static bool phtfInit = false;
     if(!phtfInit)
     {
+        // Set the trace directory (and initialize the file system config)
+        PHTFTrace::instance().dirPath(traceDirectory_);
+
         // Set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration
         // in fs.ini
-        string commWorldValue =
-            PHTFTrace::getInstance(traceDirectory_)->getFs()->consts("MPI_COMM_WORLD");
+        string commWorldValue = PHTFTrace::instance().getFs()->consts("MPI_COMM_WORLD");
         CommMan::instance().setCommWorld(strtol(commWorldValue.c_str(), 0, 0));
 
-        string commSelfValue =
-            PHTFTrace::getInstance(traceDirectory_)->getFs()->consts("MPI_COMM_SELF");
+        string commSelfValue = PHTFTrace::instance().getFs()->consts("MPI_COMM_SELF");
         CommMan::instance().setCommSelf(strtol(commSelfValue.c_str(), 0, 0));
 
         // Build a singleton map of mpi operation IDs (string => ID)
@@ -143,7 +144,7 @@ void PHTFIOApplication::rankChanged(int oldRank)
 void PHTFIOApplication::populateFileSystem()
 {
     cerr << "Populating file system . . . ";
-    PHTFFs *fs = PHTFTrace::getInstance(traceDirectory_)->getFs();
+    PHTFFs *fs = PHTFTrace::instance().getFs();
     FileSystemMap fsm;
     for(int i = 0; i < fs->fileNum(); i ++)
     {
@@ -223,7 +224,8 @@ bool PHTFIOApplication::scheduleNextMessage()
     if(!phtfEvent_)
     {
         // get event file for this process
-        phtfEvent_ = PHTFTrace::getInstance(traceDirectory_)->getEvent(getRank());
+        phtfEvent_ = PHTFTrace::instance().getEvent(getRank());
+        assert(0 != phtfEvent_);
         phtfEvent_->open();
     }
 
@@ -529,7 +531,7 @@ void PHTFIOApplication::performSeekProcessing(PHTFEventRecord* seekRecord)
 
     // Determine the seek whence values
     int MPI_SEEK_SET, MPI_SEEK_CUR, MPI_SEEK_END;
-    PHTFTrace* trace = PHTFTrace::getInstance(traceDirectory_);
+    PHTFTrace* trace = &(PHTFTrace::instance());
     istringstream seekSetStream(trace->getFs()->consts("MPI_SEEK_SET"));
     seekSetStream >> MPI_SEEK_SET;
     istringstream seekCurStream(trace->getFs()->consts("MPI_SEEK_CUR"));
@@ -756,7 +758,7 @@ void PHTFIOApplication::performCreateBasicDataType(std::string typeId)
 {
     // get parameter
     size_t size;
-    string ssize = PHTFTrace::getInstance(traceDirectory_)->getFs()->consts(typeId);
+    string ssize = PHTFTrace::instance().getFs()->consts(typeId);
     if(!ssize.compare(""))
     {
         ssize = phtfEvent_->memValue(typeId, "size");

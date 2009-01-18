@@ -158,7 +158,7 @@ sub main
             my $exitValue = $? >> 8;
             my $signalNum = $? & 127;
             my $dumpedCore = $? & 128;
-            print "ERROR: Scanner returned: $rc Exit: $exitValue Sig: $signal Num Core: $dumpedCore\n";
+            print "ERROR: Scanner returned: $rc Exit: $exitValue Sig: $signalNum Num Core: $dumpedCore\n";
         }
     }
     

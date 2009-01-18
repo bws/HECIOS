@@ -26,7 +26,7 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
-
+#include "singleton.h"
 class PHTFEvent;
 class PHTFEventRecord;
 class PHTFArch;
@@ -233,8 +233,7 @@ public:
 
 private:
     std::string _filepath;
-    std::ifstream _ifs;
-    std::ofstream _ofs;
+    std::fstream file_;
     PHTFIni *_runtime;
 };
 
@@ -310,27 +309,15 @@ private:
 /**
  * PHTF IO Trace Handler
  */
-class PHTFTrace
+class PHTFTrace : public Singleton<PHTFTrace>
 {
-    static std::string eventFileNamePrefix;
-    static std::string runtimeFileNamePrefix;
-    static std::string fsFileName;
-
-protected:
-    /**
-     * Constructor
-     * @param dirpath String contains the path to the trace directory
-     */
-    PHTFTrace(std::string dirpath);
-    /** Constructor */
-    PHTFTrace(){};
-
 public:
-    static PHTFTrace * getInstance(std::string dirpath);
+    /** Enable singleton construction */
+    friend class Singleton<PHTFTrace>;
+
     /** Destructor */
-    ~PHTFTrace(){destroyEvents();delete _fsfile;};
+    ~PHTFTrace() {destroyEvents(); delete _fsfile; };
 
-public:
     /**
      * Get the event object
      * @param pid The process id
@@ -340,7 +327,6 @@ public:
     PHTFFs *getFs();
 
     /** Build the event object vector */
-    void buildEvents();
     void destroyEvents();
 
     /** @return The string that contains the path to the trace directory */
@@ -348,7 +334,15 @@ public:
     /** Set the directory path */
     void dirPath(std::string dirpath);
 
+protected:
+    /** Constructor */
+    PHTFTrace();
+
 private:
+    static std::string eventFileNamePrefix;
+    static std::string runtimeFileNamePrefix;
+    static std::string fsFileName;
+
     std::string _dirpath;
     std::vector<PHTFEvent *> _events;
     PHTFArch *_archfile;
