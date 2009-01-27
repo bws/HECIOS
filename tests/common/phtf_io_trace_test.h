@@ -61,13 +61,13 @@ void PHTFIOTraceTest::testRecordConstructor2()
 
 void PHTFIOTraceTest::testEventConstructor()
 {
-    PHTFEvent ev("tests/traces/phtf/event.0", "tests/traces/phtf/runtime.0");
+    PHTFEvent ev("tests/traces/phtf/event.0");
     CPPUNIT_ASSERT_EQUAL(ev.filePath(), string("tests/traces/phtf/event.0"));
 }
 
 void PHTFIOTraceTest::testEventRead()
 {
-    PHTFEvent ev("tests/traces/phtf/event.0", "tests/traces/phtf/runtime.0");
+    PHTFEvent ev("tests/traces/phtf/event.0");
     PHTFEventRecord re;
     CPPUNIT_ASSERT_EQUAL(ev.open(), (int)0);
     ev >> re;
@@ -84,8 +84,9 @@ void PHTFIOTraceTest::testEventRead()
 
 void PHTFIOTraceTest::testTraceConstructor()
 {
-    PHTFTrace &tr = *PHTFTrace::getInstance("tests/traces/phtf/");
-    PHTFEvent &ev = *(tr.getEvent(0));
+    PHTFTrace& tr = PHTFTrace::instance();
+    tr.dirPath("tests/traces/phtf/");
+    PHTFEvent& ev = *(tr.getEvent(0));
     CPPUNIT_ASSERT_EQUAL(ev.filePath(), string("tests/traces/phtf/event.0"));
     PHTFEventRecord re;
     ev.open();

@@ -1,5 +1,5 @@
 #
-# Makefile to build the inter framework and assemble it for use
+# Makefile to build the INET framework and assemble it for use
 # within the Hecios simulator
 #
 
@@ -256,11 +256,12 @@ INET_OBJS = $(INET_DIR)/Applications/Ethernet/EtherApp_m.o \
 	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o
 
 INET_LIBS = \
-	$(LIB_DIR)/ospfd.a \
-	$(LIB_DIR)/ripd.a \
-	$(LIB_DIR)/zebra.a
+	$(LIB_DIR)/libospfd.a \
+	$(LIB_DIR)/libripd.a \
+	$(LIB_DIR)/libzebra.a \
+	$(LIB_DIR)/libzebra2.a
 
-INET_CMD_LIBS= -lenvir -lcmdenv
+INET_CMD_LIBS = -lenvir -lcmdenv
 
 $(INET_DIR)/bin/INET:
 	cd INET && ./makemake
@@ -274,15 +275,15 @@ $(INET_OBJS): $(INET_DIR)/bin/INET
 #
 # Archives created by and for the INET framework package
 #
-lib/ospfd.a: $(INET_DIR)/bin/INET
+lib/libospfd.a: $(INET_DIR)/bin/INET
 	mkdir -p lib
 	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/ospfd/ospfd.a $@
 
-lib/ripd.a: $(INET_DIR)/bin/INET
+lib/libripd.a: $(INET_DIR)/bin/INET
 	mkdir -p lib
 	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/ripd/ripd.a $@
 
-lib/zebra.a: $(INET_DIR)/bin/INET
+lib/libzebra2.a: $(INET_DIR)/bin/INET
 	mkdir -p lib
 	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/zebra/zebra.a $@
 
@@ -295,13 +296,13 @@ lib/libzebra.a: $(INET_DIR)/bin/INET
 #
 lib/inet.o: $(INET_DIR)/bin/INET $(INET_LIBS) lib/libzebra.a
 	mkdir -p lib
-	$(PRELINK) -L/lib -L/usr/lib -Llib $(INET_OBJS) $(INET_LIBS) -lzebra -o $@
+	$(PRELINK) -L/lib -L/usr/lib -Llib $(INET_OBJS) -lospfd -lripd -lzebra2 -lzebra -o $@
 
 #
 # Clean out INET build
 #
 inet_clean:
 	cd INET && make ROOT=$(shell pwd)/$(INET_DIR) clean
-	$(RM) lib/inet.o $(INET_LIBS) lib/libzebra.a
+	$(RM) lib/inet.o $(INET_LIBS)
 
 .PHONY: inet_clean
