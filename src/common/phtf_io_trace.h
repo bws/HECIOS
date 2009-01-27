@@ -196,14 +196,9 @@ public:
      * Constructor
      * @param filepath The path to the event file
      */
-    PHTFEvent(std::string filepath, std::string runtimepath);
-    /**
-     * Constructor
-     */
-    PHTFEvent() {_runtime = 0;};
-    /**
-     * Destrucor
-     */
+    PHTFEvent(const std::string& filepath);
+
+    /** Destructor */
     ~PHTFEvent();
 
     /** @return The string that contains the file path */
@@ -228,13 +223,9 @@ public:
     /** Write a record into the event file */
     PHTFEvent& operator<<(const PHTFEventRecord& rec);
 
-    std::string memValue(std::string type, std::string pointer) const;
-    void memValue(std::string type, std::string pointer, std::string value);
-
 private:
     std::string _filepath;
     std::fstream file_;
-    PHTFIni *_runtime;
 };
 
 /**
@@ -340,7 +331,6 @@ protected:
 
 private:
     static std::string eventFileNamePrefix;
-    static std::string runtimeFileNamePrefix;
     static std::string fsFileName;
 
     std::string _dirpath;

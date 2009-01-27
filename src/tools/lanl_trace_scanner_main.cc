@@ -38,8 +38,8 @@ extern "C" void yylex();
 
 void emitRuntimeFile(const string& runtimeFilename)
 {
-    ofstream runtimeFile(runtimeFilename.c_str());
-    runtimeFile.close();
+    //ofstream runtimeFile(runtimeFilename.c_str());
+    //runtimeFile.close();
 }
 
 void emitFileSystemConfigFile(const string& configFilename,

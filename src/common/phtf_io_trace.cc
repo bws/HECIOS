@@ -26,7 +26,6 @@ using namespace std;
 
 std::map<std::string, PHTFOperation>  PHTFEventRecord::_opmap;
 std::string PHTFTrace::eventFileNamePrefix = string("event.");
-std::string PHTFTrace::runtimeFileNamePrefix = string("runtime.");
 std::string PHTFTrace::fsFileName = string("fs.ini");
 std::string PHTFFs::fsSecName = string("FileSystem");
 std::string PHTFFs::fsConst = string("Const");
@@ -183,30 +182,6 @@ int PHTFEventRecord::paramAsDescriptor(size_t paramindex, const PHTFEvent & even
     int descriptor;
     iss >> descriptor;
     return descriptor;
-}
-
-string PHTFEventRecord::paramAsFilename(size_t paramindex, const PHTFEvent & event) const
-{
-    assert(paramindex < paraNum());
-
-    string strpt = paramAt(paramindex);
-
-    stringstream ss("");
-    ss << strpt << "@" << recordId();
-
-    string str = event.memValue("String", ss.str());
-
-    // TODO: come up with better error handling
-    if(str == "")
-    {
-        str = event.memValue("String", strpt);
-        if(str == "")
-        {
-            abort();
-        }
-    }
-
-    return str;
 }
 
 /** @return The string contains the parameters */
@@ -398,29 +373,13 @@ void PHTFEventRecord::buildRecordFields()
  * Constructor
  * @param filepath The path to the event file
  */
-PHTFEvent::PHTFEvent(string filepath, string runtimepath)
+PHTFEvent::PHTFEvent(const string& filepath)
 {
     filePath(filepath);
-    _runtime = new PHTFIni(runtimepath);
 }
 
 PHTFEvent::~PHTFEvent()
 {
-    if(_runtime)
-    {
-        delete _runtime;
-        _runtime = 0;
-    }
-}
-
-string PHTFEvent::memValue(string type, string pointer) const
-{
-    return _runtime->iniValue(type, pointer);
-}
-
-void PHTFEvent::memValue(string type, string pointer, string value)
-{
-    _runtime->iniValue(type,pointer, value);
 }
 
 /** @return The string that contains the file path */
@@ -469,7 +428,6 @@ bool PHTFEvent::eof()
 int PHTFEvent::open(bool write)
 {
     const char* filename = _filepath.c_str();
-    _runtime->init(write);
     if (write)
     {
         file_.open(filename, fstream::out | fstream::app);
@@ -545,8 +503,7 @@ PHTFEvent * PHTFTrace::getEvent(long int rank)
     ostringstream eventFilename;
     ostringstream runtimeFilename;
     eventFilename << dirPath() << "/" << PHTFTrace::eventFileNamePrefix << rank;
-    runtimeFilename << dirPath() << "/" << PHTFTrace::runtimeFileNamePrefix << rank;
-    PHTFEvent* event = new PHTFEvent(eventFilename.str(), runtimeFilename.str());
+    PHTFEvent* event = new PHTFEvent(eventFilename.str());
     _events.push_back(event);
     return event;
 }

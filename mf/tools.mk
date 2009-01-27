@@ -9,6 +9,7 @@ RM = rm -f
 CXX = g++
 LD = g++
 LEX = flex
+PRELINK = ld -Ur --eh-frame-hdr 
 
 #
 # OmNet++ tools

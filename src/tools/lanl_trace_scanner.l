@@ -36,6 +36,17 @@ char* beginLine = 0;
 /* Definitions controlling lex code generation */
 #define YY_MAIN 0
 
+/** Determine if the current state is correct */
+void checkState(int currentState, const char* currentText)
+{
+	if (0 != currentState)
+	{
+		fprintf(stderr, "ERROR: MPI construct ending was not detected\n");
+		fprintf(stderr, "\tProblem Text: %s\n", currentText);
+		exit(237);
+	}
+}
+
 %}
 %option yylineno
 
@@ -104,7 +115,9 @@ MPI_BARRIER_BEGIN ^.*\ MPI_Barrier\(
 MPI_BARRIER_END ^.*MPI_Barrier\ resumed.*\n
 
 MPI_BCAST_BEGIN ^.*\ MPI_Bcast\(
-MPI_BCAST_END \n
+MPI_BCAST_END ^.*MPI_Bcast\ resumed.*\n
+
+MPI_BCAST_IMMEDIATE ^.*\ MPI_Bcast\(.*\)\ =\ 0.*\n
 
 MPI_COMM_CREATE_BEGIN ^.*\ MPI_Comm_create\(
 MPI_COMM_CREATE_END ^.*MPI_Comm_create\ resumed.*\n
@@ -204,255 +217,309 @@ UNMATCHED_MPI_CALL ^[0-9.:]+\ MPI_.*\(
 
 %%
 {MPI_ALLREDUCE_BEGIN} {
-        BEGIN allreduce;
+		checkState(YY_START, yytext);
+        BEGIN(allreduce);
         collectInput = true;
         yymore();
         }
 <allreduce>{MPI_ALLREDUCE_END} {
         collectInput = false;
         handleMPIAllReduce(yytext);
+        BEGIN(0);
         }
 
 {MPI_BARRIER_BEGIN} {
-        BEGIN barrier;
+		checkState(YY_START, yytext);
+        BEGIN(barrier);
         collectInput = true;
         yymore();
         }
 <barrier>{MPI_BARRIER_END} {
         collectInput = false;
         handleMPIBarrier(yytext);
+        BEGIN(0);
         }
 
 {MPI_BCAST_BEGIN} {
-        BEGIN bcast;
+		checkState(YY_START, yytext);
+        BEGIN(bcast);
         collectInput = true;
         yymore();
         }
 <bcast>{MPI_BCAST_END} {
         collectInput = false;
         handleMPIBcast(yytext);
-		BEGIN 0;
+		BEGIN(0);
         }
 
+{MPI_BCAST_IMMEDIATE} {
+		checkState(YY_START, yytext);
+        collectInput = true;
+		handleMPIBcast(yytext);
+        }
+        
 {MPI_COMM_CREATE_BEGIN} {
-        BEGIN comm_create;
+		checkState(YY_START, yytext);
+        BEGIN(comm_create);
         collectInput = true;
         yymore();
         }
 <comm_create>{MPI_COMM_CREATE_END} {
         collectInput = false;
         handleMPICommCreate(yytext);
+        BEGIN(0);
         }
 
 {MPI_COMM_DUP_BEGIN} {
-        BEGIN comm_dup;
+		checkState(YY_START, yytext);
+        BEGIN(comm_dup);
         collectInput = true;
         yymore();
         }
 <comm_dup>{MPI_COMM_DUP_END} {
         collectInput = false;
         handleMPICommDup(yytext);
+        BEGIN(0);
         }
 
 {MPI_COMM_FREE_BEGIN} {
-        BEGIN comm_free;
+		checkState(YY_START, yytext);
+        BEGIN(comm_free);
         collectInput = true;
         yymore();
         }
 <comm_free>{MPI_COMM_FREE_END} {
         collectInput = false;
         handleMPICommFree(yytext);
+        BEGIN(0);
         }
 
 {MPI_COMM_RANK_BEGIN} {
-        BEGIN comm_rank;
+		checkState(YY_START, yytext);
+        BEGIN(comm_rank);
         collectInput = true;
         yymore();
         }
 <comm_rank>{MPI_COMM_RANK_END} {
         collectInput = false;
         handleMPICommRank(yytext);
+        BEGIN(0);
         }
 
 {MPI_COMM_SIZE_BEGIN} {
-        BEGIN comm_size;
+		checkState(YY_START, yytext);
+        BEGIN(comm_size);
         collectInput = true;
         yymore();
         }
 <comm_size>{MPI_COMM_SIZE_END} {
         collectInput = false;
         handleMPICommSize(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_CLOSE_BEGIN} {
-        BEGIN file_close;
+		checkState(YY_START, yytext);
+        BEGIN(file_close);
         collectInput = true;
         yymore();
         }
 <file_close>{MPI_FILE_CLOSE_END} {
-        BEGIN 0;
         collectInput = false;
         handleMPIFileClose(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_DELETE_BEGIN} {
-        BEGIN file_delete;
+		checkState(YY_START, yytext);
+        BEGIN(file_delete);
         collectInput = true;
         yymore();
         }
 <file_delete>{MPI_FILE_DELETE_END} {
         collectInput = false;
         handleMPIFileDelete(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_GET_AMODE_BEGIN} {
-        BEGIN file_get_amode;
+		checkState(YY_START, yytext);
+        BEGIN(file_get_amode);
         collectInput = true;
         yymore();
         }
 <file_get_amode>{MPI_FILE_GET_AMODE_END} {
         collectInput = false;
         handleMPIFileGetAMode(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_GET_GROUP_BEGIN} {
-        BEGIN file_get_group;
+		checkState(YY_START, yytext);
+        BEGIN(file_get_group);
         collectInput = true;
         yymore();
         }
 <file_get_group>{MPI_FILE_GET_GROUP_END} {
         collectInput = false;
         handleMPIFileGetGroup(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_GET_SIZE_BEGIN} {
-        BEGIN file_get_size;
+		checkState(YY_START, yytext);
+        BEGIN(file_get_size);
         collectInput = true;
         yymore();
         }
 <file_get_size>{MPI_FILE_GET_SIZE_END} {
         collectInput = false;
         handleMPIFileGetSize(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_OPEN_BEGIN} {
-        BEGIN file_open;
+		checkState(YY_START, yytext);
+        BEGIN(file_open);
         collectInput = true;
         yymore();
         }
 <file_open>{MPI_FILE_OPEN_END} {
         collectInput = false;
         handleMPIFileOpen(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_READ_BEGIN} {
-        BEGIN file_read;
+		checkState(YY_START, yytext);
+        BEGIN(file_read);
         collectInput = true;
         yymore();
         }
 <file_read>{MPI_FILE_READ_END} {
         collectInput = false;
         handleMPIFileRead(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_READ_ALL_BEGIN} {
-        BEGIN file_read_all;
+		checkState(YY_START, yytext);
+        BEGIN(file_read_all);
         collectInput = true;
         yymore();
         }
 <file_read_all>{MPI_FILE_READ_ALL_END} {
         collectInput = false;
         handleMPIFileReadAll(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_READ_AT_BEGIN} {
-        BEGIN file_read_at;
+		checkState(YY_START, yytext);
+        BEGIN(file_read_at);
         collectInput = true;
         yymore();
         }
 <file_read_at>{MPI_FILE_READ_AT_END} {
         collectInput = false;
         handleMPIFileReadAt(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_READ_AT_ALL_BEGIN} {
-        BEGIN file_read_at_all;
+		checkState(YY_START, yytext);
+        BEGIN(file_read_at_all);
         collectInput = true;
         yymore();
         }
 <file_read_at_all>{MPI_FILE_READ_AT_ALL_END} {
         collectInput = false;
         handleMPIFileReadAtAll(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_SEEK_BEGIN} {
-        BEGIN file_seek;
+		checkState(YY_START, yytext);
+        BEGIN(file_seek);
         collectInput = true;
         yymore();
         }
 <file_seek>{MPI_FILE_SEEK_END} {
         collectInput = false;
         handleMPIFileSeek(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_SET_SIZE_BEGIN} {
-        BEGIN file_set_size;
+		checkState(YY_START, yytext);
+        BEGIN(file_set_size);
         collectInput = true;
         yymore();
         }
 <file_set_size>{MPI_FILE_SET_SIZE_END} {
         collectInput = false;
         handleMPIFileSetSize(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_WRITE_BEGIN} {
-        BEGIN file_write;
+		checkState(YY_START, yytext);
+        BEGIN(file_write);
         collectInput = true;
         yymore();
         }
 <file_write>{MPI_FILE_WRITE_END} {
         collectInput = false;
         handleMPIFileWrite(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_WRITE_ALL_BEGIN} {
-        BEGIN file_write_all;
+		checkState(YY_START, yytext);
+        BEGIN(file_write_all);
         collectInput = true;
         yymore();
         }
 <file_write_all>{MPI_FILE_WRITE_ALL_END} {
         collectInput = false;
         handleMPIFileWriteAll(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_WRITE_AT_BEGIN} {
-        BEGIN file_write_at;
+		checkState(YY_START, yytext);
+        BEGIN(file_write_at);
         collectInput = true;
         yymore();
         }
 <file_write_at>{MPI_FILE_WRITE_AT_END} {
         collectInput = false;
         handleMPIFileWriteAt(yytext);
+        BEGIN(0);
         }
 
 {MPI_FILE_WRITE_AT_ALL_BEGIN} {
-        BEGIN file_write_at_all;
+		checkState(YY_START, yytext);
+        BEGIN(file_write_at_all);
         collectInput = true;
         yymore();
         }
 <file_write_at_all>{MPI_FILE_WRITE_AT_ALL_END} {
         collectInput = false;
         handleMPIFileWriteAtAll(yytext);
+        BEGIN(0);
         }
 
 {MPI_FINALIZE_BEGIN} {
-        BEGIN finalize;
+		checkState(YY_START, yytext);
+        BEGIN(finalize);
         collectInput = true;
         yymore();
         }
 <finalize>{MPI_FINALIZE_END} {
         collectInput = false;
         handleMPIFinalize(yytext);
+        BEGIN(0);
         }
 
 {MPI_GET_ELEMENTS} {
@@ -460,67 +527,80 @@ UNMATCHED_MPI_CALL ^[0-9.:]+\ MPI_.*\(
         }
 
 {MPI_GET_PROCESSOR_NAME_BEGIN} {
-        BEGIN get_processor_name;
+		checkState(YY_START, yytext);
+        BEGIN(get_processor_name);
         collectInput = true;
         yymore();
         }
 <get_processor_name>{MPI_GET_PROCESSOR_NAME_END} {
         collectInput = false;
         handleMPIGetProcessorName(yytext);
+        BEGIN(0);
         }
 
 {MPI_INFO_CREATE_BEGIN} {
-        BEGIN info_create;
+		checkState(YY_START, yytext);
+        BEGIN(info_create);
         collectInput = true;
         yymore();
         }
-<info_create>{MPI_INFO_DUP_END} {
+<info_create>{MPI_INFO_CREATE_END} {
         collectInput = false;
         handleMPIInfoCreate(yytext);
+        BEGIN(0);
         }
 
 {MPI_INFO_DUP_BEGIN} {
-        BEGIN info_dup;
+		checkState(YY_START, yytext);
+        BEGIN(info_dup);
         collectInput = true;
         yymore();
         }
 <info_dup>{MPI_INFO_DUP_END} {
         collectInput = false;
         handleMPIInfoDup(yytext);
+        BEGIN(0);
         }
 
 {MPI_INFO_FREE_BEGIN} {
-        BEGIN info_free;
+		checkState(YY_START, yytext);
+        BEGIN(info_free);
         collectInput = true;
         yymore();
         }
 <info_free>{MPI_INFO_FREE_END} {
         collectInput = false;
         handleMPIInfoFree(yytext);
+        BEGIN(0);
         }
 
 {MPI_INIT_BEGIN} {
-        BEGIN init;
+		checkState(YY_START, yytext);
+        BEGIN(init);
         collectInput = true;
         yymore();
         }
 <init>{MPI_INIT_END} {
         collectInput = false;
         handleMPIInit(yytext);
+        BEGIN(0);
         }
 
 {MPI_TYPE_SIZE} {
+		checkState(YY_START, yytext);
         handleMPITypeSize(yytext);
         }
 
 {MPI_WTIME_BEGIN} {
-        BEGIN wtime;
+		checkState(YY_START, yytext);
+        BEGIN(wtime);
         collectInput = true;
         yymore();
         }
 <wtime>{MPI_WTIME_END} {
         collectInput = false;
         handleMPIWTime(yytext);
+        BEGIN(0);
         }
 
 {UNMATCHED_MPI_CALL} {

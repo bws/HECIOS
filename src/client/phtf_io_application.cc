@@ -571,7 +571,10 @@ void PHTFIOApplication::performWaitProcessing(PHTFEventRecord* waitRecord,
 
 void PHTFIOApplication::performSetViewProcessing(PHTFEventRecord* setViewRecord)
 {
-    uint64_t handle = setViewRecord->paramAsAddress(0);
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "ERROR: Set view processing not currently implemented." << endl;
+    assert(0);
+    /*uint64_t handle = setViewRecord->paramAsAddress(0);
     FileDescriptor* fd = getDescriptor(handle);
 
     size_t offset = setViewRecord->paramAsSizeT(1);
@@ -582,7 +585,7 @@ void PHTFIOApplication::performSetViewProcessing(PHTFEventRecord* setViewRecord)
     assert(dataType);
 
     FileView fileView(offset, dataType->clone());
-    fd->setFileView(fileView);
+    fd->setFileView(fileView);*/
 }
 
 void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
@@ -633,7 +636,9 @@ void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
 
 void PHTFIOApplication::performCreateCommunicator(string newcomm)
 {
-    cerr << __FILE__ << ":" << __LINE__ << ":Create comm " << newcomm;
+    cerr << __FILE__ << ":" << __LINE__
+         << "ERROR: Create Comm Support needs code. " << endl;
+    /*
     string aliasComm = getAlias(newcomm);
     Communicator comm = (Communicator)strtol(aliasComm.c_str(), NULL, 0);
 
@@ -666,7 +671,7 @@ void PHTFIOApplication::performCreateCommunicator(string newcomm)
             assert(false);
         }
     }
-    cerr << ": " << CommMan::instance().commSize(comm) << endl;
+    cerr << ": " << CommMan::instance().commSize(comm) << endl;*/
 }
 
 void PHTFIOApplication::performDuplicateCommunicator(const Communicator& oldComm,
@@ -687,6 +692,10 @@ void PHTFIOApplication::performTypeProcessing(PHTFEventRecord* typeRecord)
 
 void PHTFIOApplication::performCreateDataType(string typeId)
 {
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "ERROR: Don't support create datatype yet" << endl;
+    assert(0);
+    /*
     // create type based on datatype type
 
     stringstream ss("");
@@ -697,7 +706,6 @@ void PHTFIOApplication::performCreateDataType(string typeId)
     stringstream ss2("");
     ss2 << realtype << "@" << rec_id_;
 
-    cerr << __FILE__ << ":" << __LINE__ << ":" << "Create datatype " << realtype << " ";
 
     int type = (int)strtol(phtfEvent_->memValue(ss2.str(), "type").c_str(), NULL, 0);
     switch(type)
@@ -721,7 +729,7 @@ void PHTFIOApplication::performCreateDataType(string typeId)
             cerr << "Error: unsupported datatype: " << type << endl;
             assert(false);
             break;
-    }
+    }*/
 }
 
 DataType * PHTFIOApplication::getDataTypeById(std::string typeId)
@@ -759,15 +767,7 @@ void PHTFIOApplication::performCreateBasicDataType(std::string typeId)
     // get parameter
     size_t size;
     string ssize = PHTFTrace::instance().getFs()->consts(typeId);
-    if(!ssize.compare(""))
-    {
-        ssize = phtfEvent_->memValue(typeId, "size");
-        if(!ssize.compare(""))
-        {
-            ssize = typeId;
-        }
-    }
-
+    assert(0 != ssize.size());
     size = (size_t)strtol(ssize.c_str(), 0, 0);
 
     DataType * newDataType;
@@ -800,7 +800,11 @@ void PHTFIOApplication::performCreateBasicDataType(std::string typeId)
 
 void PHTFIOApplication::performCreateContiguousDataType(std::string typeId)
 {
-    stringstream ss("");
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "ERROR: This stuff doesn't work yet." << endl;
+    assert(0);
+
+    /*stringstream ss("");
     ss << typeId << "@" << rec_id_;
 
     // get parameter
@@ -821,12 +825,15 @@ void PHTFIOApplication::performCreateContiguousDataType(std::string typeId)
     ContiguousDataType * newDataType = new ContiguousDataType(count, *oldType);
     dataTypeById_[typeId] = newDataType;
     cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Data Type Width: " << dataTypeById_.size() << endl;
+         << "Data Type Width: " << dataTypeById_.size() << endl;*/
 }
 
 void PHTFIOApplication::performCreateStructDataType(std::string typeId)
 {
-    stringstream ss("");
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "ERROR: This stuff doesn't work yet." << endl;
+    assert(0);
+    /*stringstream ss("");
     ss << typeId << "@" << rec_id_;
 
     // get parameter
@@ -872,12 +879,15 @@ void PHTFIOApplication::performCreateStructDataType(std::string typeId)
     StructDataType * newDataType = new StructDataType(blocklens, disp, oldTypes);
     dataTypeById_[typeId] = newDataType;
     cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Data Type Width: " << dataTypeById_.size() << endl;
+         << "Data Type Width: " << dataTypeById_.size() << endl;*/
 }
 
 void PHTFIOApplication::performCreateSubarrayDataType(std::string typeId)
 {
-    stringstream ss("");
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "ERROR: This stuff doesn't work yet." << endl;
+    assert(0);
+    /*stringstream ss("");
     ss << typeId << "@" << rec_id_;
 
     // get parameter
@@ -931,12 +941,15 @@ void PHTFIOApplication::performCreateSubarrayDataType(std::string typeId)
         newDataType = new SubarrayDataType(sizes, subSizes, starts, SubarrayDataType::C_ORDER, *oldType);
     dataTypeById_[typeId] = newDataType;
     cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Data Type Width: " << dataTypeById_.size() << endl;
+         << "Data Type Width: " << dataTypeById_.size() << endl;*/
 }
 
 void PHTFIOApplication::performCreateVectorDataType(std::string typeId)
 {
-    stringstream ss("");
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "ERROR: This stuff doesn't work yet." << endl;
+    assert(0);
+    /*stringstream ss("");
     ss << typeId << "@" << rec_id_;
 
     // get parameter
@@ -957,7 +970,7 @@ void PHTFIOApplication::performCreateVectorDataType(std::string typeId)
     VectorDataType * newDataType = new VectorDataType(count, blocklength, stride, *oldType);
     dataTypeById_[typeId] = newDataType;
     cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Data Type Width: " << dataTypeById_.size() << endl;
+         << "Data Type Width: " << dataTypeById_.size() << endl;*/
 }
 
 spfsMPIBarrierRequest* PHTFIOApplication::createAllReduceMessage(
@@ -1023,7 +1036,8 @@ spfsMPIFileDeleteRequest* PHTFIOApplication::createFileDeleteMessage(
     const PHTFEventRecord* deleteRecord)
 {
     // Extract the file name
-    string filename = deleteRecord->paramAsFilename(0, *phtfEvent_);
+    string filename = deleteRecord->paramAt(0);
+    cerr << "DIAGNOSTIC: Deleting Filename: " << filename << endl;
 
     // Fill out the delete request
     spfsMPIFileDeleteRequest* deleteRequest =
@@ -1090,9 +1104,7 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createFileOpenMessage(
     const PHTFEventRecord* openRecord)
 {
     // Extract the communicator id
-    string gstr = openRecord->paramAt(0);
-    gstr = getAlias(gstr);
-    int communicatorId = (int)strtol(gstr.c_str(), NULL, 0);
+    int communicatorId = openRecord->paramAsAddress(0);
 
     // Extract the open mode
     int mode = openRecord->paramAsSizeT(2);
@@ -1125,9 +1137,8 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createFileReadAtMessage(
 
     size_t offset = readAtRecord->paramAsSizeT(1);
     size_t count = readAtRecord->paramAsSizeT(3);
-    string dtstr = readAtRecord->paramAt(4);
-    dtstr = getAlias(dtstr);
-    DataType* dataType = getDataTypeById(dtstr);
+    string dtId = readAtRecord->paramAt(4);
+    DataType* dataType = getDataTypeById(dtId);
 
     spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
         0, SPFS_MPI_FILE_READ_AT_REQUEST);
@@ -1147,9 +1158,8 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createFileReadMessage(
 
     size_t count = readRecord->paramAsSizeT(2);
 
-    string dtstr = readRecord->paramAt(3);
-    dtstr = getAlias(dtstr);
-    DataType* dataType = getDataTypeById(dtstr);
+    string dtId = readRecord->paramAt(3);
+    DataType* dataType = getDataTypeById(dtId);
 
     spfsMPIFileReadAtRequest* read = new spfsMPIFileReadAtRequest(
         0, SPFS_MPI_FILE_READ_AT_REQUEST);
@@ -1188,9 +1198,8 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteAtMessage(
     size_t offset = writeAtRecord->paramAsSizeT(1);
     size_t count = writeAtRecord->paramAsSizeT(3);
 
-    string dtstr = writeAtRecord->paramAt(4);
-    dtstr = getAlias(dtstr);
-    DataType* dataType = getDataTypeById(dtstr);
+    string dtId = writeAtRecord->paramAt(4);
+    DataType* dataType = getDataTypeById(dtId);
 
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
         0, SPFS_MPI_FILE_WRITE_AT_REQUEST);
@@ -1211,9 +1220,8 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteMessage(
 
     size_t count = writeRecord->paramAsSizeT(2);
 
-    string dtstr = writeRecord->paramAt(3);
-    dtstr = getAlias(dtstr);
-    DataType* dataType = getDataTypeById(dtstr);
+    string dtId = writeRecord->paramAt(3);
+    DataType* dataType = getDataTypeById(dtId);
     assert(NULL != dataType);
 
     spfsMPIFileWriteAtRequest* write = new spfsMPIFileWriteAtRequest(
@@ -1228,34 +1236,6 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteMessage(
     fd->moveFilePointer(count * dataType->getExtent());
 
     return write;
-}
-
-string PHTFIOApplication::getAlias(string id)
-{
-    string alias = phtfEvent_->memValue("Alias", id);
-    if(alias.compare(""))
-        return getAlias(alias);
-    else
-    {
-        if(id.length() >= 8)
-        {
-            stringstream ss("");
-            ss << "0x" << id.substr(id.length() - 8);
-            alias = phtfEvent_->memValue("Alias", ss.str());
-            if(alias.compare(""))
-            {
-                return getAlias(alias);
-            }
-            else
-            {
-                return id;
-            }
-        }
-        else
-        {
-            return id;
-        }
-    }
 }
 
 spfsMPIBcastRequest* PHTFIOApplication::createBcastRequest(

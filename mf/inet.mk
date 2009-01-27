@@ -295,7 +295,7 @@ lib/libzebra.a: $(INET_DIR)/bin/INET
 #
 lib/inet.o: $(INET_DIR)/bin/INET $(INET_LIBS) lib/libzebra.a
 	mkdir -p lib
-	ld -Ur -L/lib -L/usr/lib -Llib $(INET_OBJS) $(INET_LIBS) -lzebra -o $@
+	$(PRELINK) -L/lib -L/usr/lib -Llib $(INET_OBJS) $(INET_LIBS) -lzebra -o $@
 
 #
 # Clean out INET build
