@@ -57,37 +57,53 @@ void PHTFIOApplication::initialize()
     // Parent class initialization
     IOApplication::initialize();
 
+    // Retrieve the CPU pause flasg
+    disableCPUPause_ = par("disableCPUPhase").boolValue();
+
     // Retrieve the resource describing the trace location
     traceDirectory_ = par("traceFile").stringValue();
+    bool traceIsEnabled = (0 != traceDirectory_.size());
 
-    // PHTF stuff not able to support single initialization, so
-    // enforce that locally
-    static bool phtfInit = false;
-    if(!phtfInit)
+    if (traceIsEnabled)
     {
-        // Set the trace directory (and initialize the file system config)
-        PHTFTrace::instance().dirPath(traceDirectory_);
+        // PHTF stuff not able to support single initialization, so
+        // enforce that locally
+        static bool phtfInit = false;
+        if (!phtfInit)
+        {
+            // Set the trace directory (and initialize the file system config)
+            PHTFTrace::instance().dirPath(traceDirectory_);
 
-        // Set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration
-        // in fs.ini
-        string commWorldValue = PHTFTrace::instance().getFs()->consts("MPI_COMM_WORLD");
-        CommMan::instance().setCommWorld(strtol(commWorldValue.c_str(), 0, 0));
+            // Set value for MPI_COMM_WORLD & MPI_COMM_SELF based on configuration
+            // in fs.ini
+            string commWorldValue = PHTFTrace::instance().getFs()->consts("MPI_COMM_WORLD");
+            CommMan::instance().setCommWorld(strtol(commWorldValue.c_str(), 0, 0));
 
-        string commSelfValue = PHTFTrace::instance().getFs()->consts("MPI_COMM_SELF");
-        CommMan::instance().setCommSelf(strtol(commSelfValue.c_str(), 0, 0));
+            string commSelfValue = PHTFTrace::instance().getFs()->consts("MPI_COMM_SELF");
+            CommMan::instance().setCommSelf(strtol(commSelfValue.c_str(), 0, 0));
 
-        // Build a singleton map of mpi operation IDs (string => ID)
-        PHTFEventRecord::buildOpMap();
+            // Build a singleton map of mpi operation IDs (string => ID)
+            PHTFEventRecord::buildOpMap();
 
-        // Disable further initialization
-        phtfInit = true;
+            // Disable further initialization
+            phtfInit = true;
+        }
+
+        // Schedule the kick start message
+        double maxBeginTime = par("maxBeginTime").doubleValue();
+        cMessage* kickStart = new cMessage(CPU_PHASE_MESSAGE_NAME);
+        double kickStartTime = uniform(0.0, maxBeginTime);
+        scheduleAt(kickStartTime, kickStart);
     }
-
-    // Schedule the kick start message
-    double maxBeginTime = par("maxBeginTime").doubleValue();
-    cMessage* kickStart = new cMessage(CPU_PHASE_MESSAGE_NAME);
-    double kickStartTime = uniform(0.0, maxBeginTime);
-    scheduleAt(kickStartTime, kickStart);
+    else
+    {
+        static bool printOnce = false;
+        if (!printOnce)
+        {
+            cout << "MPI-IO Tracing is disabled.\n";
+            printOnce = true;
+        }
+    }
 }
 
 /**
@@ -97,38 +113,41 @@ void PHTFIOApplication::finish()
 {
     IOApplication::finish();
 
-    // Aggregate accumulation statistics
-    static size_t numResults = 0;
-    static double aggReadTime = 0.0;
-    static double aggReadBytes = 0.0;
-    static double aggWriteTime = 0.0;
-    static double aggWriteBytes = 0.0;
-    static double maxReadTime = 0.0;
-    static double maxWriteTime = 0.0;
-
-    // Accumulate the aggregate bandwidth
-    numResults++;
-    aggReadBytes += getNumReadBytes();
-    aggReadTime += getReadTime();
-    aggWriteBytes += getNumWriteBytes();
-    aggWriteTime += getWriteTime();
-    maxReadTime = max(maxReadTime, getReadTime());
-    maxWriteTime = max(maxWriteTime, getWriteTime());
-
-    // Write out the aggregate statistic on the final process
-    if (numResults == CommMan::instance().commSize(SPFS_COMM_WORLD))
+    if (0 != traceDirectory_.size())
     {
-        double aggWriteBandwidth = aggWriteBytes / (1.0e6 * maxWriteTime);
-        recordScalar("SPFS Aggregate Write Bandwidth", aggWriteBandwidth);
-        cerr << "Aggregated Write bandwidth: " << aggWriteBandwidth << endl;
+        // Aggregate accumulation statistics
+        static size_t numResults = 0;
+        static double aggReadTime = 0.0;
+        static double aggReadBytes = 0.0;
+        static double aggWriteTime = 0.0;
+        static double aggWriteBytes = 0.0;
+        static double maxReadTime = 0.0;
+        static double maxWriteTime = 0.0;
 
-        double aggReadBandwidth = aggReadBytes / (1.0e6 * maxReadTime);
-        recordScalar("SPFS Aggregate Read Bandwidth", aggReadBandwidth);
-        cerr << "Aggregated Read bandwidth: " << aggReadBandwidth << endl;
+        // Accumulate the aggregate bandwidth
+        numResults++;
+        aggReadBytes += getNumReadBytes();
+        aggReadTime += getReadTime();
+        aggWriteBytes += getNumWriteBytes();
+        aggWriteTime += getWriteTime();
+        maxReadTime = max(maxReadTime, getReadTime());
+        maxWriteTime = max(maxWriteTime, getWriteTime());
+
+        // Write out the aggregate statistic on the final process
+        if (numResults == CommMan::instance().commSize(SPFS_COMM_WORLD))
+        {
+            double aggWriteBandwidth = aggWriteBytes / (1.0e6 * maxWriteTime);
+            recordScalar("SPFS Aggregate Write Bandwidth", aggWriteBandwidth);
+            cout << "Aggregated Write bandwidth: " << aggWriteBandwidth << endl;
+
+            double aggReadBandwidth = aggReadBytes / (1.0e6 * maxReadTime);
+            recordScalar("SPFS Aggregate Read Bandwidth", aggReadBandwidth);
+            cout << "Aggregated Read bandwidth: " << aggReadBandwidth << endl;
+        }
+
+        // Cleanup trace resources
+        phtfEvent_->close();
     }
-
-    // Cleanup trace resources
-    phtfEvent_->close();
 }
 
 void PHTFIOApplication::rankChanged(int oldRank)
@@ -248,6 +267,7 @@ bool PHTFIOApplication::processEvent(PHTFEventRecord& eventRecord)
     bool msgScheduled = false;
     int opType = eventRecord.recordOp();
     if (CPU_PHASE == opType || OPEN == opType ||
+        SEEK == opType ||
         IREAD == opType || IWRITE == opType || WAIT == opType ||
         COMM_DUP == opType || COMM_RANK == opType)
     {
@@ -276,9 +296,17 @@ bool PHTFIOApplication::processIrregularEvent(PHTFEventRecord* eventRecord)
     {
         case CPU_PHASE:
         {
-            cMessage* msg = createCPUPhaseMessage(eventRecord);
-            scheduleCPUMessage(msg);
-            msgScheduled = true;
+            if (disableCPUPause_)
+            {
+                // Skip to the next message
+                msgScheduled = scheduleNextMessage();
+            }
+            else
+            {
+                cMessage* msg = createCPUPhaseMessage(eventRecord);
+                scheduleCPUMessage(msg);
+                msgScheduled = true;
+            }
             break;
         }
         case COMM_CREATE:
@@ -523,11 +551,11 @@ void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
 
 void PHTFIOApplication::performSeekProcessing(PHTFEventRecord* seekRecord)
 {
-    uint64_t handle = seekRecord->paramAsAddress(0);
+    int handle = seekRecord->paramAsDescriptor(0, *phtfEvent_);
+    FileDescriptor* fd = getDescriptor(handle);
 
     size_t offset = seekRecord->paramAsSizeT(1);
     int whence = seekRecord->paramAsSizeT(2);
-    FileDescriptor* fd = getDescriptor(handle);
 
     // Determine the seek whence values
     int MPI_SEEK_SET, MPI_SEEK_CUR, MPI_SEEK_END;

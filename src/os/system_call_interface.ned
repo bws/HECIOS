@@ -27,6 +27,8 @@
 //
 simple SystemCallInterface
   parameters:
+      addReadOverheadSecs: const,
+      addWriteOverheadSecs: const,
       overheadSecs: const;
 
   gates:

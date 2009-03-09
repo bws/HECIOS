@@ -227,9 +227,11 @@ private:
     /** retrieve Datatype from map, NULL if none found */
     DataType * getDataTypeById(std::string);
 
-    //std::string getAlias(std::string);
-
+    /** This is a reckless approach to passing around the record ID */
     long rec_id_;
+
+    /** Flag to indicate if CPU pauses should be ignored */
+    bool disableCPUPause_;
 };
 
 #endif

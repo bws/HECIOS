@@ -224,7 +224,9 @@ void handleMPIWTime(const char* text)
     LanlTraceScanActions::instance().handleMPIWTime(text);
 }
 
-std::size_t LanlTraceScanActions::currentTraceCallId_ = 0;
+/* Static data initialization */
+const string LanlTraceScanActions::CPU_PHASE_CALLNAME = "CPU_PHASE";
+size_t LanlTraceScanActions::currentTraceCallId_ = 0;
 
 LanlTraceScanActions::LanlTraceScanActions()
     : currentFile_(make_pair("", 0)),
@@ -695,7 +697,7 @@ void LanlTraceScanActions::handleMPIFileSeek(const string& text)
 
     // Extract the whence data
     begin = end + 2;
-    end = text.find(" ", begin);
+    end = text.find_first_of(" )", begin);
     string whence = text.substr(begin, end - begin);
 
     // Create the trace call
@@ -859,7 +861,7 @@ void LanlTraceScanActions::handleMPIFinalize(const string& text)
     string duration = extractDuration(text);
 
     // Create the trace call
-    TraceCall tc = createTraceCall("MPI_FINALIZE", startTime, duration);
+    TraceCall tc = createTraceCall(CPU_PHASE_CALLNAME, startTime, duration);
     traceCalls_.push_back(tc);
 }
 
@@ -912,8 +914,8 @@ void LanlTraceScanActions::handleMPIInit(const string& text)
     string startTime = extractStartTime(text);
     string duration = extractDuration(text);
 
-    // For now, this is a no-op
-    TraceCall tc = createTraceCall("MPI_INIT", startTime, duration);
+    // TODO: For now, this is a no-op
+    TraceCall tc = createTraceCall(CPU_PHASE_CALLNAME, startTime, duration);
     traceCalls_.push_back(tc);
 }
 

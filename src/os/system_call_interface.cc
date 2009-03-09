@@ -71,6 +71,8 @@ void SequentialSystemCallInterface::initialize()
 
     // Initialize self
     overheadSecs_ = par("overheadSecs").doubleValue();
+    addReadOverheadSecs_ = par("overheadSecs").doubleValue();
+    addWriteOverheadSecs_ = par("overheadSecs").doubleValue();
     assert(0.0 <= overheadSecs_);
 }
 
@@ -79,8 +81,18 @@ void SequentialSystemCallInterface::handleMessage(cMessage* msg)
     if (msg->arrivalGateId() == inGateId_)
     {
         // Sequence the message and add system call delay
+        double overhead = overheadSecs_;
+        if (SPFS_OS_FILE_READ_REQUEST == msg->kind())
+        {
+            overhead += addReadOverheadSecs_;
+        }
+        else if (SPFS_OS_FILE_WRITE_REQUEST)
+        {
+            overhead += addWriteOverheadSecs_;
+        }
+
         simtime_t scheduleDelay =
-            messageInScheduler_.getNextMessageScheduleDelay(overheadSecs_);
+            messageInScheduler_.getNextMessageScheduleDelay(overhead);
         sendDelayed(msg, scheduleDelay, requestGateId_);
     }
     else

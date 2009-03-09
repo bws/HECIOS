@@ -98,7 +98,7 @@ module BMIEnhancedHost
             display: "p=248,247;i=block/fork;q=queue";
         ppp: PPPInterface[sizeof(out)];
             display: "p=205,350,row,90;q=txQueue;i=block/ifcard";
-        eth: EthernetInterface2[sizeof(ethOut)];
+        eth: EnhancedEthernetInterface2[sizeof(ethOut)];
             display: "p=240,350,row,90;q=txQueue;i=block/ifcard";
     connections nocheck:
         for i=0..numTcpApps-1 do

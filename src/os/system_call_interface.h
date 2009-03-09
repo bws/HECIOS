@@ -21,6 +21,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <omnetpp.h>
+#include "os_proto_m.h"
 #include "serial_message_scheduler.h"
 
 /**
@@ -29,12 +30,12 @@
 class SystemCallInterface : public cSimpleModule
 {
 public:
-    
+
     /** Constructor */
     SystemCallInterface();
 
 protected:
-    
+
     /**
      *  This is the initialization routine for this simulation module.
      */
@@ -76,7 +77,7 @@ public:
      */
     SequentialSystemCallInterface();
 
-protected:    
+protected:
     /** This is the initialization routine for this simulation module. */
     virtual void initialize();
 
@@ -89,9 +90,15 @@ private:
 
     /** */
     SerialMessageScheduler messageOutScheduler_;
-    
+
     /** System call overhead */
     double overheadSecs_;
+
+    /** Additional read system call overhead */
+    double addReadOverheadSecs_;
+
+    /** Additional write system call overhead */
+    double addWriteOverheadSecs_;
 
 };
 

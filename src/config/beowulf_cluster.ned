@@ -67,7 +67,7 @@ module BeowulfCluster
         ion: IONode[numIONodes];
             display: "p=450,150,m,2;i=abstract/cache,magenta";
 
-        switch: EtherSwitch2;
+        switch: EnhancedEtherSwitch2;
             display: "p=350,150;i=abstract/switch,cyan";
 
         pfsConfig: FSServerConfigurator;
@@ -89,13 +89,17 @@ module BeowulfCluster
     connections:
 
         for i = 0..numCPUNodes-1 do
-            cpun[i].ethOut --> GigE --> switch.in++;
-            cpun[i].ethIn <-- GigE <-- switch.out++;
+            //cpun[i].ethOut --> GigE --> switch.in++;
+            //cpun[i].ethIn <-- GigE <-- switch.out++;
+            cpun[i].ethOut --> TenGigE --> switch.in++;
+            cpun[i].ethIn <-- TenGigE <-- switch.out++;
         endfor;
 
         for i = 0..numIONodes - 1 do
-            ion[i].ethOut --> GigE --> switch.in++;
-            ion[i].ethIn <-- GigE <-- switch.out++;
+			//ion[i].ethOut --> GigE --> switch.in++;
+            //ion[i].ethIn <-- GigE <-- switch.out++;
+            ion[i].ethOut --> TenGigE --> switch.in++;
+            ion[i].ethIn <-- TenGigE <-- switch.out++;
         endfor;
 
     display: "o=white"; // affects background

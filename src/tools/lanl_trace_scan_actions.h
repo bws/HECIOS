@@ -156,6 +156,9 @@ public:
     /** Difference between double before difference is considered significant */
     static const double EPSILON = 1e-6;
 
+    /** Callname identifier for cpu phases */
+    static const std::string CPU_PHASE_CALLNAME;
+
     /** Structure for describing a trace call */
     struct TraceCall
     {
