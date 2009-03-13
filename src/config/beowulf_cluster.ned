@@ -54,6 +54,13 @@ channel FortyGigE
     datarate 40000000000.0 // bit/sec
 endchannel
 
+// Data channel representing Myrinet 10g performance
+channel Myrinet10G
+    delay 0.0
+    error 0.0
+    datarate 10000000000.0
+endchannel
+
 module BeowulfCluster
 
     parameters:
@@ -91,15 +98,15 @@ module BeowulfCluster
         for i = 0..numCPUNodes-1 do
             //cpun[i].ethOut --> GigE --> switch.in++;
             //cpun[i].ethIn <-- GigE <-- switch.out++;
-            cpun[i].ethOut --> TenGigE --> switch.in++;
-            cpun[i].ethIn <-- TenGigE <-- switch.out++;
+            cpun[i].ethOut --> Myrinet10G --> switch.in++;
+            cpun[i].ethIn <-- Myrinet10G <-- switch.out++;
         endfor;
 
         for i = 0..numIONodes - 1 do
 			//ion[i].ethOut --> GigE --> switch.in++;
             //ion[i].ethIn <-- GigE <-- switch.out++;
-            ion[i].ethOut --> TenGigE --> switch.in++;
-            ion[i].ethIn <-- TenGigE <-- switch.out++;
+            ion[i].ethOut --> Myrinet10G --> switch.in++;
+            ion[i].ethIn <-- Myrinet10G <-- switch.out++;
         endfor;
 
     display: "o=white"; // affects background

@@ -67,10 +67,17 @@ void EnhancedMACRelayUnitPP::initialize(int stage)
         size_t numPorts = getNumActivePorts();
         size_t bufferPerPort = par("bufferSizePerPort");
         size_t minBufferSize = par("minBufferSize");
+        size_t maxBufferSize = par("maxBufferSize");
+        assert (minBufferSize <= maxBufferSize);
+
         bufferSize = numPorts * bufferPerPort;
-        if (bufferSize < minBufferSize)
+        if (minBufferSize > 0 && bufferSize < minBufferSize)
         {
             bufferSize = minBufferSize;
+        }
+        else if (maxBufferSize > 0 && bufferSize > maxBufferSize)
+        {
+            bufferSize = maxBufferSize;
         }
 
         // Configure the watermark settings

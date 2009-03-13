@@ -71,8 +71,8 @@ void SequentialSystemCallInterface::initialize()
 
     // Initialize self
     overheadSecs_ = par("overheadSecs").doubleValue();
-    addReadOverheadSecs_ = par("overheadSecs").doubleValue();
-    addWriteOverheadSecs_ = par("overheadSecs").doubleValue();
+    addReadOverheadSecs_ = par("addReadOverheadSecs").doubleValue();
+    addWriteOverheadSecs_ = par("addWriteOverheadSecs").doubleValue();
     assert(0.0 <= overheadSecs_);
 }
 

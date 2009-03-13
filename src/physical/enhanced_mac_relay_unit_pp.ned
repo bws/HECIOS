@@ -40,6 +40,7 @@ simple EnhancedMACRelayUnitPP
         processingTime : numeric,   	// processing time of one frame
         bufferSizePerPort : numeric,    // memory per port (bytes)
         minBufferSize : numeric,		// minimum buffer size
+        maxBufferSize : numeric,		// maximum buffer size
         highWatermark : numeric,    	// buffer usage threshold to send PAUSE frame (bytes)
         pauseUnits : numeric,       	// time to put in PAUSE frames (in units of 512 bit times)
         writeScalars: bool;         	// enable/disable recording statistics in omnetpp.sca
