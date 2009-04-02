@@ -22,6 +22,7 @@
 #include <cassert>
 #include <functional>
 #include "comm_man.h"
+#include "lru_cache_filters.h"
 #include "mpi_proto_m.h"
 using namespace std;
 

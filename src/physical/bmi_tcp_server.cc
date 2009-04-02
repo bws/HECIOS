@@ -22,6 +22,7 @@
 #include <map>
 #include "TCPSocket.h"
 #include "TCPSocketMap.h"
+#include "basic_types.h"
 #include "bmi_endpoint.h"
 #include "bmi_proto_m.h"
 #include "ip_socket_map.h"
@@ -89,8 +90,8 @@ private:
     /** Map for handling messages from open client sockets */
     TCPSocketMap socketMap_;
 
-    /** Mapping from a messages socketId to the socket */
-    std::map<int,TCPSocket*> requestToSocketMap_;
+    /** Mapping from a messages connectionId to the socket */
+    std::map<ConnectionId,TCPSocket*> requestToSocketMap_;
 
     /** Mapping of Server IP's to connected server sockets */
     IPSocketMap remoteServerConnectionMap_;
@@ -185,7 +186,7 @@ void BMITcpServer::sendOverNetwork(spfsBMIExpectedMessage* msg)
     assert(0 < msg->byteLength());
 
     // Find the already open socket
-    map<int,TCPSocket*>::iterator pos =
+    map<ConnectionId,TCPSocket*>::iterator pos =
         requestToSocketMap_.find(msg->getConnectionId());
     assert(requestToSocketMap_.end() != pos);
 

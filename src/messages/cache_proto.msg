@@ -38,6 +38,8 @@ enum spfsCacheMessageKind
 {
     SPFS_CACHE_INVALIDATE_REQUEST = 701;
     SPFS_CACHE_INVALIDATE_RESPONSE = 702;
+    SPFS_CACHE_READ_EXCLUSIVE_REQUEST = 703;
+    SPFS_CACHE_READ_EXCLUSIVE_RESPONSE = 704;
 };
 
 message spfsCacheInvalidateRequest
@@ -50,6 +52,20 @@ message spfsCacheInvalidateRequest
 }
 
 message spfsCacheInvalidateResponse
+{
+    fields:
+}
+
+message spfsCacheReadExclusiveRequest
+{
+    fields:
+        int handle;
+        unsigned int offset;
+        MPIDataType dataType;
+        unsigned int count;
+}
+
+message spfsCacheReadExclusiveResponse
 {
     fields:
 }

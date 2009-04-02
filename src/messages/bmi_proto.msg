@@ -21,6 +21,12 @@
 //
 // BMI wrapper messages for transporting data from the client to server
 //
+cplusplus {{
+#include "basic_types.h"
+}}
+
+// Forward declarations
+class noncobject ConnectionId;
 
 // The abstract base class for all BMI Messages
 message spfsBMIMessage
@@ -33,7 +39,7 @@ message spfsBMIMessage
 message spfsBMIExpectedMessage extends spfsBMIMessage
 {
     fields:
-        int connectionId;
+        ConnectionId connectionId;
 };
 
 // Message sent that establishes a BMI connection

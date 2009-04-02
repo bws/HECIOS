@@ -37,6 +37,7 @@ typedef void* VoidPtr;
 
 // Forward declarations
 class cFSM;
+class noncobject ConnectionId;
 class noncobject DataTypePtr;
 class noncobject FileDistributionPtr;
 class noncobject FileViewPtr;
@@ -105,7 +106,7 @@ message spfsRequest
 
         // internal fields
         cFSM state;
-        int bmiConnectionId;
+        ConnectionId bmiConnectionId;
 };
 
 // File system response abstract base class
@@ -383,7 +384,7 @@ message spfsDataFlowStart extends spfsRequest
         FSSize dataSize;
 
         // The bmi connection and tag to use for this flow
-        int bmiConnectionId;
+        ConnectionId bmiConnectionId;
         int inboundBmiTag;
         int outboundBmiTag;
 };

@@ -39,6 +39,9 @@ typedef uint64_t FSSize;
 /** Logical Block Address data type */
 typedef int64_t LogicalBlockAddress;
 
+/** BMI Connection Id */
+typedef uint64_t ConnectionId;
+
 /** A contiguous region of a file, i.e. an offset and an extent */
 struct FileRegion
 {

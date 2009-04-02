@@ -5,9 +5,12 @@ DIR := src/common
 
 SIM_SRC += $(DIR)/block_indexed_data_type.cc \
 	$(DIR)/comm_man.cc \
+	$(DIR)/client_cache_directory.cc \
 	$(DIR)/contiguous_data_type.cc \
 	$(DIR)/data_type.cc \
 	$(DIR)/file_descriptor.cc \
+	$(DIR)/file_page_utils.cc \
+	$(DIR)/file_region_set.cc \
 	$(DIR)/file_view.cc \
 	$(DIR)/filename.cc \
 	$(DIR)/fs_operation.cc \

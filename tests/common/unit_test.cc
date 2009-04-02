@@ -20,9 +20,12 @@
 #include <cppunit/TextTestRunner.h>
 #include "basic_data_type_test.h"
 #include "block_indexed_data_type_test.h"
+#include "client_cache_directory_test.h"
 #include "comm_man_test.h"
 #include "contiguous_data_type_test.h"
 #include "file_descriptor_test.h"
+#include "file_page_utils_test.h"
+#include "file_region_set_test.h"
 #include "file_view_test.h"
 #include "filename_test.h"
 #include "indexed_data_type_test.h"
@@ -50,9 +53,12 @@ int main(int argc, char** argv)
 
     runner.addTest( BasicDataTypeTest::suite() );
     runner.addTest( BlockIndexedDataTypeTest::suite() );
+    runner.addTest( ClientCacheDirectoryTest::suite() );
     runner.addTest( CommManTest::suite() );
     runner.addTest( ContiguousDataTypeTest::suite() );
     runner.addTest( FileDescriptorTest::suite() );
+    runner.addTest( FilePageUtilsTest::suite() );
+    runner.addTest( FileRegionSetTest::suite() );
     runner.addTest( FileViewTest::suite() );
     runner.addTest( FilenameTest::suite() );
     runner.addTest( IPSocketMapTest::suite() );

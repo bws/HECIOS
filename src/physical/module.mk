@@ -6,7 +6,6 @@ DIR := src/physical
 SIM_SRC += $(DIR)/bmi_endpoint.cc \
 	$(DIR)/bmi_direct_endpoint.cc \
 	$(DIR)/bmi_tcp_client.cc \
-	$(DIR)/bmi_tcp_endpoint.cc \
 	$(DIR)/bmi_tcp_server.cc \
 	$(DIR)/enhanced_ether_encap.cc \
 	$(DIR)/enhanced_ether_mac_base.cc \

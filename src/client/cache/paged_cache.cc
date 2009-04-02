@@ -24,6 +24,7 @@
 #include "data_type_processor.h"
 #include "file_builder.h"
 #include "file_descriptor.h"
+#include "file_page_utils.h"
 #include "file_region_set.h"
 #include "file_view.h"
 #include "mpi_proto_m.h"
@@ -80,61 +81,24 @@ set<FilePageId> PagedCache::determineRequestPages(const FSOffset& offset,
                                                   const FSSize& size,
                                                   const FileView& view) const
 {
-    // Flatten view into file regions for the correct size
-    vector<FileRegion> requestRegions =
-        DataTypeProcessor::locateFileRegions(offset, size, view);
-
-    // Convert regions into file pages
-    return regionsToPageIds(requestRegions);
+    FilePageUtils& utils = FilePageUtils::instance();
+    return utils.determineRequestPages(pageSize_, offset, size, view);
 }
 
 set<FilePageId> PagedCache::determineRequestFullPages(const FSOffset& offset,
                                                       const FSSize& size,
                                                       const FileView& view) const
 {
-    set<FilePageId> allPageIds = determineRequestPages(offset, size, view);
-    set<FilePageId> partialPageIds = determineRequestPartialPages(offset, size, view);
-    set<FilePageId> fullPageIds;
-
-    // Do this the easy way for now, subtract the partial pages from the
-    // full pages.  If its too slow, this can be optimized later
-    set_difference(allPageIds.begin(), allPageIds.end(),
-                   partialPageIds.begin(), partialPageIds.end(),
-                   inserter(fullPageIds, fullPageIds.begin()));
-    return fullPageIds;
+    FilePageUtils& utils = FilePageUtils::instance();
+    return utils.determineRequestFullPages(pageSize_, offset, size, view);
 }
 
 set<FilePageId> PagedCache::determineRequestPartialPages(const FSOffset& offset,
                                                          const FSSize& size,
                                                          const FileView& view) const
 {
-    set<FilePageId> partialPageIds;
-
-    // Flatten view into file regions for the correct size
-    vector<FileRegion> requestRegions =
-        DataTypeProcessor::locateFileRegions(offset, size, view);
-
-    for (size_t i = 0; i < requestRegions.size(); i++)
-    {
-        // For each contiguous region, only need to check if the first page
-        // begins on a boundary and if the last page ends on a boundary.
-        // Duplicate insertion is not a problems since we are using the
-        // stl::set datatype
-        FSOffset begin = requestRegions[i].offset;
-        if (0 != (begin % pageSize_))
-        {
-            size_t pageId = begin / pageSize_;
-            partialPageIds.insert(pageId);
-        }
-
-        FSOffset end = begin + requestRegions[i].extent;
-        if (0 != (end % pageSize_))
-        {
-            size_t pageId = end / pageSize_;
-            partialPageIds.insert(pageId);
-        }
-    }
-    return partialPageIds;
+    FilePageUtils& utils = FilePageUtils::instance();
+    return utils.determineRequestPartialPages(pageSize_, offset, size, view);
 }
 
 FileRegionSet PagedCache::determinePartialPageRegions(const FilePageId& pageId,
@@ -142,53 +106,12 @@ FileRegionSet PagedCache::determinePartialPageRegions(const FilePageId& pageId,
                                                       const FSSize& size,
                                                       const FileView& view) const
 {
-    FileRegionSet pageRegions;
-
-    // Flatten view into file regions for the correct size
-    vector<FileRegion> requestRegions =
-        DataTypeProcessor::locateFileRegions(offset, size, view);
-
-    FSOffset pageBegin = pageId * pageSize_;
-    FSOffset pageEnd = pageBegin + pageSize_;
-    for (size_t i = 0; i < requestRegions.size(); i++)
-    {
-        //cerr << "Next Page: " << pageId << " paginate reg: " << requestRegions[i] << endl;
-
-        // The beginning and/or the end of the region must reside on the
-        // requested page in order for it to be partial to the page
-        // Find the regions for this page, truncate parts not on the page
-        // and add them to the list
-        FSOffset regionBegin = requestRegions[i].offset;
-        FSOffset regionEnd = regionBegin + requestRegions[i].extent;
-        if (regionBegin >= pageBegin && regionBegin < pageEnd)
-        {
-            // This region starts at offset and continues to the minimum
-            // of the extent or the page end;
-            FileRegion partial;
-            partial.offset = regionBegin;
-            partial.extent = min(pageEnd, regionEnd) - partial.offset;
-            //cerr << "Begin Partial region result: " << partial << endl;
-            pageRegions.insert(partial);
-        }
-        else if (regionEnd >= pageBegin && regionEnd < pageEnd)
-        {
-            // This region starts at page begin and continues to the end
-            // of the extent
-            FileRegion partial;
-            partial.offset = pageBegin;
-            partial.extent = regionEnd - partial.offset;
-            //cerr << "End Partial region result: " << partial << endl;
-            pageRegions.insert(partial);
-        }
-        else
-        {
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "ERROR: Region: " << requestRegions[i]
-                 << " does not have a partial region on page: " << pageId << endl;
-            assert(0);
-        }
-    }
-    return pageRegions;
+    FilePageUtils& utils = FilePageUtils::instance();
+    return utils.determinePartialPageRegions(pageSize_,
+                                             pageId,
+                                             offset,
+                                             size,
+                                             view);
 }
 
 void PagedCache::initialize()
@@ -243,39 +166,6 @@ spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
     writeRequest->setCount(pageIds.size() * pageSize_);
     writeRequest->setOffset(0);
     return writeRequest;
-}
-
-set<FilePageId> PagedCache::regionsToPageIds(const vector<FileRegion>& fileRegions) const
-{
-    set<FilePageId> spanningPageIds;
-    for (size_t i = 0; i < fileRegions.size(); i++)
-    {
-        // Determine the first and last page
-        FSOffset begin = fileRegions[i].offset;
-        FSOffset end = begin + fileRegions[i].extent;
-        size_t firstPage = begin / pageSize_;
-        size_t lastPage = end / pageSize_;
-        for (size_t j = firstPage; j < lastPage; j++)
-        {
-            FilePageId id = j;
-            spanningPageIds.insert(id);
-        }
-    }
-    return spanningPageIds;
-}
-
-set<FilePage> PagedCache::regionsToPages(const vector<FileRegion>& fileRegions) const
-{
-    set<FilePage> spanningPages;
-    set<FilePageId> spanningIds = regionsToPageIds(fileRegions);
-    set<FilePageId>::const_iterator idIter;
-    set<FilePageId>::const_iterator idEnd = spanningIds.end();
-    for (idIter = spanningIds.begin(); idIter != idEnd; ++idIter)
-    {
-        FilePage fp(pageBeginOffset(*idIter), pageSize_);
-        spanningPages.insert(fp);
-    }
-    return spanningPages;
 }
 
 FileDescriptor* PagedCache::getPageViewDescriptor(

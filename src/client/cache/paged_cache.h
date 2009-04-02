@@ -114,7 +114,7 @@ public:
                                               const FSSize& size,
                                               const FileView& view) const;
 
-    protected:
+protected:
     /** Module initialization */
     void initialize();
 
@@ -131,14 +131,6 @@ public:
         spfsMPIFileRequest* origRequest) const;
 
 private:
-    /** @return Array of page ids spanning the supplied file regions */
-    std::set<FilePageId> regionsToPageIds(
-        const std::vector<FileRegion>& fileRegions) const;
-
-    /** @return Array of pages spanning the supplied file regions */
-    std::set<FilePage> regionsToPages(
-        const std::vector<FileRegion>& fileRegions) const;
-
     /** @return a file descriptor for filename with the page view applied */
     FileDescriptor* getPageViewDescriptor(
         const Filename& filename,

@@ -143,6 +143,35 @@ simple SharedPagedMiddlewareCacheWithTwinNoBlockIndexed
         out: appOut, fsOut;
 endsimple
 
+//
+// Middleware cache using pages with Treadmarks twin diffing false sharing
+// avoidance
+//
+simple PagedMiddlewareCacheMesi
+    parameters:
+    	byteCopyTime: const,
+    	pageSize: const,
+    	pageCapacity: const;
+    	
+	gates:
+		in: appIn, fsIn;
+        out: appOut, fsOut;
+endsimple
+
+//
+// Middleware cache using pages with Treadmarks twin diffing false sharing
+// avoidance
+//
+simple SharedPagedMiddlewareCacheMesi
+    parameters:
+    	byteCopyTime: const,
+    	pageSize: const,
+    	pageCapacity: const;
+    	
+	gates:
+		in: appIn, fsIn;
+        out: appOut, fsOut;
+endsimple
 
 //
 // Local variables:
