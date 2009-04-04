@@ -31,23 +31,30 @@ module DaemonProcess
         serverJobManager: JobManager;
             display: "p=120,80;i=block/classifier,light grey";
 
+		requestScheduler: RequestScheduler;
+			display: "p=60,180;i=block/queue,light grey";
+			
         pfsServer: FSServer;
-            display: "p=60,180;i=block/process,light grey";
+            display: "p=60,280;i=block/process,light grey";
           
         trove: StorageLayer;
-            display: "p=160,180;i=block/buffer2,light sea green";
+            display: "p=260,80;i=block/buffer2,light sea green";
  
     connections nocheck:
         // Messages inbound to the job manager
         in --> serverJobManager.netIn;
-        pfsServer.out --> serverJobManager.pfsIn;
+        requestScheduler.requestOut --> serverJobManager.pfsIn;
         trove.out --> serverJobManager.storageIn;
 
         // Messages outbound from the job manager
-        serverJobManager.pfsOut --> pfsServer.in;
+        serverJobManager.pfsOut --> requestScheduler.requestIn;
         serverJobManager.storageOut --> trove.in;
         serverJobManager.netOut --> out;
 
+		// Request scheduler to pfs server connections
+		requestScheduler.serverOut --> pfsServer.in;
+		pfsServer.out --> requestScheduler.serverIn;
+		
         // Storage layer/OS connections
         trove.toOS --> toOS;
         trove.fromOS <-- fromOS;

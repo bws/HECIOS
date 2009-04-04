@@ -27,7 +27,7 @@
 #include "file_page.h"
 #include "file_region_set.h"
 #include "filename.h"
-#include "lru_cache.h"
+#include "lru_mesi_cache.h"
 #include "paged_cache.h"
 class spfsMPIFileCloseRequest;
 class spfsMPIFileOpenRequest;
@@ -43,15 +43,13 @@ class spfsMPIFileWriteAtResponse;
 class PagedMiddlewareCacheMesi : public PagedCache
 {
 public:
+    /** Typedef of the type used to store file data internally */
+    typedef LRUMesiCache<PagedCache::Key, FilePageId> FileDataPageCache;
+
     /** Constructor */
     PagedMiddlewareCacheMesi();
 
 protected:
-    /** Typedef of the data stored for a cache line */
-    typedef std::pair<int, int> Entry;
-
-    /** Typedef of the type used to store file data internally */
-    typedef LRUCache<PagedCache::Key, Entry> FileDataPageCache;
 
     /** Typedef mapping a pending request to its pending cache pages */
     typedef std::map<spfsMPIFileRequest*, PagedCache::InProcessPages> RequestMap;
@@ -135,7 +133,7 @@ private:
                        std::set<PagedCache::Key>& outWritebacks) const;
 
     /** Evict pages from the cache and write them to the file system */
-    void beginWritebackEvictions(const std::vector<Entry>& writebackPages,
+    void beginWritebackEvictions(const std::vector<FilePageId>& writebackPages,
                                  spfsMPIFileRequest* parentRequest);
 
     /** Read pages from the file system */
@@ -143,7 +141,7 @@ private:
                    spfsMPIFileRequest* parentRequest);
 
     /** @return All the dirty cache entries for filename */
-    std::vector<Entry> lookupDirtyPagesInCache(const Filename& fileame) const;
+    std::vector<FilePageId> lookupModifiedPagesInCache(const Filename& fileame) const;
 
     /** Remove request pages satisfied in the cache */
     std::set<PagedCache::Key> lookupPagesInCache(std::set<PagedCache::Key>& requestPages);
@@ -157,14 +155,14 @@ private:
      * Update the cache with full pages that have been read.
      */
     void updateCacheWithReadPages(std::set<PagedCache::Key>& requestPages,
-                                  std::vector<Entry>& outWriteBacks);
+                                  std::vector<FilePageId>& outWriteBacks);
 
     /**
      * Update the cache with pages that have been partially updated
      */
     void updateCacheWithReadPageUpdates(spfsMPIFileWriteAtRequest* writeAt,
                                         std::set<PagedCache::Key>& requestPages,
-                                        std::vector<Entry>& outWriteBacks);
+                                        std::vector<FilePageId>& outWriteBacks);
 
     /**
      * Update the cache with pages that have been read.
@@ -175,7 +173,7 @@ private:
                                    std::vector<Entry>& outWriteBacks); */
 
     /** Begin writing back the set of cache keys */
-    void beginWritebacks(const std::vector<Entry>& writeBacks,
+    void beginWritebacks(const std::vector<FilePageId>& writeBacks,
                          spfsMPIFileRequest* req);
 
     /**
@@ -191,7 +189,7 @@ private:
 
     /** Register all the pages pending to satisfy a request */
     void registerPendingWritePages(spfsMPIFileRequest* request,
-                                   const std::vector<Entry>& pendingWrites);
+                                   const std::vector<FilePageId>& pendingWrites);
 
     /** Mark page as read for requests */
     void resolvePendingReadPage(const PagedCache::Key& readPage);
@@ -231,6 +229,30 @@ private:
     OpenFileMap* openFileCounts_;
 
 };
+
+/** Functor for finding dirty pages for a cached file */
+class ModifiedPageFilter : public LRUMesiCache<PagedCache::Key,
+                                               FilePageId>::FilterFunctor
+{
+public:
+    typedef LRUMesiCache<PagedCache::Key, FilePageId> MesiCacheType;
+
+    /** Constructor */
+    ModifiedPageFilter(const Filename& filename) : filename_(filename) {};
+
+    /** @return true if the page belongs to this file and is dirty */
+    //virtual bool filter(const PagedCache::Key& key,
+    //                    const FilePageId& entry,
+    //                    MesiCacheType::State state)                                                                       FilePageId>) const
+    //{
+    //    return ((key.filename == filename_) &&
+    //            (MesiCacheType::MODIFIED == state));
+    //};
+
+private:
+    Filename filename_;
+};
+
 
 #endif /* PAGED_MIDDLEWARE_CACHE_MESI_H_ */
 

@@ -18,21 +18,35 @@ public:
     RequestScheduler() : cSimpleModule() {};
 
 protected:
-    
+
     /** Implementation of initialize */
     virtual void initialize();
 
     /** Implementation of finish */
-    virtual void finish() {};
+    virtual void finish();
 
     /** Implementation of handleMessage */
     virtual void handleMessage(cMessage* msg);
 
+    /** Mark request complete */
+    virtual void completeRequest(cMessage* msg);
+
+    /** Schedule the next request */
+    virtual void scheduleRequest(cMessage* msg);
+
 private:
-    
-    /** Map FSHandles to their queue of pending operations */
-    // std::map<FSHandle, std::queue<cMessage*> > operationsByHandle_;
-    std::map<FSHandle, std::list<PendingOperation*> > operationsByHandle_;
+
+    /** In gate id */
+    int requestInGateId_;
+
+    /** Out gate id */
+    int requestOutGateId_;
+
+    /** In gate id */
+    int serverInGateId_;
+
+    /** Out gate id */
+    int serverOutGateId_;
 };
 
 #endif

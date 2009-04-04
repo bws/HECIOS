@@ -12,6 +12,14 @@ Define_Module(RequestScheduler);
  */
 void RequestScheduler::initialize()
 {
+    requestInGateId_ = gate("requestIn")->id();
+    requestOutGateId_ = gate("requestOut")->id();
+    serverInGateId_ = gate("serverIn")->id();
+    serverOutGateId_ = gate("serverOut")->id();
+}
+
+void RequestScheduler::finish()
+{
 }
 
 /**
@@ -19,81 +27,48 @@ void RequestScheduler::initialize()
  */
 void RequestScheduler::handleMessage(cMessage* msg)
 {
-    // For now, construct the appropriate response and simply send it back
-    switch(msg->kind())
+    if (msg->arrivalGateId() == requestInGateId_)
     {
-        case SPFS_CREATE_REQUEST:
+        // Only pfs and cache messages require scheduling
+        if ((500 <= msg->kind()) && (600 > msg->kind()))
         {
-            // Build a queue for this handle
-            spfsCreateRequest create* = static_cast<spfsCreateRequest>(msg);
-            FSHandle createHandle = create->gethandle();
-            list<PendingOperation> opList;
-
-            // PendingOperation op(true, false, create);
-            // opList.push_front(op);
-            // operationsByHandle_[createHandle] = opList;
-            // send(msg, serverOut);
-            
-            /**
-               opList = operationsByHandle_[createHandle];
-               if(!opList.empty())
-               {
-                  PendingOperation op1(true, false, create);     
-                  opList.push_front(op1);
-                  send(msg, serverOut);
-               }
-               else
-               {
-                  PendingOperation op2(false, false, create);
-                  opList.push_front(op2);
-                  send(msg, serverOut);
-               }
-            */
-           
-            break;
+            scheduleRequest(msg);
         }
-        case SPFS_LOOKUP_PATH_REQUEST:
-        case SPFS_GET_ATTR_REQUEST:
-        case SPFS_READ_REQUEST:
-        case SPFS_WRITE_REQUEST:
+        else
         {
-            break;
-        }
-        case SPFS_READ_RESPONSE:
-        {
-
-            // complete the operation
-            // Pop operations out of queue
-            // Look at the handle
-            // And see if another pending op exists that can now proceed
-            // operationsByHandle_.find(handle);
-
-            
-            /**
-               spfsReadRequest read* = static_cast<spfsReadRequest>(msg);
-               FSHandle handle = read->gethandle();
-               list<PendingOperation> chkList;
-               chkList = operationsByHandle_.find(handle);
-               list<PendingOperation>::iterator listItr;
-               if(!chkList.empty())
-               {
-                 while(listItr != chkList.end()){
-                   if( *listItr->op == read)
-                   {
-                      *listItr->isPending = false;
-                      *listItr->isComplete = true;
-                      // chkList.erase(*listItr);
-                      // send(msg, serverIn );
-                   }
-               }
-            */
-        }
-        default:
-        {
-            cerr << "Error: Unknown server message type" << endl;
+            send(msg, serverOutGateId_);
         }
     }
+    else if (msg->arrivalGateId() == serverInGateId_)
+    {
+        // Only pfs and cache messages require completion
+        if ((500 <= msg->kind()) && (600 > msg->kind()))
+        {
+            completeRequest(msg);
+        }
+        else
+        {
+            send(msg, requestOutGateId_);
+        }
+    }
+    else
+    {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             <<  "message arrived through illegal gate: "
+             << msg->info() << endl;
+    }
 }
+
+void RequestScheduler::scheduleRequest(cMessage* msg)
+{
+    send(msg, serverOutGateId_);
+}
+
+void RequestScheduler::completeRequest(cMessage* msg)
+{
+    send(msg, requestOutGateId_);
+}
+
 
 /*
  * Local variables:

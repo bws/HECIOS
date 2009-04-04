@@ -75,12 +75,16 @@ void FilePageUtilsTest::tearDown()
 
 void FilePageUtilsTest::testConstructor()
 {
-    FilePageUtils& instance = FilePageUtils::instance();
+    //FilePageUtils& instance = FilePageUtils::instance();
 }
 
 void FilePageUtilsTest::testPageBeginOffset()
 {
-    CPPUNIT_FAIL("fail");
+    FilePageUtils& utils = FilePageUtils::instance();
+
+    CPPUNIT_ASSERT_EQUAL(FSOffset(0), utils.pageBeginOffset(10, 0));
+    CPPUNIT_ASSERT_EQUAL(FSOffset(0), utils.pageBeginOffset(37, 0));
+    CPPUNIT_ASSERT_EQUAL(FSOffset(408), utils.pageBeginOffset(2, 204));
 }
 
 void FilePageUtilsTest::testDetermineRequestPages()

@@ -18,6 +18,11 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "client_cache_directory.h"
+#include "data_type_layout.h"
+#include "data_type_processor.h"
+#include "file_page_utils.h"
+#include "file_view.h"
+#include "file_distribution.h"
 using namespace std;
 
 ClientCacheDirectory::ClientCacheDirectory()
@@ -31,33 +36,67 @@ ClientCacheDirectory::~ClientCacheDirectory()
 }
 
 set<ClientCacheDirectory::ClientCache>
-ClientCacheDirectory::getClientsNeedingInvalidate(const FSHandle& handle) const
+ClientCacheDirectory::getClientsNeedingInvalidate(const Filename& filename,
+                                                  const FSSize& pageSize,
+                                                  const FSOffset& offset,
+                                                  const FSSize& dataSize,
+                                                  const FileView& view,
+                                                  const FileDistribution& dist) const
 {
-    pair<HandleToClientConnectionMap::const_iterator,
-         HandleToClientConnectionMap::const_iterator> range;
-    range = handleToClientCache_.equal_range(handle);
+    // Get the file regions accessed
+    DataTypeLayout dataLayout;
+    DataTypeProcessor::createFileLayoutForServer(offset,
+                                                 dataSize,
+                                                 view,
+                                                 dist,
+                                                 dataLayout);
 
+    // Translate the regions into page ids
+    FilePageUtils& pageUtils = FilePageUtils::instance();
+    set<FilePageId> pageIds = pageUtils.regionsToPageIds(pageSize,
+                                                         dataLayout.getRegions());
+
+    // Determine the caches containing these pages
     set<ClientCache> clients;
-    HandleToClientConnectionMap::const_iterator iter;
-    for (iter = range.first; iter != range.second; ++iter)
+    set<FilePageId>::iterator iter = pageIds.begin();
+    while (iter != pageIds.end())
     {
-        clients.insert(iter->second);
+        Entry entry = {filename, *(iter)++};
+        pair<CacheEntryToClientMap::const_iterator,
+             CacheEntryToClientMap::const_iterator> range;
+        range = clientCacheEntries_.equal_range(entry);
+
+        CacheEntryToClientMap::const_iterator j;
+        for (j = range.first; j != range.second; ++j)
+        {
+            clients.insert(j->second);
+        }
     }
     return clients;
 }
 
-void ClientCacheDirectory::removeClient(const FSHandle& handle, const ClientCache& client)
+void ClientCacheDirectory::addClientCacheEntry(const ClientCache& client,
+                                               const Filename& filename,
+                                               const FilePageId& pageId)
 {
-    pair<HandleToClientConnectionMap::iterator,
-         HandleToClientConnectionMap::iterator> range;
-    range = handleToClientCache_.equal_range(handle);
+    const Entry entry = {filename, pageId};
+    clientCacheEntries_.insert(make_pair(entry, client));
+}
 
-    HandleToClientConnectionMap::iterator iter = range.first;
+void ClientCacheDirectory::removeClientCacheEntry(const ClientCache& client,
+                                                  const Filename& filename,
+                                                  const FilePageId& pageId)
+{
+    pair<CacheEntryToClientMap::iterator, CacheEntryToClientMap::iterator> range;
+    const Entry entry = {filename, pageId};
+    range = clientCacheEntries_.equal_range(entry);
+
+    CacheEntryToClientMap::iterator iter = range.first;
     while (iter != range.second)
     {
         if (client == iter->second)
         {
-            handleToClientCache_.erase(iter++);
+            clientCacheEntries_.erase(iter++);
         }
         else
         {
@@ -65,12 +104,6 @@ void ClientCacheDirectory::removeClient(const FSHandle& handle, const ClientCach
         }
     }
 }
-
-void ClientCacheDirectory::addClient(const FSHandle& handle, const ClientCache& client)
-{
-    handleToClientCache_.insert(make_pair(handle, client));
-}
-
 
 /*
  * Local variables:

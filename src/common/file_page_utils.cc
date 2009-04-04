@@ -35,15 +35,15 @@ FilePageUtils::~FilePageUtils()
 }
 
 FSOffset FilePageUtils::pageBeginOffset(const FSSize& pageSize,
-                                     const FilePageId& pageId) const
+                                        const FilePageId& pageId) const
 {
     return (pageId * pageSize);
 }
 
 set<FilePageId> FilePageUtils::determineRequestPages(const FSSize& pageSize,
-                                                  const FSOffset& offset,
-                                                  const FSSize& size,
-                                                  const FileView& view) const
+                                                     const FSOffset& offset,
+                                                     const FSSize& size,
+                                                     const FileView& view) const
 {
     // Flatten view into file regions for the correct size
     vector<FileRegion> requestRegions =

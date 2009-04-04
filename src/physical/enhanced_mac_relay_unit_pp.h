@@ -47,7 +47,7 @@ class INET_API EnhancedMACRelayUnitPP : public MACRelayUnitBase
 
     // Parameters controlling how the switch operates
     simtime_t processingTime;   // Time taken to switch and process a frame
-    int bufferSize;             // Max size of the buffer
+    std::size_t bufferSize;             // Max size of the buffer
     long highWatermark;         // if buffer goes above this level, send PAUSE frames
     int pauseUnits;             // "units" field in PAUSE frames
     simtime_t pauseInterval;    // min time between sending PAUSE frames

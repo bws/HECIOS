@@ -150,12 +150,12 @@ void PagedMiddlewareCacheMesi::processRequest(cMessage* request, cMessage* msg)
     {
         // Extract the writeback pages and resolve the associated pages
         assert(0 != dynamic_cast<spfsMPIFileWriteAtResponse*>(msg));
-        spfsMPIFileWriteAtRequest* writeback =
-            static_cast<spfsMPIFileWriteAtRequest*>(msg->contextPointer());
+        //TODO spfsMPIFileWriteAtRequest* writeback =
+        //    static_cast<spfsMPIFileWriteAtRequest*>(msg->contextPointer());
 
         // Resolve this set of pending pages
         set<PagedCache::Key> writtenPages;
-        //BWS getRequestCachePages(writeback, writtenPages);
+        //TODO getRequestCachePages(writeback, writtenPages);
         resolvePendingWritePages(writtenPages);
     }
     else if (SPFS_MPI_FILE_OPEN_REQUEST == request->kind())
@@ -193,7 +193,7 @@ void PagedMiddlewareCacheMesi::processRequest(cMessage* request, cMessage* msg)
 }
 
 void PagedMiddlewareCacheMesi::processFileOpen(spfsMPIFileOpenRequest* open,
-                                                 cMessage* msg)
+                                               cMessage* msg)
 {
     if (msg == open)
     {
@@ -234,12 +234,10 @@ void PagedMiddlewareCacheMesi::processFileClose(spfsMPIFileCloseRequest* close, 
         if (0 == openCount)
         {
             //cerr << "Last close: Evictions are on" << endl;
-            /* TODO
-            vector<CacheEntry> writeEntries = lookupDirtyPagesInCache(closeName);
-            flushCache(closeName);
-            registerPendingWritePages(close, writeEntries);
-            beginWritebackEvictions(writeEntries, close);
-            */
+            //TODO vector<FilePageId> writeEntries = lookupModifiedPagesInCache(closeName);
+            //TODO flushCache(closeName);
+            //TODO registerPendingWritePages(close, writeEntries);
+            //TODO beginWritebackEvictions(writeEntries, close);
         }
         else
         {
@@ -294,15 +292,15 @@ void PagedMiddlewareCacheMesi::processFileRead(spfsMPIFileReadAtRequest* read, c
         assert(0 != dynamic_cast<spfsMPIFileReadAtResponse*>(msg));
 
         // Determine the set of read pages
-        spfsMPIFileReadAtRequest* cacheRead =
-            static_cast<spfsMPIFileReadAtRequest*>(msg->contextPointer());
+        //TODO spfsMPIFileReadAtRequest* cacheRead =
+        //    static_cast<spfsMPIFileReadAtRequest*>(msg->contextPointer());
 
         // Determine the cache pages read
         set<PagedCache::Key> requestPages;
         //TODO getRequestCachePages(cacheRead, requestPages);
 
         // Update the cache
-        vector<Entry> writebackPages;
+        vector<FilePageId> writebackPages;
         //TODO updateCacheWithReadPages(requestPages, writebackPages);
 
         // Update the pending requests
@@ -944,9 +942,9 @@ void PagedMiddlewareCacheMesi::registerPendingPages(
 }
 
 void PagedMiddlewareCacheMesi::registerPendingWritePages(spfsMPIFileRequest* request,
-                                                             const vector<Entry>& pendingWrites)
+                                                         const vector<FilePageId>& pendingWrites)
 {
-    PagedCache::InProcessPages& inProcess = (*pendingPages_)[request];
+    //TODO PagedCache::InProcessPages& inProcess = (*pendingPages_)[request];
     size_t partialCount = 0;
     for (size_t i = 0; i < pendingWrites.size(); i++)
     {

@@ -24,7 +24,10 @@
 #include <string>
 #include <cppunit/TestAssert.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include "basic_data_type.h"
+#include "basic_distribution.h"
 #include "client_cache_directory.h"
+#include "file_view.h"
 using namespace std;
 
 /** Unit test for Client Cache Directory */
@@ -35,8 +38,8 @@ class ClientCacheDirectoryTest : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(ClientCacheDirectoryTest);
     CPPUNIT_TEST(testConstructor);
     CPPUNIT_TEST(testGetClientsNeedingInvalidate);
-    CPPUNIT_TEST(testRemoveClient);
-    CPPUNIT_TEST(testAddClient);
+    CPPUNIT_TEST(testRemoveClientCacheEntry);
+    CPPUNIT_TEST(testAddClientCacheEntry);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -51,9 +54,9 @@ public:
 
     void testGetClientsNeedingInvalidate();
 
-    void testRemoveClient();
+    void testRemoveClientCacheEntry();
 
-    void testAddClient();
+    void testAddClientCacheEntry();
 
 private:
 };
@@ -69,63 +72,113 @@ void ClientCacheDirectoryTest::tearDown()
 
 void ClientCacheDirectoryTest::testConstructor()
 {
-    ClientCacheDirectory& instance = ClientCacheDirectory::instance();
+    //ClientCacheDirectory& instance = ClientCacheDirectory::instance();
 }
 
 void ClientCacheDirectoryTest::testGetClientsNeedingInvalidate()
 {
-    FSHandle handle1 = 0;
     ClientCacheDirectory& instance = ClientCacheDirectory::instance();
-    instance.addClient(handle1, 0);
-    instance.addClient(handle1, 1);
-    instance.addClient(handle1, 2);
-    instance.addClient(handle1, 3);
+    Filename file1("/foo");
+    FilePageId page10(10), page11(11), page12(12);
+    instance.addClientCacheEntry(0, file1, page10);
+    instance.addClientCacheEntry(0, file1, page11);
+    instance.addClientCacheEntry(0, file1, page12);
+    instance.addClientCacheEntry(1, file1, page11);
+    instance.addClientCacheEntry(1, file1, page12);
+    instance.addClientCacheEntry(2, file1, page10);
 
-    set<ConnectionId> connections = instance.getClientsNeedingInvalidate(handle1);
+    FileView view(0, new ByteDataType());
+    BasicDistribution dist;
+    set<ConnectionId> connections = instance.getClientsNeedingInvalidate(file1,
+                                                                         10,
+                                                                         0,
+                                                                         1000,
+                                                                         view,
+                                                                         dist);
     set<ConnectionId>::const_iterator iter = connections.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(3), connections.size());
     CPPUNIT_ASSERT_EQUAL(ConnectionId(0), *(iter++));
     CPPUNIT_ASSERT_EQUAL(ConnectionId(1), *(iter++));
     CPPUNIT_ASSERT_EQUAL(ConnectionId(2), *(iter++));
-    CPPUNIT_ASSERT_EQUAL(ConnectionId(3), *(iter++));
     CPPUNIT_ASSERT(connections.end() == iter);
 }
 
-void ClientCacheDirectoryTest::testRemoveClient()
+void ClientCacheDirectoryTest::testRemoveClientCacheEntry()
 {
     ClientCacheDirectory& instance = ClientCacheDirectory::instance();
 
-    FSHandle handle1 = 1024;
-    instance.addClient(handle1, 0);
-    instance.addClient(handle1, 1);
-    instance.addClient(handle1, 2);
-    instance.addClient(handle1, 3);
+    Filename file1("/foo"), file2("/bar");
+    FilePageId page1(1), page2(2);
+    instance.addClientCacheEntry(0, file1, page1);
+    instance.addClientCacheEntry(0, file1, page2);
+    instance.addClientCacheEntry(0, file2, page1);
+    instance.addClientCacheEntry(0, file2, page2);
+    instance.addClientCacheEntry(1, file1, page2);
+    instance.addClientCacheEntry(2, file2, page1);
 
     // Now remove two entries
-    instance.removeClient(handle1, 1);
-    instance.removeClient(handle1, 2);
+    instance.removeClientCacheEntry(0, file1, page2);
+    instance.removeClientCacheEntry(2, file2, page1);
 
-    set<ConnectionId> connections = instance.getClientsNeedingInvalidate(handle1);
+    FileView view(0, new ByteDataType());
+    BasicDistribution dist;
+    set<ConnectionId> connections = instance.getClientsNeedingInvalidate(file1,
+                                                                         10,
+                                                                         10,
+                                                                         10,
+                                                                         view,
+                                                                         dist);
     set<ConnectionId>::const_iterator iter = connections.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), connections.size());
     CPPUNIT_ASSERT_EQUAL(ConnectionId(0), *(iter++));
-    CPPUNIT_ASSERT_EQUAL(ConnectionId(3), *(iter++));
+    CPPUNIT_ASSERT(connections.end() == iter);
+
+    connections = instance.getClientsNeedingInvalidate(file1,
+                                                       10,
+                                                       20,
+                                                       10,
+                                                       view,
+                                                       dist);
+    iter = connections.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), connections.size());
+    CPPUNIT_ASSERT_EQUAL(ConnectionId(1), *(iter++));
     CPPUNIT_ASSERT(connections.end() == iter);
 }
 
-void ClientCacheDirectoryTest::testAddClient()
+void ClientCacheDirectoryTest::testAddClientCacheEntry()
 {
     ClientCacheDirectory& instance = ClientCacheDirectory::instance();
 
-    FSHandle handle1 = 3007;
-    instance.addClient(handle1, 0);
-    instance.addClient(handle1, 1);
-    instance.addClient(handle1, 2);
-    instance.addClient(handle1, 3);
+    Filename file1("/foo"), file2("/bar");
+    FilePageId page44(44), page55(55), page66(66);
+    instance.addClientCacheEntry(0, file1, page44);
+    instance.addClientCacheEntry(1, file2, page55);
+    instance.addClientCacheEntry(2, file1, page66);
+    instance.addClientCacheEntry(3, file2, page44);
 
-    set<ConnectionId> connections = instance.getClientsNeedingInvalidate(handle1);
+    FileView view(0, new ByteDataType());
+    BasicDistribution dist;
+    set<ConnectionId> connections = instance.getClientsNeedingInvalidate(file1,
+                                                                         10,
+                                                                         0,
+                                                                         700,
+                                                                         view,
+                                                                         dist);
     set<ConnectionId>::const_iterator iter = connections.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), connections.size());
     CPPUNIT_ASSERT_EQUAL(ConnectionId(0), *(iter++));
-    CPPUNIT_ASSERT_EQUAL(ConnectionId(1), *(iter++));
     CPPUNIT_ASSERT_EQUAL(ConnectionId(2), *(iter++));
+    CPPUNIT_ASSERT(connections.end() == iter);
+
+    connections = instance.getClientsNeedingInvalidate(file2,
+                                                       10,
+                                                       0,
+                                                       600,
+                                                       view,
+                                                       dist);
+    iter = connections.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), connections.size());
+    CPPUNIT_ASSERT_EQUAL(ConnectionId(1), *(iter++));
     CPPUNIT_ASSERT_EQUAL(ConnectionId(3), *(iter++));
     CPPUNIT_ASSERT(connections.end() == iter);
 }

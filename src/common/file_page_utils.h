@@ -75,7 +75,6 @@ public:
                                               const FSSize& size,
                                               const FileView& view) const;
 
-protected:
     /** @return Array of pages spanning the supplied file regions */
     std::set<FilePage> regionsToPages(const FSSize& pageSize,
                                       const std::vector<FileRegion>& fileRegions) const;

@@ -5,8 +5,8 @@
 simple RequestScheduler
 
     gates:
-        in: netIn;
-        out: netOut;
+        in: requestIn;
+        out: requestOut;
 
         in: serverIn;
         out: serverOut;

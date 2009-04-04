@@ -68,7 +68,7 @@ void EnhancedMACRelayUnitPP::initialize(int stage)
         size_t bufferPerPort = par("bufferSizePerPort");
         size_t minBufferSize = par("minBufferSize");
         size_t maxBufferSize = par("maxBufferSize");
-        assert (minBufferSize <= maxBufferSize);
+        assert (0 == maxBufferSize || minBufferSize <= maxBufferSize);
 
         bufferSize = numPorts * bufferPerPort;
         if (minBufferSize > 0 && bufferSize < minBufferSize)
@@ -107,13 +107,13 @@ void EnhancedMACRelayUnitPP::initialize(int stage)
         WATCH(bufferUsed);
 
         buffer = new PortBuffer[numPorts];
-        for (int i = 0; i < numPorts; ++i)
+        for (size_t i = 0; i < numPorts; ++i)
         {
             buffer[i].port = i;
             buffer[i].cpuBusy = false;
 
             char qname[20];
-            sprintf(qname,"portQueue%d",i);
+            sprintf(qname,"portQueue%lu",i);
             buffer[i].queue.setName(qname);
         }
 
@@ -149,8 +149,7 @@ void EnhancedMACRelayUnitPP::handleMessage(cMessage *msg)
 void EnhancedMACRelayUnitPP::handleIncomingFrame(EtherFrame *frame)
 {
     // If buffer not full, insert payload frame into buffer and process the frame in parallel.
-
-    long length = frame->byteLength();
+    size_t length = frame->byteLength();
     if (length + bufferUsed < bufferSize)
     {
         int inputport = frame->arrivalGate()->index();

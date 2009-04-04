@@ -14,6 +14,7 @@ SIM_SRC += $(DIR)/change_dir_ent.cc \
 	$(DIR)/lookup.cc \
 	$(DIR)/read.cc \
 	$(DIR)/read_dir.cc \
+	$(DIR)/request_scheduler.cc \
 	$(DIR)/remove.cc \
 	$(DIR)/remove_dir_ent.cc \
 	$(DIR)/set_attr.cc \
