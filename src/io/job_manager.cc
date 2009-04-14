@@ -60,14 +60,15 @@ void JobManager::finish()
 DataFlow* JobManager::createDataFlow(spfsDataFlowStart* flowStart)
 {
     DataFlow* flow = 0;
-    if (SPFS_BMI_TO_LIST_IO_FLOW == flowStart->getFlowType())
+    if (DataFlow::SERVER_FLOW_TYPE == flowStart->getFlowType())
     {
         flow = new BMIListIODataFlow(*flowStart,
                                      flowBuffers_,
                                      flowBufferSize_,
                                      this);
     }
-    else if (SPFS_BMI_TO_MEMORY_FLOW == flowStart->getFlowType())
+    else if (DataFlow::CACHE_FLOW_TYPE == flowStart->getFlowType() ||
+             DataFlow::CLIENT_FLOW_TYPE == flowStart->getFlowType())
     {
         flow = new BMIMemoryDataFlow(*flowStart,
                                      flowBuffers_,

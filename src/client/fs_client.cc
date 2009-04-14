@@ -202,8 +202,8 @@ spfsReadRequest* FSClient::createReadRequest(const FSHandle& handle,
     read->setClientFlowBmiTag(simulation.getUniqueNumber());
     read->setServerFlowBmiTag(simulation.getUniqueNumber());
 
-    // Set the Read request size (op, creds, fs_id, handle, objType,
-    // attrMask, Attributes) TODO: fix attribute size
+    // Set the Read request
+    // (op, creds, fs_id, handle, dist, dist param, view, offset, data size)
     read->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 +
                         8 + 4 + 4 + 4 +
                         view.getRepresentationByteLength() +
@@ -268,8 +268,8 @@ spfsWriteRequest* FSClient::createWriteRequest(const FSHandle& handle,
     write->setClientFlowBmiTag(simulation.getUniqueNumber());
     write->setServerFlowBmiTag(simulation.getUniqueNumber());
 
-    // Set the Write request size (op, creds, fs_id, handle, objType,
-    // attrMask, Attributes) TODO: fix attribute size
+    // Set the Write request size
+    // (op, creds, fs_id, handle, dist, dist param, view, offset, data size)
     write->setByteLength(4 + FSClient::CREDENTIALS_SIZE + 4 +
                          8 + 4 + 4 + 4 +
                          view.getRepresentationByteLength() +

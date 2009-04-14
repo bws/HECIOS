@@ -127,6 +127,13 @@ public:
     ValueType lookup(const KeyType& key);
 
     /**
+     * @return The value for key and update the LRU ordering
+     *
+     * @throw NoSuchEntry if no entry exists for the key
+     */
+    State lookupState(const KeyType& key);
+
+    /**
      * Check if an entry exists without modifying its LRU status
      *
      * @return true if a value exists for the given key
@@ -150,7 +157,13 @@ public:
      * @return a vector of all the cache values that the filter returns
      *   true for.
      */
-    std::set<KeyType> getFilteredEntries(const FilterFunctor& filter) const;
+    std::set<ValueType> getFilteredEntries(const FilterFunctor& filter) const;
+
+    /**
+     * @return a vector of all the cache keys that the filter returns
+     *   true for.
+     */
+    std::set<KeyType> getFilteredKeys(const FilterFunctor& filter) const;
 
     /**
      * @return the next entry that will be evicted on a new insertion
@@ -437,6 +450,30 @@ ValueType LRUMesiCache<KeyType,ValueType>::lookup(const KeyType& key)
 
 template<class KeyType, class ValueType>
 typename LRUMesiCache<KeyType,ValueType>::State
+LRUMesiCache<KeyType,ValueType>::lookupState(const KeyType& key)
+{
+    EntryType* entry = 0;
+    typename std::map<KeyType, EntryType*>::iterator pos;
+
+    // Search the map for key
+    pos = keyEntryMap_.find(key);
+    if (pos == keyEntryMap_.end())
+    {
+        NoSuchEntry e;
+        throw e;
+    }
+
+    entry = pos->second;
+
+    // Refresh the LRU list
+    lruList_.erase(entry->lruRef);
+    lruList_.push_front(key);
+    entry->lruRef = lruList_.begin();
+    return entry->state;
+}
+
+template<class KeyType, class ValueType>
+typename LRUMesiCache<KeyType,ValueType>::State
 LRUMesiCache<KeyType,ValueType>::getState(const KeyType& key) const
 {
     // Search the map for key
@@ -471,7 +508,27 @@ std::vector<KeyType> LRUMesiCache<KeyType,ValueType>::getModifiedEntries() const
 }
 
 template<class KeyType, class ValueType>
-std::set<KeyType> LRUMesiCache<KeyType,ValueType>::getFilteredEntries(
+std::set<ValueType> LRUMesiCache<KeyType,ValueType>::getFilteredEntries(
+    const LRUMesiCache<KeyType,ValueType>::FilterFunctor& filterFunc) const
+{
+    std::set<ValueType> filteredEntries;
+
+    // Loop thru the map to find all of the dirty entries
+    typename MapType::const_iterator mapEnd = keyEntryMap_.end();
+    typename MapType::const_iterator mapIter;
+    for (mapIter = keyEntryMap_.begin(); mapIter != mapEnd; mapIter++)
+    {
+        if (filterFunc(mapIter->first, *mapIter->second))
+        {
+            filteredEntries.insert(mapIter->second->data);
+        }
+    }
+
+    return filteredEntries;
+}
+
+template<class KeyType, class ValueType>
+std::set<KeyType> LRUMesiCache<KeyType,ValueType>::getFilteredKeys(
     const LRUMesiCache<KeyType,ValueType>::FilterFunctor& filterFunc) const
 {
     std::set<KeyType> filteredEntries;

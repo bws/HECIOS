@@ -19,8 +19,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include <omnetpp.h>
-#include <string.h>
+#include <cstddef>
+#include <string>
 #include <map>
 #include "TCPSocket.h"
 
@@ -28,32 +28,51 @@
 class IPSocketMap
 {
 public:
+    typedef std::pair<std::string, std::size_t> Connection;
+
+    /**
+     * @return -1 if lhs is less than rhs, 0 if they are equal, and 1
+     *   if lhs is greater than rhs
+     */
+    static int compare(const Connection& lhs, const Connection& rhs);
 
     /** Default constructor */
     IPSocketMap() {};
 
     /** Destructor */
     ~IPSocketMap();
-    
+
     /** @return the TCPSocket for key ip, or NULL if ip is not in the map */
-    TCPSocket* getSocket(const std::string& ip) const;
+    TCPSocket* getSocket(const std::string& ip, std::size_t port) const;
 
     /** Remove and deallocate all stored sockets */
     void clear();
-    
+
     /** Add a IP to TCPSocket map entry */
-    void addSocket(const std::string& ip, TCPSocket* socket);
+    void addSocket(const std::string& ip, std::size_t port, TCPSocket* socket);
 
     /** Remove the mapping entry for key ip */
-    void removeSocket(const std::string& ip);
+    void removeSocket(const std::string& ip, std::size_t port);
 
 private:
 
     /** Disable copy construct */
     IPSocketMap(const IPSocketMap& other);
-    
-    std::map<std::string, TCPSocket *> ipSocketMap_;
+
+    std::map<Connection, TCPSocket*> ipSocketMap_;
 };
+
+inline bool operator==(const IPSocketMap::Connection& lhs,
+                       const IPSocketMap::Connection& rhs)
+{
+    return (0 == IPSocketMap::compare(lhs, rhs));
+}
+
+inline bool operator<(const IPSocketMap::Connection& lhs,
+                      const IPSocketMap::Connection& rhs)
+{
+    return (-1 == IPSocketMap::compare(lhs, rhs));
+}
 
 #endif
 

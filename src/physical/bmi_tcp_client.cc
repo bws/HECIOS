@@ -182,7 +182,8 @@ void BMITcpClient::sendOverNetwork(spfsBMIUnexpectedMessage* msg)
 TCPSocket* BMITcpClient::getConnectedSocket(const FSHandle& handle)
 {
     IPvXAddress* serverIp = PFSUtils::instance().getServerIP(handle);
-    TCPSocket* sock = serverConnectionMap_.getSocket(serverIp->str());
+    TCPSocket* sock = serverConnectionMap_.getSocket(serverIp->str(),
+                                                     connectPort_);
 
     // If a connected socket does not exist, create it
     if (0 == sock)
@@ -193,7 +194,7 @@ TCPSocket* BMITcpClient::getConnectedSocket(const FSHandle& handle)
         sock->connect(serverIp->get4(), connectPort_);
 
         // Add open socket for use in later communication
-        serverConnectionMap_.addSocket(serverIp->str(), sock);
+        serverConnectionMap_.addSocket(serverIp->str(), connectPort_, sock);
 
         // Add open socket to TCPSocketMap for handling later TCP messages
         socketMap_.addSocket(sock);

@@ -3,6 +3,9 @@
 // Abstract interface for all I/O applications
 //
 simple IOApplication
+	parameters:
+        traceFile: string,
+        maxBeginTime: numeric;
     gates:
         in: ioIn, mpiIn;
         out: ioOut, mpiOut;
@@ -27,9 +30,9 @@ endsimple
 // An IOApplication using the SHTF trace file format
 //
 simple SHTFIOApplication
-    parameters:
-        traceFile: string;
-
+	parameters:
+        traceFile: string,
+        maxBeginTime: numeric;
     gates:
         in: ioIn, mpiIn;
         out: ioOut, mpiOut;

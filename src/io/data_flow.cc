@@ -36,6 +36,7 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
       bufferSize_(bufferSize),
       parentModule_(parentModule),
       mode_(static_cast<Mode>(flowStart.getFlowMode())),
+      type_(static_cast<Type>(flowStart.getFlowType())),
       uniqueId_(simulation.getUniqueNumber()),
       flowSize_(0),
       networkTransferTotal_(0),
@@ -46,7 +47,11 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
 //      transferToStorageDelay_("SPFS Flow to Storage Delay")
 {
     // Create the data type layout
-    if (CLIENT_READ == mode_ || CLIENT_WRITE == mode_)
+    if (CACHE_FLOW_TYPE == type_)
+    {
+        flowSize_ = 0;
+    }
+    else if (CLIENT_FLOW_TYPE == type_)
     {
         FSSize aggregateSize;
         flowSize_ = DataTypeProcessor::createFileLayoutForClient(
@@ -58,7 +63,7 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
             aggregateSize);
         layout_.addRegion(0, flowSize_);
     }
-    else if (SERVER_READ == mode_ || SERVER_WRITE == mode_)
+    else if (SERVER_FLOW_TYPE == type_)
     {
         flowSize_ = DataTypeProcessor::createFileLayoutForServer(
             flowStart.getOffset(),

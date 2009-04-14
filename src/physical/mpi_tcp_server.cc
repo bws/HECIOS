@@ -20,11 +20,14 @@
 #include <cassert>
 #include <iostream>
 #include <map>
+#include <omnetpp.h>
 #include "TCPSocket.h"
 #include "TCPSocketMap.h"
-#include "network_proto_m.h"
+#include "cache_proto_m.h"
+#include "ip_socket_map.h"
 #include "mpi_proto_m.h"
-#include <omnetpp.h>
+#include "network_proto_m.h"
+#include "pfs_utils.h"
 using namespace std;
 
 /**
@@ -35,10 +38,10 @@ class MPITcpServer : public cSimpleModule, public TCPSocket::CallbackInterface
 public:
     /** Constructor */
     MPITcpServer() : cSimpleModule() {};
-    
+
 protected:
     /** Implementation of initialize */
-    virtual void initialize();
+    virtual void initialize(int stage);
 
     /** Implementation of finish */
     virtual void finish() {};
@@ -46,11 +49,37 @@ protected:
     /** Implementation of cSimpleModule::handleMessage */
     virtual void handleMessage(cMessage* msg);
 
+    virtual void handleApplicationMessage(cMessage* msg);
+
     /** Implementation of TCPSocket::CallbackInterface::socketDataArrived */
     virtual void socketDataArrived(int connId, void* ptr, cMessage* msg,
                                    bool urgent);
-    
+
+    /** Handle the arrival of a socket failure message */
+    virtual void socketFailure(int connId, void *yourPtr, int code);
+
 private:
+    /** Send a message over an already established connection */
+    void sendExpectedMessage(const ConnectionId& connId, cMessage* payload);
+
+    /** Send a message over an unestablished connection */
+    void sendUnexpectedMessage(int rank, cMessage* payload);
+
+    /** @return a socket with an open connection to a remote server */
+    TCPSocket* getConnectedSocket(int rank);
+
+    /** Gate id for appIn */
+    int appInGateId_;
+
+    /** Gate id for appOut */
+    int appOutGateId_;
+
+    /** Gate id for netIn */
+    int netInGateId_;
+
+    /** Gate id for netOut */
+    int netOutGateId_;
+
     /** The port to listen on */
     int listenPort_;
 
@@ -60,31 +89,40 @@ private:
     /** The server's listening socket */
     TCPSocket listenSocket_;
 
-    /** Mapping from a messages socketId to the sending socket */
-    std::map<int,TCPSocket*> requestToSocketMap_;
+    /** Mapping from a messages connectionId to the sending socket */
+    std::map<ConnectionId, TCPSocket*> requestToSocketMap_;
 
-    /** Gate id for appOut */
-    int appOutGateId_;
+    /** Mapping of Server IP's to connected server sockets */
+    IPSocketMap remoteServerConnectionMap_;
 };
 
 // OMNet Registriation Method
 Define_Module(MPITcpServer);
 
-void MPITcpServer::initialize()
+void MPITcpServer::initialize(int stage)
 {
-    // Extract the port information
-    listenPort_ = par("listenPort").longValue();
+    if (0 == stage)
+    {
+        // Setup the socket receive stuff
+        listenSocket_.setOutputGate(gate("tcpOut"));
+        listenSocket_.setCallbackObject(this, 0);
 
-    // Setup the socket receive stuff
-    listenSocket_.setOutputGate(gate("tcpOut"));
-    listenSocket_.setCallbackObject(this, 0);
-    
-    // Open the server side socket
-    listenSocket_.bind(listenPort_);
-    listenSocket_.listen();
+        // Extract the gate ids
+        appInGateId_ = gate("appIn")->id();
+        appOutGateId_ = gate("appOut")->id();
+        netInGateId_ = gate("tcpIn")->id();
+        netOutGateId_ = gate("tcpOut")->id();
+    }
+    else if (4 == stage)
+    {
+        // Extract the port information
+        listenPort_ = par("listenPort").longValue();
 
-    // Extract the gate ids
-    appOutGateId_ = gate("appOut")->id();
+        // Open the server side socket
+        cerr << "Attempting to listen on port: " << listenPort_ << endl;
+        listenSocket_.bind(listenPort_);
+        listenSocket_.listen();
+    }
 }
 
 /**
@@ -107,38 +145,119 @@ void MPITcpServer::handleMessage(cMessage* msg)
         }
         inSock->processMessage(msg);
     }
-    else if (0 != dynamic_cast<spfsMPISendResponse*>(msg))
+    else if (msg->arrivalGateId() == appInGateId_)
     {
-        // Retrieve the socket
-        spfsMPIRequest* origReq =
-            static_cast<spfsMPIRequest*>(msg->contextPointer());
-        map<int,TCPSocket*>::iterator pos =
-            requestToSocketMap_.find(origReq->getSocketId());
-        assert(requestToSocketMap_.end() != pos);
-        
-        TCPSocket* responseSocket = pos->second;
-        assert(0 != responseSocket);
-
-        // Remove the entry for this socket
-        requestToSocketMap_.erase(origReq->getSocketId());
-
-        // Encapsulate the file system response and send to the client
-        spfsNetworkServerSendMessage* pkt = new spfsNetworkServerSendMessage();
-        pkt->encapsulate(msg);
-        pkt->setByteLength(4);
-        responseSocket->send(pkt);
+        handleApplicationMessage(msg);
      }
-    else if (0 != dynamic_cast<spfsMPISendRequest*>(msg))
+    else if (msg->arrivalGateId() == netInGateId_)
     {
         send(msg, appOutGateId_);
     }
     else
     {
-        cerr << "MPI TCP Server does not support message type "
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "MPI TCP Server does not support message type "
              << " name: " << msg->name()
              << " kind: " << msg->kind()
              << " info: " << msg->info() << endl;
+        assert(false);
     }
+}
+
+void MPITcpServer::handleApplicationMessage(cMessage* msg)
+{
+    // Determine if this is a request or a response to figure out
+    // the type of socket to use
+    if (spfsMPIRequest* req = dynamic_cast<spfsMPIRequest*>(msg))
+    {
+        assert(req == 0);
+        assert(false);
+    }
+    else if (spfsCacheRequest* req = dynamic_cast<spfsCacheRequest*>(msg))
+    {
+        int destRank = req->getDestinationRank();
+        sendUnexpectedMessage(destRank, msg);
+    }
+    else if (spfsMPIResponse* req = dynamic_cast<spfsMPIResponse*>(msg))
+    {
+        spfsMPIRequest* origReq =
+                static_cast<spfsMPIRequest*>(req->contextPointer());
+        ConnectionId connId = origReq->getConnectionId();
+        sendExpectedMessage(connId, msg);
+    }
+    else if (spfsCacheResponse* req = dynamic_cast<spfsCacheResponse*>(msg))
+    {
+        spfsCacheRequest* origReq =
+                static_cast<spfsCacheRequest*>(req->contextPointer());
+        ConnectionId connId = origReq->getMpiConnectionId();
+        sendExpectedMessage(connId, msg);
+    }
+    else
+    {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "Unsupported application message type!" << endl;
+        assert(false);
+    }
+}
+
+void MPITcpServer::sendExpectedMessage(const ConnectionId& connId,
+                                       cMessage* payload)
+{
+    map<ConnectionId, TCPSocket*>::iterator pos = requestToSocketMap_.find(connId);
+    assert(requestToSocketMap_.end() != pos);
+
+    TCPSocket* responseSocket = pos->second;
+    assert(0 != responseSocket);
+
+    // Encapsulate the message and send to the peer
+    spfsNetworkServerSendMessage* pkt = new spfsNetworkServerSendMessage();
+    pkt->encapsulate(payload);
+    pkt->setByteLength(4);
+    responseSocket->send(pkt);
+
+    // Remove the entry for this socket
+    requestToSocketMap_.erase(connId);
+}
+
+void MPITcpServer::sendUnexpectedMessage(int rank, cMessage* payload)
+{
+    TCPSocket* socket = getConnectedSocket(rank);
+
+    // Encapsulate the message and send to the peer
+    spfsNetworkServerSendMessage* pkt = new spfsNetworkServerSendMessage();
+    pkt->encapsulate(payload);
+    pkt->setByteLength(4);
+    socket->send(pkt);
+}
+
+
+TCPSocket* MPITcpServer::getConnectedSocket(int rank)
+{
+    PFSUtils::ConnectionDescriptor cd =
+        PFSUtils::instance().getRankConnectionDescriptor(rank);
+    IPvXAddress* serverIp = cd.first;
+    size_t connectPort = cd.second;
+    TCPSocket* sock = remoteServerConnectionMap_.getSocket(serverIp->str(),
+                                                           connectPort);
+
+    // If a connected socket does not exist, create it
+    if (0 == sock)
+    {
+        sock = new TCPSocket();
+        sock->setOutputGate(gate("tcpOut"));
+        sock->setCallbackObject(this, NULL);
+        sock->connect(serverIp->get4(), listenPort_);
+
+        // Add open socket for use in later communication
+        remoteServerConnectionMap_.addSocket(serverIp->str(),
+                                             connectPort,
+                                             sock);
+
+        // Add open socket to TCPSocketMap for handling later TCP messages
+        socketMap_.addSocket(sock);
+    }
+
+    return sock;
 }
 
 //
@@ -147,23 +266,42 @@ void MPITcpServer::handleMessage(cMessage* msg)
 // whole messages are received rather than message fragments
 //
 void MPITcpServer::socketDataArrived(int, void *, cMessage *msg, bool)
-{    
+{
     // Find the socket for this message
     TCPSocket* responseSocket = socketMap_.findSocketFor(msg);
-    
+
     // Decapsulate the payload and call handleMessage with the payload
     cMessage* payload = msg->decapsulate();
 
     // Store the response socket for use during response
     static int nextSocketId = 0;
-    spfsMPIRequest* request = dynamic_cast<spfsMPIRequest*>(payload);
-    request->setSocketId(nextSocketId++);
-    requestToSocketMap_[request->getSocketId()] = responseSocket;
-    
+    if (spfsCacheRequest* request = dynamic_cast<spfsCacheRequest*>(payload))
+    {
+        request->setMpiConnectionId(nextSocketId++);
+    }
+    else if (spfsMPIRequest* request = dynamic_cast<spfsMPIRequest*>(payload))
+    {
+        request->setConnectionId(nextSocketId++);
+    }
+    else
+    {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "Error: Invalid MPI Payload: " << msg->info() << endl;
+        assert(false);
+    }
+    requestToSocketMap_[nextSocketId - 1] = responseSocket;
+
     delete msg;
     handleMessage(payload);
 }
 
+void MPITcpServer::socketFailure(int connId, void *yourPtr, int code)
+{
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Socket Failure: ConnId: " << connId
+         << " Code: " << code << endl;
+    assert(false);
+}
 
 /*
  * Local variables:

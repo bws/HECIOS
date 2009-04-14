@@ -24,13 +24,14 @@
 
 simple MpiMiddleware
     gates:
-        in: appIn, netServerIn, netClientIn;
-        out: appOut, netServerOut, netClientOut;
+        in: appIn, cacheIn, netIn;
+        out: appOut, cacheOut, netOut;
 endsimple
 
 
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:

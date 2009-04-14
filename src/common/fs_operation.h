@@ -30,7 +30,7 @@ class FSStateMachine;
 class FSOperation
 {
 public:
-    /** Constructor */
+   /** Constructor */
     FSOperation(FSOperationState& operationState);
 
     /** Destructor */
@@ -41,7 +41,7 @@ public:
 
     /** @return a copy of the operation's state */
     FSOperationState state() const { return operationState_; };
-    
+
     /**
      * Register the state machines in the order to perform the operation
      *  fsStateMachine's memory is now owned by FSOperation
@@ -56,10 +56,10 @@ public:
 protected:
     /** Register the state machines required to implement this operation */
     virtual void registerStateMachines() = 0;
-    
+
     /** Send the final response once all state machines have finished*/
     virtual void sendFinalResponse() = 0;
-    
+
 private:
     /** Copy constructor hidden */
     FSOperation(const FSOperation& other);

@@ -18,8 +18,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-#include <cassert>
 #include "ip_socket_map.h"
+#include <cassert>
 using namespace std;
 
 IPSocketMap::~IPSocketMap()
@@ -31,7 +31,7 @@ IPSocketMap::~IPSocketMap()
 void IPSocketMap::clear()
 {
     // Delete the allocated sockets
-    map<string, TCPSocket *>::iterator iter;
+    map<Connection, TCPSocket *>::iterator iter;
     for (iter = ipSocketMap_.begin(); iter != ipSocketMap_.end(); ++iter)
     {
         delete iter->second;
@@ -39,12 +39,12 @@ void IPSocketMap::clear()
     }
 }
 
-void IPSocketMap::addSocket(const string& ipAddr, TCPSocket* socket)
+void IPSocketMap::addSocket(const string& ipAddr, size_t port, TCPSocket* socket)
 {
     assert(0 != socket);
 
     // Determine if an entry for this IP already exists
-    TCPSocket* entry = getSocket(ipAddr);
+    TCPSocket* entry = getSocket(ipAddr, port);
 
     // If the entry exists and isn't the same as this socket, delete the
     // memory
@@ -54,26 +54,50 @@ void IPSocketMap::addSocket(const string& ipAddr, TCPSocket* socket)
     }
 
     // Add entry
-    ipSocketMap_[ipAddr] = socket;
+    Connection conn = make_pair(ipAddr, port);
+    ipSocketMap_[conn] = socket;
 }
 
-void IPSocketMap::removeSocket(const string& ipAddr)
+void IPSocketMap::removeSocket(const string& ipAddr, size_t port)
 {
-    map<string, TCPSocket *>::iterator itr = ipSocketMap_.find(ipAddr);
+    Connection conn = make_pair(ipAddr, port);
+    map<Connection, TCPSocket*>::iterator itr = ipSocketMap_.find(conn);
     if (ipSocketMap_.end() != itr)
     {
-       ipSocketMap_.erase(ipAddr);
+       ipSocketMap_.erase(conn);
     }
 }
 
-TCPSocket* IPSocketMap::getSocket(const string& ipAddr) const
+TCPSocket* IPSocketMap::getSocket(const string& ipAddr, size_t port) const
 {
     TCPSocket* socket = 0;
-    map<string, TCPSocket *>::const_iterator pos = ipSocketMap_.find(ipAddr);
+    Connection conn = make_pair(ipAddr, port);
+    map<Connection, TCPSocket*>::const_iterator pos = ipSocketMap_.find(conn);
     if (ipSocketMap_.end() != pos)
     {
         socket = pos->second;
     }
     return socket;
 
+}
+
+int IPSocketMap::compare(const Connection& lhs, const Connection& rhs)
+{
+    int compareVal = 1;
+    if (lhs.second == rhs.second)
+    {
+        if (lhs.first < rhs.first)
+        {
+            compareVal = -1;
+        }
+        else if (lhs.first == rhs.first)
+        {
+            compareVal = 0;
+        }
+    }
+    else if (lhs.second < rhs.second)
+    {
+        compareVal = -1;
+    }
+    return compareVal;
 }

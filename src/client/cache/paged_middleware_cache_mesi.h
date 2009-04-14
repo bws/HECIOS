@@ -28,7 +28,11 @@
 #include "file_region_set.h"
 #include "filename.h"
 #include "lru_mesi_cache.h"
+#include "page_access_mixin.h"
 #include "paged_cache.h"
+class spfsCacheReadExclusiveRequest;
+class spfsCacheReadSharedRequest;
+class spfsMPIFileRequest;
 class spfsMPIFileCloseRequest;
 class spfsMPIFileOpenRequest;
 class spfsMPIFileReadAtRequest;
@@ -40,7 +44,8 @@ class spfsMPIFileWriteAtResponse;
  * A paged cache that uses the MESI invalidation protocol to achieve
  * cache coherence.
  */
-class PagedMiddlewareCacheMesi : public PagedCache
+class PagedMiddlewareCacheMesi : public PagedCache,
+                                 private SinglePageAccessMixin
 {
 public:
     /** Typedef of the type used to store file data internally */
@@ -54,17 +59,11 @@ protected:
     /** Typedef mapping a pending request to its pending cache pages */
     typedef std::map<spfsMPIFileRequest*, PagedCache::InProcessPages> RequestMap;
 
-    /** Typedef mapping a pending request to its number of partial cache pages */
-    typedef std::map<spfsMPIFileRequest*, int> PartialRequestMap;
-
     /** Typedef mapping filenames to the number of current openers */
     typedef std::map<Filename, std::size_t> OpenFileMap;
 
     /** Message name for full page writeback requests */
     static const std::string PAGE_WRITEBACK_NAME;
-
-    /** Message name for partial page writeback requests */
-    static const std::string PARTIAL_PAGE_WRITEBACK_NAME;
 
     /** Perform module initialization */
     virtual void initialize();
@@ -74,9 +73,6 @@ protected:
 
     /** @return the map of pending reads indexed by request */
     virtual RequestMap* createPendingPageMap();
-
-    /** @return the map of pending reads indexed by request */
-    virtual PartialRequestMap* createPendingPartialPageMap();
 
     /**
      * @return the map of the number of times each file has been opened for
@@ -107,16 +103,16 @@ private:
 
     void processFileWrite(spfsMPIFileWriteAtRequest* write, cMessage* msg);
 
-    /** Determine the set of pages for this I/O request
+    /** Determine the set of pages for this I/O request */
     template<class spfsMPIFileIORequest> void getRequestCachePages(
         const spfsMPIFileIORequest* ioRequest,
-        std::set<PagedCache::Key>& outRequestPages) const; */
+        std::set<PagedCache::Key>& outRequestPages) const;
 
-    /** Determine the set of pages for this I/O request
+    /** Determine the set of pages for this I/O request */
     void getRequestCachePages(
         const spfsMPIFileWriteAtRequest* writeAt,
-        std::vector<MultiCache::Page>& outFullPages,
-        std::vector<MultiCache::PartialPage>& outPartialPages) const; */
+        std::vector<PagedCache::Key>& outFullPages,
+        std::vector<PagedCache::Key>& outPartialPages) const;
 
     /** Determine the set of partial pages for this I/O request */
     template<class spfsMPIFileIORequest> void getRequestPartialCachePages(
@@ -133,18 +129,25 @@ private:
                        std::set<PagedCache::Key>& outWritebacks) const;
 
     /** Evict pages from the cache and write them to the file system */
-    void beginWritebackEvictions(const std::vector<FilePageId>& writebackPages,
+    void beginWritebackEvictions(const std::set<PagedCache::Key>& writebackPages,
                                  spfsMPIFileRequest* parentRequest);
 
     /** Read pages from the file system */
-    void beginRead(const std::set<PagedCache::Key>& readPages,
-                   spfsMPIFileRequest* parentRequest);
+    void beginReadExclusive(const std::set<PagedCache::Key>& readPages,
+                            spfsMPIFileRequest* parentRequest);
+
+    /** Read pages from the file system */
+    void beginReadShared(const std::set<PagedCache::Key>& readPages,
+                         spfsMPIFileRequest* parentRequest);
 
     /** @return All the dirty cache entries for filename */
-    std::vector<FilePageId> lookupModifiedPagesInCache(const Filename& fileame) const;
+    std::set<PagedCache::Key> lookupModifiedPagesInCache(const Filename& fileame) const;
 
     /** Remove request pages satisfied in the cache */
     std::set<PagedCache::Key> lookupPagesInCache(std::set<PagedCache::Key>& requestPages);
+
+    /** Remove request pages marked exclusive/modified in the cache */
+    void trimExclusiveCachePages(std::set<PagedCache::Key>& requestPages);
 
     /**
      * Remove all cache entries for the name flushFile
@@ -155,25 +158,17 @@ private:
      * Update the cache with full pages that have been read.
      */
     void updateCacheWithReadPages(std::set<PagedCache::Key>& requestPages,
-                                  std::vector<FilePageId>& outWriteBacks);
-
-    /**
-     * Update the cache with pages that have been partially updated
-     */
-    void updateCacheWithReadPageUpdates(spfsMPIFileWriteAtRequest* writeAt,
-                                        std::set<PagedCache::Key>& requestPages,
-                                        std::vector<FilePageId>& outWriteBacks);
+                                  std::set<PagedCache::Key>& outWriteBacks);
 
     /**
      * Update the cache with pages that have been read.
-     *
+     */
     void updateCacheWithWritePages(const Filename& filename,
-                                   const std::vector<MultiCache::Page>& fullPages,
-                                   const std::vector<MultiCache::PartialPage>& partialPages,
-                                   std::vector<Entry>& outWriteBacks); */
+                                   const std::set<FilePageId>& writePages,
+                                   std::set<PagedCache::Key>& outWriteBacks);
 
     /** Begin writing back the set of cache keys */
-    void beginWritebacks(const std::vector<FilePageId>& writeBacks,
+    void beginWritebacks(const std::set<PagedCache::Key>& writeBacks,
                          spfsMPIFileRequest* req);
 
     /**
@@ -189,7 +184,7 @@ private:
 
     /** Register all the pages pending to satisfy a request */
     void registerPendingWritePages(spfsMPIFileRequest* request,
-                                   const std::vector<FilePageId>& pendingWrites);
+                                   const std::set<PagedCache::Key>& pendingWrites);
 
     /** Mark page as read for requests */
     void resolvePendingReadPage(const PagedCache::Key& readPage);
@@ -197,9 +192,9 @@ private:
     /** Mark pages as read for requests */
     void resolvePendingReadPages(const std::set<PagedCache::Key>& readPages);
 
-    /** Mark pages as read for requests *
+    /** Mark pages as read for requests */
     void resolvePendingReadPages(const Filename& filename,
-                                 const std::vector<MultiCache::Page>& readPages); */
+                                 const std::set<FilePageId>& readPages);
 
     /** Mark page as written for requests */
     void resolvePendingWritePage(const PagedCache::Key& writePage);
@@ -222,37 +217,10 @@ private:
     /** Map of request to the total pending pages */
     RequestMap* pendingPages_;
 
-    /** Map of request to the total pending pages */
-    PartialRequestMap* pendingPartialPages_;
-
     /** Map of the number of opens for each file */
     OpenFileMap* openFileCounts_;
 
 };
-
-/** Functor for finding dirty pages for a cached file */
-class ModifiedPageFilter : public LRUMesiCache<PagedCache::Key,
-                                               FilePageId>::FilterFunctor
-{
-public:
-    typedef LRUMesiCache<PagedCache::Key, FilePageId> MesiCacheType;
-
-    /** Constructor */
-    ModifiedPageFilter(const Filename& filename) : filename_(filename) {};
-
-    /** @return true if the page belongs to this file and is dirty */
-    //virtual bool filter(const PagedCache::Key& key,
-    //                    const FilePageId& entry,
-    //                    MesiCacheType::State state)                                                                       FilePageId>) const
-    //{
-    //    return ((key.filename == filename_) &&
-    //            (MesiCacheType::MODIFIED == state));
-    //};
-
-private:
-    Filename filename_;
-};
-
 
 #endif /* PAGED_MIDDLEWARE_CACHE_MESI_H_ */
 

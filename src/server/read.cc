@@ -120,8 +120,8 @@ void Read::startDataFlow()
     dataFlowStart->setContextPointer(readReq_);
 
     // Set the flow configuration
-    dataFlowStart->setFlowType(SPFS_BMI_TO_LIST_IO_FLOW);
-    dataFlowStart->setFlowMode(DataFlow::SERVER_READ);
+    dataFlowStart->setFlowType(DataFlow::SERVER_FLOW_TYPE);
+    dataFlowStart->setFlowMode(DataFlow::READ_MODE);
 
     // Set the BMI connection parameters
     dataFlowStart->setBmiConnectionId(readReq_->getBmiConnectionId());

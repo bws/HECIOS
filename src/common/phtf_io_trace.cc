@@ -721,9 +721,11 @@ PHTFFs::PHTFFs(string filepath, bool write)
 
 int PHTFFs::fileNum()
 {
+    assert(0 != _fsini);
+
     if(_fsini->exist(PHTFFs::fsSecName))
     {
-        PHTFIniItem * section = _fsini->iniSection(PHTFFs::fsSecName);
+        PHTFIniItem* section = _fsini->iniSection(PHTFFs::fsSecName);
         return section->size();
     }
     else
@@ -734,6 +736,7 @@ int PHTFFs::fileNum()
 
 void PHTFFs::addFile(string filename, string filesize)
 {
+    assert(0 != _fsini);
     _fsini->iniValue(PHTFFs::fsSecName, filename, filesize);
 }
 

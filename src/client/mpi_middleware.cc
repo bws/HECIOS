@@ -82,12 +82,12 @@ void MpiMiddleware::completeCommunicationCB(spfsMPIRequest* request)
 
 void MpiMiddleware::initialize()
 {
-    appInGate_        = findGate("appIn");
-    appOutGate_       = findGate("appOut");
-    netServerInGate_  = findGate("netServerIn");
-    netServerOutGate_ = findGate("netServerOut");
-    netClientInGate_  = findGate("netClientIn");
-    netClientOutGate_ = findGate("netClientOut");
+    appInGate_  = findGate("appIn");
+    appOutGate_ = findGate("appOut");
+    cacheInGate_  = findGate("cacheIn");
+    cacheOutGate_ = findGate("cacheOut");
+    netInGate_  = findGate("netIn");
+    netOutGate_ = findGate("netOut");
 }
 
 void MpiMiddleware::finish()
@@ -111,15 +111,23 @@ void MpiMiddleware::handleMessage(cMessage* msg)
         }
         else
         {
-            cerr << __FILE__ << ":" << __LINE__ << ":ERROR: "
-                 << "Unknown application request\n";
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "Message type not supported." << endl;
             assert(false);
         }
     }
+    else if (msg->arrivalGateId() == cacheInGate_)
+    {
+        send(msg, netOutGate_);
+    }
+    else if (msg->arrivalGateId() == netInGate_)
+    {
+        send(msg, cacheOutGate_);
+    }
     else
     {
-        cerr << __FILE__ << ":" << __LINE__ << ":ERROR: "
-             << "MPI Networking simulation is not currently available.\n";
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "Message arrived unexpectedly." << endl;
         assert(false);
     }
 }
@@ -140,16 +148,6 @@ spfsMPIBcastResponse* MpiMiddleware::createBcastResponse(
         new spfsMPIBcastResponse(0, SPFS_MPI_BCAST_RESPONSE);
     resp->setContextPointer(request);
     return resp;
-}
-
-void MpiMiddleware::sendNet(cMessage *msg)
-{
-    send(msg, netClientOutGate_);
-}
-
-void MpiMiddleware::sendApp(cMessage *msg)
-{
-    send(msg, appOutGate_);
 }
 
 /*

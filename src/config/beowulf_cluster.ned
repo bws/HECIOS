@@ -61,7 +61,7 @@ channel Myrinet10G
     datarate 10000000000.0
 endchannel
 
-module BeowulfCluster
+module BeowulfClusterFastE
 
     parameters:
         numCPUNodes: const,
@@ -96,34 +96,128 @@ module BeowulfCluster
     connections:
 
         for i = 0..numCPUNodes-1 do
-            //cpun[i].ethOut --> GigE --> switch.in++;
-            //cpun[i].ethIn <-- GigE <-- switch.out++;
+			cpun[i].ethOut --> FastE --> switch.in++;
+            cpun[i].ethIn <-- FastE <-- switch.out++;
+        endfor;
+
+        for i = 0..numIONodes - 1 do
+			ion[i].ethOut --> FastE --> switch.in++;
+            ion[i].ethIn <-- FastE <-- switch.out++;
+        endfor;
+    display: "o=white"; // affects background
+endmodule
+
+module BeowulfClusterGigE
+
+    parameters:
+        numCPUNodes: const,
+        numIONodes: const;
+
+    submodules:
+        cpun: ComputeNode[numCPUNodes];
+            display: "p=20,150,m,4;i=abstract/server,yellow";
+
+        ion: IONode[numIONodes];
+            display: "p=450,150,m,2;i=abstract/cache,magenta";
+
+        switch: EnhancedEtherSwitch2;
+            display: "p=350,150;i=abstract/switch,cyan";
+
+        pfsConfig: FSServerConfigurator;
+            parameters:
+                handlesPerServer = 250000;
+            display: "p=40,50;i=abstract/table2,light blue";
+
+        mpiConfig: MPIConfigurator;
+            display: "p=140,50;i=abstract/table2,khaki";
+
+        networkConfig: FlatNetworkConfigurator;
+            parameters:
+                moduleTypes = "Router StandardHost BMIEnhancedHost EnhancedHost",
+                nonIPModuleTypes = "",
+                networkAddress = "192.168.0.0",
+                netmask = "255.255.0.0";
+            display: "p=240,50;i=abstract/table2,hot pink";
+
+    connections:
+
+        for i = 0..numCPUNodes-1 do
+            cpun[i].ethOut --> GigE --> switch.in++;
+            cpun[i].ethIn <-- GigE <-- switch.out++;
+        endfor;
+
+        for i = 0..numIONodes - 1 do
+			ion[i].ethOut --> GigE --> switch.in++;
+            ion[i].ethIn <-- GigE <-- switch.out++;
+        endfor;
+    display: "o=white"; // affects background
+endmodule
+
+module BeowulfClusterMyri10G
+
+    parameters:
+        numCPUNodes: const,
+        numIONodes: const;
+
+    submodules:
+        cpun: ComputeNode[numCPUNodes];
+            display: "p=20,150,m,4;i=abstract/server,yellow";
+
+        ion: IONode[numIONodes];
+            display: "p=450,150,m,2;i=abstract/cache,magenta";
+
+        switch: EnhancedEtherSwitch2;
+            display: "p=350,150;i=abstract/switch,cyan";
+
+        pfsConfig: FSServerConfigurator;
+            parameters:
+                handlesPerServer = 250000;
+            display: "p=40,50;i=abstract/table2,light blue";
+
+        mpiConfig: MPIConfigurator;
+            display: "p=140,50;i=abstract/table2,khaki";
+
+        networkConfig: FlatNetworkConfigurator;
+            parameters:
+                moduleTypes = "Router StandardHost BMIEnhancedHost EnhancedHost",
+                nonIPModuleTypes = "",
+                networkAddress = "192.168.0.0",
+                netmask = "255.255.0.0";
+            display: "p=240,50;i=abstract/table2,hot pink";
+
+    connections:
+
+        for i = 0..numCPUNodes-1 do
             cpun[i].ethOut --> Myrinet10G --> switch.in++;
             cpun[i].ethIn <-- Myrinet10G <-- switch.out++;
         endfor;
 
         for i = 0..numIONodes - 1 do
-			//ion[i].ethOut --> GigE --> switch.in++;
-            //ion[i].ethIn <-- GigE <-- switch.out++;
             ion[i].ethOut --> Myrinet10G --> switch.in++;
             ion[i].ethIn <-- Myrinet10G <-- switch.out++;
         endfor;
-
     display: "o=white"; // affects background
-
 endmodule
 
 
 // Network for testing and general simulator use
-network Test: BeowulfCluster
+network Test: BeowulfClusterFastE
 endnetwork
 
 // Settings for a beowulf cluster similar to adenine
-network adenine: BeowulfCluster
+network adenine: BeowulfClusterFastE
+endnetwork
+
+// Settings for a beowulf cluster similar to Jazz
+network Jazz: BeowulfClusterFastE
 endnetwork
 
 // Settings for a beowulf cluster similar to Palmetto
-network Palmetto: BeowulfCluster
+network PalmettoGigE: BeowulfClusterGigE
+endnetwork
+
+// Settings for a beowulf cluster similar to Palmetto
+network PalmettoMyri10G: BeowulfClusterMyri10G
 endnetwork
 
 

@@ -30,7 +30,7 @@ void RequestScheduler::handleMessage(cMessage* msg)
     if (msg->arrivalGateId() == requestInGateId_)
     {
         // Only pfs and cache messages require scheduling
-        if ((500 <= msg->kind()) && (600 > msg->kind()))
+        if ((400 <= msg->kind()) && (600 > msg->kind()))
         {
             scheduleRequest(msg);
         }
@@ -42,7 +42,7 @@ void RequestScheduler::handleMessage(cMessage* msg)
     else if (msg->arrivalGateId() == serverInGateId_)
     {
         // Only pfs and cache messages require completion
-        if ((500 <= msg->kind()) && (600 > msg->kind()))
+        if ((400 <= msg->kind()) && (600 > msg->kind()))
         {
             completeRequest(msg);
         }
@@ -56,6 +56,7 @@ void RequestScheduler::handleMessage(cMessage* msg)
         cerr << __FILE__ << ":" << __LINE__ << ":"
              <<  "message arrived through illegal gate: "
              << msg->info() << endl;
+        exit(1);
     }
 }
 
@@ -72,6 +73,7 @@ void RequestScheduler::completeRequest(cMessage* msg)
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

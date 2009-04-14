@@ -58,9 +58,10 @@ void SHTFIOApplication::initialize()
     trace_ = createIOTrace(traceName);
     assert(0 != trace_);
 
-    // Send the kick start message
-    cMessage* kickStart = new cMessage();
-    scheduleAt(0.0, kickStart);
+    // Schedule the kick start message
+    cMessage* kickStart = new cMessage(CPU_PHASE_MESSAGE_NAME);
+    double kickStartTime = 0.0;
+    scheduleAt(kickStartTime, kickStart);
 }
 
 /**

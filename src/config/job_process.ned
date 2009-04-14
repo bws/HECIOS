@@ -27,19 +27,15 @@ import
 //
 module JobProcess
     parameters:
-        middlewareCacheType : string;
 
     gates:
-        in: in;
-        out: out;
+        in: bmiIn, mpiIn;
+        out: bmiOut, mpiOut;
 
     submodules:
         mpi: MPIProcess;
             display: "p=120,80;i=block/process,white";
            
-        cache: middlewareCacheType like MiddlewareCache;
-            display: "p=120,180;i=block/buffer2,green";
-
         clientJobManager: JobManager;
             display: "p=60, 280;i=block/classifier,yellow";
 
@@ -48,20 +44,20 @@ module JobProcess
 
     connections nocheck:
         // Connect the MPI process I/O handling to the cache
-        mpi.ioOut --> cache.appIn;
-        mpi.ioIn <-- cache.appOut;
-
-        // Connect the cache to the file system client
-        cache.fsOut --> fsClient.appIn;
-        cache.fsIn <-- fsClient.appOut;
+        mpi.ioOut --> fsClient.appIn;
+        mpi.ioIn <-- fsClient.appOut;
 
         // Connect the file system network to job manager pfs ports
         fsClient.netOut --> clientJobManager.pfsIn;
         fsClient.netIn <-- clientJobManager.pfsOut;
 
         // Connect the client job manager's network ports to the network
-        clientJobManager.netOut --> out;
-        clientJobManager.netIn <-- in;
+        clientJobManager.netOut --> bmiOut;
+        clientJobManager.netIn <-- bmiIn;
+        
+        // Connect the MPI process's network ports to the network
+        mpi.netOut --> mpiOut;
+        mpi.netIn <-- mpiIn;
 
     display: "o=white";
 endmodule

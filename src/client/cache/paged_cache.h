@@ -55,8 +55,11 @@ public:
     struct InProcessPages
     {
     public:
-        /** Pages in the process of being read */
+        /** Pages in the process of being read shared */
         std::set<PagedCache::Key> readPages;
+
+        /** Pages in the process of being read exclusive*/
+        std::set<PagedCache::Key> readExclusivePages;
 
         /** Pages in the process of being written */
         std::set<PagedCache::Key> writePages;

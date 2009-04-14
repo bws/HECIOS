@@ -29,7 +29,7 @@ FSStateMachine::~FSStateMachine()
 }
 
 bool FSStateMachine::handleStateMessage(cFSM& currentState,
-                                   cMessage* stateMessage)
+                                        cMessage* stateMessage)
 {
     return updateState(currentState, stateMessage);
 }

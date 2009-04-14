@@ -26,8 +26,8 @@ simple MiddlewareCache
 		byteCopyTime: const;
 		
     gates:
-        in: appIn, fsIn;
-        out: appOut, fsOut;
+        in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //
@@ -38,8 +38,8 @@ simple NoMiddlewareCache
 		byteCopyTime: const;
 		
     gates:
-        in: appIn, fsIn;
-        out: appOut, fsOut;
+        in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //
@@ -52,8 +52,8 @@ simple DirectPagedMiddlewareCache
     	pageCapacity: const;
     	
 	gates:
-		in: appIn, fsIn;
-        out: appOut, fsOut;
+		in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //
@@ -66,8 +66,8 @@ simple SharedDirectPagedMiddlewareCache
     	pageCapacity: const;
     	
 	gates:
-		in: appIn, fsIn;
-        out: appOut, fsOut;
+		in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //
@@ -79,8 +79,8 @@ simple FullyPagedMiddlewareCache
         pageCapacity: const;
         
     gates:
-        in: appIn, fsIn;
-        out: appOut, fsOut;
+        in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //
@@ -94,8 +94,8 @@ simple PagedMiddlewareCacheWithTwinNoBlockIndexed
     	pageCapacity: const;
     	
 	gates:
-		in: appIn, fsIn;
-        out: appOut, fsOut;
+		in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //
@@ -109,8 +109,8 @@ simple PagedMiddlewareCacheWithTwin
     	pageCapacity: const;
     	
 	gates:
-		in: appIn, fsIn;
-        out: appOut, fsOut;
+		in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //
@@ -124,8 +124,8 @@ simple SharedPagedMiddlewareCacheWithTwin
     	pageCapacity: const;
     	
 	gates:
-		in: appIn, fsIn;
-        out: appOut, fsOut;
+		in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //
@@ -139,8 +139,8 @@ simple SharedPagedMiddlewareCacheWithTwinNoBlockIndexed
     	pageCapacity: const;
     	
 	gates:
-		in: appIn, fsIn;
-        out: appOut, fsOut;
+		in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //
@@ -154,8 +154,8 @@ simple PagedMiddlewareCacheMesi
     	pageCapacity: const;
     	
 	gates:
-		in: appIn, fsIn;
-        out: appOut, fsOut;
+		in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //
@@ -169,8 +169,8 @@ simple SharedPagedMiddlewareCacheMesi
     	pageCapacity: const;
     	
 	gates:
-		in: appIn, fsIn;
-        out: appOut, fsOut;
+		in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
 endsimple
 
 //

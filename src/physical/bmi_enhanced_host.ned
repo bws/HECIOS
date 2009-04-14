@@ -79,7 +79,7 @@ module BMIEnhancedHost
                 routerId = "",
                 routingFile = routingFile;
             display: "p=60,230;i=block/table";
-        tcpApp: tcpAppType[numTcpApps] like TCPApp;
+        bmiTcpApp: tcpAppType[numTcpApps] like TCPApp;
             display: "p=163,67;i=block/app";
         tcp: TCP;
             display: "p=163,154;i=block/wheelbarrow";
@@ -102,8 +102,8 @@ module BMIEnhancedHost
             display: "p=240,350,row,90;q=txQueue;i=block/ifcard";
     connections nocheck:
         for i=0..numTcpApps-1 do
-            tcpApp[i].tcpOut --> tcp.from_appl++;
-            tcpApp[i].tcpIn <-- tcp.to_appl++;
+            bmiTcpApp[i].tcpOut --> tcp.from_appl++;
+            bmiTcpApp[i].tcpIn <-- tcp.to_appl++;
         endfor;
 
         tcp.to_ip --> networkLayer.TCPIn;
@@ -137,8 +137,8 @@ module BMIEnhancedHost
 
         // Connections for BMI messaging applications
         for i=0..numTcpApps-1 do
-            bmiIn[i] --> tcpApp[i].appIn;
-            bmiOut[i] <-- tcpApp[i].appOut;
+            bmiIn[i] --> bmiTcpApp[i].appIn;
+            bmiOut[i] <-- bmiTcpApp[i].appOut;
         endfor;
 
 endmodule

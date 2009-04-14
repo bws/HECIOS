@@ -201,8 +201,8 @@ void FSWriteSM::startFlow(spfsWriteResponse* writeResponse)
     flowStart->setOutboundBmiTag(serverRequest->getServerFlowBmiTag());
 
     // Flow configuration
-    flowStart->setFlowType(SPFS_BMI_TO_MEMORY_FLOW);
-    flowStart->setFlowMode(DataFlow::CLIENT_WRITE);
+    flowStart->setFlowType(DataFlow::CLIENT_FLOW_TYPE);
+    flowStart->setFlowMode(DataFlow::WRITE_MODE);
 
     // Data transfer configuration
     flowStart->setHandle(serverRequest->getHandle());

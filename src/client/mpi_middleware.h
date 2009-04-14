@@ -44,19 +44,13 @@ public:
     /** @return the rank of this node */
     int rank() const;
 
-    /** Sends Message to net out gate */
-    void sendNet(cMessage *msg);
-
-    /** Sends Message to app out gate */
-    void sendApp(cMessage *msg);
-
     /** Callback for when a communication completes */
     void completeCommunicationCB(spfsMPIRequest* request);
-    
+
 protected:
     /** Implementation of initialize */
     virtual void initialize();
-  
+
     /** Implementation of finish */
     virtual void finish();
 
@@ -67,22 +61,24 @@ private:
     /** @return the completion response for the barrier */
     spfsMPIBarrierResponse* createBarrierResponse(
         spfsMPIBarrierRequest* request) const;
-    
+
     /** @return the completion response for the bcast */
     spfsMPIBcastResponse* createBcastResponse(
         spfsMPIBcastRequest* request) const;
-    
+
     /** Gate to recv messages from application on */
     int appInGate_;
 
     /** Gate to send messages to the application on */
     int appOutGate_;
 
+    /** Cache communication gates */
+    int cacheInGate_;
+    int cacheOutGate_;
+
     /** Network communication gates */
-    int netServerInGate_;
-    int netClientInGate_;
-    int netServerOutGate_;
-    int netClientOutGate_;
+    int netInGate_;
+    int netOutGate_;
 
     /** Process rank for this MPI middleware */
     int rank_;

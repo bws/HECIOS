@@ -45,8 +45,8 @@ BMIMemoryDataFlow::~BMIMemoryDataFlow()
 
 void BMIMemoryDataFlow::startTransfer()
 {
-    assert(INVALID != getMode());
-    if (CLIENT_WRITE == getMode())
+    assert(INVALID_MODE != getMode());
+    if (WRITE_MODE == getMode())
     {
         FSSize bufSize = min(getBufferSize(), getSize() - amountPushed_);
         if (0 < bufSize)

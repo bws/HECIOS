@@ -48,12 +48,12 @@ BMIListIODataFlow::~BMIListIODataFlow()
 
 void BMIListIODataFlow::startTransfer()
 {
-    if (SERVER_READ == getMode())
+    if (READ_MODE == getMode())
     {
         // Request the data from storage
         pullDataFromStorage(getBufferSize());
     }
-    else if (SERVER_WRITE == getMode())
+    else if (WRITE_MODE == getMode())
     {
         // No-op, just wait for data
     }

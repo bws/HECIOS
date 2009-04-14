@@ -38,9 +38,10 @@ class DataFlow
 {
 public:
     /** Modes of operation (data read or write) */
-    enum Mode { INVALID = 0,
-                CLIENT_READ, CLIENT_WRITE,
-                SERVER_READ, SERVER_WRITE};
+    enum Mode { INVALID_MODE = 0, READ_MODE, WRITE_MODE};
+
+    /** Flow types: cache, client, or server */
+    enum Type {INVALID_TYPE = 0, CACHE_FLOW_TYPE, CLIENT_FLOW_TYPE, SERVER_FLOW_TYPE};
 
     /** Constructor for a read operation */
     DataFlow(const spfsDataFlowStart& flowStart,
@@ -151,6 +152,9 @@ private:
 
     /** Indicate whether the flow is processing a read or write */
     Mode mode_;
+
+    /** Indicate whether the type of flow to perform (cache, client, or server) */
+    Type type_;
 
     /** Unique identifier */
     int uniqueId_;

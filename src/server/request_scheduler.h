@@ -3,7 +3,6 @@
 
 #include <map>
 #include <queue>
-#include <list>
 #include <omnetpp.h>
 #include "pfs_types.h"
 using namespace std;
@@ -47,12 +46,16 @@ private:
 
     /** Out gate id */
     int serverOutGateId_;
+
+    /** Queue of messages */
+    std::map<FSHandle, std::queue<cMessage*> > messageQueues_;
 };
 
 #endif
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

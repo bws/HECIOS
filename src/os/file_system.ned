@@ -23,6 +23,9 @@
 // Template for File Systems
 //
 simple FileSystem
+    parameters:
+        noATime : bool;
+
     gates:
         in: in, response;
         out: out, request;
@@ -33,7 +36,8 @@ endsimple
 //
 simple NativeFileSystem
     parameters:
-        blockSizeBytes : const;
+        blockSizeBytes : const,
+        noATime: bool;
 
     gates:
         in: in, response;

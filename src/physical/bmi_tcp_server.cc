@@ -235,7 +235,8 @@ cMessage* BMITcpServer::extractBMIPayload(spfsBMIMessage* bmiMsg)
 TCPSocket* BMITcpServer::getConnectedSocket(const FSHandle& handle)
 {
     IPvXAddress* serverIp = PFSUtils::instance().getServerIP(handle);
-    TCPSocket* sock = remoteServerConnectionMap_.getSocket(serverIp->str());
+    TCPSocket* sock = remoteServerConnectionMap_.getSocket(serverIp->str(),
+                                                           listenPort_);
 
     // If a connected socket does not exist, create it
     if (0 == sock)
@@ -246,7 +247,9 @@ TCPSocket* BMITcpServer::getConnectedSocket(const FSHandle& handle)
         sock->connect(serverIp->get4(), listenPort_);
 
         // Add open socket for use in later communication
-        remoteServerConnectionMap_.addSocket(serverIp->str(), sock);
+        remoteServerConnectionMap_.addSocket(serverIp->str(),
+                                             listenPort_,
+                                             sock);
 
         // Add open socket to TCPSocketMap for handling later TCP messages
         socketMap_.addSocket(sock);

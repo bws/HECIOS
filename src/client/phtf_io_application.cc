@@ -164,8 +164,9 @@ void PHTFIOApplication::populateFileSystem()
 {
     cerr << "Populating file system . . . ";
     PHTFFs *fs = PHTFTrace::instance().getFs();
+    int numFiles = fs->fileNum();
     FileSystemMap fsm;
-    for(int i = 0; i < fs->fileNum(); i ++)
+    for(int i = 0; i < numFiles; i ++)
     {
         fsm[fs->fileName(i)] = fs->fileSize(i);
     }
@@ -520,9 +521,7 @@ void PHTFIOApplication::performFakeOpenProcessing(const PHTFEventRecord& openRec
     // for its own record keeping
     cModule* mpiProcess = parentModule();
     assert(0 != mpiProcess);
-    cModule* jobProcess = mpiProcess->parentModule();
-    assert(0 != jobProcess);
-    cModule* cacheModule = jobProcess->submodule("cache");
+    cModule* cacheModule = mpiProcess->submodule("cache");
     assert(0 != cacheModule);
     MiddlewareCache* middlewareCache = dynamic_cast<MiddlewareCache*>(cacheModule);
     assert(0 != middlewareCache);

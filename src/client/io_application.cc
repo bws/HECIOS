@@ -218,6 +218,7 @@ void IOApplication::handleIOMessage(cMessage* msg)
         }
         case SPFS_MPI_FILE_DELETE_RESPONSE:
         {
+            //cerr << "Delete Delay: " << delay << endl;
             fileDeleteDelay_.record(delay);
             break;
         }
@@ -231,6 +232,7 @@ void IOApplication::handleIOMessage(cMessage* msg)
         }
         case SPFS_MPI_FILE_OPEN_RESPONSE:
         {
+            //cerr << "Open Delay: " << delay << endl;
             fileOpenDelay_.record(delay);
             break;
         }
@@ -260,6 +262,7 @@ void IOApplication::handleIOMessage(cMessage* msg)
         }
         case SPFS_MPI_FILE_STAT_RESPONSE:
         {
+            //cerr << "Stat Delay: " << delay << endl;
             fileStatDelay_.record(delay);
             break;
         }

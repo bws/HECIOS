@@ -42,14 +42,16 @@ import
 
 
 //
-// An embellishment of INET's StandardHost that also provides BMI support
+// An embellishment of INET's StandardHost that also provides BMI and MPI support
 // in the TCP Application.
 //
 module EnhancedHost
     parameters:
-        numTcpApps: numeric const,
+        numBMIApps: numeric const,
+        numMPIApps: numeric const,
         numUdpApps: numeric const,
-        tcpAppType: string,
+        bmiAppType: string,
+        mpiAppType: string,
         udpAppType: string,
         IPForward: bool,
         namid: numeric const,
@@ -62,6 +64,9 @@ module EnhancedHost
 
         in: bmiIn[];
         out: bmiOut[];
+
+        in: mpiIn[];
+        out: mpiOut[];
 
     submodules:
         namTrace: NAMTraceWriter;
@@ -78,8 +83,13 @@ module EnhancedHost
                 routerId = "",
                 routingFile = routingFile;
             display: "p=60,230;i=block/table";
-        tcpApp: tcpAppType[numTcpApps] like TCPApp;
+            
+        bmiTcpApp: bmiAppType[numBMIApps] like TCPApp;
             display: "p=275,91,m,3;i=block/app";
+            
+        mpiTcpApp: mpiAppType[numMPIApps] like TCPApp;
+            display: "p=275,91,m,3;i=block/app";
+            
         tcp: TCP;
             display: "p=243,186;i=block/wheelbarrow";
         udpApp: udpAppType[numUdpApps] like UDPApp;
@@ -100,9 +110,14 @@ module EnhancedHost
         eth: EnhancedEthernetInterface2[sizeof(ethOut)];
             display: "p=360,358,row,90;q=txQueue;i=block/ifcard";
     connections nocheck:
-        for i=0..numTcpApps-1 do
-            tcpApp[i].tcpOut --> tcp.from_appl++;
-            tcpApp[i].tcpIn <-- tcp.to_appl++;
+        for i=0..numBMIApps-1 do
+            bmiTcpApp[i].tcpOut --> tcp.from_appl++;
+            bmiTcpApp[i].tcpIn <-- tcp.to_appl++;
+        endfor;
+
+        for i=0..numMPIApps-1 do
+            mpiTcpApp[i].tcpOut --> tcp.from_appl++;
+            mpiTcpApp[i].tcpIn <-- tcp.to_appl++;
         endfor;
 
         tcp.to_ip --> networkLayer.TCPIn;
@@ -135,9 +150,15 @@ module EnhancedHost
         endfor;
 
         // Connections for BMI messaging applications
-        for i=0..numTcpApps-1 do
-            bmiIn[i] --> tcpApp[i].appIn;
-            bmiOut[i] <-- tcpApp[i].appOut;
+        for i=0..numBMIApps-1 do
+            bmiIn[i] --> bmiTcpApp[i].appIn;
+            bmiOut[i] <-- bmiTcpApp[i].appOut;
+        endfor;
+
+        // Connections for MPI messaging applications
+        for i=0..numMPIApps-1 do
+            mpiIn[i] --> mpiTcpApp[i].appIn;
+            mpiOut[i] <-- mpiTcpApp[i].appOut;
         endfor;
 
     display: "b=457,419";

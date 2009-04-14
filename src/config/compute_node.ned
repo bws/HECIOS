@@ -35,15 +35,19 @@ module ComputeNode
 
         hca: EnhancedHost;
         parameters:
-            numTcpApps = numProcs,
-            tcpAppType = "BMITcpClient";
+            numBMIApps = numProcs,
+            numMPIApps = numProcs,
+            bmiAppType = "BMITcpClient",
+            mpiAppType = "MPITcpServer";
         display: "p=100,80;i=block/rxtx,medium purple";
 
     connections:
-        // Connect processes to network transport
+        // Connect processes to BMI network transport
         for i=0..numProcs-1 do
-            process[i].out --> hca.bmiIn++;
-            process[i].in <-- hca.bmiOut++;
+            process[i].bmiOut --> hca.bmiIn++;
+            process[i].bmiIn <-- hca.bmiOut++;
+            process[i].mpiOut --> hca.mpiIn++;
+            process[i].mpiIn <-- hca.mpiOut++;
         endfor
 
         // Connect forwarding gates

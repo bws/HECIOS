@@ -31,10 +31,12 @@ import
 //
 module MPIProcess
     parameters:
+        middlewareCacheType : string,
         IOApplicationType : string;
+
     gates:
-        in: ioIn, mpiClientIn, mpiServerIn;
-        out: ioOut, mpiClientOut, mpiServerOut;
+        in: ioIn, netIn;
+        out: ioOut, netOut;
 
     submodules:
         app:IOApplicationType like IOApplication;
@@ -43,20 +45,29 @@ module MPIProcess
 		mpiMiddleware: MpiMiddleware;
 	    	display: "p=180,180;i=block/classifier,red";
 
+        cache: middlewareCacheType like MiddlewareCache;
+            display: "p=120,180;i=block/buffer2,green";
+
     connections:
-        // Connect the MPI application to the MPI middleware
+        // Connect the I/O application to the MPI Middleware
 		app.mpiOut --> mpiMiddleware.appIn;
 		app.mpiIn <-- mpiMiddleware.appOut;
 
-        // Connect the MPI application to the I/O middleware
-        app.ioOut --> ioOut;
-        app.ioIn <-- ioIn;
+        // Connect the MPI application to the cache middleware
+        app.ioOut --> cache.appIn;
+        app.ioIn <-- cache.appOut;
+        
+        // Connect the Cache to the MPI Middleware
+		cache.mpiOut --> mpiMiddleware.cacheIn;
+		cache.mpiIn <-- mpiMiddleware.cacheOut;
 
-		// Connect the MPI middleware to the MPI messaging network
-        mpiMiddleware.netClientOut --> mpiClientOut;
-        mpiMiddleware.netClientIn <-- mpiClientIn;
-        mpiMiddleware.netServerOut --> mpiServerOut;
-        mpiMiddleware.netServerIn <-- mpiServerIn;
+        // Connect the Cache to the I/O subsystem
+		cache.fsOut --> ioOut;
+		cache.fsIn <-- ioIn;
+
+        // Connect the MPI Middleware to the network
+        mpiMiddleware.netOut --> netOut;
+        mpiMiddleware.netIn <-- netIn;
 
     display: "o=white";
 endmodule

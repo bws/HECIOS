@@ -49,6 +49,8 @@ void FileSystem::createFile(const Filename& filename, FSSize size)
 
 void FileSystem::initialize()
 {
+    noATime_ = par("noATime").boolValue();
+
     inGateId_ = findGate("in");
     outGateId_ = findGate("out");
     requestGateId_ = findGate("request");
@@ -269,14 +271,24 @@ void FileSystem::writeMetaData(spfsOSFileRequest* request)
     Filename filename(request->getFilename());
     vector<FSBlock> blocks = getMetaDataBlocks(filename);
     assert(0 != blocks.size());
-    
+
     // Write the first meta data block to simulate updating the atime
     spfsOSWriteBlocksRequest* writeBlock =
         new spfsOSWriteBlocksRequest(0, SPFS_OS_WRITE_BLOCKS_REQUEST);
     writeBlock->setContextPointer(request);
     writeBlock->setBlocksArraySize(1);
     writeBlock->setBlocks(0, blocks[0]);
-    writeBlock->setWriteThrough(true);
+
+    // Set whether the atime is immediately updated
+    if (noATime_)
+    {
+        writeBlock->setWriteThrough(false);
+    }
+    else
+    {
+        writeBlock->setWriteThrough(true);
+    }
+
     send(writeBlock, requestGateId_);
 }
 
@@ -318,7 +330,7 @@ void FileSystem::sendFileIOResponse(spfsOSFileLIORequest* ioRequest)
     {
         ioSize += ioRequest->getExtent(i);
     }
-    
+
     // Respond to the read or write request
     if (0 != dynamic_cast<spfsOSFileReadRequest*>(ioRequest))
     {
@@ -345,7 +357,7 @@ void NativeFileSystem::initializeFileSystem()
 {
     // Retrieve the block size
     blockSize_ = par("blockSizeBytes").longValue();
-    
+
     // Construct the storage layout for the file system
     storageLayout_ = new FixedINodeStorageLayout(getBlockSize());
 }

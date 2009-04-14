@@ -110,12 +110,11 @@ message spfsMPIRequest
 {
     fields:
         // internal fields
-        //cFSM state;
-        FSOperationState opState;
         cFSM cacheState;
+        FSOperationState opState;
         unsigned int numResolvedSegments = 1;
         int remainingResponses = 0;
-        int socketId = -1;
+        int connectionId = -1;
 };
 
 // The abstract base class for collective messages -- not used purely correctly
@@ -260,11 +259,11 @@ message spfsMPIFileSetInfoResponse extends spfsMPIResponse
 message spfsMPIFileReadRequest extends spfsMPIFileRequest
 {
     fields:
-	int count;
-	MPIDataType dataType;
+		int count;
+		MPIDataType dataType;
 
-        // Internal fields used during processing
-        int remainingFlows = 0;
+    	// Internal fields used during processing
+    	int remainingFlows = 0;
 };
 
 // File read response
@@ -420,9 +419,9 @@ message spfsMPIBcastResponse extends spfsMPIResponse
 {
 };
 
-
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:

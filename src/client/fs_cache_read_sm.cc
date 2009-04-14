@@ -18,20 +18,20 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //#define FSM_DEBUG  // Enable FSM Debug output
-#include "fs_read_sm.h"
+#include "fs_cache_read_sm.h"
 #include <cassert>
 #include <omnetpp.h>
+#include "cache_proto_m.h"
 #include "data_flow.h"
 #include "data_type_layout.h"
 #include "data_type_processor.h"
 #include "file_distribution.h"
 #include "fs_client.h"
-#include "mpi_proto_m.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSReadSM::FSReadSM(spfsMPIFileReadAtRequest* readRequest,
-                   FSClient* client)
+FSCacheReadSM::FSCacheReadSM(spfsCacheReadRequest* readRequest,
+                             FSClient* client)
     : readRequest_(readRequest),
       client_(client),
       bytesRead_(0)
@@ -40,7 +40,7 @@ FSReadSM::FSReadSM(spfsMPIFileReadAtRequest* readRequest,
     assert(0 != client_);
 }
 
-bool FSReadSM::updateState(cFSM& currentState, cMessage* msg)
+bool FSCacheReadSM::updateState(cFSM& currentState, cMessage* msg)
 {
     /** File system write state machine states */
     enum {
@@ -142,9 +142,10 @@ bool FSReadSM::updateState(cFSM& currentState, cMessage* msg)
     return isComplete;
 }
 
-void FSReadSM::enterRead()
+void FSCacheReadSM::enterRead()
 {
-    FileDescriptor* fd = readRequest_->getFileDes();
+    /*
+    FileDescriptor* fd = readRequest_->getDescriptor();
     assert(0 != fd);
     const FSMetaData* metaData = fd->getMetaData();
 
@@ -227,22 +228,23 @@ void FSReadSM::enterRead()
     // Set the number of outstanding responses and flows
     readRequest_->setRemainingResponses(numRequests);
     readRequest_->setRemainingFlows(numFlows);
+*/
 }
 
-bool FSReadSM::fileHasReadData(size_t reqBytes)
+bool FSCacheReadSM::fileHasReadData(size_t reqBytes)
 {
     // TODO: This is not a correct implementation, but it works for now
     // Extract the file descriptor
-    FileDescriptor* fd = readRequest_->getFileDes();
+    FileDescriptor* fd = readRequest_->getDescriptor();
     assert(0 != fd);
     FSSize fileSize = fd->getMetaData()->size;
     return (reqBytes <= fileSize);
 }
 
-void FSReadSM::startFlow(spfsReadResponse* readResponse)
+void FSCacheReadSM::startFlow(spfsReadResponse* readResponse)
 {
     // Extract the file descriptor
-    FileDescriptor* fd = readRequest_->getFileDes();
+    FileDescriptor* fd = readRequest_->getDescriptor();
     assert(0 != fd);
 
     // Extract the server request
@@ -261,39 +263,40 @@ void FSReadSM::startFlow(spfsReadResponse* readResponse)
     flowStart->setOutboundBmiTag(serverRequest->getServerFlowBmiTag());
 
     // Flow configuration
-    flowStart->setFlowType(DataFlow::CLIENT_FLOW_TYPE);
+    flowStart->setFlowType(DataFlow::CACHE_FLOW_TYPE);
     flowStart->setFlowMode(DataFlow::READ_MODE);
 
     // Data transfer configuration
     flowStart->setHandle(serverRequest->getHandle());
     flowStart->setView(serverRequest->getView());
     flowStart->setDist(serverRequest->getDist());
-    flowStart->setOffset(readRequest_->getOffset());
-    flowStart->setDataType(readRequest_->getDataType());
-    flowStart->setCount(readRequest_->getCount());
+    //TODO flowStart->setOffset(readRequest_->getOffset());
+    //TODO flowStart->setDataType(readRequest_->getDataType());
+    //TODO flowStart->setCount(readRequest_->getCount());
 
     // Send the start message
     client_->send(flowStart, client_->getNetOutGate());
 }
 
-void FSReadSM::countResponse()
+void FSCacheReadSM::countResponse()
 {
     int numRemainingResponses = readRequest_->getRemainingResponses();
     readRequest_->setRemainingResponses(--numRemainingResponses);
 }
 
-void FSReadSM::countFlowFinish(spfsDataFlowFinish* finishMsg)
+void FSCacheReadSM::countFlowFinish(spfsDataFlowFinish* finishMsg)
 {
     assert(0 != finishMsg);
     bytesRead_ += finishMsg->getFlowSize();
-    int numRemainingFlows = readRequest_->getRemainingFlows();
-    readRequest_->setRemainingFlows(--numRemainingFlows);
+    //TODO int numRemainingFlows = readRequest_->getRemainingFlows();
+    //TODO readRequest_->setRemainingFlows(--numRemainingFlows);
 }
 
-bool FSReadSM::isReadComplete()
+bool FSCacheReadSM::isReadComplete()
 {
-    return (0 == readRequest_->getRemainingResponses())
-        && (0 == readRequest_->getRemainingFlows());
+    return false;
+//TODO    return (0 == readRequest_->getRemainingResponses())
+//TODO        && (0 == readRequest_->getRemainingFlows());
 }
 
 /*

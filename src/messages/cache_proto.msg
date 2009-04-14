@@ -24,15 +24,26 @@
 
 // allow a pointer field in a message 
 cplusplus {{
+#include "basic_types.h"
 #include "data_type.h"
+#include "file_descriptor.h"
+#include "fs_operation_state.h"
+
+/** File descriptor type */
+typedef FileDescriptor* FileDescriptorPtr;
 
 /** MPI Data type */
 typedef DataType* MPIDataType;
 }}
 
 class cFSM;
+class noncobject ConnectionId;
 class noncobject MPIDataType;
 class noncobject FileDescriptorPtr;
+class noncobject FSHandle;
+class noncobject FSOffset;
+class noncobject FSOperationState;
+class noncobject FSSize;
 
 enum spfsCacheMessageKind
 {
@@ -40,41 +51,87 @@ enum spfsCacheMessageKind
     SPFS_CACHE_INVALIDATE_RESPONSE = 502;
     SPFS_CACHE_READ_EXCLUSIVE_REQUEST = 503;
     SPFS_CACHE_READ_EXCLUSIVE_RESPONSE = 504;
+    SPFS_CACHE_READ_SHARED_REQUEST = 505;
+    SPFS_CACHE_READ_SHARED_RESPONSE = 506;
 };
 
-message spfsCacheInvalidateRequest
+message spfsCacheRequest
 {
     fields:
-        int handle;
-        unsigned int offset;
-        MPIDataType dataType;
-        unsigned int count;
+        FileDescriptorPtr descriptor = 0;
+        FSHandle handle;
+
+        // internal fields
+        FSOperationState opState;
+        unsigned int numResolvedSegments = 1;
+        int remainingResponses = 0;
+        int socketId = -1;
+        ConnectionId mpiConnectionId;
+        int destinationRank;
 }
 
-message spfsCacheInvalidateResponse
+message spfsCacheResponse
+{
+}
+
+message spfsCacheInvalidateRequest extends spfsCacheRequest
+{
+    fields:
+    	FSSize pageSize;
+    	unsigned long pageIds[];
+}
+
+message spfsCacheInvalidateResponse extends spfsCacheResponse
 {
     fields:
 }
 
-message spfsCacheReadExclusiveRequest
+message spfsCacheReadRequest extends spfsCacheRequest
 {
     fields:
-        int handle;
-        unsigned int offset;
-        MPIDataType dataType;
-        unsigned int count;
+    	FSSize pageSize;
+    	unsigned long pageIds[];
 }
 
-message spfsCacheReadExclusiveResponse
+message spfsCacheReadResponse extends spfsCacheResponse
+{
+    fields:
+}
+
+message spfsCacheReadExclusiveRequest extends spfsCacheReadRequest
+{
+}
+
+message spfsCacheReadExclusiveResponse extends spfsCacheReadResponse
+{
+}
+
+message spfsCacheReadSharedRequest extends spfsCacheReadRequest
+{
+}
+
+message spfsCacheReadSharedResponse extends spfsCacheReadResponse
+{
+}
+
+message spfsCacheUpgradeRequest extends spfsCacheRequest
+{
+    fields:
+    	FSSize pageSize;
+    	unsigned long pageIds[];
+}
+
+message spfsCacheUpgradeResponse extends spfsCacheResponse
 {
     fields:
 }
 
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:
 //
-// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+// vim: ts=4 sts=4 sw=4 expandtab
 //

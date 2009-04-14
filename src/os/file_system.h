@@ -62,9 +62,9 @@ class FileSystem : public cSimpleModule
 
     /** Add a file to the file system */
     void createFile(const Filename& filename, FSSize size);
-    
+
 protected:
-    
+
     /** Initialize the simulation module */
     virtual void initialize();
 
@@ -76,7 +76,7 @@ protected:
 
     /** Initialize derived file systems */
     virtual void initializeFileSystem() = 0;
-    
+
     /** Finalize the native file system */
     virtual void finishFileSystem() = 0;
 
@@ -111,15 +111,18 @@ private:
 
     /** Send the final read or write response */
     void sendFileIOResponse(spfsOSFileLIORequest* ioRequest);
-    
+
     /** @return the meta data blocks for a filename */
     virtual std::vector<FSBlock> getMetaDataBlocks(
         const Filename& filename) const = 0;
-    
+
     /** @return the data blocks for a file region */
     virtual std::vector<FSBlock> getDataBlocks(
         spfsOSFileLIORequest* ioRequest) const = 0;
-    
+
+    /** Flag indicating if atime is updated on each access */
+    bool noATime_;
+
     /** in gate id */
     int inGateId_;
 
@@ -140,31 +143,31 @@ private:
 class NativeFileSystem : public FileSystem
 {
 public:
-    
+
     /** @return the file system's block size in bytes */
     std::size_t getBlockSize() const { return blockSize_; };
-    
+
 protected:
 
     /** Initialize the native file system */
     virtual void initializeFileSystem();
-    
+
     /** Finalize the native file system */
     virtual void finishFileSystem();
-    
+
     /** Allocate disk storage for a new directory */
     virtual void allocateDirectoryStorage(const Filename& filename);
 
     /** Allocate disk storage for a new file */
     virtual void allocateFileStorage(const Filename& filename,
                                      FSSize size);
-    
+
 private:
 
     /** @return the meta data blocks for a filename */
     virtual std::vector<FSBlock> getMetaDataBlocks(
         const Filename& filename) const;
-    
+
     /** @return the data blocks for a file region */
     virtual std::vector<FSBlock> getDataBlocks(
         const Filename& filename, FSOffset offset, FSSize extent) const;
@@ -175,7 +178,7 @@ private:
 
     /** File system block size in bytes */
     std::size_t blockSize_;
-    
+
     /** Storage layout for this file system */
     StorageLayout* storageLayout_;
 };
