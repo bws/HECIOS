@@ -3,31 +3,31 @@
 # General Settings
 #
 [General]
-preload-ned-files = @NEDINCLUDES@
+preload-ned-files = @@INSTALL_DIR@/lib/ned/hecios_ned.lst
 sim-time-limit = 10000s
 network = PalmettoMyri10G
 
 #
 # Environment settings
 #
-include ini/global_env.ini
+include @INSTALL_DIR@/ini/global_env.ini
 
 #
 # Output settings
 #
-include ini/global_out_vectors.ini
+include @INSTALL_DIR@/ini/global_out_vectors.ini
 
 #
 # Run definitions
 #
-include ini/global_run_configs.ini
+include @INSTALL_DIR@/ini/global_run_configs.ini
 
 #
 # Simulation parameters
 #
 [Parameters]
-include ini/palmetto_static_params.ini
-include ini/palmetto_myri10g.ini
+include @INSTALL_DIR@/ini/palmetto_static_params.ini
+include @INSTALL_DIR@/ini/palmetto_myri10g.ini
 
 ###############################################################################
 #
