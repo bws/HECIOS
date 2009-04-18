@@ -271,7 +271,7 @@ $(BUILD_DIR)/hecios_ned.lst:
 	find $(HECIOS_DIR) -name *.ned > $@
 
 $(BUILD_DIR)/omnetpp.ini: $(BUILD_DIR)/hecios_ned.lst $(HECIOS_DIR)/omnetpp.ini.in
-	sed -e "s|@NEDINCLUDES@|@$(BUILD_DIR)/hecios_ned.lst|" $(HECIOS_DIR)/omnetpp.ini.in > $@
+	sed -e "s|@INSTALL_DIR@|$(INSTALL_DIR)|" $(HECIOS_DIR)/omnetpp.ini.in > $@
 
 configfile: $(BUILD_DIR)/omnetpp.ini
 
