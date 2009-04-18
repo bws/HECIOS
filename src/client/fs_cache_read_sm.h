@@ -26,7 +26,8 @@ class cMessage;
 class FSClient;
 class spfsCacheReadRequest;
 class spfsDataFlowFinish;
-class spfsReadResponse;
+class spfsReadPagesRequest;
+class spfsReadPagesResponse;
 
 /**
  * Class responsible for reading a file into cache
@@ -35,7 +36,9 @@ class FSCacheReadSM : public FSStateMachine
 {
 public:
     /** Construct the file read state machine */
-    FSCacheReadSM(spfsCacheReadRequest* mpiReq, FSClient* client);
+    FSCacheReadSM(spfsCacheReadRequest* mpiReq,
+                  FSClient* client,
+                  bool isExclusive);
 
 protected:
     /** Message processing for removes */
@@ -61,13 +64,16 @@ private:
     bool isReadComplete();
 
     /** Start a flow */
-    void startFlow(spfsReadResponse* readResponse);
+    void startFlow(spfsReadPagesResponse* readResponse);
 
     /** The originating read request */
     spfsCacheReadRequest* readRequest_;
 
     /** The file system client module */
     FSClient* client_;
+
+    /** Whether to read exclusive or shared */
+    bool isExclusive_;
 
     /** The number of bytes read */
     std::size_t bytesRead_;

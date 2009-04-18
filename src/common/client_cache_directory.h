@@ -34,15 +34,11 @@ class FileView;
 class ClientCacheDirectory : public Singleton<ClientCacheDirectory>
 {
 public:
+    /** Forward declaration */
+    class Entry;
+
     /** Enable singleton construction */
     friend class Singleton<ClientCacheDirectory>;
-
-    /** Entries stored in client caches */
-    struct Entry
-    {
-        Filename filename;
-        FilePageId pageId;
-    };
 
     /** Client cache type */
     typedef ConnectionId ClientCache;
@@ -50,25 +46,40 @@ public:
     /** Map of handle to client cache type */
     typedef std::multimap<Entry, ClientCache> CacheEntryToClientMap;
 
+    /** Map of client caches to the invalid entries */
+    typedef std::map<ClientCache, std::set<Entry> > InvalidationMap;
+
+    /** Cache entry states */
+    enum State {INVALID_STATE = 0, SHARED, EXCLUSIVE};
+
+    /** Entries stored in client caches */
+    struct Entry
+    {
+        Filename filename;
+        FilePageId pageId;
+        State state;
+    };
+
     /**
      * Parse the request to determine the client caches in need of an
      * invalidate
      *
      * @return the set of client caches needing an invalidate
      */
-    std::set<ClientCache> getClientsNeedingInvalidate(const Filename& filename,
-                                                      const FSSize& pageSize,
-                                                      const FSOffset& offset,
-                                                      const FSSize& dataSize,
-                                                      const FileView& view,
-                                                      const FileDistribution& dist) const;
+    InvalidationMap getClientsNeedingInvalidate(const Filename& filename,
+                                                const FSSize& pageSize,
+                                                const FSOffset& offset,
+                                                const FSSize& dataSize,
+                                                const FileView& view,
+                                                const FileDistribution& dist) const;
 
-    /** */
+    /** Add a directory entry for the page */
     void addClientCacheEntry(const ClientCache& clientCache,
                              const Filename& filename,
-                             const FilePageId& pageId);
+                             const FilePageId& pageId,
+                             State state);
 
-    /** */
+    /** Remove the directory entry for the page */
     void removeClientCacheEntry(const ClientCache& clientCache,
                                 const Filename& filename,
                                 const FilePageId& pageId);

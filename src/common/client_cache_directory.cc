@@ -20,6 +20,7 @@
 #include "client_cache_directory.h"
 #include "data_type_layout.h"
 #include "data_type_processor.h"
+#include "file_builder.h"
 #include "file_page_utils.h"
 #include "file_view.h"
 #include "file_distribution.h"
@@ -35,7 +36,7 @@ ClientCacheDirectory::~ClientCacheDirectory()
 
 }
 
-set<ClientCacheDirectory::ClientCache>
+ClientCacheDirectory::InvalidationMap
 ClientCacheDirectory::getClientsNeedingInvalidate(const Filename& filename,
                                                   const FSSize& pageSize,
                                                   const FSOffset& offset,
@@ -44,12 +45,15 @@ ClientCacheDirectory::getClientsNeedingInvalidate(const Filename& filename,
                                                   const FileDistribution& dist) const
 {
     // Get the file regions accessed
+    FSMetaData* meta = FileBuilder::instance().getMetaData(filename);
+    int serverIdx = dist.getObjectIdx();
     DataTypeLayout dataLayout;
-    DataTypeProcessor::createFileLayoutForServer(offset,
-                                                 dataSize,
-                                                 view,
-                                                 dist,
-                                                 dataLayout);
+    DataTypeProcessor::createServerFileLayoutForRead(offset,
+                                                     dataSize,
+                                                     view,
+                                                     dist,
+                                                     meta->bstreamSizes[serverIdx],
+                                                     dataLayout);
 
     // Translate the regions into page ids
     FilePageUtils& pageUtils = FilePageUtils::instance();
@@ -57,11 +61,11 @@ ClientCacheDirectory::getClientsNeedingInvalidate(const Filename& filename,
                                                          dataLayout.getRegions());
 
     // Determine the caches containing these pages
-    set<ClientCache> clients;
+    InvalidationMap invalidations;
     set<FilePageId>::iterator iter = pageIds.begin();
     while (iter != pageIds.end())
     {
-        Entry entry = {filename, *(iter)++};
+        Entry entry = {filename, *(iter++)};
         pair<CacheEntryToClientMap::const_iterator,
              CacheEntryToClientMap::const_iterator> range;
         range = clientCacheEntries_.equal_range(entry);
@@ -69,17 +73,18 @@ ClientCacheDirectory::getClientsNeedingInvalidate(const Filename& filename,
         CacheEntryToClientMap::const_iterator j;
         for (j = range.first; j != range.second; ++j)
         {
-            clients.insert(j->second);
+            invalidations[j->second].insert(entry);
         }
     }
-    return clients;
+    return invalidations;
 }
 
 void ClientCacheDirectory::addClientCacheEntry(const ClientCache& client,
                                                const Filename& filename,
-                                               const FilePageId& pageId)
+                                               const FilePageId& pageId,
+                                               State state)
 {
-    const Entry entry = {filename, pageId};
+    const Entry entry = {filename, pageId, state};
     clientCacheEntries_.insert(make_pair(entry, client));
 }
 

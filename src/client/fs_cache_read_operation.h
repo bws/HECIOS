@@ -1,9 +1,9 @@
-#ifndef FS_READ_OPERATION_H_
-#define FS_READ_OPERATION_H_
+#ifndef FS_CACHE_READ_OPERATION_H_
+#define FS_CACHE_READ_OPERATION_H_
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2008 bradles
+// Copyright (C) 2009 Bradley W. Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License

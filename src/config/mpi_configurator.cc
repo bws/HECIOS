@@ -24,6 +24,7 @@
 #include "IPv4InterfaceData.h"
 #include "IPvXAddress.h"
 #include "io_application.h"
+#include "middleware_cache.h"
 #include "mpi_middleware.h"
 #include "pfs_types.h"
 #include "pfs_utils.h"
@@ -154,18 +155,24 @@ void MPIConfigurator::initialize(int stage)
                 size_t rank = nextProcessRank_++;
                 ioApp->setRank(rank);
 
+                // Set the rank for the MPI Middleware
+                MpiMiddleware* mpiMid = dynamic_cast<MpiMiddleware*>(
+                    mpiProcess->submodule("mpiMiddleware"));
+                assert(0 != mpiMid);
+                mpiMid->setRank(rank);
+
+                // Set the rank for the cache middleware
+                MiddlewareCache* mwCache = dynamic_cast<MiddlewareCache*>(
+                    mpiProcess->submodule("cache"));
+                assert(0 != mwCache);
+                mwCache->setRank(rank);
+
                 // Set the port for the MPI Server
                 size_t listenPort = getMPIServerListenPort(cpun, j);
 
                 // Register the IP/port for the this process rank
                 PFSUtils::instance().registerRankConnectionDescriptor(
                     rank, make_pair(addr, listenPort));
-
-                // Set the rank for the MPI Middleware
-                MpiMiddleware* mpiMid = dynamic_cast<MpiMiddleware*>(
-                    mpiProcess->submodule("mpiMiddleware"));
-                assert(0 != mpiMid);
-                mpiMid->setRank(rank);
             }
         }
     }

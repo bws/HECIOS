@@ -31,9 +31,11 @@
 using namespace std;
 
 FSCacheReadSM::FSCacheReadSM(spfsCacheReadRequest* readRequest,
-                             FSClient* client)
+                             FSClient* client,
+                             bool isExclusive)
     : readRequest_(readRequest),
       client_(client),
+      isExclusive_(isExclusive),
       bytesRead_(0)
 {
     assert(0 != readRequest_);
@@ -92,7 +94,7 @@ bool FSCacheReadSM::updateState(cFSM& currentState, cMessage* msg)
         }
         case FSM_Enter(COUNT_SERVER_RESPONSE):
         {
-            assert(0 != dynamic_cast<spfsReadResponse*>(msg));
+            assert(0 != dynamic_cast<spfsReadPagesResponse*>(msg));
 
             // Need a quick workaround in case there isn't a need for a
             // flow here
@@ -100,13 +102,13 @@ bool FSCacheReadSM::updateState(cFSM& currentState, cMessage* msg)
                 static_cast<spfsReadRequest*>(msg->contextPointer());
             if (true == readRequest->getHasReadData())
             {
-                startFlow(dynamic_cast<spfsReadResponse*>(msg));
+                startFlow(dynamic_cast<spfsReadPagesResponse*>(msg));
             }
             break;
         }
         case FSM_Exit(COUNT_SERVER_RESPONSE):
         {
-            assert(0 != dynamic_cast<spfsReadResponse*>(msg));
+            assert(0 != dynamic_cast<spfsReadPagesResponse*>(msg));
             countResponse();
 
             if (isReadComplete())
@@ -144,20 +146,17 @@ bool FSCacheReadSM::updateState(cFSM& currentState, cMessage* msg)
 
 void FSCacheReadSM::enterRead()
 {
-    /*
     FileDescriptor* fd = readRequest_->getDescriptor();
     assert(0 != fd);
     const FSMetaData* metaData = fd->getMetaData();
 
     // Construct the template read request
-    spfsReadRequest read("ReadStuff", SPFS_READ_REQUEST);
-
-    // Note: The read request is NOT deleted here as one would expect.
-    // Because the server side flow completes after the client, the request
-    // is deleted on the server
+    spfsReadPagesRequest read("ReadStuff", SPFS_READ_PAGES_REQUEST);
+    read.setMetaHandle(metaData->handle);
     read.setContextPointer(readRequest_);
     read.setOffset(readRequest_->getOffset());
     read.setView(new FileView(fd->getFileView()));
+    read.setIsExclusive(isExclusive_);
 
     // Send request to each server
     int numRequests = 0;
@@ -168,23 +167,26 @@ void FSCacheReadSM::enterRead()
         // Process the data type to determine the read size
         metaData->dist->setObjectIdx(i);
         FSSize aggregateSize = 0;
-        FSSize reqBytes = DataTypeProcessor::createFileLayoutForClient(
+        FSSize reqBytes = DataTypeProcessor::createClientFileLayoutForRead(
             readRequest_->getOffset(),
             *readRequest_->getDataType(),
             readRequest_->getCount(),
             *read.getView(),
             *metaData->dist,
+            metaData->bstreamSizes[i],
             aggregateSize);
 
-        if (!fileHasReadData(readRequest_->getOffset() + reqBytes))
+        if (0 == aggregateSize && 0 != reqBytes)
         {
             // Create a request that the server will not flow data for
             // because the read data is not present in the file
-            spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
+            spfsReadPagesRequest* req = static_cast<spfsReadPagesRequest*>(read.dup());
             req->setAutoCleanup(true);
             req->setHasReadData(false);
             req->setHandle(metaData->dataHandles[i]);
+            req->setDist(metaData->dist->clone());
             req->setDataSize(aggregateSize);
+            req->setBstreamSize(metaData->bstreamSizes[i]);
 
             // Set the message size in bytes
             req->setByteLength(8 + 8 + 4 + 4 + 4 +
@@ -196,7 +198,7 @@ void FSCacheReadSM::enterRead()
             // Add to the number of requests sent
             numRequests++;
         }
-        else if (0 != reqBytes && 0 != aggregateSize)
+        else if (0 != aggregateSize && 0 != reqBytes)
         {
             // Note: The read request is NOT deleted here as one would expect.
             // Because the server side flow completes after the client, the request
@@ -209,6 +211,7 @@ void FSCacheReadSM::enterRead()
             req->setHandle(metaData->dataHandles[i]);
             req->setDist(metaData->dist->clone());
             req->setDataSize(aggregateSize);
+            req->setBstreamSize(metaData->bstreamSizes[i]);
             req->setClientFlowBmiTag(simulation.getUniqueNumber());
             req->setServerFlowBmiTag(simulation.getUniqueNumber());
 
@@ -228,7 +231,6 @@ void FSCacheReadSM::enterRead()
     // Set the number of outstanding responses and flows
     readRequest_->setRemainingResponses(numRequests);
     readRequest_->setRemainingFlows(numFlows);
-*/
 }
 
 bool FSCacheReadSM::fileHasReadData(size_t reqBytes)
@@ -241,41 +243,44 @@ bool FSCacheReadSM::fileHasReadData(size_t reqBytes)
     return (reqBytes <= fileSize);
 }
 
-void FSCacheReadSM::startFlow(spfsReadResponse* readResponse)
+void FSCacheReadSM::startFlow(spfsReadPagesResponse* readResponse)
 {
-    // Extract the file descriptor
-    FileDescriptor* fd = readRequest_->getDescriptor();
-    assert(0 != fd);
+    size_t numPages = readResponse->getServerPages();
+    FSSize pageSize = readResponse->getPageSize();
+    if (numPages > 0 && pageSize > 0)
+    {
+        // Extract the file descriptor
+        FileDescriptor* fd = readRequest_->getDescriptor();
+        assert(0 != fd);
 
-    // Extract the server request
-    spfsReadRequest* serverRequest =
-        static_cast<spfsReadRequest*>(readResponse->contextPointer());
+        // Extract the server request
+        spfsReadPagesRequest* serverRequest =
+            static_cast<spfsReadPagesRequest*>(readResponse->contextPointer());
 
-    // Create the flow start message
-    spfsDataFlowStart* flowStart =
-        new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
-    flowStart->setContextPointer(readRequest_);
-    flowStart->setClientContextPointer(serverRequest);
+        // Create the flow start message
+        spfsCacheDataFlowStart* flowStart = new spfsCacheDataFlowStart(0,
+                                                                       SPFS_DATA_FLOW_START);
+        flowStart->setContextPointer(readRequest_);
+        flowStart->setClientContextPointer(serverRequest);
+        flowStart->setBstreamSize(serverRequest->getBstreamSize());
 
-    // Set the handle as the connection id (TODO: This is hacky)
-    flowStart->setBmiConnectionId(serverRequest->getHandle());
-    flowStart->setInboundBmiTag(serverRequest->getClientFlowBmiTag());
-    flowStart->setOutboundBmiTag(serverRequest->getServerFlowBmiTag());
+        // Set the handle as the connection id (TODO: This is hacky)
+        flowStart->setBmiConnectionId(serverRequest->getHandle());
+        flowStart->setInboundBmiTag(serverRequest->getClientFlowBmiTag());
+        flowStart->setOutboundBmiTag(serverRequest->getServerFlowBmiTag());
 
-    // Flow configuration
-    flowStart->setFlowType(DataFlow::CACHE_FLOW_TYPE);
-    flowStart->setFlowMode(DataFlow::READ_MODE);
+        // Flow configuration
+        flowStart->setFlowType(DataFlow::CACHE_FLOW_TYPE);
+        flowStart->setFlowMode(DataFlow::READ_MODE);
 
-    // Data transfer configuration
-    flowStart->setHandle(serverRequest->getHandle());
-    flowStart->setView(serverRequest->getView());
-    flowStart->setDist(serverRequest->getDist());
-    //TODO flowStart->setOffset(readRequest_->getOffset());
-    //TODO flowStart->setDataType(readRequest_->getDataType());
-    //TODO flowStart->setCount(readRequest_->getCount());
+        // Data transfer configuration
+        flowStart->setHandle(serverRequest->getHandle());
+        flowStart->setNumPages(numPages);
+        flowStart->setPageSize(pageSize);
 
-    // Send the start message
-    client_->send(flowStart, client_->getNetOutGate());
+        // Send the start message
+        client_->send(flowStart, client_->getNetOutGate());
+    }
 }
 
 void FSCacheReadSM::countResponse()
@@ -288,15 +293,14 @@ void FSCacheReadSM::countFlowFinish(spfsDataFlowFinish* finishMsg)
 {
     assert(0 != finishMsg);
     bytesRead_ += finishMsg->getFlowSize();
-    //TODO int numRemainingFlows = readRequest_->getRemainingFlows();
-    //TODO readRequest_->setRemainingFlows(--numRemainingFlows);
+    int numRemainingFlows = readRequest_->getRemainingFlows();
+    readRequest_->setRemainingFlows(--numRemainingFlows);
 }
 
 bool FSCacheReadSM::isReadComplete()
 {
-    return false;
-//TODO    return (0 == readRequest_->getRemainingResponses())
-//TODO        && (0 == readRequest_->getRemainingFlows());
+    return (0 == readRequest_->getRemainingResponses())
+        && (0 == readRequest_->getRemainingFlows());
 }
 
 /*

@@ -57,11 +57,13 @@ public:
 
     /** @return the read exclusive requests for this set of pages */
     virtual std::vector<spfsCacheReadExclusiveRequest*> createCacheReadExclusiveRequests(
+        int cacheRank,
         const std::set<PagedCache::Key>& pages,
         spfsMPIFileRequest* parentRequest) const = 0;
 
     /** @return the read shared requests for this set of pages */
     virtual std::vector<spfsCacheReadSharedRequest*> createCacheReadSharedRequests(
+        int cacheRank,
         const std::set<PagedCache::Key>& pages,
         spfsMPIFileRequest* parentRequest) const = 0;
 
@@ -98,11 +100,13 @@ public:
 
     /** @return the read exclusive requests for this set of pages */
     virtual std::vector<spfsCacheReadExclusiveRequest*> createCacheReadExclusiveRequests(
+        int cacheRank,
         const std::set<PagedCache::Key>& pages,
         spfsMPIFileRequest* parentRequest) const;
 
     /** @return the read shared requests for this set of pages */
     virtual std::vector<spfsCacheReadSharedRequest*> createCacheReadSharedRequests(
+        int cacheRank,
         const std::set<PagedCache::Key>& pages,
         spfsMPIFileRequest* parentRequest) const;
 
@@ -136,11 +140,13 @@ public:
 
     /** @return the read exclusive requests for this set of pages */
     virtual std::vector<spfsCacheReadExclusiveRequest*> createCacheReadExclusiveRequests(
+        int cacheRank,
         const std::set<PagedCache::Key>& pages,
         spfsMPIFileRequest* parentRequest) const;
 
     /** @return the read shared requests for this set of pages */
     virtual std::vector<spfsCacheReadSharedRequest*> createCacheReadSharedRequests(
+        int cacheRank,
         const std::set<PagedCache::Key>& pages,
         spfsMPIFileRequest* parentRequest) const;
 

@@ -22,7 +22,9 @@
 #include <vector>
 #include "bmi_proto_m.h"
 #include "data_flow_registry.h"
+#include "file_builder.h"
 #include "os_proto_m.h"
+#include "pfs_types.h"
 #include "pvfs_proto_m.h"
 using namespace std;
 
@@ -36,8 +38,17 @@ BMIListIODataFlow::BMIListIODataFlow(const spfsDataFlowStart& flowStart,
       bmiConnectionId_(flowStart.getBmiConnectionId()),
       outboundBmiTag_(flowStart.getOutboundBmiTag()),
       pullSubregionOffset_(0),
-      pushSubregionOffset_(0)
+      pushSubregionOffset_(0),
+      pfsMetaData_(0),
+      bstreamSizeIdx_(0)
 {
+    // Really only need this stuff for writes
+    const spfsServerDataFlowStart& serverFlow =
+        dynamic_cast<const spfsServerDataFlowStart&>(flowStart);
+    FSHandle metaHandle = serverFlow.getMetaHandle();
+    pfsMetaData_ = FileBuilder::instance().getMetaData(metaHandle);
+    bstreamSizeIdx_ = serverFlow.getDist()->getObjectIdx();
+    assert(0 != pfsMetaData_);
 }
 
 BMIListIODataFlow::~BMIListIODataFlow()
@@ -207,6 +218,7 @@ void BMIListIODataFlow::pushDataToStorage(FSSize pushSize)
     {
         fileWrite->setOffset(i, regions[i].offset);
         fileWrite->setExtent(i, regions[i].extent);
+        updateBstreamSize(regions[i].offset + regions[i].extent);
     }
 
     // Send the request to the storage layer
@@ -234,6 +246,13 @@ void BMIListIODataFlow::sendPushAck(FSSize amountRecvd)
 
     // Send the acknowledgement directly to module
     parentModule()->sendDirect(pushResponse, 0.0, partnerModule, "directIn");
+}
+
+void BMIListIODataFlow::updateBstreamSize(FSSize lastByteOffset)
+{
+    assert(0 != pfsMetaData_);
+    FSSize oldSize = pfsMetaData_->bstreamSizes[bstreamSizeIdx_];
+    pfsMetaData_->bstreamSizes[bstreamSizeIdx_] = max(lastByteOffset, oldSize);
 }
 
 /*

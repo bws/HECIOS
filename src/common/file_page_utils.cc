@@ -20,7 +20,9 @@
 #include "file_page_utils.h"
 #include <algorithm>
 #include <cassert>
+#include "data_type_layout.h"
 #include "data_type_processor.h"
+#include "file_distribution.h"
 #include "file_view.h"
 using namespace std;
 
@@ -51,6 +53,32 @@ set<FilePageId> FilePageUtils::determineRequestPages(const FSSize& pageSize,
 
     // Convert regions into file pages
     return regionsToPageIds(pageSize, requestRegions);
+}
+
+set<FilePageId> FilePageUtils::determineRequestPages(const FSSize& pageSize,
+                                                     const FSOffset& offset,
+                                                     const FSSize& size,
+                                                     const FileView& view,
+                                                     const FileDistribution& dist) const
+{
+    // Flatten view into the physical file regions
+    DataTypeLayout serverLayout;
+    DataTypeProcessor::createServerFileLayoutForWrite(offset, size, view, dist,
+                                                      serverLayout);
+
+    // Convert the physical file regions into logical file regions
+    vector<FileRegion> logicalRegions;
+    vector<FileRegion> physicalRegions = serverLayout.getRegions();
+    for (size_t i = 0; i < physicalRegions.size(); i++)
+    {
+        FSOffset currentOffset = dist.physicalToLogicalOffset(physicalRegions[i].offset);
+        FSSize extent = physicalRegions[i].extent;
+
+        FileRegion logicalRegion = {currentOffset, extent};
+        logicalRegions.push_back(logicalRegion);
+    }
+
+    return regionsToPageIds(pageSize, logicalRegions);
 }
 
 set<FilePageId> FilePageUtils::determineRequestFullPages(const FSSize& pageSize,

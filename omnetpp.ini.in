@@ -1,30 +1,42 @@
 # This file is shared by all PFS simulations
-
+#
+# General Settings
+#
 [General]
 preload-ned-files = @NEDINCLUDES@
 sim-time-limit = 10000s
+network = PalmettoMyri10G
 
-network = Test
+#
+# Environment settings
+#
+include ini/global_env.ini
 
-[Cmdenv]
-express-mode = yes
+#
+# Output settings
+#
+include ini/global_out_vectors.ini
 
-[Tkenv]
-default-run=1
+#
+# Run definitions
+#
+include ini/global_run_configs.ini
 
-[OutVectors]
-**.SPFS*.enabled = yes
-**.enabled = no
-
+#
+# Simulation parameters
+#
 [Parameters]
+include ini/palmetto_static_params.ini
+include ini/palmetto_myri10g.ini
+
 ###############################################################################
 #
 # Settings for the Beowulf Cluster configuration
 #
 ###############################################################################
-Test.numCPUNodes = 32
-Test.numIONodes = 4
-Test.cpun[*].numProcs = 1
+**.numCPUNodes = 1
+**.numIONodes = 1
+**.cpun[*].numProcs = 8
 
 ###############################################################################
 #
@@ -35,18 +47,12 @@ Test.cpun[*].numProcs = 1
 #
 ###############################################################################
 **.mpi.IOApplicationType = "PHTFIOApplication"
-**.mpi.app.traceFile = "tests/traces/test_trace.shtf"
-**.mpi.app.numTraceProcs = 4
-#**.mpi.app.dirPHTF = "/opt/public/lanl-traces/32PE_N-N_1024K/32PE_N-N_1024K.anon/phtf/"
-**.mpi.app.dirPHTF = "/data/traces/phtf/lanl_32PE_N-1_strided_1024K/"
-
-###############################################################################
-#
-# MPI Configuration settings
-#
-###############################################################################
-Test.mpiConfig.listenPortMin = 2000
-Test.mpiConfig.listenPortMax = 4000
+**.mpi.app.disableCPUPhase = true
+**.mpi.app.traceFile = ""
+#**.mpi.app.traceFile = "/data/traces/phtf/mpi-io-test_64p"
+#**.mpi.app.traceFile = "/data/traces/phtf/mpi-io-test_128p"
+#**.mpi.app.traceFile = "/data/traces/phtf/mpi-io-test_256p"
+#**.mpi.app.traceFile = "/data/traces/phtf/flash-io_512p"
 
 ###############################################################################
 #
@@ -54,217 +60,24 @@ Test.mpiConfig.listenPortMax = 4000
 #
 ###############################################################################
 **.middlewareCacheType = "NoMiddlewareCache"
-**.mpi.cache.dataCacheReplacePolicy = 0
+#**.cpun[*].process[*].mpi.middlewareCacheType = "DirectPagedMiddlewareCache"
+#**.cpun[*].process[*].mpi.middlewareCacheType = "PagedMiddlewareCacheMesi"
+#**.cpun[*].process[*].mpi.middlewareCacheType = "PagedMiddlewareCacheWithTwinNoBlockIndexed"
+#**.cpun[*].process[*].mpi.middlewareCacheType = "PagedMiddlewareCacheWithTwin"
+#**.cpun[*].process[*].mpi.middlewareCacheType = "SharedPagedMiddlewareCacheWithTwinNoBlockIndexed"
+#**.cpun[*].process[*].mpi.middlewareCacheType = "SharedDirectPagedMiddlewareCache"
+#**.cpun[*].process[*].mpi.middlewareCacheType = "SharedPagedMiddlewareCacheWithTwin"
+**.cpun[*].process[*].mpi.cache.pageCapacity = 16
+**.cpun[*].process[*].mpi.cache.pageSize = 32768
+
+# Note we are assuming we can copy memory at 4GB/s (a reasonable estimate)
+**.cpun[*].process[*].mpi.cache.byteCopyTime = .00000000023283064365
 
 ###############################################################################
 #
 # Parallel File System Client Configuration settings
 #
 ###############################################################################
-Test.**.fsClient.useCollectiveCreate = false
-Test.**.fsClient.useCollectiveGetAttr = false
-Test.**.fsClient.useCollectiveRemove = false
-Test.**.fsClient.clientOverheadDelaySecs = 0.0
-
-Test.**.fsClient.directoryCreateProcessingDelaySecs = 0.0001
-Test.**.fsClient.directoryReadProcessingDelaySecs = 0.0009
-Test.**.fsClient.directoryRemoveProcessingDelaySecs = 0.0
-Test.**.fsClient.fileCloseProcessingDelaySecs = 0.0
-Test.**.fsClient.fileOpenProcessingDelaySecs = 0.0001
-Test.**.fsClient.fileReadProcessingDelaySecs = 0.0
-Test.**.fsClient.fileStatProcessingDelaySecs = 0.0001
-Test.**.fsClient.fileUpdateTimeProcessingDelaySecs = 0.0001
-Test.**.fsClient.fileWriteProcessingDelaySecs = 0.0
-
-
-###############################################################################
-#
-# Parallel File System Server settings
-#
-###############################################################################
-**.pfsConfig.changeDirEntProcessingDelaySecs = 0.0          # Op Mean: ??
-**.pfsConfig.createDirEntProcessingDelaySecs = 0.00064      # Op Mean: 0.001172
-**.pfsConfig.createDFileProcessingDelaySecs = 0.000354      # Op Mean: 0.000885
-**.pfsConfig.createDirectoryProcessingDelaySecs = 0.001     # Op Mean: N/A
-**.pfsConfig.createMetadataProcessingDelaySecs = 0.000123   # Op Mean: 0.000654
-**.pfsConfig.getAttrProcessingDelaySecs = 0.000068          # Op Mean: 0.000601
-**.pfsConfig.lookupPathProcessingDelaySecs = 0.000074       # Op Mean: 0.000668
-**.pfsConfig.readDirProcessingDelaySecs = 0.000             # Op Mean: 0.000603
-**.pfsConfig.removeDirEntProcessingDelaySecs = 0.001324     # Op Mean: 0.001855
-**.pfsConfig.removeMetaProcessingDelaySecs = 0.000829       # Op Mean: 0.001358
-**.pfsConfig.removeObjectProcessingDelaySecs = 0.000        # Op Mean: 0.000508
-**.pfsConfig.setAttrProcessingDelaySecs = 0.000352          # Op Mean: 0.001316
-
-Test.pfsConfig.metaDataSizeInBytes = 256 #ignored
-Test.pfsConfig.serverOverheadDelaySecs = 0.0
-Test.pfsConfig.collectDiskData = false
-
-###############################################################################
-#
-# Parallel File System Server DataFlow settings
-#
-###############################################################################
-**.clientJobManager.bufferSizeInBytes = 262144
-**.clientJobManager.numBuffers = 8
-**.serverJobManager.bufferSizeInBytes = 262144
-**.serverJobManager.numBuffers = 8
-
-###############################################################################
-#
-# Settings for BMI TCP applications
-#
-###############################################################################
-**.ion[*].hca.tcpApp[0].listenPort = 6000
-**.ion[*].hca.tcpApp[0].connectPort = 6000
-
-# Must set the port for the BMI applications, though these will be overwritten
-# when the MPI client and server are created and setup by MPIConfigurator
-#
-# Disable the listen functionality on the clients by setting the listen port
-# to 0
-**.cpun[*].hca.tcpApp[*].listenPort = 0
-**.cpun[*].hca.tcpApp[0].connectPort = 6000
-**.cpun[*].hca.tcpApp[*].connectPort = 0
-
-#
-# Set the network startup costs for queue'ing and buffer copy
-#
-**.tcpApp[*].fixedOverheadSecs = 0.0
-**.tcpApp[*].scaledOverheadSecs = 0.0
-
-###############################################################################
-#
-# Settings for File System storage layer (Trove)
-#
-###############################################################################
-**.trove.ioLibraryType = "ListIOLibrary"
-
-###############################################################################
-#
-# Settings for Operating System
-#
-###############################################################################
-**.os.systemCallInterfaceType = "SequentialSystemCallInterface"
-**.os.fileSystemType = "NativeFileSystem"
-**.os.bufferCacheType = "LRUBufferCache"
-**.os.blockTranslatorType = "BasicTranslator"
-**.os.diskSchedulerType = "FCFSDiskScheduler"
-**.os.accessManagerType = "MutexAccessManager"
-
-# Local Node OS Settings
-#
-# Configure a buffer cache filling 4GB RAM (assuming a 512 byte block size)
-**.os.bufferCache.numEntries = 8388608
-**.os.fileSystem.blockSizeBytes = 4096
-**.os.systemCall.overheadSecs = 0.0000001;
-
-###############################################################################
-#
-# Settings for Hard Disk drive on IONodes
-#
-###############################################################################
-# Performance characteristics of Hitachi Deskstar T7K500 with NCQ (500GB SATA)
-# Performance characteristics downloaded from Hitachi:
-#  http://www.hitachigst.com/tech/techlib.nsf/products/Deskstar_T7K500
-#
-**.hardDisk.numCylinders = 16383
-**.hardDisk.numHeads = 16
-**.hardDisk.numSectors = 976773168
-**.hardDisk.tracksPerCylinder = 946
-**.hardDisk.sectorsPerTrack = 63
-**.hardDisk.rpm = 7200
-**.hardDisk.fixedControllerReadOverheadSecs = 0.0005
-**.hardDisk.fixedControllerWriteOverheadSecs = 0.0005
-**.hardDisk.trackSwitchTimeSecs = 0.001
-**.hardDisk.averageReadSeekSecs = 0.0087
-**.hardDisk.averageWriteSeekSecs = 0.0087
-
-###############################################################################
-#
-# Adenine-like INET component configuration
-#
-###############################################################################
-# We should set this to something like a Foundry FESX448
-Test.switch.relayUnitType = "MACRelayUnitPP"
-Test.switch.relayUnit.addressTableFile = ""
-Test.switch.relayUnit.addressTableSize = 100000
-Test.switch.relayUnit.agingTime = 0
-Test.switch.relayUnit.processingTime = 0
-Test.switch.relayUnit.bufferSize = 64000
-Test.switch.relayUnit.highWatermark = 100000
-Test.switch.relayUnit.pauseUnits = 0
-Test.switch.relayUnit.writeScalars = false
-Test.switch.mac[*].address = "auto"
-Test.switch.mac[*].promiscuous = true
-Test.switch.mac[*].queueModule = ""
-Test.switch.mac[*].txQueueLimit = 128000
-Test.switch.mac[*].writeScalars = false
-
-# We should set this to something like an Intel Pro/1000 PT
-#
-# RX Ring Length: 256  TX Ring Length: 128
-#
-Test.**.eth[*].queueType = "DropTailQueue"
-Test.**.eth[*].queue.frameCapacity = 256
-Test.**.eth[*].mac.promiscuous = false
-Test.**.eth[*].mac.address = "auto"
-#Test.**.eth[*].mac.txrate = 1000000000
-#Test.**.eth[*].mac.duplexEnabled = true
-Test.**.eth[*].mac.txQueueLimit = 128
-Test.**.eth[*].mac.queueModule = ""
-Test.**.eth[*].mac.writeScalars = false
-Test.**.eth[*].encap.writeScalars = false
-Test.**.ppp[*].queueType = "DropTailQueue"
-Test.**.ppp[*].queue.frameCapacity = 0
-
-#
-# Time to perform TCP/Userspace memory operations
-#
-Test.**.hca.networkLayer.ip.procDelay = 0.000125
-
-# Various INET configuration settings
-Test.**.hca.namid = -1
-Test.**.hca.routingFile = ""
-Test.**.hca.routingFile = ""
-Test.**.hca.IPForward = 0
-Test.**.hca.networkLayer.arp.retryTimeout = 1
-Test.**.hca.networkLayer.arp.retryCount = 3
-Test.**.hca.networkLayer.arp.cacheTimeout = 100
-Test.**.hca.networkLayer.proxyARP = false
-
-###############################################################################
-#
-# Settings for all TCP connections
-#
-###############################################################################
-**.tcp.recordStats = 0
-**.tcp.mss = 512 # bytes
-**.tcp.advertisedWindow= 109568 # =64 MSSs
-**.tcp.tcpAlgorithmClass="TCPReno"
-**.tcp.sendQueueClass="TCPMsgBasedSendQueue"
-**.tcp.receiveQueueClass="TCPMsgBasedRcvQueue"
-
-
-##############################################################################
-#
-# UDP Applications (disabled)
-#
-##############################################################################
-**.numUdpApps=0 # 0 means no UDP apps active.
-**.udpAppType="UDPBasicApp"
-
-
-##############################################################################
-#
-# Ping Application (disabled)
-#
-##############################################################################
-**.pingApp.destAddr=""  # Empty destAddr ensures the ping app won't start 
-**.pingApp.srcAddr=""
-**.pingApp.packetSize=56
-**.pingApp.interval=1
-**.pingApp.hopLimit=32
-**.pingApp.count=0
-**.pingApp.startTime=1
-**.pingApp.stopTime=0
-**.pingApp.printPing=false
+**.fsClient.useCollectiveCreate = true
+**.fsClient.useCollectiveGetAttr = true
+**.fsClient.useCollectiveRemove = true

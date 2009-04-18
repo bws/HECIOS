@@ -41,13 +41,23 @@ enum FSObjectType { SPFS_INVALID_OBJECT_TYPE = 0,
 /** Metadata for a file */
 struct FSMetaData
 {
-    int mode;            /* standard Posix file metadata */
+    /* standard Posix file metadata */
+    int mode;
     int owner;
     int group;
     int nlinks;
-    int size;            /* number of bytes in file */
-    FSHandle handle; /* handle of the metadata object */
+    FSSize size;
+
+    /** Metadata handle */
+    FSHandle handle;
+
+    /* Data object handles */
     std::vector<FSHandle> dataHandles;
+
+    /** Data object sizes */
+    std::vector<FSSize> bstreamSizes;
+
+    /** File data distribution */
     FileDistribution* dist;
 };
 

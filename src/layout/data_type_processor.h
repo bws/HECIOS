@@ -35,33 +35,56 @@ class FileView;
 class DataTypeProcessor
 {
 public:
+    /**
+     * @return the number of bytes processed
+     * @side fills the outAggregateSize with the total I/O size
+     */
+    static FSSize createClientFileLayoutForRead(const FSOffset& offset,
+                                                const DataType& dataType,
+                                                const std::size_t& count,
+                                                const FileView& view,
+                                                const FileDistribution& dist,
+                                                const FSSize& bstreamSize,
+                                                FSSize& outAggregateSize);
 
     /**
      * @return the number of bytes processed
      * @side fills the outAggregateSize with the total I/O size
      */
-    static FSSize createFileLayoutForClient(const FSOffset& offset,
-                                            const DataType& dataType,
-                                            const std::size_t& count,
-                                            const FileView& view,
-                                            const FileDistribution& dist,
-                                            FSSize& outAggregateSize);
+    static FSSize createClientFileLayoutForWrite(const FSOffset& offset,
+                                                 const DataType& dataType,
+                                                 const std::size_t& count,
+                                                 const FileView& view,
+                                                 const FileDistribution& dist,
+                                                 FSSize& outAggregateSize);
 
     /**
      * @return the number of bytes processed
      * @side Fills the layout object with physical offsets and extents for
      * this server's I/O
      */
-    static FSSize createFileLayoutForServer(const FSOffset& offset,
-                                            const FSSize& dataSize,
-                                            const FileView& view,
-                                            const FileDistribution& dist,
-                                            DataTypeLayout& outLayout);
-    
-    /** 
+    static FSSize createServerFileLayoutForRead(const FSOffset& offset,
+                                                const FSSize& dataSize,
+                                                const FileView& view,
+                                                const FileDistribution& dist,
+                                                const FSSize& bstreamSize,
+                                                DataTypeLayout& outLayout);
+
+    /**
+     * @return the number of bytes processed
+     * @side Fills the layout object with physical offsets and extents for
+     * this server's I/O
+     */
+    static FSSize createServerFileLayoutForWrite(const FSOffset& offset,
+                                                 const FSSize& dataSize,
+                                                 const FileView& view,
+                                                 const FileDistribution& dist,
+                                                 DataTypeLayout& outLayout);
+
+    /**
      * @return the file regions for the first requestSize bytes of the
      *   supplied MPI view.  This step 'flattens' the view into list I/O
-     *   offsets and extents. 
+     *   offsets and extents.
      */
     static std::vector<FileRegion> locateFileRegions(const FSOffset& offset,
                                                      const FSSize& dataSize,
@@ -78,8 +101,10 @@ private:
                                        const std::size_t& count,
                                        const FileView& view,
                                        const FileDistribution& dist,
+                                       const FSSize& bstreamSize,
+                                       bool dataExtend,
                                        FSSize& outAggregateSize);
-    
+
     /** @return the number of bytes processed
      * @side Fills the layout object with physical offsets and extents for
      * this server's I/O
@@ -88,13 +113,17 @@ private:
                                        const FSSize& dataSize,
                                        const FileView& view,
                                        const FileDistribution& dist,
+                                       const FSSize& bstreamSize,
+                                       bool dataExtend,
                                        DataTypeLayout& outLayout);
 
     /** Construct the server local offset extent pairs */
     static void distributeContiguousRegion(const FSOffset& offset,
                                            const FSSize& extent,
                                            const FileDistribution& dist,
-                                           DataTypeLayout& outLayout);    
+                                           const FSSize& bstreamSize,
+                                           bool dataExtend,
+                                           DataTypeLayout& outLayout);
 };
 
 #endif

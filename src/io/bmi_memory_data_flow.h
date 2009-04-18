@@ -42,10 +42,10 @@ public:
 protected:
     /** Start the flow of data */
     virtual void startTransfer();
-    
+
     /** Process BMI and Storage request and responses */
     virtual void processDataFlowMessage(cMessage* msg);
-    
+
     /** Use standard BMI calls to send data over the network */
     virtual void pushDataToNetwork(FSSize pushSize);
 
@@ -67,7 +67,7 @@ private:
 
     /** Send the BMI data receipt acknowledgment */
     void sendPushAck(spfsBMIPushDataRequest* request);
-    
+
     /** File used for I/O */
     Filename filename_;
 
@@ -75,7 +75,7 @@ private:
     cSimpleModule* module_;
 
     /** The BMI connection id */
-    int bmiConnectionId_;    
+    int bmiConnectionId_;
 
     /** The BMI tag used to send outbound data */
     int outboundBmiTag_;

@@ -72,6 +72,7 @@ SinglePageAccessMixin::~SinglePageAccessMixin()
 
 vector<spfsCacheReadExclusiveRequest*>
 SinglePageAccessMixin::createCacheReadExclusiveRequests(
+    int cacheRank,
     const std::set<PagedCache::Key>& pages,
     spfsMPIFileRequest* parentRequest) const
 {
@@ -82,29 +83,33 @@ SinglePageAccessMixin::createCacheReadExclusiveRequests(
     {
         // Create the file descriptor
         Filename name = iter->filename;
-        //FilePageId page = iter->key;
-        //static DataType* byteType = new ByteDataType();
+        FilePageId page = iter->key;
+        static DataType* byteType = new ByteDataType();
         FileDescriptor* fd = FileBuilder::instance().getDescriptor(name);
         spfsCacheReadExclusiveRequest* readPage =
             new spfsCacheReadExclusiveRequest("Single Page Cache Read Excl",
                                               SPFS_CACHE_READ_EXCLUSIVE_REQUEST);
         readPage->setContextPointer(parentRequest);
         readPage->setDescriptor(fd);
-        //readPage->setDataType(byteType);
-        //readPage->setOffset(page * getPageSize());
-        //readPage->setCount(getPageSize());
-        readPage->setByteLength(getByteLength(fd->getFileView()));
+        readPage->setDataType(byteType);
+        readPage->setOffset(page * getPageSize());
+        readPage->setCount(getPageSize());
+
+        readPage->setOriginatingRank(cacheRank);
+        readPage->setRemainingPages(1);
+
+        readPage->setByteLength(getByteLength(fd->getFileView()) + 8);
 
         // Add request and continue iterating
         requests.push_back(readPage);
         ++iter;
-
     }
     return requests;
 }
 
 vector<spfsCacheReadSharedRequest*>
 SinglePageAccessMixin::createCacheReadSharedRequests(
+    int cacheRank,
     const std::set<PagedCache::Key>& pages,
     spfsMPIFileRequest* parentRequest) const
 {
@@ -115,18 +120,22 @@ SinglePageAccessMixin::createCacheReadSharedRequests(
     {
         // Create the file descriptor
         Filename name = iter->filename;
-        //FilePageId page = iter->key;
-        //static DataType* byteType = new ByteDataType();
+        FilePageId page = iter->key;
+        static DataType* byteType = new ByteDataType();
         FileDescriptor* fd = FileBuilder::instance().getDescriptor(name);
         spfsCacheReadSharedRequest* readPage =
             new spfsCacheReadSharedRequest("Single Page Cache Read Shared",
                                            SPFS_CACHE_READ_SHARED_REQUEST);
         readPage->setContextPointer(parentRequest);
         readPage->setDescriptor(fd);
-        //readPage->setDataType(byteType);
-        //readPage->setOffset(page * getPageSize());
-        //readPage->setCount(getPageSize());
-        readPage->setByteLength(getByteLength(fd->getFileView()));
+        readPage->setDataType(byteType);
+        readPage->setOffset(page * getPageSize());
+        readPage->setCount(getPageSize());
+
+        readPage->setOriginatingRank(cacheRank);
+        readPage->setRemainingPages(1);
+
+        readPage->setByteLength(getByteLength(fd->getFileView()) + 8);
 
         // Add request and continue iterating
         requests.push_back(readPage);
@@ -229,6 +238,7 @@ void BlockIndexedPageAccessMixin::groupPagesByFilename(
 }
 vector<spfsCacheReadExclusiveRequest*>
 BlockIndexedPageAccessMixin::createCacheReadExclusiveRequests(
+    int cacheRank,
     const set<PagedCache::Key>& pages,
     spfsMPIFileRequest* parentRequest) const
 {
@@ -246,16 +256,21 @@ BlockIndexedPageAccessMixin::createCacheReadExclusiveRequests(
         FileDescriptor* fd = getPageViewDescriptor(iter->first, iter->second);
 
         // Create the request
-        //static DataType* byteType = new ByteDataType();
+        static DataType* byteType = new ByteDataType();
         spfsCacheReadExclusiveRequest* readRequest =
             new spfsCacheReadExclusiveRequest("Cache Read Excl Request",
                                               SPFS_CACHE_READ_EXCLUSIVE_REQUEST);
         readRequest->setContextPointer(parentRequest);
         readRequest->setDescriptor(fd);
-        //readRequest->setDataType(byteType);
-        //readRequest->setCount(pages.size() * getPageSize());
-        //readRequest->setOffset(0);
-        //readRequest->setByteLength(getByteLength(fd->getFileView()));
+        readRequest->setDataType(byteType);
+        readRequest->setCount(iter->second.size() * getPageSize());
+        readRequest->setOffset(0);
+
+        readRequest->setOriginatingRank(cacheRank);
+        readRequest->setRemainingPages(iter->second.size());
+
+        // Set message size and add space for read type and rank
+        readRequest->setByteLength(getByteLength(fd->getFileView()) + 8);
 
         // Add the request and increment iterator
         requests.push_back(readRequest);
@@ -266,6 +281,7 @@ BlockIndexedPageAccessMixin::createCacheReadExclusiveRequests(
 
 vector<spfsCacheReadSharedRequest*>
 BlockIndexedPageAccessMixin::createCacheReadSharedRequests(
+    int cacheRank,
     const set<PagedCache::Key>& pages,
     spfsMPIFileRequest* parentRequest) const
 {
@@ -283,16 +299,21 @@ BlockIndexedPageAccessMixin::createCacheReadSharedRequests(
         FileDescriptor* fd = getPageViewDescriptor(iter->first, iter->second);
 
         // Create the request
-        //static DataType* byteType = new ByteDataType();
+        static DataType* byteType = new ByteDataType();
         spfsCacheReadSharedRequest* readRequest =
             new spfsCacheReadSharedRequest("Cache Read Shared Request",
                                            SPFS_CACHE_READ_SHARED_REQUEST);
         readRequest->setContextPointer(parentRequest);
         readRequest->setDescriptor(fd);
-        //readRequest->setDataType(byteType);
-        //readRequest->setCount(pages.size() * getPageSize());
-        //readRequest->setOffset(0);
-        readRequest->setByteLength(getByteLength(fd->getFileView()));
+        readRequest->setDataType(byteType);
+        readRequest->setCount(iter->second.size() * getPageSize());
+        readRequest->setOffset(0);
+
+        readRequest->setOriginatingRank(cacheRank);
+        readRequest->setRemainingPages(iter->second.size());
+
+        // Set message size and add space for read type and rank
+        readRequest->setByteLength(getByteLength(fd->getFileView()) + 8);
 
         // Add the request and increment iterator
         requests.push_back(readRequest);
@@ -327,7 +348,7 @@ BlockIndexedPageAccessMixin::createPFSReadRequests(
         readRequest->setContextPointer(parentRequest);
         readRequest->setFileDes(fd);
         readRequest->setDataType(byteType);
-        readRequest->setCount(pages.size() * getPageSize());
+        readRequest->setCount(iter->second.size() * getPageSize());
         readRequest->setOffset(0);
         readRequest->setByteLength(getByteLength(fd->getFileView()));
 
@@ -365,7 +386,7 @@ BlockIndexedPageAccessMixin::createPFSWriteRequests(
         writeRequest->setContextPointer(parentRequest);
         writeRequest->setFileDes(fd);
         writeRequest->setDataType(byteType);
-        writeRequest->setCount(pages.size() * getPageSize());
+        writeRequest->setCount(iter->second.size() * getPageSize());
         writeRequest->setOffset(0);
         writeRequest->setByteLength(getByteLength(fd->getFileView()));
 

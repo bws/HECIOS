@@ -26,7 +26,30 @@
 using namespace std;
 
 
-FSSize DataTypeProcessor::createFileLayoutForClient(
+FSSize DataTypeProcessor::createClientFileLayoutForRead(
+    const FSOffset& offset,
+    const DataType& dataType,
+    const size_t& count,
+    const FileView& view,
+    const FileDistribution& dist,
+    const FSSize& bstreamSize,
+    FSSize& outAggregateSize)
+{
+    FSSize bytesProcessed = processClientRequest(offset,
+                                                 dataType,
+                                                 count,
+                                                 view,
+                                                 dist,
+                                                 bstreamSize,
+                                                 false,
+                                                 outAggregateSize);
+    assert(0 <= bytesProcessed);
+    assert(0 <= outAggregateSize);
+    //assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
+    return bytesProcessed;
+}
+
+FSSize DataTypeProcessor::createClientFileLayoutForWrite(
     const FSOffset& offset,
     const DataType& dataType,
     const size_t& count,
@@ -39,6 +62,8 @@ FSSize DataTypeProcessor::createFileLayoutForClient(
                                                  count,
                                                  view,
                                                  dist,
+                                                 0,
+                                                 true,
                                                  outAggregateSize);
     assert(0 <= bytesProcessed);
     assert(0 <= outAggregateSize);
@@ -46,7 +71,27 @@ FSSize DataTypeProcessor::createFileLayoutForClient(
     return bytesProcessed;
 }
 
-FSSize DataTypeProcessor::createFileLayoutForServer(
+FSSize DataTypeProcessor::createServerFileLayoutForRead(
+    const FSOffset& offset,
+    const FSSize& dataSize,
+    const FileView& view,
+    const FileDistribution& dist,
+    const FSSize& bstreamSize,
+    DataTypeLayout& outLayout)
+{
+    FSSize bytesProcessed = processServerRequest(offset,
+                                                 dataSize,
+                                                 view,
+                                                 dist,
+                                                 bstreamSize,
+                                                 false,
+                                                 outLayout);
+    assert(0 <= bytesProcessed);
+    //assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
+    return bytesProcessed;
+}
+
+FSSize DataTypeProcessor::createServerFileLayoutForWrite(
     const FSOffset& offset,
     const FSSize& dataSize,
     const FileView& view,
@@ -57,10 +102,12 @@ FSSize DataTypeProcessor::createFileLayoutForServer(
                                                  dataSize,
                                                  view,
                                                  dist,
+                                                 0,
+                                                 true,
                                                  outLayout);
     assert(0 <= bytesProcessed);
     //assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
-    return bytesProcessed;    
+    return bytesProcessed;
 }
 
 vector<FileRegion> DataTypeProcessor::locateFileRegions(const FSOffset& offset,
@@ -73,7 +120,7 @@ vector<FileRegion> DataTypeProcessor::locateFileRegions(const FSOffset& offset,
     const DataType* fileDataType = view.getDataType();
     vector<FileRegion> fileRegions = fileDataType->getRegionsByBytes(offset,
                                                                      dataSize);
-    
+
     // Modify the file regions to take into account the view displacement
     for (size_t i = 0; i < fileRegions.size(); i++)
     {
@@ -89,26 +136,30 @@ FSSize DataTypeProcessor::processClientRequest(
     const std::size_t& count,
     const FileView& view,
     const FileDistribution& dist,
+    const FSSize& bstreamSize,
+    bool dataExtend,
     FSSize& outAggregateSize)
 {
-    // It isn't neccesary to flatten the memory data type, simply figure out
+    // It isn't necessary to flatten the memory data type, simply figure out
     // its magnitude
     outAggregateSize = dataType.getExtent() * count;
 
     // Determine the offsets and extents into the memory buffer to send to
     // the server described in the distribution
     //
-    // For the simulator it isn't neccesary to get the actual offsets, so
+    // For the simulator it isn't necessary to get the actual offsets, so
     // use the server's results to construct the size of each server's
     // data receipt
     DataTypeLayout layout;
-    return processServerRequest(offset, outAggregateSize, view, dist, layout);
+    return processServerRequest(offset, outAggregateSize, view, dist, bstreamSize, dataExtend, layout);
 }
 
 FSSize DataTypeProcessor::processServerRequest(const FSOffset& offset,
                                                const FSSize& dataSize,
                                                const FileView& view,
                                                const FileDistribution& dist,
+                                               const FSSize& bstreamSize,
+                                               bool dataExtend,
                                                DataTypeLayout& outLayout)
 {
     // Determine the amount of contiguous file regions that correspond to
@@ -123,6 +174,8 @@ FSSize DataTypeProcessor::processServerRequest(const FSOffset& offset,
         distributeContiguousRegion(disp + fileRegions[i].offset,
                                    fileRegions[i].extent,
                                    dist,
+                                   bstreamSize,
+                                   dataExtend,
                                    outLayout);
     }
 
@@ -134,6 +187,8 @@ void DataTypeProcessor::distributeContiguousRegion(
     const FSOffset& offset,
     const FSSize& extent,
     const FileDistribution& dist,
+    const FSSize& bstreamSize,
+    bool dataExtend,
     DataTypeLayout& outLayout)
 {
     // Determine the first mapped offset for this server
@@ -148,9 +203,22 @@ void DataTypeProcessor::distributeContiguousRegion(
 
         // Determine how much of the extent to actually use
         FSSize requestedExtent = min(serverExtent, extent);
-        
-        // Add region to the layout
-        outLayout.addRegion(physOffset, requestedExtent);
+
+        // If the dataExtend flag is set add the region
+        // Otherwise, trim region to include only existing data
+        if (dataExtend)
+        {
+            // Add region to the layout
+            outLayout.addRegion(physOffset, requestedExtent);
+        }
+        else if (FSSize(physOffset) < bstreamSize)
+        {
+            // Choose the min of final byte of request or stream
+            FSOffset finalByte = min(physOffset + extent, bstreamSize);
+
+            // Add region to layout
+            outLayout.addRegion(physOffset, physOffset + finalByte);
+        }
 
         // Determine the next mapped offset for this server
         logServerOffset = dist.nextMappedLogicalOffset(logServerOffset +

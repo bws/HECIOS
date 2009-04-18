@@ -24,6 +24,7 @@
 class spfsDataFlowStart;
 class cSimpleModule;
 class cMessage;
+class FSMetaData;
 
 /** A data flow using ListIO system calls to read and write data */
 class BMIListIODataFlow : public DataFlow
@@ -41,10 +42,10 @@ public:
 protected:
     /** Start the flow of data */
     virtual void startTransfer();
-    
+
     /** Process BMI and Storage request and responses */
     virtual void processDataFlowMessage(cMessage* msg);
-    
+
     /** Use standard BMI calls to send data over the network */
     virtual void pushDataToNetwork(FSSize pushSize);
 
@@ -67,6 +68,9 @@ private:
     /** Send data receipt acknowledgement */
     void sendPushAck(FSSize amountRecvd);
 
+    /** Update the bstream size to include the final byte */
+    void updateBstreamSize(FSSize lastByteOffset);
+
     /** File used for I/O */
     Filename filename_;
 
@@ -74,16 +78,22 @@ private:
     cSimpleModule* module_;
 
     /** The BMI connection id */
-    int bmiConnectionId_;    
+    int bmiConnectionId_;
 
     /** The BMI tag to use for sending */
-    int outboundBmiTag_;    
+    int outboundBmiTag_;
 
     /** The offset into the layout subregions for push operations */
     FSOffset pullSubregionOffset_;
-    
+
     /** The offset into the layout subregions for pull operations */
     FSOffset pushSubregionOffset_;
+
+    /** Metadata for the pfs file being written to */
+    FSMetaData* pfsMetaData_;
+
+    /** The index into the metadata bstreamSize field */
+    std::size_t bstreamSizeIdx_;
 };
 
 #endif

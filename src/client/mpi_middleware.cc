@@ -76,12 +76,13 @@ void MpiMiddleware::completeCommunicationCB(spfsMPIRequest* request)
                  << "Invalid MPI message kind: " << request->kind() << endl;
         }
     }
-    assert(0 != response);
     send(response, appOutGate_);
+    assert(0 != response);
 }
 
 void MpiMiddleware::initialize()
 {
+    // Initialize gates
     appInGate_  = findGate("appIn");
     appOutGate_ = findGate("appOut");
     cacheInGate_  = findGate("cacheIn");
@@ -122,6 +123,9 @@ void MpiMiddleware::handleMessage(cMessage* msg)
     }
     else if (msg->arrivalGateId() == netInGate_)
     {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "MPI Message arrived over network: " << msg->info() << endl;
+        assert(false);
         send(msg, cacheOutGate_);
     }
     else

@@ -12,8 +12,9 @@ SIM_SRC += $(DIR)/change_dir_ent.cc \
 	$(DIR)/fs_server.cc \
 	$(DIR)/get_attr.cc \
 	$(DIR)/lookup.cc \
-	$(DIR)/read.cc \
 	$(DIR)/read_dir.cc \
+	$(DIR)/read_pages.cc \
+	$(DIR)/read.cc \
 	$(DIR)/request_scheduler.cc \
 	$(DIR)/remove.cc \
 	$(DIR)/remove_dir_ent.cc \

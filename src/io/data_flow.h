@@ -43,13 +43,12 @@ public:
     /** Flow types: cache, client, or server */
     enum Type {INVALID_TYPE = 0, CACHE_FLOW_TYPE, CLIENT_FLOW_TYPE, SERVER_FLOW_TYPE};
 
-    /** Constructor for a read operation */
+    /** Constructor for a cache operations */
     DataFlow(const spfsDataFlowStart& flowStart,
              std::size_t numBuffers,
              FSSize bufferSize,
              cSimpleModule* parentModule);
 
-    /** Destructor */
     virtual ~DataFlow() = 0;
 
     /** @return the buffer size used for network data flows */
@@ -132,6 +131,15 @@ protected:
     DataTypeLayout layout_;
 
 private:
+    /** Initialize this object for a cache flow */
+    void initCacheFlow();
+
+    /** Initialize this object for a client flow */
+    void initClientFlow();
+
+    /** Initialize this object for a server flow */
+    void initServerFlow();
+
     /**
      * @return the time between the origination of the request and
      *  this response.

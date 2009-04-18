@@ -115,9 +115,10 @@ void Read::handleServerMessage(cMessage* msg)
 void Read::startDataFlow()
 {
     // Construct the data flow start message
-    spfsDataFlowStart* dataFlowStart =
-        new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
+    spfsServerDataFlowStart* dataFlowStart =
+        new spfsServerDataFlowStart(0, SPFS_DATA_FLOW_START);
     dataFlowStart->setContextPointer(readReq_);
+    dataFlowStart->setMetaHandle(readReq_->getMetaHandle());
 
     // Set the flow configuration
     dataFlowStart->setFlowType(DataFlow::SERVER_FLOW_TYPE);
@@ -134,6 +135,7 @@ void Read::startDataFlow()
     dataFlowStart->setDataSize(readReq_->getDataSize());
     dataFlowStart->setView(readReq_->getView());
     dataFlowStart->setDist(readReq_->getDist());
+    dataFlowStart->setBstreamSize(readReq_->getBstreamSize());
 
     module_->send(dataFlowStart);
 }

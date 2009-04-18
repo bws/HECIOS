@@ -33,6 +33,7 @@
 #include "bmi_list_io_data_flow.h"
 #include "lookup.h"
 #include "read_dir.h"
+#include "read_pages.h"
 #include "read.h"
 #include "remove_dir_ent.h"
 #include "remove.h"
@@ -389,6 +390,12 @@ void FSServer::processRequest(spfsRequest* request, cMessage* msg)
             read.handleServerMessage(msg);
             break;
         }
+        case SPFS_READ_PAGES_REQUEST:
+        {
+            ReadPages readPages(this, static_cast<spfsReadPagesRequest*>(request));
+            readPages.handleServerMessage(msg);
+            break;
+        }
         case SPFS_REMOVE_DIR_ENT_REQUEST:
         {
             RemoveDirEnt removeDirEnt(
@@ -416,7 +423,8 @@ void FSServer::processRequest(spfsRequest* request, cMessage* msg)
         }
         default:
         {
-            cerr << "FSServer Error: Unknown message kind:" << request->kind()
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "FSServer Error: Unknown message kind:" << request->kind()
                  << endl
                  << "!!!!!!!!! ------------------------ !!!!!!!!!!!!!" << endl
                  << "ERROR: Server unable to construct response" << endl
@@ -478,6 +486,11 @@ void FSServer::recordLookup()
 void FSServer::recordReadDir()
 {
     numReadDirs_++;
+}
+
+void FSServer::recordReadPages()
+{
+    numReadPages_++;
 }
 
 void FSServer::recordRead()

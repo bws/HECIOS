@@ -55,6 +55,12 @@ public:
      */
     virtual void performFakeOpen(const Filename& openName) = 0;
 
+    /** Set the MPI world rank */
+    void setRank(int rank) { rank_ = rank; };
+
+    /** Return the world rank */
+    int getRank() const { return rank_; };
+
 protected:
     /** Implementation of initialize */
     virtual void initialize();
@@ -80,6 +86,9 @@ private:
 
     /** The time to copy a byte of data to/from the cache */
     double byteCopyTime_;
+
+    /** MPI World rank */
+    int rank_;
 
     /** Gate ids */
     int appInGateId_;

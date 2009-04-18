@@ -155,6 +155,7 @@ void FSReadSM::enterRead()
     // Because the server side flow completes after the client, the request
     // is deleted on the server
     read.setContextPointer(readRequest_);
+    read.setMetaHandle(metaData->handle);
     read.setOffset(readRequest_->getOffset());
     read.setView(new FileView(fd->getFileView()));
 
@@ -167,15 +168,16 @@ void FSReadSM::enterRead()
         // Process the data type to determine the read size
         metaData->dist->setObjectIdx(i);
         FSSize aggregateSize = 0;
-        FSSize reqBytes = DataTypeProcessor::createFileLayoutForClient(
+        FSSize reqBytes = DataTypeProcessor::createClientFileLayoutForRead(
             readRequest_->getOffset(),
             *readRequest_->getDataType(),
             readRequest_->getCount(),
             *read.getView(),
             *metaData->dist,
+            metaData->bstreamSizes[i],
             aggregateSize);
 
-        if (!fileHasReadData(readRequest_->getOffset() + reqBytes))
+        if (0 == aggregateSize && 0 != reqBytes)
         {
             // Create a request that the server will not flow data for
             // because the read data is not present in the file
@@ -184,6 +186,7 @@ void FSReadSM::enterRead()
             req->setHasReadData(false);
             req->setHandle(metaData->dataHandles[i]);
             req->setDataSize(aggregateSize);
+            req->setBstreamSize(metaData->bstreamSizes[i]);
 
             // Set the message size in bytes
             req->setByteLength(8 + 8 + 4 + 4 + 4 +
@@ -195,7 +198,7 @@ void FSReadSM::enterRead()
             // Add to the number of requests sent
             numRequests++;
         }
-        else if (0 != reqBytes && 0 != aggregateSize)
+        else if (0 != aggregateSize && 0 != reqBytes)
         {
             // Note: The read request is NOT deleted here as one would expect.
             // Because the server side flow completes after the client, the request
@@ -208,6 +211,7 @@ void FSReadSM::enterRead()
             req->setHandle(metaData->dataHandles[i]);
             req->setDist(metaData->dist->clone());
             req->setDataSize(aggregateSize);
+            req->setBstreamSize(metaData->bstreamSizes[i]);
             req->setClientFlowBmiTag(simulation.getUniqueNumber());
             req->setServerFlowBmiTag(simulation.getUniqueNumber());
 
@@ -250,10 +254,11 @@ void FSReadSM::startFlow(spfsReadResponse* readResponse)
         static_cast<spfsReadRequest*>(readResponse->contextPointer());
 
     // Create the flow start message
-    spfsDataFlowStart* flowStart =
-        new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
+    spfsClientDataFlowStart* flowStart =
+        new spfsClientDataFlowStart(0, SPFS_DATA_FLOW_START);
     flowStart->setContextPointer(readRequest_);
     flowStart->setClientContextPointer(serverRequest);
+    flowStart->setBstreamSize(serverRequest->getBstreamSize());
 
     // Set the handle as the connection id (TODO: This is hacky)
     flowStart->setBmiConnectionId(serverRequest->getHandle());

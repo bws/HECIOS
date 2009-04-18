@@ -35,7 +35,7 @@ public:
 
     /** Construct DataTypeLayout */
     DataTypeLayout(DataType* dataType);
-    
+
     /** Construct a layout for a single contiguous region */
     DataTypeLayout(const FSOffset& offset, const FSSize& extent);
 
@@ -59,15 +59,16 @@ public:
 
     /** Return the total length of this request data layout */
     FSSize getLength() const;
-    
+
     /** @return the file regions in the request layout from
         [byteOffset, byteOffset + byteLength] */
     std::vector<FileRegion> getSubRegions(const FSOffset& byteOffset,
                                           const FSSize& byteLength) const;
-    
+
 private:
     /** The list of contiguous regions described in this layout */
     std::vector<FileRegion> fileRegions_;
+
 };
 
 #endif

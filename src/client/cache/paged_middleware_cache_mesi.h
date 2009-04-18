@@ -30,6 +30,7 @@
 #include "lru_mesi_cache.h"
 #include "page_access_mixin.h"
 #include "paged_cache.h"
+class spfsCacheReadRequest;
 class spfsCacheReadExclusiveRequest;
 class spfsCacheReadSharedRequest;
 class spfsMPIFileRequest;
@@ -148,6 +149,9 @@ private:
 
     /** Remove request pages marked exclusive/modified in the cache */
     void trimExclusiveCachePages(std::set<PagedCache::Key>& requestPages);
+
+    /** Tally in the additional read pages */
+    void countPageArrivals(spfsCacheReadRequest* read, cMessage* response);
 
     /**
      * Remove all cache entries for the name flushFile

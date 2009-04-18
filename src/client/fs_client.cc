@@ -19,6 +19,7 @@
 //
 #include "fs_client.h"
 #include <iostream>
+#include "fs_cache_read_operation.h"
 #include "fs_close_operation.h"
 #include "fs_create_directory_operation.h"
 #include "fs_delete_operation.h"
@@ -29,6 +30,7 @@
 #include "fs_write_operation.h"
 #include "fs_update_time_operation.h"
 #include "pfs_types.h"
+#include "cache_proto_m.h"
 #include "pvfs_proto_m.h"
 #include "mpi_proto_m.h"
 using namespace std;
@@ -253,14 +255,16 @@ spfsSetAttrRequest* FSClient::createSetAttrRequest(const FSHandle& handle,
     return setAttr;
 }
 
-spfsWriteRequest* FSClient::createWriteRequest(const FSHandle& handle,
+spfsWriteRequest* FSClient::createWriteRequest(const FSHandle& metaHandle,
+                                               const FSHandle& dataHandle,
                                                const FileView& view,
                                                FSOffset offset,
                                                FSSize dataSize,
                                                const FileDistribution& dist)
 {
     spfsWriteRequest* write = new spfsWriteRequest(0, SPFS_WRITE_REQUEST);
-    write->setHandle(handle);
+    write->setMetaHandle(metaHandle);
+    write->setHandle(dataHandle);
     write->setView(new FileView(view));
     write->setOffset(offset);
     write->setDataSize(dataSize);
@@ -332,6 +336,8 @@ void FSClient::initialize()
     numFileStats_ = 0;
     numFileUtimes_ = 0;
     numFileWrites_ = 0;
+    numCacheReadExclusives_ = 0;
+    numCacheReadShareds_ = 0;
 }
 
 void FSClient::finish()
@@ -457,6 +463,16 @@ void FSClient::scheduleRequest(cMessage* request)
             scheduleTime += fileWriteProcessingDelay_;
             break;
         }
+        case SPFS_CACHE_READ_EXCLUSIVE_REQUEST:
+        {
+            numCacheReadExclusives_++;
+            break;
+        }
+        case SPFS_CACHE_READ_SHARED_REQUEST:
+        {
+            numCacheReadShareds_++;
+            break;
+        }
         default:
         {
             cerr << __FILE__ << ":" << __LINE__ << ":"
@@ -571,6 +587,20 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
                 "ERROR: Unsupported client request type: "
                  << request->kind()
                  << endl;
+            break;
+        }
+        case SPFS_CACHE_READ_EXCLUSIVE_REQUEST:
+        {
+            FSCacheReadOperation read(this,
+                                      static_cast<spfsCacheReadExclusiveRequest*>(request));
+            read.processMessage(msg);
+            break;
+        }
+        case SPFS_CACHE_READ_SHARED_REQUEST:
+        {
+            FSCacheReadOperation read(this,
+                                      static_cast<spfsCacheReadSharedRequest*>(request));
+            read.processMessage(msg);
             break;
         }
         default:

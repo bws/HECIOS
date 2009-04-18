@@ -90,9 +90,10 @@ void Write::handleServerMessage(cMessage* msg)
 void Write::startDataFlow()
 {
     // Construct the data flow start message
-    spfsDataFlowStart* dataFlowStart =
-        new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
+    spfsServerDataFlowStart* dataFlowStart =
+        new spfsServerDataFlowStart(0, SPFS_DATA_FLOW_START);
     dataFlowStart->setContextPointer(writeReq_);
+    dataFlowStart->setMetaHandle(writeReq_->getMetaHandle());
 
     // Set the flow configuration
     dataFlowStart->setFlowType(DataFlow::SERVER_FLOW_TYPE);
@@ -109,6 +110,9 @@ void Write::startDataFlow()
     dataFlowStart->setDataSize(writeReq_->getDataSize());
     dataFlowStart->setView(writeReq_->getView());
     dataFlowStart->setDist(writeReq_->getDist());
+
+    // Server data flow specific information
+    dataFlowStart->setMetaHandle(writeReq_->getMetaHandle());
 
     module_->send(dataFlowStart);
 }

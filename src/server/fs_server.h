@@ -190,6 +190,9 @@ public:
     /** Record that a read directory request has arrived */
     void recordReadDir();
 
+    /** Record that a read pages request has arrived */
+    void recordReadPages();
+
     /** Record that a read request has arrived */
     void recordRead();
 
@@ -328,6 +331,7 @@ private:
     double numLookups_;
     double numReadDirs_;
     double numReads_;
+    double numReadPages_;
     double numRemoveDirEnts_;
     double numRemoveObjects_;
     double numSetAttrs_;

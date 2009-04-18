@@ -22,6 +22,7 @@
 #include <numeric>
 #include <omnetpp.h>
 #include "data_type_processor.h"
+#include "file_builder.h"
 #include "file_distribution.h"
 #include "filename.h"
 #include "pvfs_proto_m.h"
@@ -41,36 +42,19 @@ DataFlow::DataFlow(const spfsDataFlowStart& flowStart,
       flowSize_(0),
       networkTransferTotal_(0),
       storageTransferTotal_(0)
-//      transferFromNetworkDelay_("SPFS Flow from Network Delay"),
-//      transferFromStorageDelay_("SPFS Flow from Storage Delay"),
-//      transferToNetworkDelay_("SPFS Flow to Network Delay"),
-//      transferToStorageDelay_("SPFS Flow to Storage Delay")
 {
     // Create the data type layout
     if (CACHE_FLOW_TYPE == type_)
     {
-        flowSize_ = 0;
+        initCacheFlow();
     }
     else if (CLIENT_FLOW_TYPE == type_)
     {
-        FSSize aggregateSize;
-        flowSize_ = DataTypeProcessor::createFileLayoutForClient(
-            flowStart.getOffset(),
-            *(flowStart.getDataType()),
-            flowStart.getCount(),
-            *(flowStart.getView()),
-            *(flowStart.getDist()),
-            aggregateSize);
-        layout_.addRegion(0, flowSize_);
+        initClientFlow();
     }
     else if (SERVER_FLOW_TYPE == type_)
     {
-        flowSize_ = DataTypeProcessor::createFileLayoutForServer(
-            flowStart.getOffset(),
-            flowStart.getDataSize(),
-            *(flowStart.getView()),
-            *(flowStart.getDist()),
-            layout_);
+        initServerFlow();
     }
     assert(0 < flowSize_);
 }
@@ -86,6 +70,10 @@ spfsDataFlowStart* DataFlow::getOriginatingMessage() const
 
 void DataFlow::initialize()
 {
+    //      transferFromNetworkDelay_("SPFS Flow from Network Delay"),
+    //      transferFromStorageDelay_("SPFS Flow from Storage Delay"),
+    //      transferToNetworkDelay_("SPFS Flow to Network Delay"),
+    //      transferToStorageDelay_("SPFS Flow to Storage Delay")
     // Spawn the first operations
     for (size_t i = 0; i < numBuffers_; i++)
     {
@@ -147,6 +135,71 @@ void DataFlow::collectTransferToStorageDelay(cMessage* response)
 {
 //    simtime_t delay = getRoundTripDelay(response);
 //    transferToStorageDelay_.record(delay);
+}
+
+void DataFlow::initCacheFlow()
+{
+    const spfsCacheDataFlowStart* cacheFlow =
+        dynamic_cast<const spfsCacheDataFlowStart*>(originatingMessage_);
+    assert(0 != cacheFlow);
+    flowSize_ = cacheFlow->getPageSize() * cacheFlow->getNumPages();
+    layout_.addRegion(0, flowSize_);
+}
+
+void DataFlow::initClientFlow()
+{
+    const spfsClientDataFlowStart* clientFlow =
+        dynamic_cast<const spfsClientDataFlowStart*>(originatingMessage_);
+    assert(0 != clientFlow);
+    FSSize aggregateSize;
+    if (READ_MODE == mode_)
+    {
+        flowSize_ = DataTypeProcessor::createClientFileLayoutForRead(
+            clientFlow->getOffset(),
+            *(clientFlow->getDataType()),
+            clientFlow->getCount(),
+            *(clientFlow->getView()),
+            *(clientFlow->getDist()),
+            clientFlow->getBstreamSize(),
+            aggregateSize);
+    }
+    else
+    {
+        flowSize_ = DataTypeProcessor::createClientFileLayoutForWrite(
+            clientFlow->getOffset(),
+            *(clientFlow->getDataType()),
+            clientFlow->getCount(),
+            *(clientFlow->getView()),
+            *(clientFlow->getDist()),
+            aggregateSize);
+    }
+    layout_.addRegion(0, flowSize_);
+}
+
+void DataFlow::initServerFlow()
+{
+    const spfsServerDataFlowStart* serverFlow =
+        dynamic_cast<const spfsServerDataFlowStart*>(originatingMessage_);
+    assert(0 != serverFlow);
+    if (READ_MODE == mode_)
+    {
+        flowSize_ = DataTypeProcessor::createServerFileLayoutForRead(
+            serverFlow->getOffset(),
+            serverFlow->getDataSize(),
+            *(serverFlow->getView()),
+            *(serverFlow->getDist()),
+            serverFlow->getBstreamSize(),
+            layout_);
+    }
+    else
+    {
+        flowSize_ = DataTypeProcessor::createServerFileLayoutForWrite(
+            serverFlow->getOffset(),
+            serverFlow->getDataSize(),
+            *(serverFlow->getView()),
+            *(serverFlow->getDist()),
+            layout_);
+    }
 }
 
 simtime_t DataFlow::getRoundTripDelay(cMessage* response) const

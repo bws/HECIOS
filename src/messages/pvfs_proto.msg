@@ -93,6 +93,10 @@ enum spfsMessageKind
     SPFS_COLLECTIVE_GET_ATTR_RESPONSE = 439;
     SPFS_COLLECTIVE_REMOVE_REQUEST = 440;
     SPFS_COLLECTIVE_REMOVE_RESPONSE = 441;
+    SPFS_INVALIDATE_PAGES_REQUEST = 442;
+    SPFS_INVALIDATE_PAGES_WRAPPER_REQUEST = 443;
+    SPFS_READ_PAGES_REQUEST = 444;
+    SPFS_READ_PAGES_RESPONSE = 445;
 };
 
 // File request abstract base class
@@ -145,11 +149,13 @@ message spfsRemoveResponse extends spfsResponse
 message spfsReadRequest extends spfsRequest
 {
     fields:
+    	FSHandle metaHandle;
     	bool hasReadData;
         FSOffset offset;
         FSSize dataSize;
         FileViewPtr view;
         FileDistributionPtr dist;
+    	FSSize bstreamSize;
         int clientFlowBmiTag;
         int serverFlowBmiTag;
 };
@@ -164,6 +170,7 @@ message spfsReadResponse extends spfsResponse
 message spfsWriteRequest extends spfsRequest
 {
     fields:
+    	FSHandle metaHandle;
         FSOffset offset;
         FSSize dataSize;
         FileViewPtr view;
@@ -366,27 +373,43 @@ message spfsListAttrResponse extends spfsResponse
 message spfsDataFlowStart extends spfsRequest
 {
     fields:
+		// File information
+		FSSize bstreamSize;
+        
         // Flow information
 		int flowType;
         int flowMode;
-        int flowId; // Set by the job manager
-        FileDistributionPtr dist;
-        FileViewPtr view;
-        FSOffset offset;
 
-        // Client Data information
-        DataTypePtr dataType;
-        unsigned long count;
-        VoidPtr clientContextPointer;
+		// Flow info set by job manager
+        int flowId;
 
-        // Server Data information
-        FSSize dataSize;
-
-        // The bmi connection and tag to use for this flow
-        ConnectionId bmiConnectionId;
+        // The bmi tags to use for this flow
         int inboundBmiTag;
         int outboundBmiTag;
 };
+
+message spfsClientDataFlowStart extends spfsDataFlowStart
+{
+	fields:
+        FSOffset offset;
+        DataTypePtr dataType;
+        unsigned long count;
+        FileViewPtr view;
+        FileDistributionPtr dist;
+
+        // Client Data information
+        VoidPtr clientContextPointer;
+}
+
+message spfsServerDataFlowStart extends spfsDataFlowStart
+{
+	fields:
+		FSHandle metaHandle;
+        FSOffset offset;
+        FSSize dataSize;
+        FileViewPtr view;
+        FileDistributionPtr dist;
+}
 
 // Indicate the data flow has finished
 message spfsDataFlowFinish extends spfsResponse
@@ -440,6 +463,55 @@ message spfsCollectiveRemoveRequest extends spfsRequest
 // Remove a file system object
 message spfsCollectiveRemoveResponse extends spfsResponse
 {
+};
+
+// Flow pages
+message spfsCacheDataFlowStart extends spfsDataFlowStart
+{
+	fields:
+		unsigned long numPages;
+        FSSize pageSize;
+
+        // Client Data information
+        VoidPtr clientContextPointer;
+}
+
+// Read object data
+message spfsInvalidatePagesRequest extends spfsRequest
+{
+    fields:
+    	bool isExclusive;
+    	bool forwardToDestination;
+    	int destinationRank;
+
+		string filename;
+    	FSSize pageSize;
+    	int pageIds[];    	
+};
+
+// Read file data
+message spfsInvalidatePagesWrapperRequest extends spfsResponse
+{
+    fields:
+};
+
+// Read object data
+message spfsReadPagesRequest extends spfsReadRequest
+{
+    fields:
+    	bool isExclusive;
+    	int originatingRank;
+    	string filename;
+    	FSSize pageSize;
+};
+
+// Read file data
+message spfsReadPagesResponse extends spfsReadResponse
+{
+    fields:
+    	FSSize pageSize;
+    	int serverPages;
+    	int clientPages;
 };
 
 //

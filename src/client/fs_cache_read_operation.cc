@@ -18,10 +18,12 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "fs_cache_read_operation.h"
+#include <iostream>
 #include "fs_client.h"
 #include "fs_get_attributes_sm.h"
 #include "fs_cache_read_sm.h"
 #include "cache_proto_m.h"
+using namespace std;
 
 FSCacheReadOperation::FSCacheReadOperation(FSClient* client,
                                            spfsCacheReadExclusiveRequest* readRequest)
@@ -67,12 +69,28 @@ void FSCacheReadOperation::registerStateMachines()
 
     // Perform the file read
     addStateMachine(new FSCacheReadSM(readRequest_,
-                                      client_));
+                                      client_,
+                                      isExclusive_));
 
 }
 
 void FSCacheReadOperation::sendFinalResponse()
 {
+    spfsCacheReadResponse* readResponse;
+
+    if (isExclusive_)
+    {
+        readResponse =
+            new spfsCacheReadExclusiveResponse(0, SPFS_CACHE_READ_EXCLUSIVE_RESPONSE);
+    }
+    else
+    {
+        readResponse =
+            new spfsCacheReadSharedResponse(0, SPFS_CACHE_READ_SHARED_RESPONSE);
+    }
+    readResponse->setContextPointer(readRequest_);
+    client_->send(readResponse, client_->getAppOutGate());
+    cerr << __FILE__ << ":" << __LINE__ << ":" << "Cache flow read complete.\n";
 }
 
 /*

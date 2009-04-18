@@ -27,6 +27,7 @@
 #include "file_page.h"
 #include "file_region_set.h"
 #include "singleton.h"
+class FileDistribution;
 class FileView;
 
 class FilePageUtils : public Singleton<FilePageUtils>
@@ -47,6 +48,16 @@ public:
                                                const FSOffset& offset,
                                                const FSSize& size,
                                                const FileView& view) const;
+
+    /**
+     * @return Array of pages ids spanning the supplied file regions that
+     *   are located *WITHIN* the supplied distribution
+     */
+    std::set<FilePageId> determineRequestPages(const FSSize& pageSize,
+                                               const FSOffset& offset,
+                                               const FSSize& size,
+                                               const FileView& view,
+                                               const FileDistribution& dist) const;
 
     /**
      * @return Array of pages ids that are fully covered by

@@ -218,14 +218,24 @@ void FileBuilder::createFile(const Filename& fileName,
         for (size_t i = 0; i < nextServerNumber_; i++)
         {
             int serverNum = (firstServer + i) % nextServerNumber_;
-            dataHandles.push_back(getNextHandle(serverNum));
+            FSHandle dataHandle = getNextHandle(serverNum);
 
             // Construct the storage layout for the PFS file
-            Filename storageName(dataHandles[i]);
+            Filename storageName(dataHandle);
             FSSize localFileSize = meta->size / numServers;
-            layoutManager.addFile((size_t)serverNum, storageName, localFileSize);
+            if (0 != localFileSize)
+            {
+                layoutManager.addFile((size_t)serverNum, storageName, localFileSize);
+            }
+            else
+            {
+                layoutManager.addFile((size_t)serverNum, storageName, DEFAULT_BSTREAM_SIZE);
+            }
+
+            // Update the metadata
+            meta->dataHandles.push_back(dataHandle);
+            meta->bstreamSizes.push_back(localFileSize);
         }
-        meta->dataHandles = dataHandles;
 
         // Record bookeeping information
         nameToHandleMap_[fileName.str()] = meta->handle;

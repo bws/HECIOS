@@ -150,7 +150,7 @@ void FSWriteSM::beginWrite()
         // Process the data type to determine the write size
         metaData->dist->setObjectIdx(i);
         FSSize aggregateSize = 0;
-        FSSize reqBytes = DataTypeProcessor::createFileLayoutForClient(
+        FSSize reqBytes = DataTypeProcessor::createClientFileLayoutForWrite(
             writeRequest_->getOffset(),
             *writeRequest_->getDataType(),
             writeRequest_->getCount(),
@@ -162,6 +162,7 @@ void FSWriteSM::beginWrite()
         if (0 != reqBytes && 0 != aggregateSize)
         {
             spfsWriteRequest* req = FSClient::createWriteRequest(
+                metaData->handle,
                 metaData->dataHandles[i],
                 fd->getFileView(),
                 writeRequest_->getOffset(),
@@ -191,8 +192,8 @@ void FSWriteSM::startFlow(spfsWriteResponse* writeResponse)
         static_cast<spfsWriteRequest*>(writeResponse->contextPointer());
 
     // Create the flow start message
-    spfsDataFlowStart* flowStart =
-        new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
+    spfsClientDataFlowStart* flowStart =
+        new spfsClientDataFlowStart(0, SPFS_DATA_FLOW_START);
     flowStart->setContextPointer(writeRequest_);
 
     // Set the handle as the connection id (TODO: This is hacky)
@@ -245,15 +246,9 @@ void FSWriteSM::countCompletion(spfsWriteCompletionResponse* completionResponse)
 
 bool FSWriteSM::isWriteComplete()
 {
-    bool isComplete = (0 == writeRequest_->getRemainingResponses())
-                        && (0 == writeRequest_->getRemainingFlows())
-                        && (0 == writeRequest_->getRemainingCompletions());
-    //cerr << __FILE__ << ":" << __LINE__ << ":"
-    //     << "Write Completion Status: " << isComplete << endl
-    //     << "\tRemaining Resps: " << writeRequest_->getRemainingResponses() << endl
-    //     << "\tRemaining Flows: " << writeRequest_->getRemainingFlows() << endl
-    //     << "\tRemaining Completions: " << writeRequest_->getRemainingCompletions() << endl;
-
+    bool isComplete = (0 == writeRequest_->getRemainingResponses()) &&
+                      (0 == writeRequest_->getRemainingFlows()) &&
+                      (0 == writeRequest_->getRemainingCompletions());
     return isComplete;
 }
 

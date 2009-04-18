@@ -39,6 +39,9 @@ public:
     /** Default size for a PFS directory */
     static const std::size_t DEFAULT_DIRECTORY_SIZE = 8192;
 
+    /** Default size for a PFS directory */
+    static const std::size_t DEFAULT_BSTREAM_SIZE = 1073741824;
+
     /** Singleton accessor */
     //static FileBuilder& instance();
 
@@ -115,9 +118,6 @@ private:
 
     /** Disabled assignment operator */
     FileBuilder& operator=(const FileBuilder& other);
-
-    /** Singleton instance */
-    //static FileBuilder* instance_;
 
     /** Size of metadata entries */
     std::size_t defaultMetaDataSize_;

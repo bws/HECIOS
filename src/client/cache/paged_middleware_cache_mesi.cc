@@ -352,6 +352,7 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
         COMPLETE_CACHE_BYPASS_WRITE = FSM_Steady(2),
         UPDATE_CACHED_PAGES = FSM_Transient(3),
         BEGIN_UPGRADE_PAGE_READ = FSM_Steady(4),
+        COUNT_UPGRADE_ARRIVALS = FSM_Steady(5),
         UPDATE_CACHE_AND_WRITEBACK = FSM_Steady(6),
         COMPLETE_WRITE = FSM_Steady(7)
     };
@@ -458,7 +459,32 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
         case FSM_Exit(BEGIN_UPGRADE_PAGE_READ):
         {
             // Transition to next state
-            FSM_Goto(currentState, UPDATE_CACHE_AND_WRITEBACK);
+            if (readExclusivePages.empty())
+            {
+                FSM_Goto(currentState, UPDATE_CACHE_AND_WRITEBACK);
+            }
+            else
+            {
+                FSM_Goto(currentState, COUNT_UPGRADE_ARRIVALS);
+            }
+            break;
+        }
+        case FSM_Enter(COUNT_UPGRADE_ARRIVALS):
+        {
+            break;
+        }
+        case FSM_Exit(COUNT_UPGRADE_ARRIVALS):
+        {
+            //countPageArrivals();
+            spfsCacheReadExclusiveRequest* readRequest = 0;
+            if (0 == readRequest->getRemainingPages())
+            {
+                FSM_Goto(currentState, UPDATE_CACHE_AND_WRITEBACK);
+            }
+            else
+            {
+                FSM_Goto(currentState, COUNT_UPGRADE_ARRIVALS);
+            }
             break;
         }
         case FSM_Enter(UPDATE_CACHE_AND_WRITEBACK):
@@ -600,7 +626,7 @@ void PagedMiddlewareCacheMesi::beginReadExclusive(
     assert(0 != readPages.size());
     // Construct and dispatch the requests
     vector<spfsCacheReadExclusiveRequest*> readRequests =
-        createCacheReadExclusiveRequests(readPages, parentRequest);
+        createCacheReadExclusiveRequests(getRank(), readPages, parentRequest);
     for (size_t i = 0; i < readRequests.size(); i++)
     {
         send(readRequests[i], fsOutGateId());
@@ -614,7 +640,7 @@ void PagedMiddlewareCacheMesi::beginReadShared(
     assert(0 != readPages.size());
     // Construct and dispatch the requests
     vector<spfsCacheReadSharedRequest*> readRequests =
-        createCacheReadSharedRequests(readPages, parentRequest);
+        createCacheReadSharedRequests(getRank(), readPages, parentRequest);
     for (size_t i = 0; i < readRequests.size(); i++)
     {
         send(readRequests[i], fsOutGateId());
@@ -758,6 +784,12 @@ void PagedMiddlewareCacheMesi::flushCache(const Filename& flushName)
             pageBegin++;
         }
     }
+}
+
+void PagedMiddlewareCacheMesi::countPageArrivals(spfsCacheReadRequest* read,
+                                                 cMessage* response)
+{
+    assert(false);
 }
 
 void PagedMiddlewareCacheMesi::completeRequests()

@@ -92,7 +92,7 @@ public:
     /** @return a new Read Dir request */
     static spfsReadDirRequest* createReadDirRequest(const FSHandle& handle,
                                                     std::size_t dirEntCount);
-    
+
     /** @return a new Read Request */
     static spfsReadRequest* createReadRequest(const FSHandle& handle,
                                               const FileView& view,
@@ -113,21 +113,22 @@ public:
                                                     FSObjectType objectType);
 
     /** @return a new Write Request */
-    static spfsWriteRequest* createWriteRequest(const FSHandle& handle,
+    static spfsWriteRequest* createWriteRequest(const FSHandle& metaHandle,
+                                                const FSHandle& dataHandle,
                                                 const FileView& view,
                                                 FSOffset offset,
                                                 FSSize dataSize,
                                                 const FileDistribution& dist);
-    
+
     /** Constructor */
     FSClient();
-    
+
     /** @return a reference to the client filesystem state */
     ClientFSState& fsState() { return clientState_; };
 
     /** @return the application outbound gate id */
     int getAppOutGate() const { return appOutGateId_; };
-    
+
     /** @return the network outbound gate id */
     int getNetOutGate() const { return netOutGateId_; };
 
@@ -144,7 +145,7 @@ protected:
 private:
     /** Schedule the incoming message after its associated processing delay */
     void scheduleRequest(cMessage* request);
-    
+
     /**
      * Process the incoming message based on the originating request type
      *
@@ -164,16 +165,16 @@ private:
 
     /** Enable collective file creation optimization */
     bool useCollectiveCreate_;
-    
+
     /** Enable collective file get attributes optimization */
     bool useCollectiveGetAttr_;
-    
+
     /** Enable collective file remove optimization */
     bool useCollectiveRemove_;
 
     /** Delay associated with client processing */
     double clientOverheadDelay_;
-    
+
     /** Client processing delay for directory creation */
     double directoryCreateProcessingDelay_;
 
@@ -220,8 +221,10 @@ private:
     double numFileOpens_;
     double numFileReads_;
     double numFileStats_;
-    double numFileWrites_;
     double numFileUtimes_;
+    double numFileWrites_;
+    double numCacheReadExclusives_;
+    double numCacheReadShareds_;
 
     /** Temporal data collection */
     cOutVector collectiveCreateDelay_;

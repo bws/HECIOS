@@ -31,8 +31,6 @@ cplusplus {{
 
 /** File descriptor type */
 typedef FileDescriptor* FileDescriptorPtr;
-
-/** MPI Data type */
 typedef DataType* MPIDataType;
 }}
 
@@ -53,6 +51,7 @@ enum spfsCacheMessageKind
     SPFS_CACHE_READ_EXCLUSIVE_RESPONSE = 504;
     SPFS_CACHE_READ_SHARED_REQUEST = 505;
     SPFS_CACHE_READ_SHARED_RESPONSE = 506;
+    SPFS_CACHE_SEND_PAGES = 507;
 };
 
 message spfsCacheRequest
@@ -63,9 +62,7 @@ message spfsCacheRequest
 
         // internal fields
         FSOperationState opState;
-        unsigned int numResolvedSegments = 1;
-        int remainingResponses = 0;
-        int socketId = -1;
+        int numRemainingPages;
         ConnectionId mpiConnectionId;
         int destinationRank;
 }
@@ -89,8 +86,20 @@ message spfsCacheInvalidateResponse extends spfsCacheResponse
 message spfsCacheReadRequest extends spfsCacheRequest
 {
     fields:
-    	FSSize pageSize;
-    	unsigned long pageIds[];
+    	// Info about sender
+    	int originatingRank;
+    	
+    	// Request information
+        long offset;
+		int count;
+		MPIDataType dataType;
+		FSSize pageSize;
+		int numPages;
+		
+		// Data for internal use
+		int remainingResponses;
+		int remainingFlows;
+		int remainingPages;
 }
 
 message spfsCacheReadResponse extends spfsCacheResponse
@@ -125,6 +134,14 @@ message spfsCacheUpgradeResponse extends spfsCacheResponse
 {
     fields:
 }
+
+message spfsCacheSendPages extends spfsCacheRequest
+{
+    fields:
+    	FSSize pageSize;
+    	unsigned long pageIds[];
+}
+
 
 //
 // Local variables:
