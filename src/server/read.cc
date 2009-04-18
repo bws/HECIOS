@@ -68,7 +68,7 @@ void Read::handleServerMessage(cMessage* msg)
         {
             assert(0 != dynamic_cast<spfsReadRequest*>(msg));
             module_->recordRead();
-            if (readReq_->getHasReadData())
+            if (0 != readReq_->getLocalSize())
             {
                 FSM_Goto(currentState, START_DATA_FLOW);
             }
@@ -153,7 +153,7 @@ void Read::sendFinalResponse()
 void Read::finish()
 {
     // If a flow was initiated for this request
-    if (readReq_->getHasReadData())
+    if (0 != readReq_->getLocalSize())
     {
         // Set the flag so that the originating request is cleaned up during
         // object destruction.  Don't simply delete it because the state is

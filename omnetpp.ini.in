@@ -59,19 +59,19 @@ include @INSTALL_DIR@/ini/palmetto_myri10g.ini
 # MPI-IO Cache settings
 #
 ###############################################################################
-**.middlewareCacheType = "NoMiddlewareCache"
-#**.cpun[*].process[*].mpi.middlewareCacheType = "DirectPagedMiddlewareCache"
-#**.cpun[*].process[*].mpi.middlewareCacheType = "PagedMiddlewareCacheMesi"
-#**.cpun[*].process[*].mpi.middlewareCacheType = "PagedMiddlewareCacheWithTwinNoBlockIndexed"
-#**.cpun[*].process[*].mpi.middlewareCacheType = "PagedMiddlewareCacheWithTwin"
-#**.cpun[*].process[*].mpi.middlewareCacheType = "SharedPagedMiddlewareCacheWithTwinNoBlockIndexed"
-#**.cpun[*].process[*].mpi.middlewareCacheType = "SharedDirectPagedMiddlewareCache"
-#**.cpun[*].process[*].mpi.middlewareCacheType = "SharedPagedMiddlewareCacheWithTwin"
-**.cpun[*].process[*].mpi.cache.pageCapacity = 16
-**.cpun[*].process[*].mpi.cache.pageSize = 32768
+**.mpi.middlewareCacheType = "NoMiddlewareCache"
+#**.mpi.middlewareCacheType = "DirectPagedMiddlewareCache"
+#**.mpi.middlewareCacheType = "PagedMiddlewareCacheMesi"
+#**.mpi.middlewareCacheType = "PagedMiddlewareCacheWithTwinNoBlockIndexed"
+#**.mpi.middlewareCacheType = "PagedMiddlewareCacheWithTwin"
+#**.mpi.middlewareCacheType = "SharedPagedMiddlewareCacheWithTwinNoBlockIndexed"
+#**.mpi.middlewareCacheType = "SharedDirectPagedMiddlewareCache"
+#**.mpi.middlewareCacheType = "SharedPagedMiddlewareCacheWithTwin"
+**.mpi.cache.pageCapacity = 16
+**.mpi.cache.pageSize = 32768
 
 # Note we are assuming we can copy memory at 4GB/s (a reasonable estimate)
-**.cpun[*].process[*].mpi.cache.byteCopyTime = .00000000023283064365
+**.mpi.cache.byteCopyTime = .00000000023283064365
 
 ###############################################################################
 #

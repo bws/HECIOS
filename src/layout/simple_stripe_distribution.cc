@@ -27,7 +27,7 @@ SimpleStripeDistribution::SimpleStripeDistribution(size_t serverIdx,
                                                    FSSize stripSize)
     : FileDistribution(serverIdx, numServers),
       stripSize_(stripSize)
-{
+      {
 }
 
 SimpleStripeDistribution::SimpleStripeDistribution(

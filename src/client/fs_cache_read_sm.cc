@@ -100,7 +100,7 @@ bool FSCacheReadSM::updateState(cFSM& currentState, cMessage* msg)
             // flow here
             spfsReadRequest* readRequest =
                 static_cast<spfsReadRequest*>(msg->contextPointer());
-            if (true == readRequest->getHasReadData())
+            if (0 != readRequest->getLocalSize())
             {
                 startFlow(dynamic_cast<spfsReadPagesResponse*>(msg));
             }
@@ -164,56 +164,50 @@ void FSCacheReadSM::enterRead()
     int numServers = metaData->dataHandles.size();
     for (int i = 0; i < numServers; i++)
     {
-        // Process the data type to determine the read size
+        // Process the data to determine if any data could be on this server
+        // (must use the client write processor to ensure the stream size won't
+        //  limit the data distribution)
         metaData->dist->setObjectIdx(i);
         FSSize aggregateSize = 0;
-        FSSize reqBytes = DataTypeProcessor::createClientFileLayoutForRead(
+        FSSize serverBytes = DataTypeProcessor::createClientFileLayoutForWrite(
             readRequest_->getOffset(),
             *readRequest_->getDataType(),
             readRequest_->getCount(),
             *read.getView(),
             *metaData->dist,
-            metaData->bstreamSizes[i],
             aggregateSize);
 
-        if (0 == aggregateSize && 0 != reqBytes)
+        if (0 != serverBytes)
         {
+            // Now reprocess the data using the client read functionality
+            // to figure out the actual data to send to server
+            FSSize reqBytes = DataTypeProcessor::createClientFileLayoutForRead(
+                readRequest_->getOffset(),
+                *readRequest_->getDataType(),
+                readRequest_->getCount(),
+                *read.getView(),
+                *metaData->dist,
+                metaData->bstreamSizes[i],
+                aggregateSize);
+
             // Create a request that the server will not flow data for
             // because the read data is not present in the file
-            spfsReadPagesRequest* req = static_cast<spfsReadPagesRequest*>(read.dup());
+            spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
             req->setAutoCleanup(true);
-            req->setHasReadData(false);
             req->setHandle(metaData->dataHandles[i]);
-            req->setDist(metaData->dist->clone());
             req->setDataSize(aggregateSize);
             req->setBstreamSize(metaData->bstreamSizes[i]);
-
-            // Set the message size in bytes
-            req->setByteLength(8 + 8 + 4 + 4 + 4 +
-                               //FSClient::CREDENTIALS_SIZE +
-                               fd->getFileView().getRepresentationByteLength() +
-                               8 + 8);
-            client_->send(req, client_->getNetOutGate());
+            req->setLocalSize(reqBytes);
 
             // Add to the number of requests sent
             numRequests++;
-        }
-        else if (0 != aggregateSize && 0 != reqBytes)
-        {
-            // Note: The read request is NOT deleted here as one would expect.
-            // Because the server side flow completes after the client, the request
-            // is deleted on the server
-            spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
-            req->setAutoCleanup(false);
-
-            // Set the server specific request data
-            req->setHasReadData(true);
-            req->setHandle(metaData->dataHandles[i]);
-            req->setDist(metaData->dist->clone());
-            req->setDataSize(aggregateSize);
-            req->setBstreamSize(metaData->bstreamSizes[i]);
-            req->setClientFlowBmiTag(simulation.getUniqueNumber());
-            req->setServerFlowBmiTag(simulation.getUniqueNumber());
+            if (0 != reqBytes)
+            {
+                req->setAutoCleanup(false);
+                req->setClientFlowBmiTag(simulation.getUniqueNumber());
+                req->setServerFlowBmiTag(simulation.getUniqueNumber());
+                numFlows++;
+            }
 
             // Set the message size in bytes
             req->setByteLength(8 + 8 + 4 + 4 + 4 +
@@ -221,10 +215,6 @@ void FSCacheReadSM::enterRead()
                                fd->getFileView().getRepresentationByteLength() +
                                8 + 8);
             client_->send(req, client_->getNetOutGate());
-
-            // Add to the number of requests and flows sent
-            numRequests++;
-            numFlows++;
         }
     }
 

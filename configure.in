@@ -106,9 +106,9 @@ case "$comp_mode" in
 	    CONFIG_LDFLAGS="-g"
         ;;
     release)
-        CONFIG_CXXFLAGS="-O2 -DNDEBUG" 
-        CONFIG_UNSAFE_CXXFLAGS="-O2 -DNDEBUG" 
-	    CONFIG_LDFLAGS=""
+        CONFIG_CXXFLAGS="-g -O2 -DNDEBUG" 
+        CONFIG_UNSAFE_CXXFLAGS="-g -O2 -DNDEBUG" 
+	    CONFIG_LDFLAGS="-g"
         ;;
     strict)
 	    CONFIG_CXXFLAGS="-g -Wno-deprecated -Wno-unused -Wall -Werror -ansi -pedantic"

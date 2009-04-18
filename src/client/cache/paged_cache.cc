@@ -196,13 +196,13 @@ FileDescriptor* PagedCache::getPageViewDescriptor(
 
 bool operator<(const PagedCache::Key& lhs, const PagedCache::Key& rhs)
 {
-    if (lhs.filename == rhs.filename)
+    if (lhs.key == rhs.key)
     {
-        return (lhs.key < rhs.key);
+        return (lhs.filename < rhs.filename);
     }
     else
     {
-        return (lhs.filename < rhs.filename);
+        return (lhs.key < rhs.key);
     }
 }
 

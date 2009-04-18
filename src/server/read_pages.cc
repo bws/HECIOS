@@ -267,7 +267,7 @@ void ReadPages::sendFinalResponse(size_t& numClientPages,
 void ReadPages::finish()
 {
     // If a flow was initiated for this request
-    if (readReq_->getHasReadData())
+    if (0 != readReq_->getLocalSize())
     {
         // Set the flag so that the originating request is cleaned up during
         // object destruction.  Don't simply delete it because the state is

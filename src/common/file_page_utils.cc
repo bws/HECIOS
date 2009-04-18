@@ -193,11 +193,13 @@ set<FilePageId> FilePageUtils::regionsToPageIds(const FSSize& pageSize,
     set<FilePageId> spanningPageIds;
     for (size_t i = 0; i < fileRegions.size(); i++)
     {
+        //cerr << "Loop " << i << " of " << fileRegions.size() << endl;
         // Determine the first and last page
         FSOffset begin = fileRegions[i].offset;
         FSOffset end = begin + fileRegions[i].extent;
         size_t firstPage = begin / pageSize;
         size_t lastPage = end / pageSize;
+
         for (size_t j = firstPage; j < lastPage; j++)
         {
             FilePageId id = j;

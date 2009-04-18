@@ -150,12 +150,12 @@ message spfsReadRequest extends spfsRequest
 {
     fields:
     	FSHandle metaHandle;
-    	bool hasReadData;
         FSOffset offset;
         FSSize dataSize;
         FileViewPtr view;
         FileDistributionPtr dist;
     	FSSize bstreamSize;
+    	FSSize localSize;
         int clientFlowBmiTag;
         int serverFlowBmiTag;
 };
