@@ -405,7 +405,7 @@ void PagedMiddlewareCacheWithTwinNoBlockIndexed::processFileWrite(spfsMPIFileWri
                     // Figure out the memory copy delay for the read and write
                     double readBytes = partialPagesTrimmed.size() * pageSize();
                     double writeBytes = write->getCount() * write->getDataType()->getExtent();
-                    double delay = (readBytes + writeBytes) * byteCopyTime();
+                    double delay = (readBytes + 2*writeBytes) * byteCopyTime();
                     cPar* delayPar = new cPar("Delay");
                     delayPar->setDoubleValue(delay);
                     write->addPar(delayPar);
@@ -414,7 +414,7 @@ void PagedMiddlewareCacheWithTwinNoBlockIndexed::processFileWrite(spfsMPIFileWri
                 {
                     // Figure out the memory copy delay for the write only
                     double writeBytes = write->getCount() * write->getDataType()->getExtent();
-                    double delay = (writeBytes) * byteCopyTime();
+                    double delay = (2*writeBytes) * byteCopyTime();
                     cPar* delayPar = new cPar("Delay");
                     delayPar->setDoubleValue(delay);
                     write->addPar(delayPar);

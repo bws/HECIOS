@@ -68,6 +68,9 @@ protected:
     /** Perform module initialization */
     virtual void initialize();
 
+    /** Perform module finalization */
+    virtual void finish();
+
     /** @return the file data page cache for this middleware */
     virtual FileDataPageCache* createFileDataPageCache(size_t cacheSize);
 

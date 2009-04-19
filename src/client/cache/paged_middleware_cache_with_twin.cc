@@ -95,6 +95,11 @@ void PagedMiddlewareCacheWithTwin::initialize()
     openFileCounts_ = createOpenFileMap();
 }
 
+void PagedMiddlewareCacheWithTwin::finish()
+{
+    PagedCache::finish();
+}
+
 PagedMiddlewareCacheWithTwin::FileDataPageCache*
 PagedMiddlewareCacheWithTwin::createFileDataPageCache(size_t cacheSize)
 {
@@ -401,7 +406,7 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
                     // Figure out the memory copy delay for the read and write
                     double readBytes = partialPagesTrimmed.size() * pageSize();
                     double writeBytes = write->getCount() * write->getDataType()->getExtent();
-                    double delay = (readBytes + writeBytes) * byteCopyTime();
+                    double delay = (readBytes + 2*writeBytes) * byteCopyTime();
                     cPar* delayPar = new cPar("Delay");
                     delayPar->setDoubleValue(delay);
                     write->addPar(delayPar);
@@ -410,7 +415,7 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
                 {
                     // Figure out the memory copy delay for the write only
                     double writeBytes = write->getCount() * write->getDataType()->getExtent();
-                    double delay = (writeBytes) * byteCopyTime();
+                    double delay = (2*writeBytes) * byteCopyTime();
                     cPar* delayPar = new cPar("Delay");
                     delayPar->setDoubleValue(delay);
                     write->addPar(delayPar);
@@ -659,6 +664,7 @@ void PagedMiddlewareCacheWithTwin::beginWritebackEvictions(
                 partialPageWriteback->setDataType(byteType);
                 partialPageWriteback->setOffset(regIter->offset);
                 partialPageWriteback->setCount(regIter->extent);
+
                 send(partialPageWriteback, fsOutGateId());
                 regIter++;
             }
