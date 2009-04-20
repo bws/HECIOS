@@ -100,15 +100,21 @@ message spfsCacheReadRequest extends spfsCacheRequest
 		int remainingResponses;
 		int remainingFlows;
 		int remainingPages;
+		unsigned long responseCachePageIds[];
+		unsigned long responseServerPageIds[];
+		
 }
 
 message spfsCacheReadResponse extends spfsCacheResponse
 {
     fields:
+    	string filename;
+    	unsigned long pageIds[];
 }
 
 message spfsCacheReadExclusiveRequest extends spfsCacheReadRequest
 {
+	fields:
 }
 
 message spfsCacheReadExclusiveResponse extends spfsCacheReadResponse
@@ -135,11 +141,9 @@ message spfsCacheUpgradeResponse extends spfsCacheResponse
     fields:
 }
 
-message spfsCacheSendPages extends spfsCacheRequest
+message spfsCacheSendPages extends spfsCacheReadResponse
 {
     fields:
-    	FSSize pageSize;
-    	unsigned long pageIds[];
 }
 
 

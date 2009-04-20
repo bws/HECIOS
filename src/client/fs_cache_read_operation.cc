@@ -89,7 +89,20 @@ void FSCacheReadOperation::sendFinalResponse()
             new spfsCacheReadSharedResponse(0, SPFS_CACHE_READ_SHARED_RESPONSE);
     }
     readResponse->setContextPointer(readRequest_);
+
+    // Set the response's filename
+    FileDescriptor* fd = readRequest_->getDescriptor();
+    readResponse->setFilename(fd->getFilename().c_str());
     client_->send(readResponse, client_->getAppOutGate());
+
+    // Set the page ids here
+    size_t numPages = readRequest_->getResponseServerPageIdsArraySize();
+    readResponse->setPageIdsArraySize(numPages);
+    for (size_t i = 0; i < numPages; i++)
+    {
+        readResponse->setPageIds(i, readRequest_->getResponseServerPageIds(i));
+    }
+
     cerr << __FILE__ << ":" << __LINE__ << ":" << "Cache flow read complete.\n";
 }
 

@@ -58,7 +58,7 @@ private:
     void countFlowFinish(spfsDataFlowFinish* finishMsg);
 
     /** Count a read response */
-    void countResponse();
+    void countResponse(spfsReadPagesResponse* response);
 
     /** @return true if all read responses and finished flows are received */
     bool isReadComplete();

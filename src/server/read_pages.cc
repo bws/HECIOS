@@ -69,9 +69,8 @@ void ReadPages::handleServerMessage(cMessage* msg)
     };
 
     // Page locations
-    size_t numClientPages = 0;
-    size_t numServerPages = 0;
-    vector<spfsInvalidatePagesRequest*> invalidations;
+    set<FilePageId> clientPages;
+    set<FilePageId> serverPages;
 
     FSM_Switch(currentState)
     {
@@ -80,16 +79,31 @@ void ReadPages::handleServerMessage(cMessage* msg)
             assert(0 != dynamic_cast<spfsReadPagesRequest*>(msg));
             module_->recordReadPages();
 
-            // Create the forwarding requests
-            invalidations = createInvalidatePagesRequests(numClientPages,
-                                                          numServerPages);
-
-            // Determine what further processing is required
-            if (0 == numServerPages && invalidations.empty())
+            if (0 != readReq_->getLocalSize())
+            {
+                FSM_Goto(currentState, DETERMINE_PAGE_LOCATIONS);
+            }
+            else
             {
                 FSM_Goto(currentState, SEND_FINAL_RESPONSE);
             }
-            else if (0 == numServerPages)
+            break;
+        }
+        case FSM_Enter(DETERMINE_PAGE_LOCATIONS):
+        {
+            break;
+        }
+        case FSM_Exit(DETERMINE_PAGE_LOCATIONS):
+        {
+            // Determine where to retrieve the pages
+            parititionRequestPages(clientPages, serverPages);
+
+            // Determine what further processing is required
+            if (clientPages.empty() && serverPages.empty())
+            {
+                FSM_Goto(currentState, SEND_FINAL_RESPONSE);
+            }
+            else if (serverPages.empty())
             {
                 FSM_Goto(currentState, SEND_FORWARD_REQUESTS);
             }
@@ -102,12 +116,12 @@ void ReadPages::handleServerMessage(cMessage* msg)
         case FSM_Enter(START_LOCAL_DATA_FLOW):
         {
             assert(0 != dynamic_cast<spfsReadRequest*>(msg));
-            startDataFlow();
+            startDataFlow(serverPages);
             break;
         }
         case FSM_Exit(START_LOCAL_DATA_FLOW):
         {
-            if (invalidations.empty())
+            if (clientPages.empty())
             {
                 FSM_Goto(currentState, SEND_FINAL_RESPONSE);
             }
@@ -120,6 +134,7 @@ void ReadPages::handleServerMessage(cMessage* msg)
         case FSM_Enter(SEND_FORWARD_REQUESTS):
         {
             assert(0 != dynamic_cast<spfsReadRequest*>(msg));
+            vector<spfsInvalidatePagesRequest*> invalidations;
             sendInvalidateRequests(invalidations);
             break;
         }
@@ -131,7 +146,7 @@ void ReadPages::handleServerMessage(cMessage* msg)
         case FSM_Enter(SEND_FINAL_RESPONSE):
         {
             assert(0 != dynamic_cast<spfsReadRequest*>(msg));
-            sendFinalResponse(numClientPages, numServerPages);
+            sendFinalResponse(clientPages, serverPages);
             break;
         }
         case FSM_Exit(SEND_FINAL_RESPONSE):
@@ -151,28 +166,32 @@ void ReadPages::handleServerMessage(cMessage* msg)
     readReq_->setState(currentState);
 }
 
-vector<spfsInvalidatePagesRequest*>
-ReadPages::createInvalidatePagesRequests(size_t& numClientPages,
-                                         size_t& numServerPages)
+void ReadPages::parititionRequestPages(set<FilePageId>& outClientPages,
+                                       set<FilePageId>& outServerPages)
 {
     // Turn the request into pages
     FilePageUtils& pageUtils = FilePageUtils::instance();
-    set<FilePageId> requestPages = pageUtils.determineRequestPages(readReq_->getPageSize(),
-                                                                   readReq_->getOffset(),
-                                                                   readReq_->getDataSize(),
-                                                                   *readReq_->getView(),
-                                                                   *readReq_->getDist());
+    outServerPages = pageUtils.determineRequestPages(readReq_->getPageSize(),
+                                                     readReq_->getOffset(),
+                                                     readReq_->getDataSize(),
+                                                     *readReq_->getView(),
+                                                     *readReq_->getDist());
 
-    // Determine the invalidations based on the Request
-    ClientCacheDirectory& cacheDirectory = ClientCacheDirectory::instance();
+    cerr << "Found server pages: " << outServerPages.size() << endl;
+}
+
+vector<spfsInvalidatePagesRequest*>
+ReadPages::createInvalidatePagesRequests(const set<FilePageId>& outClientPages)
+{
+    ClientCacheDirectory& directory = ClientCacheDirectory::instance();
     Filename filename(readReq_->getFilename());
     ClientCacheDirectory::InvalidationMap invalidations =
-        cacheDirectory.getClientsNeedingInvalidate(filename,
-                                                   readReq_->getPageSize(),
-                                                   readReq_->getOffset(),
-                                                   readReq_->getDataSize(),
-                                                   *readReq_->getView(),
-                                                   *readReq_->getDist());
+        directory.getClientsNeedingInvalidate(filename,
+                                              readReq_->getPageSize(),
+                                              readReq_->getOffset(),
+                                              readReq_->getDataSize(),
+                                              *readReq_->getView(),
+                                              *readReq_->getDist());
 
     // Construct the invalidation requests
     size_t exclusivePageCount = 0;
@@ -209,15 +228,12 @@ ReadPages::createInvalidatePagesRequests(size_t& numClientPages,
         invalidateReqs.push_back(request);
         ++iter;
     }
-
-    // Set the outbound parameters
-    numServerPages = requestPages.size() - exclusivePageCount;
-    numClientPages = exclusivePageCount;
     return invalidateReqs;
 }
 
-void ReadPages::startDataFlow()
+void ReadPages::startDataFlow(const set<FilePageId>& localPages)
 {
+
     // Construct the data flow start message
     spfsServerDataFlowStart* dataFlowStart =
         new spfsServerDataFlowStart(0, SPFS_DATA_FLOW_START);
@@ -232,11 +248,16 @@ void ReadPages::startDataFlow()
     dataFlowStart->setInboundBmiTag(readReq_->getServerFlowBmiTag());
     dataFlowStart->setOutboundBmiTag(readReq_->getClientFlowBmiTag());
 
-    // Data transfer configuration
+    // Construct the data transfer configuration
+    FSSize pageSize = readReq_->getPageSize();
+    FilePageUtils& pageUtils = FilePageUtils::instance();
+    FileView* pageView = pageUtils.createPageViewDescriptor(pageSize,localPages);
+
     dataFlowStart->setHandle(readReq_->getHandle());
-    dataFlowStart->setOffset(readReq_->getOffset());
-    dataFlowStart->setDataSize(readReq_->getDataSize());
-    dataFlowStart->setView(readReq_->getView());
+    dataFlowStart->setMetaHandle(readReq_->getMetaHandle());
+    dataFlowStart->setOffset(0);
+    dataFlowStart->setDataSize(localPages.size() * pageSize);
+    dataFlowStart->setView(pageView);
     dataFlowStart->setDist(readReq_->getDist());
 
     module_->send(dataFlowStart);
@@ -250,16 +271,35 @@ void ReadPages::sendInvalidateRequests(vector<spfsInvalidatePagesRequest*> inval
     }
 }
 
-void ReadPages::sendFinalResponse(size_t& numClientPages,
-                                  size_t& numServerPages)
+void ReadPages::sendFinalResponse(const set<FilePageId>& clientPages,
+                                  const set<FilePageId>& serverPages)
 {
     // Construct the final response
     spfsReadPagesResponse* resp = new spfsReadPagesResponse(
         0, SPFS_READ_PAGES_RESPONSE);
     resp->setContextPointer(readReq_);
-    resp->setServerPages(numServerPages);
-    resp->setClientPages(numClientPages);
-    //resp->setPageSize(readReq_->getPageSize());
+
+    // Set the pages received from the server for use on the client
+    resp->setServerPageIdsArraySize(serverPages.size());
+    set<FilePageId>::const_iterator iter = serverPages.begin();
+    set<FilePageId>::const_iterator last = serverPages.end();
+    int i = 0;
+    while (iter != last)
+    {
+        resp->setServerPageIds(i++, *(iter++));
+    }
+
+    // Set the pages received from the client caches for use on the client
+    resp->setClientPageIdsArraySize(clientPages.size());
+    iter = clientPages.begin();
+    last = clientPages.end();
+    i = 0;
+    while (iter != last)
+    {
+        resp->setClientPageIds(i++, *(iter++));
+    }
+
+    // Set the message size and send
     resp->setByteLength(4 + 4 + 4);
     module_->send(resp);
 }

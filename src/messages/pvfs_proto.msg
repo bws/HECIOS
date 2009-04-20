@@ -510,8 +510,8 @@ message spfsReadPagesResponse extends spfsReadResponse
 {
     fields:
     	FSSize pageSize;
-    	int serverPages;
-    	int clientPages;
+    	unsigned long clientPageIds[];
+    	unsigned long serverPageIds[];
 };
 
 //

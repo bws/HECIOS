@@ -81,7 +81,7 @@ bool FSCacheReadSM::updateState(cFSM& currentState, cMessage* msg)
         }
         case FSM_Exit(COUNT):
         {
-            if (SPFS_READ_RESPONSE == msg->kind())
+            if (SPFS_READ_PAGES_RESPONSE == msg->kind())
             {
                 FSM_Goto(currentState, COUNT_SERVER_RESPONSE);
             }
@@ -108,8 +108,9 @@ bool FSCacheReadSM::updateState(cFSM& currentState, cMessage* msg)
         }
         case FSM_Exit(COUNT_SERVER_RESPONSE):
         {
-            assert(0 != dynamic_cast<spfsReadPagesResponse*>(msg));
-            countResponse();
+            spfsReadPagesResponse* response = dynamic_cast<spfsReadPagesResponse*>(msg);
+            assert(0 != response);
+            countResponse(response);
 
             if (isReadComplete())
             {
@@ -152,6 +153,10 @@ void FSCacheReadSM::enterRead()
 
     // Construct the template read request
     spfsReadPagesRequest read("ReadStuff", SPFS_READ_PAGES_REQUEST);
+
+    // Note: The read request is NOT deleted here as one would expect.
+    // Because the server side flow completes after the client, the request
+    // is deleted on the server
     read.setMetaHandle(metaData->handle);
     read.setContextPointer(readRequest_);
     read.setOffset(readRequest_->getOffset());
@@ -204,6 +209,7 @@ void FSCacheReadSM::enterRead()
             if (0 != reqBytes)
             {
                 req->setAutoCleanup(false);
+                req->setDist(metaData->dist->clone());
                 req->setClientFlowBmiTag(simulation.getUniqueNumber());
                 req->setServerFlowBmiTag(simulation.getUniqueNumber());
                 numFlows++;
@@ -235,8 +241,8 @@ bool FSCacheReadSM::fileHasReadData(size_t reqBytes)
 
 void FSCacheReadSM::startFlow(spfsReadPagesResponse* readResponse)
 {
-    size_t numPages = readResponse->getServerPages();
-    FSSize pageSize = readResponse->getPageSize();
+    size_t numPages = readResponse->getServerPageIdsArraySize();
+    FSSize pageSize = readRequest_->getPageSize();
     if (numPages > 0 && pageSize > 0)
     {
         // Extract the file descriptor
@@ -273,10 +279,26 @@ void FSCacheReadSM::startFlow(spfsReadPagesResponse* readResponse)
     }
 }
 
-void FSCacheReadSM::countResponse()
+void FSCacheReadSM::countResponse(spfsReadPagesResponse* response)
 {
     int numRemainingResponses = readRequest_->getRemainingResponses();
     readRequest_->setRemainingResponses(--numRemainingResponses);
+
+    // Add the client pages to the initial request
+    size_t origSize = readRequest_->getResponseCachePageIdsArraySize();
+    size_t newSize = origSize + response->getClientPageIdsArraySize();
+    for (size_t i = origSize, j = 0; i < newSize; i++, j++)
+    {
+        readRequest_->setResponseCachePageIds(i, response->getClientPageIds(j));
+    }
+
+    // Add the server pages to the initial request
+    origSize = readRequest_->getResponseServerPageIdsArraySize();
+    newSize = origSize + response->getServerPageIdsArraySize();
+    for (size_t i = origSize, j = 0; i < newSize; i++, j++)
+    {
+        readRequest_->setResponseServerPageIds(i, response->getServerPageIds(j));
+    }
 }
 
 void FSCacheReadSM::countFlowFinish(spfsDataFlowFinish* finishMsg)

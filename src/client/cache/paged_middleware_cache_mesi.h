@@ -31,6 +31,7 @@
 #include "page_access_mixin.h"
 #include "paged_cache.h"
 class spfsCacheReadRequest;
+class spfsCacheReadResponse;
 class spfsCacheReadExclusiveRequest;
 class spfsCacheReadSharedRequest;
 class spfsMPIFileRequest;
@@ -104,6 +105,9 @@ private:
 
     void processFileWrite(spfsMPIFileWriteAtRequest* write, cMessage* msg);
 
+    /** Cleanup memory associated with cache originated request */
+    void cleanupRequest(cMessage* msg);
+
     /** Determine the set of pages for this I/O request */
     template<class spfsMPIFileIORequest> void getRequestCachePages(
         const spfsMPIFileIORequest* ioRequest,
@@ -119,6 +123,10 @@ private:
     template<class spfsMPIFileIORequest> void getRequestPartialCachePages(
         const spfsMPIFileIORequest* ioRequest,
         std::set<PagedCache::Key>& outRequestPages) const;
+
+    /** @return The pages contained in the response */
+    void getResponsePages(spfsCacheReadResponse* response,
+                          std::set<PagedCache::Key>& readPages) const;
 
     /** @return pages from readPages not already scheduled for reading */
     std::set<PagedCache::Key> trimPendingReadPages(const std::set<PagedCache::Key>& readPages);

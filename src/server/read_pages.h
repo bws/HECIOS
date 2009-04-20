@@ -20,7 +20,9 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <cstddef>
+#include <set>
 #include <vector>
+#include "file_page.h"
 class cMessage;
 class spfsInvalidatePagesRequest;
 class spfsReadPagesRequest;
@@ -49,12 +51,16 @@ protected:
     /** @return true if the file contains the offset/extent to be read */
     bool hasReadData();
 
+    /** Partition the request pages into the client-exclusive and server-local sets */
+    void parititionRequestPages(std::set<FilePageId>& outClientPages,
+                                std::set<FilePageId>& outServerPages);
+
     /** @return the set of page forward requests */
-    std::vector<spfsInvalidatePagesRequest*> createInvalidatePagesRequests(std::size_t& numClientPages,
-                                                                           std::size_t& numServerPages);
+    std::vector<spfsInvalidatePagesRequest*> createInvalidatePagesRequests(
+        const std::set<FilePageId>& clientPages);
 
     /** Create and send the data flow requests */
-    void startDataFlow();
+    void startDataFlow(const std::set<FilePageId>& localPages);
 
     /**
      * Create and send the cache forwarding requests
@@ -64,8 +70,8 @@ protected:
     /**
      * Create and send the final read response
      */
-    void sendFinalResponse(std::size_t& numClientPages,
-                           std::size_t& numServerPages);
+    void sendFinalResponse(const std::set<FilePageId>& clientPages,
+                           const std::set<FilePageId>& serverPages);
 
     /**
      * No-op for now.

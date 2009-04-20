@@ -20,6 +20,8 @@
 #include "file_page_utils.h"
 #include <algorithm>
 #include <cassert>
+#include "basic_data_type.h"
+#include "block_indexed_data_type.h"
 #include "data_type_layout.h"
 #include "data_type_processor.h"
 #include "file_distribution.h"
@@ -200,7 +202,7 @@ set<FilePageId> FilePageUtils::regionsToPageIds(const FSSize& pageSize,
         size_t firstPage = begin / pageSize;
         size_t lastPage = end / pageSize;
 
-        for (size_t j = firstPage; j < lastPage; j++)
+        for (size_t j = firstPage; j <= lastPage; j++)
         {
             FilePageId id = j;
             spanningPageIds.insert(id);
@@ -222,6 +224,28 @@ set<FilePage> FilePageUtils::regionsToPages(const FSSize& pageSize,
         spanningPages.insert(fp);
     }
     return spanningPages;
+}
+
+FileView* FilePageUtils::createPageViewDescriptor(const FSSize& pageSize,
+                                                 const set<FilePageId>& pageIds) const
+{
+    assert(!pageIds.empty());
+
+    // Create the vector of displacements
+    set<FilePageId>::const_iterator idIter = pageIds.begin();
+    vector<size_t> displacements(pageIds.size());
+    for (size_t i = 0; i < displacements.size(); i++)
+    {
+        displacements[i] = (*idIter) * pageSize;
+        ++idIter;
+    }
+
+    // Create the block indexed data type to use as the view
+    static ByteDataType byteDataType;
+    BlockIndexedDataType* viewType = new BlockIndexedDataType(pageSize,
+                                                              displacements,
+                                                              byteDataType);
+    return (new FileView(0, viewType));
 }
 
 /*

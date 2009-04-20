@@ -674,6 +674,11 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
             readDelay_.record(delay);
             break;
         }
+        case SPFS_READ_PAGES_RESPONSE:
+        {
+            //readPagesDelay_.record(delay);
+            break;
+        }
         case SPFS_REMOVE_DIR_ENT_RESPONSE:
         {
             removeDirEntDelay_.record(delay);

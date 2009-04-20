@@ -173,24 +173,13 @@ FileDescriptor* PagedCache::getPageViewDescriptor(
 {
     assert(!pageIds.empty());
 
-    // Create the vector of displacements
-    set<FilePageId>::const_iterator idIter = pageIds.begin();
-    vector<size_t> displacements(pageIds.size());
-    for (size_t i = 0; i < displacements.size(); i++)
-    {
-        displacements[i] = (*idIter) * pageSize_;
-        ++idIter;
-    }
-
-    // Create the block indexed data type to use as the view
-    BlockIndexedDataType* pageView = new BlockIndexedDataType(pageSize_,
-                                                              displacements,
-                                                              byteDataType_);
-    FileView cacheView(0, pageView);
+    FilePageUtils& pageUtils = FilePageUtils::instance();
+    FileView* cacheView = pageUtils.createPageViewDescriptor(pageSize_, pageIds);
 
     // Create a descriptor with which to apply the view
     FileDescriptor* fd = FileBuilder::instance().getDescriptor(filename);
-    fd->setFileView(cacheView);
+    fd->setFileView(*cacheView);
+    delete cacheView;
     return fd;
 }
 

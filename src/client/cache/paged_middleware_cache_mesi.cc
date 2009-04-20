@@ -154,7 +154,9 @@ void PagedMiddlewareCacheMesi::handleApplicationMessage(cMessage* msg)
 void PagedMiddlewareCacheMesi::handleFileSystemMessage(cMessage* msg)
 {
     if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind() ||
-        SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->kind())
+        SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->kind() ||
+        SPFS_CACHE_READ_EXCLUSIVE_RESPONSE == msg->kind() ||
+        SPFS_CACHE_READ_SHARED_RESPONSE == msg->kind())
     {
         cMessage* cacheRequest = static_cast<cMessage*>(msg->contextPointer());
         cMessage* appRequest = static_cast<cMessage*>(cacheRequest->contextPointer());
@@ -163,11 +165,7 @@ void PagedMiddlewareCacheMesi::handleFileSystemMessage(cMessage* msg)
         // Don't delete bypass writes
         if (appRequest != cacheRequest)
         {
-            spfsMPIFileRequest* fileRequest =
-                dynamic_cast<spfsMPIFileRequest*>(cacheRequest);
-            assert(0 != fileRequest);
-            delete fileRequest->getFileDes();
-            delete fileRequest;
+            cleanupRequest(cacheRequest);
             delete msg;
         }
     }
@@ -175,6 +173,10 @@ void PagedMiddlewareCacheMesi::handleFileSystemMessage(cMessage* msg)
     {
         assert(SPFS_MPI_FILE_READ_RESPONSE != msg->kind());
         assert(SPFS_MPI_FILE_WRITE_RESPONSE != msg->kind());
+        assert(SPFS_CACHE_READ_EXCLUSIVE_RESPONSE != msg->kind());
+        assert(SPFS_CACHE_READ_SHARED_RESPONSE != msg->kind());
+        assert(SPFS_CACHE_INVALIDATE_RESPONSE != msg->kind());
+        assert(SPFS_CACHE_SEND_PAGES != msg->kind());
 
         // Forward messages not handled by the cache
         send(msg, appOutGateId());
@@ -227,6 +229,23 @@ void PagedMiddlewareCacheMesi::processRequest(cMessage* request, cMessage* msg)
 
     // Complete any requests satisfied by this message
     completeRequests();
+}
+
+void PagedMiddlewareCacheMesi::cleanupRequest(cMessage* msg)
+{
+    assert(0 != msg);
+    if (spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(msg))
+    {
+        delete fileRequest->getFileDes();
+        delete fileRequest;
+    }
+    else
+    {
+        spfsCacheRequest* cacheRequest = dynamic_cast<spfsCacheRequest*>(msg);
+        assert(0 != cacheRequest);
+        delete cacheRequest->getDescriptor();
+        delete cacheRequest;
+    }
 }
 
 void PagedMiddlewareCacheMesi::processFileOpen(spfsMPIFileOpenRequest* open,
@@ -368,6 +387,7 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
             // Determine the cache pages requested
             set<PagedCache::Key> requestPages;
             getRequestCachePages(write, requestPages);
+            cerr << "Total request pages: " << requestPages.size() << endl;
 
             if (requestPages.size() > lruCache_->capacity())
             {
@@ -379,11 +399,14 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
                 // exclusive requests to satisfy, which is fine for Flash-IO
                 // Get exclusive access on the necessary pages
                 trimExclusiveCachePages(requestPages);
+                cerr << __LINE__ << " pages: " << requestPages.size() << endl;
                 readExclusivePages = trimPendingReadPages(requestPages);
+                cerr << __LINE__ << " pages: " << readExclusivePages.size() << endl;
 
                 // Register the request for completion
                 set<PagedCache::Key> noPages;
                 registerPendingPages(write, readExclusivePages, noPages);
+                cerr << "Add pending pages: " << readExclusivePages.size() << endl;
 
                 if (readExclusivePages.empty())
                 {
@@ -489,16 +512,17 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
         }
         case FSM_Enter(UPDATE_CACHE_AND_WRITEBACK):
         {
-            assert(0 != dynamic_cast<spfsMPIFileReadAtResponse*>(msg));
+            assert(0 != dynamic_cast<spfsCacheReadExclusiveResponse*>(msg));
 
             // First insert the just read pages into the cache
-            set<PagedCache::Key> writebackPages;
-            spfsMPIFileReadAtRequest* read =
-                static_cast<spfsMPIFileReadAtRequest*>(msg->contextPointer());
+            spfsCacheReadExclusiveResponse* response = dynamic_cast<spfsCacheReadExclusiveResponse*>(msg);
+            assert(0 != response);
             set<PagedCache::Key> readPages;
-            getRequestCachePages(read, readPages);
+            getResponsePages(response, readPages);
+            set<PagedCache::Key> writebackPages;
             updateCacheWithReadPages(readPages, writebackPages);
             resolvePendingReadPages(readPages);
+            cerr << "Resolving pages: " << readPages.size() << endl;
 
             // TODO: If the writebuffer is not infinite, the request will need
             // to pause while writebacks occur
@@ -546,46 +570,18 @@ void PagedMiddlewareCacheMesi::getRequestCachePages(
                                                           requestPages);
 }
 
-void PagedMiddlewareCacheMesi::getRequestCachePages(
-    const spfsMPIFileWriteAtRequest* ioRequest,
-    vector<PagedCache::Key>& outFullPages,
-    vector<PagedCache::Key>& outPartialPages) const
+void PagedMiddlewareCacheMesi::getResponsePages(
+    spfsCacheReadResponse* response,
+    set<PagedCache::Key>& readPages) const
 {
-    // Convert regions into file pages
-    FileDescriptor* fd = ioRequest->getFileDes();
-    FSSize ioSize = ioRequest->getDataType()->getExtent() * ioRequest->getCount();
-
-    // Construct the pages for full regions
-    set<FilePageId> fullPages =
-        determineRequestFullPages(ioRequest->getOffset(),
-                                  ioSize,
-                                  fd->getFileView());
-    set<FilePageId>::const_iterator first = fullPages.begin();
-    set<FilePageId>::const_iterator last = fullPages.end();
-    while (first != last)
+    assert(0 != response);
+    size_t numPages = response->getPageIdsArraySize();
+    Filename filename(response->getFilename());
+    for (size_t i = 0; i < numPages; i++)
     {
-        PagedCache::Key page(fd->getFilename(), *first);
-        outFullPages.push_back(page);
-        first++;
-    }
-
-    // Construct the pages for partial regions
-    set<FilePageId> partialPages =
-        determineRequestPartialPages(ioRequest->getOffset(),
-                                     ioSize,
-                                     fd->getFileView());
-    first = partialPages.begin();
-    last = partialPages.end();
-    while (first != last)
-    {
-/*        MultiCache::PartialPage page;
-        page.id = *first;
-        page.regions = determinePartialPageRegions(page.id,
-                                                   ioRequest->getOffset(),
-                                                   ioSize,
-                                                   fd->getFileView());
-        outPartialPages.push_back(page);
-*/        first++;
+        FilePageId pageId = response->getPageIds(i);
+        PagedCache::Key key(filename, pageId);
+        readPages.insert(key);
     }
 }
 

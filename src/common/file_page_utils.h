@@ -94,6 +94,10 @@ public:
     std::set<FilePageId> regionsToPageIds(const FSSize& pageSize,
                                           const std::vector<FileRegion>& fileRegions) const;
 
+    /** @return a pointer to afile view of only the requested pages */
+    FileView* createPageViewDescriptor(const FSSize& pageSize,
+                                       const std::set<FilePageId>& pageIds) const;
+
 private:
     /** Private constructor */
     FilePageUtils();
