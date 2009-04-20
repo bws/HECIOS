@@ -152,6 +152,9 @@ private:
 /** @return true if the lhs key is ordered before the rhs key */
 bool operator<(const PagedCache::Key& lhs, const PagedCache::Key& rhs);
 
+/** Print set of paged cache keys */
+std::ostream& operator<<(std::ostream& ost, const std::set<PagedCache::Key>& keys);
+
 #endif /* PAGED_CACHE_H_ */
 
 /*

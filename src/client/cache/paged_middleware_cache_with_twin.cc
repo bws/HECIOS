@@ -393,6 +393,9 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
                 getRequestPartialCachePages(write, allPartialPages);
                 cachedPages = lookupPagesInCache(allPartialPages);
                 partialPagesTrimmed = allPartialPages;
+
+                // Better would be to nto re-retrieve partial pages
+                // already in transit, but that is hard
                 //partialPagesTrimmed = trimPendingReadPages(allPartialPages);
 
                 // Register the request for completion
@@ -511,7 +514,7 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
                 updateCacheWithReadPages(readPages, writebackPages);
                 resolvePendingReadPages(readPages);
 
-                // Perform the partial page updates
+                // Perform the partial page updates here
                 updateCacheWithReadPageUpdates(write, readPages, writebackPages);
                 partialPages.clear();
             }
@@ -815,12 +818,12 @@ void PagedMiddlewareCacheWithTwin::updateCacheWithReadPageUpdates(
     while (iter != end)
     {
         // Locate the correct partial page
-        bool notFound = true;
-        for (size_t i = 0; i < partialPages.size() && notFound; i++)
+        bool isFound = false;
+        for (size_t i = 0; i < partialPages.size() && !isFound; i++)
         {
             if (partialPages[i].id == iter->key)
             {
-                notFound = false;
+                isFound = true;
 
                 // Now perform the cache update
                 try {
@@ -828,10 +831,10 @@ void PagedMiddlewareCacheWithTwin::updateCacheWithReadPageUpdates(
                     MultiCache::Key evictedKey(Filename("/"), 0);
                     MultiCache::Page* evictedPage = 0;
                     bool isEvictedDirty = false;
-                     lruCache_->insertDirtyPartialPageAndRecall(key, partialPages[i],
-                                                                evictedKey,
-                                                                evictedPage,
-                                                                isEvictedDirty);
+                    lruCache_->insertDirtyPartialPageAndRecall(key, partialPages[i],
+                                                               evictedKey,
+                                                               evictedPage,
+                                                               isEvictedDirty);
 
                      // Add the writeback entry
                      if (isEvictedDirty)
@@ -845,7 +848,15 @@ void PagedMiddlewareCacheWithTwin::updateCacheWithReadPageUpdates(
                  }
             }
         }
-        assert(false == notFound);
+
+        // If we retrieved the page, there had better be a partial update
+        // for it
+        if (false == isFound)
+        {
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "Unable to find any partial page updates for page: " << iter->key << endl;
+        }
+        assert(true == isFound);
         iter++;
     }
 }

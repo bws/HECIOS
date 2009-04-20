@@ -195,6 +195,21 @@ bool operator<(const PagedCache::Key& lhs, const PagedCache::Key& rhs)
     }
 }
 
+/** Print out a set of page cache keys */
+std::ostream& operator<<(std::ostream& ost, const std::set<PagedCache::Key>& keys)
+{
+    std::set<PagedCache::Key>::const_iterator first = keys.begin();
+    std::set<PagedCache::Key>::const_iterator last = keys.end();
+    ost << "{";
+    while (first != last)
+    {
+        ost << " [" << first->filename << "," << first->key << "]";
+        ++first;
+    }
+    ost << "}";
+    return ost;
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

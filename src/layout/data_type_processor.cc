@@ -213,11 +213,11 @@ void DataTypeProcessor::distributeContiguousRegion(
         }
         else if (FSSize(physOffset) < bstreamSize)
         {
-            // Choose the min of final byte of request or stream
-            FSOffset finalByte = min(physOffset + extent, bstreamSize);
+            // Choose the min of request extent or stream extent
+            FSOffset finalSize = min(physOffset + extent, bstreamSize);
 
             // Add region to layout
-            outLayout.addRegion(physOffset, physOffset + finalByte);
+            outLayout.addRegion(physOffset, physOffset + finalSize);
         }
 
         // Determine the next mapped offset for this server
