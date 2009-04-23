@@ -177,7 +177,8 @@ void ReadPages::parititionRequestPages(set<FilePageId>& outClientPages,
                                                      *readReq_->getView(),
                                                      *readReq_->getDist());
 
-    cerr << "Found server pages: " << outServerPages.size() << endl;
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Found server pages: " << outServerPages.size() << endl;
 }
 
 vector<spfsInvalidatePagesRequest*>
@@ -259,6 +260,7 @@ void ReadPages::startDataFlow(const set<FilePageId>& localPages)
     dataFlowStart->setDataSize(localPages.size() * pageSize);
     dataFlowStart->setView(pageView);
     dataFlowStart->setDist(readReq_->getDist());
+    dataFlowStart->setBstreamSize(readReq_->getBstreamSize());
 
     module_->send(dataFlowStart);
 }

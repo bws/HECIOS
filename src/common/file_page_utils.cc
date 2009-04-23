@@ -226,7 +226,7 @@ set<FilePage> FilePageUtils::regionsToPages(const FSSize& pageSize,
 }
 
 FileView* FilePageUtils::createPageViewDescriptor(const FSSize& pageSize,
-                                                 const set<FilePageId>& pageIds) const
+                                                  const set<FilePageId>& pageIds) const
 {
     assert(!pageIds.empty());
 

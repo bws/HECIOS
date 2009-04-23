@@ -22,13 +22,15 @@
 using namespace std;
 
 FSOperationState::FSOperationState()
-    : numCompletedStateMachines_(0)
+    : numCompletedStateMachines_(0),
+      numRemainingResponses_(0)
 {
 }
 
 FSOperationState::FSOperationState(const FSOperationState& other)
     :  numCompletedStateMachines_(other.numCompletedStateMachines_),
-       currentState_(other.currentState_)
+       currentState_(other.currentState_),
+       numRemainingResponses_(0)
 {
 }
 
@@ -63,7 +65,7 @@ cFSM* FSOperationState::currentState()
 void FSOperationState::finishCurrentStateMachine()
 {
     numCompletedStateMachines_++;
-    
+
     // Note: The following code makes assumptions about how cFSM is
     // implemented.  A new version of the OMNeT library may break this code
     currentState_.setState(0, 0);

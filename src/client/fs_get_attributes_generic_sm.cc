@@ -18,7 +18,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //#define FSM_DEBUG  // Enable FSM Debug output
-#include "fs_get_attributes_sm.h"
+#include "fs_get_attributes_generic_sm.h"
 #include <omnetpp.h>
 #include "file_builder.h"
 #include "fs_client.h"
@@ -26,20 +26,24 @@
 #include "pvfs_proto_m.h"
 using namespace std;
 
-FSGetAttributesSM::FSGetAttributesSM(const Filename& filename,
-                                     bool calculateSize,
-                                     spfsMPIRequest* mpiRequest,
-                                     FSClient* client)
+template<class AppRequestType>
+FSGetAttributesGenericSM<AppRequestType>::FSGetAttributesGenericSM(
+    const Filename& filename,
+    bool calculateSize,
+    AppRequestType* appRequest,
+    FSClient* client)
     : handle_(FileBuilder::instance().getMetaData(filename)->handle),
       calculateSize_(calculateSize),
-      mpiReq_(mpiRequest),
+      appReq_(appRequest),
       client_(client)
 {
     assert(0 != client_);
-    assert(0 != mpiReq_);
+    assert(0 != appReq_);
 }
 
-bool FSGetAttributesSM::updateState(cFSM& currentState, cMessage* msg)
+template<class AppRequestType>
+bool FSGetAttributesGenericSM<AppRequestType>::updateState(cFSM& currentState,
+                                                    cMessage* msg)
 {
     // File system get attributes state machine states
     enum {
@@ -101,8 +105,8 @@ bool FSGetAttributesSM::updateState(cFSM& currentState, cMessage* msg)
             else
                 FSM_Goto(currentState, COUNT_RESPONSES);
             break;
-        }        
-         case FSM_Enter(FINISH):
+        }
+        case FSM_Enter(FINISH):
         {
             cacheAttributes();
             isComplete = true;
@@ -112,7 +116,8 @@ bool FSGetAttributesSM::updateState(cFSM& currentState, cMessage* msg)
     return isComplete;
 }
 
-bool FSGetAttributesSM::isAttrCached()
+template<class AppRequestType>
+bool FSGetAttributesGenericSM<AppRequestType>::isAttrCached()
 {
     FSMetaData* lookup = client_->fsState().lookupAttr(handle_);
     if (0 != lookup)
@@ -122,16 +127,18 @@ bool FSGetAttributesSM::isAttrCached()
     return false;
 }
 
-void FSGetAttributesSM::getMetadata()
+template<class AppRequestType>
+void FSGetAttributesGenericSM<AppRequestType>::getMetadata()
 {
     // Construct the request
     spfsGetAttrRequest *req =
         FSClient::createGetAttrRequest(handle_, SPFS_METADATA_OBJECT);
-    req->setContextPointer(mpiReq_);
+    req->setContextPointer(appReq_);
     client_->send(req, client_->getNetOutGate());
 }
 
-void FSGetAttributesSM::getDataAttributes()
+template<class AppRequestType>
+void FSGetAttributesGenericSM<AppRequestType>::getDataAttributes()
 {
     const FSMetaData* meta = FileBuilder::instance().getMetaData(handle_);
 
@@ -139,19 +146,20 @@ void FSGetAttributesSM::getDataAttributes()
     {
         spfsGetAttrRequest* req = FSClient::createGetAttrRequest(
             meta->dataHandles[i], SPFS_DATA_OBJECT);
-        req->setContextPointer(mpiReq_);
+        req->setContextPointer(appReq_);
         client_->send(req, client_->getNetOutGate());
     }
 
-    mpiReq_->setRemainingResponses(meta->dataHandles.size());
+    appReq_->setRemainingResponses(meta->dataHandles.size());
 }
 
-bool FSGetAttributesSM::countResponse()
+template<class AppRequestType>
+bool FSGetAttributesGenericSM<AppRequestType>::countResponse()
 {
     bool isComplete = false;
 
-    int numOutstanding = mpiReq_->getRemainingResponses() - 1;
-    mpiReq_->setRemainingResponses(numOutstanding);
+    int numOutstanding = appReq_->getRemainingResponses() - 1;
+    appReq_->setRemainingResponses(numOutstanding);
     if (0 == numOutstanding)
     {
         isComplete = true;
@@ -159,7 +167,8 @@ bool FSGetAttributesSM::countResponse()
     return isComplete;
 }
 
-void FSGetAttributesSM::cacheAttributes()
+template<class AppRequestType>
+void FSGetAttributesGenericSM<AppRequestType>::cacheAttributes()
 {
     const FSMetaData* attr = FileBuilder::instance().getMetaData(handle_);
     client_->fsState().insertAttr(handle_, *attr);

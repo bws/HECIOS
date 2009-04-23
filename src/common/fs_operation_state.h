@@ -48,16 +48,19 @@ public:
 
     /** Finish the current state machine */
     void finishCurrentStateMachine();
-    
+
 private:
     /** Swap the contents of this and other */
     void swap(FSOperationState& other);
-    
+
     /** The number of state machines completed*/
     int numCompletedStateMachines_;
 
     /** The most recent state */
     cFSM currentState_;
+
+    /** The number of responses remaining */
+    std::size_t numRemainingResponses_;
 };
 
 #endif

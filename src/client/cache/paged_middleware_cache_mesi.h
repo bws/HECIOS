@@ -3,7 +3,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2008 bradles
+// Copyright (C) 2009 Bradley W. Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -156,7 +156,8 @@ private:
     std::set<PagedCache::Key> lookupPagesInCache(std::set<PagedCache::Key>& requestPages);
 
     /** Remove request pages marked exclusive/modified in the cache */
-    void trimExclusiveCachePages(std::set<PagedCache::Key>& requestPages);
+    void trimExclusiveCachePages(std::set<PagedCache::Key>& requestPages,
+                                 std::set<PagedCache::Key>& outExclusivePages);
 
     /** Tally in the additional read pages */
     void countPageArrivals(spfsCacheReadRequest* read, cMessage* response);
@@ -166,6 +167,9 @@ private:
      */
     void flushCache(const Filename& flushFile);
 
+    /** Mark exclusive pages modified */
+    void updateCacheExclusivePages(const std::set<PagedCache::Key>& exclusivePages);
+
     /**
      * Update the cache with full pages that have been read.
      */
@@ -173,11 +177,10 @@ private:
                                   std::set<PagedCache::Key>& outWriteBacks);
 
     /**
-     * Update the cache with pages that have been read.
+     * Update the cache with full pages that have been written.
      */
-    void updateCacheWithWritePages(const Filename& filename,
-                                   const std::set<FilePageId>& writePages,
-                                   std::set<PagedCache::Key>& outWriteBacks);
+    void updateCacheWithWritePages(std::set<PagedCache::Key>& requestPages,
+                                  std::set<PagedCache::Key>& outWriteBacks);
 
     /** Begin writing back the set of cache keys */
     void beginWritebacks(const std::set<PagedCache::Key>& writeBacks,
@@ -203,10 +206,6 @@ private:
 
     /** Mark pages as read for requests */
     void resolvePendingReadPages(const std::set<PagedCache::Key>& readPages);
-
-    /** Mark pages as read for requests */
-    void resolvePendingReadPages(const Filename& filename,
-                                 const std::set<FilePageId>& readPages);
 
     /** Mark page as written for requests */
     void resolvePendingWritePage(const PagedCache::Key& writePage);

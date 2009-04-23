@@ -19,11 +19,13 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+#include <set>
 #include "fs_operation.h"
 class cFSM;
 class cMessage;
 class FSClient;
 class spfsCacheReadRequest;
+class spfsCacheReadResponse;
 class spfsCacheReadExclusiveRequest;
 class spfsCacheReadSharedRequest;
 
@@ -48,6 +50,9 @@ protected:
     virtual void sendFinalResponse();
 
 private:
+
+    /** Set the server page ids field in the cache read response */
+    void setServerPageIds(spfsCacheReadResponse* readResponse);
 
     /** The file system client module */
     FSClient* client_;

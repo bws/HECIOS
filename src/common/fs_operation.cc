@@ -57,9 +57,9 @@ void FSOperation::processMessage(cMessage* operationMessage)
     if (!registrationIsComplete_)
     {
         registerStateMachines();
-        registrationIsComplete_ = true;;
+        registrationIsComplete_ = true;
     }
-    
+
     // If there are remaining state machines, execute those
     // Else, send the final response
     if (!isComplete())

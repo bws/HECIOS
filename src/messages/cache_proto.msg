@@ -95,6 +95,7 @@ message spfsCacheReadRequest extends spfsCacheRequest
 		MPIDataType dataType;
 		FSSize pageSize;
 		int numPages;
+		unsigned int requestPageIds[];
 		
 		// Data for internal use
 		int remainingResponses;

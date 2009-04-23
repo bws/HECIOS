@@ -48,10 +48,13 @@ include @INSTALL_DIR@/ini/palmetto_myri10g.ini
 ###############################################################################
 **.mpi.IOApplicationType = "PHTFIOApplication"
 **.mpi.app.disableCPUPhase = true
+**.mpi.app.isVerbose = false
 **.mpi.app.traceFile = ""
 #**.mpi.app.traceFile = "/data/traces/phtf/mpi-io-test_64p"
 #**.mpi.app.traceFile = "/data/traces/phtf/mpi-io-test_128p"
 #**.mpi.app.traceFile = "/data/traces/phtf/mpi-io-test_256p"
+#**.mpi.app.traceFile = "/data/traces/phtf/flash-io_8p"
+#**.mpi.app.traceFile = "/data/traces/phtf/flash-io_256p"
 #**.mpi.app.traceFile = "/data/traces/phtf/flash-io_512p"
 
 ###############################################################################

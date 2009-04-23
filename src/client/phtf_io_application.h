@@ -3,7 +3,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007 Bradley W. Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -232,6 +232,9 @@ private:
 
     /** Flag to indicate if CPU pauses should be ignored */
     bool disableCPUPause_;
+
+    /** Flag to indicate if trace entries are output */
+    bool printTrace_;
 };
 
 #endif

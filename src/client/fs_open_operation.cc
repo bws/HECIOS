@@ -25,7 +25,7 @@
 #include "fs_client.h"
 #include "fs_collective_create_sm.h"
 #include "fs_create_sm.h"
-#include "fs_get_attributes_sm.h"
+#include "fs_get_attributes_generic_sm.h"
 #include "fs_lookup_name_sm.h"
 #include "mpi_proto_m.h"
 using namespace std;

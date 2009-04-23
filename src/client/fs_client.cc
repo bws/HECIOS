@@ -486,6 +486,8 @@ void FSClient::scheduleRequest(cMessage* request)
 
 void FSClient::processMessage(cMessage* request, cMessage* msg)
 {
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Processing: " << request->kind() << endl;
     switch(request->kind())
     {
         case SPFS_MPI_DIRECTORY_CREATE_REQUEST:
@@ -611,6 +613,8 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
             break;
         }
     }
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Processing complete: " << request->kind() << endl;
 }
 
 void FSClient::collectServerResponseData(cMessage* serverResponse)

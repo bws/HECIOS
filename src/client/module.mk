@@ -15,7 +15,6 @@ SIM_SRC += $(DIR)/client_fs_state.cc \
 	$(DIR)/fs_collective_get_attributes_sm.cc \
 	$(DIR)/fs_collective_remove_sm.cc \
 	$(DIR)/fs_lookup_name_sm.cc \
-	$(DIR)/fs_get_attributes_sm.cc \
 	$(DIR)/fs_read_directory_sm.cc \
 	$(DIR)/fs_read_sm.cc \
 	$(DIR)/fs_remove_sm.cc \

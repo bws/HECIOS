@@ -35,18 +35,18 @@ FSSize DataTypeProcessor::createClientFileLayoutForRead(
     const FSSize& bstreamSize,
     FSSize& outAggregateSize)
 {
-    FSSize bytesProcessed = processClientRequest(offset,
-                                                 dataType,
-                                                 count,
-                                                 view,
-                                                 dist,
-                                                 bstreamSize,
-                                                 false,
-                                                 outAggregateSize);
-    assert(0 <= bytesProcessed);
+    FSSize assignedBytes = processClientRequest(offset,
+                                                dataType,
+                                                count,
+                                                view,
+                                                dist,
+                                                bstreamSize,
+                                                false,
+                                                outAggregateSize);
+    assert(0 <= assignedBytes);
     assert(0 <= outAggregateSize);
     //assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
-    return bytesProcessed;
+    return assignedBytes;
 }
 
 FSSize DataTypeProcessor::createClientFileLayoutForWrite(
@@ -57,18 +57,18 @@ FSSize DataTypeProcessor::createClientFileLayoutForWrite(
     const FileDistribution& dist,
     FSSize& outAggregateSize)
 {
-    FSSize bytesProcessed = processClientRequest(offset,
-                                                 dataType,
-                                                 count,
-                                                 view,
-                                                 dist,
-                                                 0,
-                                                 true,
-                                                 outAggregateSize);
-    assert(0 <= bytesProcessed);
+    FSSize assignedBytes = processClientRequest(offset,
+                                                dataType,
+                                                count,
+                                                view,
+                                                dist,
+                                                0,
+                                                true,
+                                                outAggregateSize);
+    assert(0 <= assignedBytes);
     assert(0 <= outAggregateSize);
     //assert(bytesProcessed <= maxBytesToProcess || 0 == maxBytesToProcess);
-    return bytesProcessed;
+    return assignedBytes;
 }
 
 FSSize DataTypeProcessor::createServerFileLayoutForRead(
@@ -214,10 +214,10 @@ void DataTypeProcessor::distributeContiguousRegion(
         else if (FSSize(physOffset) < bstreamSize)
         {
             // Choose the min of request extent or stream extent
-            FSOffset finalSize = min(physOffset + extent, bstreamSize);
+            FSOffset finalSize = min(physOffset + requestedExtent, bstreamSize);
 
             // Add region to layout
-            outLayout.addRegion(physOffset, physOffset + finalSize);
+            outLayout.addRegion(physOffset, finalSize - physOffset);
         }
 
         // Determine the next mapped offset for this server

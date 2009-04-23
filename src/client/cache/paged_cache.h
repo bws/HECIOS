@@ -133,6 +133,9 @@ protected:
         const std::set<FilePageId>& pageIds,
         spfsMPIFileRequest* origRequest) const;
 
+    /** Add the delay associated with copying the memory in and out of the cache */
+    void addCacheMemoryDelay(spfsMPIFileRequest* origRequest, double delay) const;
+
 private:
     /** @return a file descriptor for filename with the page view applied */
     FileDescriptor* getPageViewDescriptor(

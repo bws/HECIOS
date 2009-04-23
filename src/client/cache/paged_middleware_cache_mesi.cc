@@ -1,7 +1,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2008 bradles
+// Copyright (C) 2009 Bradley W. Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -231,17 +231,17 @@ void PagedMiddlewareCacheMesi::processRequest(cMessage* request, cMessage* msg)
     completeRequests();
 }
 
-void PagedMiddlewareCacheMesi::cleanupRequest(cMessage* msg)
+void PagedMiddlewareCacheMesi::cleanupRequest(cMessage* request)
 {
-    assert(0 != msg);
-    if (spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(msg))
+    assert(0 != request);
+    if (spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(request))
     {
         delete fileRequest->getFileDes();
         delete fileRequest;
     }
     else
     {
-        spfsCacheRequest* cacheRequest = dynamic_cast<spfsCacheRequest*>(msg);
+        spfsCacheRequest* cacheRequest = dynamic_cast<spfsCacheRequest*>(request);
         assert(0 != cacheRequest);
         delete cacheRequest->getDescriptor();
         delete cacheRequest;
@@ -289,11 +289,13 @@ void PagedMiddlewareCacheMesi::processFileClose(spfsMPIFileCloseRequest* close, 
         // If this is the last close, flush the dirty cache data to disk
         if (0 == openCount)
         {
-            //cerr << "Last close: Evictions are on" << endl;
             set<PagedCache::Key> dirtyPages = lookupModifiedPagesInCache(closeName);
             flushCache(closeName);
             registerPendingWritePages(close, dirtyPages);
             beginWritebackEvictions(dirtyPages, close);
+
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "Final file close: Eviction count: " << dirtyPages.size() << endl;
         }
         else
         {
@@ -371,12 +373,12 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
         COMPLETE_CACHE_BYPASS_WRITE = FSM_Steady(2),
         UPDATE_CACHED_PAGES = FSM_Transient(3),
         BEGIN_UPGRADE_PAGE_READ = FSM_Steady(4),
-        COUNT_UPGRADE_ARRIVALS = FSM_Steady(5),
         UPDATE_CACHE_AND_WRITEBACK = FSM_Steady(6),
         COMPLETE_WRITE = FSM_Steady(7)
     };
 
     // Variables needed for multiple states
+    set<PagedCache::Key> cacheExclusivePages;
     set<PagedCache::Key> readExclusivePages;
 
     cFSM currentState = write->getCacheState();
@@ -387,7 +389,6 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
             // Determine the cache pages requested
             set<PagedCache::Key> requestPages;
             getRequestCachePages(write, requestPages);
-            cerr << "Total request pages: " << requestPages.size() << endl;
 
             if (requestPages.size() > lruCache_->capacity())
             {
@@ -398,32 +399,20 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
                 // TODO this technically allows both read shared and read
                 // exclusive requests to satisfy, which is fine for Flash-IO
                 // Get exclusive access on the necessary pages
-                trimExclusiveCachePages(requestPages);
-                cerr << __LINE__ << " pages: " << requestPages.size() << endl;
+                trimExclusiveCachePages(requestPages, cacheExclusivePages);
                 readExclusivePages = trimPendingReadPages(requestPages);
-                cerr << __LINE__ << " pages: " << readExclusivePages.size() << endl;
 
                 // Register the request for completion
                 set<PagedCache::Key> noPages;
                 registerPendingPages(write, readExclusivePages, noPages);
-                cerr << "Add pending pages: " << readExclusivePages.size() << endl;
-
-                if (readExclusivePages.empty())
-                {
-                    // Only need to update cached pages
-                    FSM_Goto(currentState, UPDATE_CACHED_PAGES);
-                }
-                else
-                {
-                    FSM_Goto(currentState, BEGIN_UPGRADE_PAGE_READ);
-                }
+                FSM_Goto(currentState, UPDATE_CACHED_PAGES);
             }
             break;
         }
         case FSM_Enter(BEGIN_CACHE_BYPASS_WRITE):
         {
             assert(write == msg);
-            cerr << "Bypass write" << endl;
+
             // Set the message context to itself so that messages processes
             msg->setContextPointer(msg);
             send(msg, fsOutGateId());
@@ -448,20 +437,18 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
         }
         case FSM_Enter(UPDATE_CACHED_PAGES):
         {
-            // Add the delay for reading the exclusive cache pages
-            // and writing the new data to memory
+            // Update the pages already in the cache
+            updateCacheExclusivePages(cacheExclusivePages);
+
+            // Figure out the memory copy delay for the read and write
             double readBytes = readExclusivePages.size() * pageSize();
             double writeBytes = write->getCount() * write->getDataType()->getExtent();
             double delay = (readBytes + writeBytes) * byteCopyTime();
-            cPar* delayPar = new cPar("Delay");
-            delayPar->setDoubleValue(delay);
-            write->addPar(delayPar);
-
+            addCacheMemoryDelay(write, delay);
             break;
         }
         case FSM_Exit(UPDATE_CACHED_PAGES):
         {
-            cerr << "Cache write" << endl;
             // Transition to next state
             if (readExclusivePages.empty())
             {
@@ -481,33 +468,7 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
         }
         case FSM_Exit(BEGIN_UPGRADE_PAGE_READ):
         {
-            // Transition to next state
-            if (readExclusivePages.empty())
-            {
-                FSM_Goto(currentState, UPDATE_CACHE_AND_WRITEBACK);
-            }
-            else
-            {
-                FSM_Goto(currentState, COUNT_UPGRADE_ARRIVALS);
-            }
-            break;
-        }
-        case FSM_Enter(COUNT_UPGRADE_ARRIVALS):
-        {
-            break;
-        }
-        case FSM_Exit(COUNT_UPGRADE_ARRIVALS):
-        {
-            //countPageArrivals();
-            spfsCacheReadExclusiveRequest* readRequest = 0;
-            if (0 == readRequest->getRemainingPages())
-            {
-                FSM_Goto(currentState, UPDATE_CACHE_AND_WRITEBACK);
-            }
-            else
-            {
-                FSM_Goto(currentState, COUNT_UPGRADE_ARRIVALS);
-            }
+            FSM_Goto(currentState, UPDATE_CACHE_AND_WRITEBACK);
             break;
         }
         case FSM_Enter(UPDATE_CACHE_AND_WRITEBACK):
@@ -520,9 +481,8 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
             set<PagedCache::Key> readPages;
             getResponsePages(response, readPages);
             set<PagedCache::Key> writebackPages;
-            updateCacheWithReadPages(readPages, writebackPages);
+            updateCacheWithWritePages(readPages, writebackPages);
             resolvePendingReadPages(readPages);
-            cerr << "Resolving pages: " << readPages.size() << endl;
 
             // TODO: If the writebuffer is not infinite, the request will need
             // to pause while writebacks occur
@@ -674,7 +634,8 @@ PagedMiddlewareCacheMesi::lookupPagesInCache(set<PagedCache::Key>& requestPages)
 }
 
 void PagedMiddlewareCacheMesi::trimExclusiveCachePages(
-    set<PagedCache::Key>& requestPages)
+    set<PagedCache::Key>& requestPages,
+    set<PagedCache::Key>& exclusivePages)
 {
     set<PagedCache::Key>::iterator iter = requestPages.begin();
     set<PagedCache::Key>::iterator end = requestPages.end();
@@ -688,6 +649,7 @@ void PagedMiddlewareCacheMesi::trimExclusiveCachePages(
             if (MesiCacheType::EXCLUSIVE == state ||
                 MesiCacheType::MODIFIED == state)
             {
+                exclusivePages.insert(*iter);
                 requestPages.erase(iter++);
             }
             else
@@ -698,6 +660,27 @@ void PagedMiddlewareCacheMesi::trimExclusiveCachePages(
         {
             // Lookup failed, increment to next entry
             iter++;
+        }
+    }
+}
+
+void PagedMiddlewareCacheMesi::updateCacheExclusivePages(
+    const set<PagedCache::Key>& exclusivePages)
+{
+    set<PagedCache::Key>::const_iterator iter = exclusivePages.begin();
+    set<PagedCache::Key>::const_iterator end = exclusivePages.end();
+    while (iter != end)
+    {
+        try
+        {
+            PagedCache::Key key(iter->filename, iter->key);
+            lruCache_->setState(key, MesiCacheType::MODIFIED);
+            ++iter;
+        } catch (NoSuchEntry& e)
+        {
+            assert(false);
+            cerr << __FILE__ << ":" << __LINE__ << ":"
+                 << "Exclusive page should exist before updating state!!!\n";
         }
     }
 }
@@ -732,39 +715,36 @@ void PagedMiddlewareCacheMesi::updateCacheWithReadPages(set<PagedCache::Key>& up
     }
 }
 
-
-void PagedMiddlewareCacheMesi::updateCacheWithWritePages(
-    const Filename& filename,
-    const set<FilePageId>& writePages,
-    set<PagedCache::Key>& outWritebacks)
+void PagedMiddlewareCacheMesi::updateCacheWithWritePages(set<PagedCache::Key>& updatePages,
+                                                         set<PagedCache::Key>& outWriteBacks)
 {
-    // Update the cache with the write pages and accumulate any writebacks
-    set<FilePageId>::const_iterator iter = writePages.begin();
-    set<FilePageId>::const_iterator last = writePages.end();
-    while (iter != last)
+    // Update the cache and accumulate any writebacks required
+    set<PagedCache::Key>::const_iterator iter;
+    for (iter = updatePages.begin(); iter != updatePages.end(); iter++)
     {
-        PagedCache::Key key(filename, *iter);
-        PagedCache::Key evictedKey(Filename("/"), 0);
-        FilePageId evictedPage = 0;
-        MesiCacheType::State evictedState = MesiCacheType::NULL_STATE;
         try {
-            lruCache_->insertAndRecall(key, *iter, MesiCacheType::MODIFIED,
+            // Create an entry for the clean page even if the dirty page
+            // already exists
+            PagedCache::Key evictedKey(Filename("/"), 0);
+            FilePageId evictedPage = 0;
+            MesiCacheType::State evictedState = MesiCacheType::NULL_STATE;
+            lruCache_->insertAndRecall(*iter, iter->key, MesiCacheType::MODIFIED,
                                        evictedKey,
                                        evictedPage,
                                        evictedState);
 
-            // Add the writeback entry
+            // Only add writeback if the eviction is dirty
             if (MesiCacheType::MODIFIED == evictedState)
             {
-                outWritebacks.insert(evictedKey);
+                outWriteBacks.insert(evictedKey);
             }
-        } catch(NoSuchEntry& e)
+        } catch (const NoSuchEntry& e)
         {
-            // No eviction occurred
+            // No eviction was necessary
         }
-        ++iter;
     }
 }
+
 
 void PagedMiddlewareCacheMesi::flushCache(const Filename& flushName)
 {
@@ -857,6 +837,7 @@ void PagedMiddlewareCacheMesi::resolvePendingReadPage(const PagedCache::Key& res
 
 void PagedMiddlewareCacheMesi::resolvePendingReadPages(const set<PagedCache::Key>& resolvedPages)
 {
+    assert(0 != pendingPages_);
     RequestMap::iterator iter;
     for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
     {
@@ -871,20 +852,9 @@ void PagedMiddlewareCacheMesi::resolvePendingReadPages(const set<PagedCache::Key
     }
 }
 
-void PagedMiddlewareCacheMesi::resolvePendingReadPages(const Filename& filename,
-                                                       const set<FilePageId>& readPages)
-{
-    set<PagedCache::Key> readKeys;
-    for (size_t i = 0; i < readPages.size(); i++)
-    {
-        //TODO PagedCache::Key key(filename, readPages[i].id);
-        //TODO readKeys.insert(key);
-    }
-    resolvePendingReadPages(readKeys);
-}
-
 void PagedMiddlewareCacheMesi::resolvePendingWritePage(const PagedCache::Key& resolvedPage)
 {
+    assert(0 != pendingPages_);
     RequestMap::iterator iter;
     for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
     {
@@ -894,6 +864,7 @@ void PagedMiddlewareCacheMesi::resolvePendingWritePage(const PagedCache::Key& re
 
 void PagedMiddlewareCacheMesi::resolvePendingWritePages(const set<PagedCache::Key>& resolvedPages)
 {
+    assert(0 != pendingPages_);
     RequestMap::iterator iter;
     for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
     {
@@ -910,6 +881,7 @@ void PagedMiddlewareCacheMesi::resolvePendingWritePages(const set<PagedCache::Ke
 
 vector<spfsMPIFileRequest*> PagedMiddlewareCacheMesi::popCompletedRequests()
 {
+    assert(0 != pendingPages_);
     vector<spfsMPIFileRequest*> completeRequests;
 
     // Iterate through the requests to find completed requests
@@ -947,6 +919,7 @@ vector<spfsMPIFileRequest*> PagedMiddlewareCacheMesi::popCompletedRequests()
 
 set<PagedCache::Key> PagedMiddlewareCacheMesi::trimPendingReadPages(const set<PagedCache::Key>& pageIds)
 {
+    assert(0 != pendingPages_);
     if (!pendingPages_->empty())
     {
         set<PagedCache::Key> result;
@@ -966,6 +939,7 @@ set<PagedCache::Key> PagedMiddlewareCacheMesi::trimPendingReadPages(const set<Pa
 
 set<PagedCache::Key> PagedMiddlewareCacheMesi::trimPendingWritePages(const set<PagedCache::Key>& pages)
 {
+    assert(0 != pendingPages_);
     if (!pendingPages_->empty())
     {
         set<PagedCache::Key> result;
@@ -985,6 +959,7 @@ set<PagedCache::Key> PagedMiddlewareCacheMesi::trimPendingWritePages(const set<P
 
 bool PagedMiddlewareCacheMesi::hasPendingPages(const Filename& filename) const
 {
+    assert(0 != pendingPages_);
     RequestMap::const_iterator requestIter;
     RequestMap::const_iterator requestMapEnd = pendingPages_->end();;
     for (requestIter = pendingPages_->begin(); requestIter != requestMapEnd; requestIter++)

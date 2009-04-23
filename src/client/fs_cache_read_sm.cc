@@ -162,6 +162,7 @@ void FSCacheReadSM::enterRead()
     read.setOffset(readRequest_->getOffset());
     read.setView(new FileView(fd->getFileView()));
     read.setIsExclusive(isExclusive_);
+    read.setPageSize(readRequest_->getPageSize());
 
     // Send request to each server
     int numRequests = 0;
@@ -200,6 +201,7 @@ void FSCacheReadSM::enterRead()
             spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
             req->setAutoCleanup(true);
             req->setHandle(metaData->dataHandles[i]);
+            req->setOffset(readRequest_->getOffset());
             req->setDataSize(aggregateSize);
             req->setBstreamSize(metaData->bstreamSizes[i]);
             req->setLocalSize(reqBytes);
@@ -243,50 +245,52 @@ void FSCacheReadSM::startFlow(spfsReadPagesResponse* readResponse)
 {
     size_t numPages = readResponse->getServerPageIdsArraySize();
     FSSize pageSize = readRequest_->getPageSize();
-    if (numPages > 0 && pageSize > 0)
-    {
-        // Extract the file descriptor
-        FileDescriptor* fd = readRequest_->getDescriptor();
-        assert(0 != fd);
+    assert(0 < numPages);
+    assert(0 < pageSize);
 
-        // Extract the server request
-        spfsReadPagesRequest* serverRequest =
-            static_cast<spfsReadPagesRequest*>(readResponse->contextPointer());
+    // Extract the file descriptor
+    FileDescriptor* fd = readRequest_->getDescriptor();
+    assert(0 != fd);
 
-        // Create the flow start message
-        spfsCacheDataFlowStart* flowStart = new spfsCacheDataFlowStart(0,
-                                                                       SPFS_DATA_FLOW_START);
-        flowStart->setContextPointer(readRequest_);
-        flowStart->setClientContextPointer(serverRequest);
-        flowStart->setBstreamSize(serverRequest->getBstreamSize());
+    // Extract the server request
+    spfsReadPagesRequest* serverRequest =
+        static_cast<spfsReadPagesRequest*>(readResponse->contextPointer());
 
-        // Set the handle as the connection id (TODO: This is hacky)
-        flowStart->setBmiConnectionId(serverRequest->getHandle());
-        flowStart->setInboundBmiTag(serverRequest->getClientFlowBmiTag());
-        flowStart->setOutboundBmiTag(serverRequest->getServerFlowBmiTag());
+    // Create the flow start message
+    spfsCacheDataFlowStart* flowStart = new spfsCacheDataFlowStart(0,
+                                                                   SPFS_DATA_FLOW_START);
+    flowStart->setContextPointer(readRequest_);
+    flowStart->setClientContextPointer(serverRequest);
+    flowStart->setBstreamSize(serverRequest->getBstreamSize());
 
-        // Flow configuration
-        flowStart->setFlowType(DataFlow::CACHE_FLOW_TYPE);
-        flowStart->setFlowMode(DataFlow::READ_MODE);
+    // Set the handle as the connection id (TODO: This is hacky)
+    flowStart->setBmiConnectionId(serverRequest->getHandle());
+    flowStart->setInboundBmiTag(serverRequest->getClientFlowBmiTag());
+    flowStart->setOutboundBmiTag(serverRequest->getServerFlowBmiTag());
 
-        // Data transfer configuration
-        flowStart->setHandle(serverRequest->getHandle());
-        flowStart->setNumPages(numPages);
-        flowStart->setPageSize(pageSize);
+    // Flow configuration
+    flowStart->setFlowType(DataFlow::CACHE_FLOW_TYPE);
+    flowStart->setFlowMode(DataFlow::READ_MODE);
 
-        // Send the start message
-        client_->send(flowStart, client_->getNetOutGate());
-    }
+    // Data transfer configuration
+    flowStart->setHandle(serverRequest->getHandle());
+    flowStart->setNumPages(numPages);
+    flowStart->setPageSize(pageSize);
+
+    // Send the start message
+    client_->send(flowStart, client_->getNetOutGate());
 }
 
 void FSCacheReadSM::countResponse(spfsReadPagesResponse* response)
 {
-    int numRemainingResponses = readRequest_->getRemainingResponses();
-    readRequest_->setRemainingResponses(--numRemainingResponses);
+    // Increment the number of responses
+    int numRemainingResponses = readRequest_->getRemainingResponses() - 1;
+    readRequest_->setRemainingResponses(numRemainingResponses);
 
     // Add the client pages to the initial request
     size_t origSize = readRequest_->getResponseCachePageIdsArraySize();
     size_t newSize = origSize + response->getClientPageIdsArraySize();
+    readRequest_->setResponseCachePageIdsArraySize(newSize);
     for (size_t i = origSize, j = 0; i < newSize; i++, j++)
     {
         readRequest_->setResponseCachePageIds(i, response->getClientPageIds(j));
@@ -295,6 +299,7 @@ void FSCacheReadSM::countResponse(spfsReadPagesResponse* response)
     // Add the server pages to the initial request
     origSize = readRequest_->getResponseServerPageIdsArraySize();
     newSize = origSize + response->getServerPageIdsArraySize();
+    readRequest_->setResponseServerPageIdsArraySize(newSize);
     for (size_t i = origSize, j = 0; i < newSize; i++, j++)
     {
         readRequest_->setResponseServerPageIds(i, response->getServerPageIds(j));

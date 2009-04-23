@@ -76,6 +76,7 @@ SinglePageAccessMixin::createCacheReadExclusiveRequests(
     const std::set<PagedCache::Key>& pages,
     spfsMPIFileRequest* parentRequest) const
 {
+    assert(0 != getPageSize());
     vector<spfsCacheReadExclusiveRequest*> requests;
     set<PagedCache::Key>::iterator iter = pages.begin();
     set<PagedCache::Key>::iterator end = pages.end();
@@ -97,6 +98,9 @@ SinglePageAccessMixin::createCacheReadExclusiveRequests(
 
         readPage->setOriginatingRank(cacheRank);
         readPage->setRemainingPages(1);
+        readPage->setRequestPageIdsArraySize(1);
+        readPage->setRequestPageIds(0, page);
+        readPage->setPageSize(getPageSize());
 
         readPage->setByteLength(getByteLength(fd->getFileView()) + 8);
 
@@ -113,6 +117,7 @@ SinglePageAccessMixin::createCacheReadSharedRequests(
     const std::set<PagedCache::Key>& pages,
     spfsMPIFileRequest* parentRequest) const
 {
+    assert(0 != getPageSize());
     vector<spfsCacheReadSharedRequest*> requests;
     set<PagedCache::Key>::iterator iter = pages.begin();
     set<PagedCache::Key>::iterator end = pages.end();
@@ -134,6 +139,9 @@ SinglePageAccessMixin::createCacheReadSharedRequests(
 
         readPage->setOriginatingRank(cacheRank);
         readPage->setRemainingPages(1);
+        readPage->setRequestPageIdsArraySize(1);
+        readPage->setRequestPageIds(0, page);
+        readPage->setPageSize(getPageSize());
 
         readPage->setByteLength(getByteLength(fd->getFileView()) + 8);
 
@@ -242,6 +250,7 @@ BlockIndexedPageAccessMixin::createCacheReadExclusiveRequests(
     const set<PagedCache::Key>& pages,
     spfsMPIFileRequest* parentRequest) const
 {
+    assert(0 != getPageSize());
     // Group the pages
     FilePageMap pagesByName;
     groupPagesByFilename(pages, pagesByName);
@@ -268,6 +277,17 @@ BlockIndexedPageAccessMixin::createCacheReadExclusiveRequests(
 
         readRequest->setOriginatingRank(cacheRank);
         readRequest->setRemainingPages(iter->second.size());
+        readRequest->setPageSize(getPageSize());
+
+        // Set the actual pages into the request
+        readRequest->setRequestPageIdsArraySize(iter->second.size());
+        set<FilePageId>::const_iterator pageIter = iter->second.begin();
+        set<FilePageId>::const_iterator pageLast = iter->second.end();
+        int i = 0;
+        while (pageIter != pageLast)
+        {
+            readRequest->setRequestPageIds(i++, *(pageIter++));
+        }
 
         // Set message size and add space for read type and rank
         readRequest->setByteLength(getByteLength(fd->getFileView()) + 8);
@@ -285,6 +305,7 @@ BlockIndexedPageAccessMixin::createCacheReadSharedRequests(
     const set<PagedCache::Key>& pages,
     spfsMPIFileRequest* parentRequest) const
 {
+    assert(0 != getPageSize());
     // Group the pages
     FilePageMap pagesByName;
     groupPagesByFilename(pages, pagesByName);
@@ -311,9 +332,20 @@ BlockIndexedPageAccessMixin::createCacheReadSharedRequests(
 
         readRequest->setOriginatingRank(cacheRank);
         readRequest->setRemainingPages(iter->second.size());
+        readRequest->setPageSize(getPageSize());
 
         // Set message size and add space for read type and rank
         readRequest->setByteLength(getByteLength(fd->getFileView()) + 8);
+
+        // Set the actual pages into the request
+        readRequest->setRequestPageIdsArraySize(iter->second.size());
+        set<FilePageId>::const_iterator pageIter = iter->second.begin();
+        set<FilePageId>::const_iterator pageLast = iter->second.end();
+        int i = 0;
+        while (pageIter != pageLast)
+        {
+            readRequest->setRequestPageIds(i++, *(pageIter++));
+        }
 
         // Add the request and increment iterator
         requests.push_back(readRequest);

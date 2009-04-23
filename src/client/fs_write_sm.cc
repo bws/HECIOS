@@ -159,7 +159,7 @@ void FSWriteSM::beginWrite()
             aggregateSize);
 
         // Send write request if server hosts data
-        if (0 != reqBytes && 0 != aggregateSize)
+        if (0 != reqBytes)
         {
             spfsWriteRequest* req = FSClient::createWriteRequest(
                 metaData->handle,

@@ -36,7 +36,7 @@ class DataTypeProcessor
 {
 public:
     /**
-     * @return the number of bytes processed
+     * @return the number of bytes assigned to the distribution
      * @side fills the outAggregateSize with the total I/O size
      */
     static FSSize createClientFileLayoutForRead(const FSOffset& offset,
@@ -48,7 +48,7 @@ public:
                                                 FSSize& outAggregateSize);
 
     /**
-     * @return the number of bytes processed
+     * @return the number of bytes assigned to the distribution
      * @side fills the outAggregateSize with the total I/O size
      */
     static FSSize createClientFileLayoutForWrite(const FSOffset& offset,
@@ -59,7 +59,7 @@ public:
                                                  FSSize& outAggregateSize);
 
     /**
-     * @return the number of bytes processed
+     * @return the number of bytes assigned to the distribution
      * @side Fills the layout object with physical offsets and extents for
      * this server's I/O
      */
@@ -71,7 +71,7 @@ public:
                                                 DataTypeLayout& outLayout);
 
     /**
-     * @return the number of bytes processed
+     * @return the number of bytes assigned to the distribution
      * @side Fills the layout object with physical offsets and extents for
      * this server's I/O
      */

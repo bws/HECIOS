@@ -1,5 +1,5 @@
-#ifndef FS_GET_ATTRIBUTES_SM_H
-#define FS_GET_ATTRIBUTES_SM_H
+#ifndef FS_GET_ATTRIBUTES_GENERIC_SM_H
+#define FS_GET_ATTRIBUTES_GENERIC_SM_H
 //
 // This file is part of Hecios
 //
@@ -25,24 +25,24 @@
 class cFSM;
 class cMessage;
 class FSClient;
-class spfsMPIRequest;
 
 /**
  * Class responsible for getting the attributes for a handle
  */
-class FSGetAttributesSM : public FSStateMachine
+template<class AppRequestType>
+class FSGetAttributesGenericSM : public FSStateMachine
 {
 public:
     /** Constructor for get attribute state machine */
-    FSGetAttributesSM(const Filename& filename,
-                      bool calculateSize,
-                      spfsMPIRequest* mpiRequest,
-                      FSClient* client);
-    
+    FSGetAttributesGenericSM(const Filename& filename,
+                             bool calculateSize,
+                             AppRequestType* appRequest,
+                             FSClient* client);
+
 protected:
     /** Message processing for client name lookup*/
     virtual bool updateState(cFSM& currentState, cMessage* msg);
-    
+
 private:
     /** @return true if the lookup name is cached */
     bool isAttrCached();
@@ -55,7 +55,7 @@ private:
 
     /** @return true when all the data attributes responses have been recvd */
     bool countResponse();
-    
+
     /** @return Cache the file's attributes */
     void cacheAttributes();
 
@@ -64,14 +64,20 @@ private:
 
     /** Flag to indicate whether the file size needs to be calculated */
     bool calculateSize_;
-    
-    /** The originating MPI request */
-    spfsMPIRequest* mpiReq_;
+
+    /** The originating application request */
+    AppRequestType* appReq_;
 
     /** The filesystem client module */
     FSClient* client_;
 };
 
+// Convenience typedef
+class spfsMPIRequest;
+typedef FSGetAttributesGenericSM<spfsMPIRequest> FSGetAttributesSM;
+
+// g++ does not support export yet, so just do this to hack around that
+#include "fs_get_attributes_generic_sm.cc"
 #endif
 
 /*

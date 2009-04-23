@@ -1,7 +1,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007 Bradley W. Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -57,8 +57,11 @@ void PHTFIOApplication::initialize()
     // Parent class initialization
     IOApplication::initialize();
 
-    // Retrieve the CPU pause flasg
+    // Retrieve the CPU pause flag
     disableCPUPause_ = par("disableCPUPhase").boolValue();
+
+    // Retrieve the trace printing flag
+    printTrace_ = par("isVerbose").boolValue();
 
     // Retrieve the resource describing the trace location
     traceDirectory_ = par("traceFile").stringValue();
@@ -162,7 +165,7 @@ void PHTFIOApplication::rankChanged(int oldRank)
 
 void PHTFIOApplication::populateFileSystem()
 {
-    cerr << "Populating file system . . . ";
+    cout << "Populating file system . . . " << flush;
     PHTFFs *fs = PHTFTrace::instance().getFs();
     int numFiles = fs->fileNum();
     FileSystemMap fsm;
@@ -171,7 +174,7 @@ void PHTFIOApplication::populateFileSystem()
         fsm[fs->fileName(i)] = fs->fileSize(i);
     }
     FileBuilder::instance().populateFileSystem(fsm);
-    cerr << "Done." << endl;
+    cout << "Done." << endl << flush;
 }
 
 void PHTFIOApplication::handleMessage(cMessage* msg)
@@ -255,8 +258,11 @@ bool PHTFIOApplication::scheduleNextMessage()
         PHTFEventRecord eventRecord;
         *phtfEvent_ >> eventRecord;
 
-        // TODO: Use this to look at the actual events
-        //cerr << "[" << getRank() << "] " << eventRecord.recordStr() << endl;
+        if (printTrace_)
+        {
+            cout << "[" << getRank() << "] " << eventRecord.recordStr() << endl;
+            cout.flush();
+        }
         rec_id_ = eventRecord.recordId();
         msgScheduled = processEvent(eventRecord);
     }

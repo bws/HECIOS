@@ -1,7 +1,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2008 bradles
+// Copyright (C) 2008 Bradley W. Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -410,18 +410,14 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
                     double readBytes = partialPagesTrimmed.size() * pageSize();
                     double writeBytes = write->getCount() * write->getDataType()->getExtent();
                     double delay = (readBytes + 2*writeBytes) * byteCopyTime();
-                    cPar* delayPar = new cPar("Delay");
-                    delayPar->setDoubleValue(delay);
-                    write->addPar(delayPar);
+                    addCacheMemoryDelay(write, delay);
                 }
                 else
                 {
                     // Figure out the memory copy delay for the write only
                     double writeBytes = write->getCount() * write->getDataType()->getExtent();
                     double delay = (2*writeBytes) * byteCopyTime();
-                    cPar* delayPar = new cPar("Delay");
-                    delayPar->setDoubleValue(delay);
-                    write->addPar(delayPar);
+                    addCacheMemoryDelay(write, delay);
 
                     if (!cachedPages.empty())
                     {

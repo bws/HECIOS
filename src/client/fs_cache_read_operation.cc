@@ -1,7 +1,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2008 bradles
+// Copyright (C) 2008 Bradley W. Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -18,9 +18,12 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "fs_cache_read_operation.h"
+#include <algorithm>
+#include <cstddef>
 #include <iostream>
+#include "file_page.h"
 #include "fs_client.h"
-#include "fs_get_attributes_sm.h"
+#include "fs_get_attributes_generic_sm.h"
 #include "fs_cache_read_sm.h"
 #include "cache_proto_m.h"
 using namespace std;
@@ -62,16 +65,15 @@ void FSCacheReadOperation::registerStateMachines()
 
     // Retrieve the file attributes
     Filename file = mpiRequest->getFileDes()->getFilename();
-    addStateMachine(new FSGetAttributesSM(file,
-                                          false,
-                                          mpiRequest,
-                                          client_));
+    addStateMachine(new FSGetAttributesGenericSM<spfsCacheReadRequest>(file,
+                                                                false,
+                                                                readRequest_,
+                                                                client_));
 
     // Perform the file read
     addStateMachine(new FSCacheReadSM(readRequest_,
                                       client_,
                                       isExclusive_));
-
 }
 
 void FSCacheReadOperation::sendFinalResponse()
@@ -93,17 +95,43 @@ void FSCacheReadOperation::sendFinalResponse()
     // Set the response's filename
     FileDescriptor* fd = readRequest_->getDescriptor();
     readResponse->setFilename(fd->getFilename().c_str());
-    client_->send(readResponse, client_->getAppOutGate());
 
-    // Set the page ids here
-    size_t numPages = readRequest_->getResponseServerPageIdsArraySize();
-    readResponse->setPageIdsArraySize(numPages);
+    // Set the page ids
+    setServerPageIds(readResponse);
+
+    client_->send(readResponse, client_->getAppOutGate());
+}
+
+void FSCacheReadOperation::setServerPageIds(spfsCacheReadResponse* readResponse)
+{
+    // Get the full requested set of page ids
+    set<FilePageId> requestedPages;
+    size_t numPages = readRequest_->getRequestPageIdsArraySize();
     for (size_t i = 0; i < numPages; i++)
     {
-        readResponse->setPageIds(i, readRequest_->getResponseServerPageIds(i));
+        requestedPages.insert(readRequest_->getRequestPageIds(i));
     }
 
-    cerr << __FILE__ << ":" << __LINE__ << ":" << "Cache flow read complete.\n";
+    // Get the set of page ids that other clients will return
+    set<FilePageId> clientCachePages;
+    numPages = readRequest_->getResponseCachePageIdsArraySize();
+    for (size_t i = 0; i < numPages; i++)
+    {
+        clientCachePages.insert(readRequest_->getResponseCachePageIds(i));
+    }
+
+    // Find the difference between the two sets
+    vector<FilePageId> serverPageIds;
+    set_difference(requestedPages.begin(), requestedPages.end(),
+                   clientCachePages.begin(), clientCachePages.end(),
+                   back_inserter(serverPageIds));
+
+    // Set the page ids here
+    readResponse->setPageIdsArraySize(serverPageIds.size());
+    for (size_t i = 0; i < serverPageIds.size(); i++)
+    {
+        readResponse->setPageIds(i, serverPageIds[i]);
+    }
 }
 
 /*

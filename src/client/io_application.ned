@@ -18,6 +18,7 @@ endsimple
 simple PHTFIOApplication
     parameters:
         disableCPUPhase: bool,
+        isVerbose: bool,
         traceFile: string,
         maxBeginTime: numeric;
     gates:

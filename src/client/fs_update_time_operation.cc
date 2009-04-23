@@ -1,7 +1,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2008 bradles
+// Copyright (C) 2008 Bradley W. Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@
 #include <omnetpp.h>
 #include "filename.h"
 #include "fs_client.h"
-#include "fs_get_attributes_sm.h"
+#include "fs_get_attributes_generic_sm.h"
 #include "fs_set_attributes_sm.h"
 #include "fs_lookup_name_sm.h"
 #include "mpi_proto_m.h"
