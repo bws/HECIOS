@@ -22,6 +22,7 @@
 #include <cassert>
 #include <functional>
 #include "cache_proto_m.h"
+#include "client_cache_directory.h"
 #include "comm_man.h"
 #include "file_builder.h"
 #include "mpi_proto_m.h"
@@ -196,6 +197,9 @@ void PagedMiddlewareCacheMesi::processRequest(cMessage* request, cMessage* msg)
         set<PagedCache::Key> writtenPages;
         getRequestCachePages(writeback, writtenPages);
         resolvePendingWritePages(writtenPages);
+
+        // Update the directory that these pages are no longer exclusive/modified
+        clearDirectoryEntries(writtenPages);
     }
     else if (SPFS_MPI_FILE_OPEN_REQUEST == request->kind())
     {
@@ -358,9 +362,8 @@ void PagedMiddlewareCacheMesi::processFileRead(spfsMPIFileReadAtRequest* read, c
 
         beginWritebackEvictions(writebackPages, 0);
 
-        // TODO: If the writebuffer is not infinite, the request will need
-        // to pause while writebacks occur
-        //addPendingWrites(read, writebackPages);
+        // Add the wriebacks to the list of pending pages for this request
+        registerPendingWritePages(read, writebackPages);
     }
 }
 
@@ -396,10 +399,10 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
             }
             else
             {
-                // TODO this technically allows both read shared and read
-                // exclusive requests to satisfy, which is fine for Flash-IO
                 // Get exclusive access on the necessary pages
                 trimExclusiveCachePages(requestPages, cacheExclusivePages);
+                // TODO this technically allows both read shared and read
+                // exclusive requests to satisfy, which is safe for Flash-IO
                 readExclusivePages = trimPendingReadPages(requestPages);
 
                 // Register the request for completion
@@ -484,9 +487,8 @@ void PagedMiddlewareCacheMesi::processFileWrite(spfsMPIFileWriteAtRequest* write
             updateCacheWithWritePages(readPages, writebackPages);
             resolvePendingReadPages(readPages);
 
-            // TODO: If the writebuffer is not infinite, the request will need
-            // to pause while writebacks occur
-            //registerPendingWritePages(write, writebackPages);
+            // Add the pending writebacks to the request's pending set
+            registerPendingWritePages(write, writebackPages);
             beginWritebackEvictions(writebackPages, 0);
             break;
         }
@@ -800,6 +802,21 @@ void PagedMiddlewareCacheMesi::completeRequests()
         // Ensure we send the application response back to the application
         // that actually originated the response
         sendApplicationResponse(delay, resp);
+    }
+}
+
+void PagedMiddlewareCacheMesi::clearDirectoryEntries(const set<PagedCache::Key>& entries)
+{
+    ClientCacheDirectory& directory = ClientCacheDirectory::instance();
+
+    set<PagedCache::Key>::const_iterator iter = entries.begin();
+    set<PagedCache::Key>::const_iterator last = entries.end();
+    while (iter != last)
+    {
+        directory.removeClientCacheEntryByRank(getRank(),
+                                               iter->filename,
+                                               iter->key);
+        iter++;
     }
 }
 

@@ -20,6 +20,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+#include <cassert>
 #include <cstddef>
 #include <iostream>
 #include <map>
@@ -35,13 +36,11 @@ class ClientCacheDirectory : public Singleton<ClientCacheDirectory>
 {
 public:
     /** Forward declaration */
+    class ClientCache;
     class Entry;
 
     /** Enable singleton construction */
     friend class Singleton<ClientCacheDirectory>;
-
-    /** Client cache type */
-    typedef ConnectionId ClientCache;
 
     /** Map of handle to client cache type */
     typedef std::multimap<Entry, ClientCache> CacheEntryToClientMap;
@@ -51,6 +50,13 @@ public:
 
     /** Cache entry states */
     enum State {INVALID_STATE = 0, SHARED, EXCLUSIVE};
+
+    /** Type for describing a client cache */
+    struct ClientCache
+    {
+        int rank;
+        ConnectionId connection;
+    };
 
     /** Entries stored in client caches */
     struct Entry
@@ -84,6 +90,11 @@ public:
                                 const Filename& filename,
                                 const FilePageId& pageId);
 
+    /** Remove the directory entry for the page */
+    void removeClientCacheEntryByRank(int rank,
+                                      const Filename& filename,
+                                      const FilePageId& pageId);
+
 private:
     /** Private constructor */
     ClientCacheDirectory();
@@ -100,6 +111,23 @@ private:
     /** Map of handles to client caches */
     CacheEntryToClientMap clientCacheEntries_;
 };
+
+/** @return -1, 0, or 1 if lhs is less than, equal to, or greater than rhs */
+inline int compare(const ClientCacheDirectory::ClientCache& lhs,
+                   const ClientCacheDirectory::ClientCache& rhs)
+{
+    int cmpValue = 1;
+    if (lhs.rank == rhs.rank)
+    {
+        assert(lhs.connection == rhs.connection);
+        cmpValue = 0;
+    }
+    else if (lhs.rank < rhs.rank)
+    {
+        cmpValue = -1;
+    }
+    return cmpValue;
+}
 
 /** @return -1, 0, or 1 if lhs is less than, equal to, or greater than rhs */
 inline int compare(const ClientCacheDirectory::Entry& lhs,
@@ -122,6 +150,20 @@ inline int compare(const ClientCacheDirectory::Entry& lhs,
         cmpValue = -1;
     }
     return cmpValue;
+}
+
+/** @return true if the two entries are equivalent */
+inline bool operator==(const ClientCacheDirectory::ClientCache& lhs,
+                       const ClientCacheDirectory::ClientCache& rhs)
+{
+    return (0 == compare(lhs, rhs));
+}
+
+/** @return true if the two entries are equivalent */
+inline bool operator<(const ClientCacheDirectory::ClientCache& lhs,
+                      const ClientCacheDirectory::ClientCache& rhs)
+{
+    return (-1 == compare(lhs, rhs));
 }
 
 /** @return true if the two entries are equivalent */

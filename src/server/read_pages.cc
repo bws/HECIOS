@@ -177,6 +177,16 @@ void ReadPages::parititionRequestPages(set<FilePageId>& outClientPages,
                                                      *readReq_->getView(),
                                                      *readReq_->getDist());
 
+    // Determine the pages held in a cache exclusively
+    ClientCacheDirectory& directory = ClientCacheDirectory::instance();
+    Filename(readReq_->getFilename());
+    //ClientCacheDirectory::InvalidationMap invalidations =
+    //        directory.getClientsNeedingInvalidate(filename,
+    //                                              readReq_->getPageSize(),
+    //                                              readReq_->getOffset(),
+    //                                              readReq_->getDataSize(),
+    //                                              *readReq_->getView(),
+    //                                              *readReq_->getDist());
     cerr << __FILE__ << ":" << __LINE__ << ":"
          << "Found server pages: " << outServerPages.size() << endl;
 }

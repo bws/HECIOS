@@ -110,6 +110,28 @@ void ClientCacheDirectory::removeClientCacheEntry(const ClientCache& client,
     }
 }
 
+void ClientCacheDirectory::removeClientCacheEntryByRank(int rank,
+                                                        const Filename& filename,
+                                                        const FilePageId& pageId)
+{
+    pair<CacheEntryToClientMap::iterator, CacheEntryToClientMap::iterator> range;
+    const Entry entry = {filename, pageId};
+    range = clientCacheEntries_.equal_range(entry);
+
+    CacheEntryToClientMap::iterator iter = range.first;
+    while (iter != range.second)
+    {
+        if (rank == iter->second.rank)
+        {
+            clientCacheEntries_.erase(iter++);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

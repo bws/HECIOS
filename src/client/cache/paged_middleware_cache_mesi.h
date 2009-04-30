@@ -192,6 +192,9 @@ private:
      */
     void completeRequests();
 
+    /** Clear the exclusive/modified entries for these pages */
+    void clearDirectoryEntries(const std::set<PagedCache::Key>& entries);
+
     /** Register all the pages pending to satisfy a request */
     void registerPendingPages(spfsMPIFileRequest* request,
                               const std::set<PagedCache::Key>& pendingReads,

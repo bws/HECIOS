@@ -5,6 +5,11 @@
 [General]
 preload-ned-files = @@INSTALL_DIR@/lib/ned/hecios_ned.lst
 sim-time-limit = 10000s
+
+#
+# Network to enable
+#
+#network = PalmettoGigE
 network = PalmettoMyri10G
 
 #
@@ -26,7 +31,17 @@ include @INSTALL_DIR@/ini/global_run_configs.ini
 # Simulation parameters
 #
 [Parameters]
+
+#
+# Enable to time ping data
+#
+#**.cpun[0].hca.pingApp.destAddr = "192.168.0.2"   
+
+#
+# Include parameters
+#
 include @INSTALL_DIR@/ini/palmetto_static_params.ini
+#include @INSTALL_DIR@/ini/palmetto_gige.ini
 include @INSTALL_DIR@/ini/palmetto_myri10g.ini
 
 ###############################################################################
