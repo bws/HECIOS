@@ -185,6 +185,21 @@ void FileRegionSetTest::testInsert()
     temp2.offset = 10; temp2.extent = 52;
     CPPUNIT_ASSERT_EQUAL(temp2, *iter5++);
     CPPUNIT_ASSERT(iter5 == set5.end());
+
+    // Test insert that includes perfectly aligned regions
+    FileRegionSet set6;
+    FileRegion f20 = {10,5};
+    FileRegion f21 = {20,5};
+    FileRegion f22 = {15,5};
+    set6.insert(f20);
+    set6.insert(f21);
+    set6.insert(f22);
+    std::set<FileRegion>::const_iterator iter6 = set6.begin();
+    FileRegion temp3;
+    temp3.offset = 10; temp3.extent = 15;
+    CPPUNIT_ASSERT_EQUAL(size_t(1), set6.size());
+    CPPUNIT_ASSERT_EQUAL(temp3, *iter6++);
+    CPPUNIT_ASSERT(iter6 == set6.end());
 }
 
 

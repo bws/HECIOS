@@ -18,16 +18,16 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <cppunit/TextTestRunner.h>
-#include "file_region_set_test.h"
 #include "multi_cache_test.h"
+#include "progressive_page_cache_test.h"
 
 int main(int argc, char** argv)
 {
     CppUnit::TextTestRunner runner;
 
     // Add all of the requisite tests
-    runner.addTest( FileRegionSetTest::suite() );
     runner.addTest( MultiCacheTest::suite() );
+    runner.addTest( ProgressivePageCacheTest::suite() );
 
     bool success = runner.run();
     return (success ? 0 : 1);

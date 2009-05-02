@@ -110,6 +110,11 @@ tests_clean:
 
 .PHONY: tests_clean
 
+tests_depclean:
+	$(RM) $(SIM_TEST_DEPENDS)
+
+.PHONY: tests_depclean
+
 #
 # client cache package unit tests
 #

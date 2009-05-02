@@ -178,8 +178,8 @@ void ReadPages::parititionRequestPages(set<FilePageId>& outClientPages,
                                                      *readReq_->getDist());
 
     // Determine the pages held in a cache exclusively
-    ClientCacheDirectory& directory = ClientCacheDirectory::instance();
-    Filename(readReq_->getFilename());
+    //ClientCacheDirectory& directory = ClientCacheDirectory::instance();
+    //Filename(readReq_->getFilename());
     //ClientCacheDirectory::InvalidationMap invalidations =
     //        directory.getClientsNeedingInvalidate(filename,
     //                                              readReq_->getPageSize(),

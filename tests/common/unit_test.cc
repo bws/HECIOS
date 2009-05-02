@@ -23,6 +23,7 @@
 #include "client_cache_directory_test.h"
 #include "comm_man_test.h"
 #include "contiguous_data_type_test.h"
+#include "dirty_file_region_set_test.h"
 #include "file_descriptor_test.h"
 #include "file_page_utils_test.h"
 #include "file_region_set_test.h"
@@ -56,6 +57,7 @@ int main(int argc, char** argv)
     runner.addTest( ClientCacheDirectoryTest::suite() );
     runner.addTest( CommManTest::suite() );
     runner.addTest( ContiguousDataTypeTest::suite() );
+    runner.addTest( DirtyFileRegionSetTest::suite() );
     runner.addTest( FileDescriptorTest::suite() );
     runner.addTest( FilePageUtilsTest::suite() );
     runner.addTest( FileRegionSetTest::suite() );

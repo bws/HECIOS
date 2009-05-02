@@ -140,7 +140,6 @@ void FileRegionSet::insert(const FileRegion& region)
         FSOffset nextRegionEnd = itUpper->offset + itUpper->extent;
         FSOffset maxEnd = max(newRegionEnd, nextRegionEnd);
         newRegion.extent = maxEnd - newRegion.offset;
-        //cerr << "Region extent modded: " << newRegion << endl;
         regions_.erase(itUpper++);
     }
 

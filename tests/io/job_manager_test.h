@@ -98,14 +98,11 @@ void JobManagerTest::setUp()
     readRequest_->setDist(distribution_);
 
     // Create the begin flow request
-    flowStart_ = new spfsDataFlowStart(0, SPFS_DATA_FLOW_START);
-    flowStart_->setFlowType(SPFS_BMI_TO_MEMORY_FLOW);
-    flowStart_->setFlowMode(DataFlow::SERVER_READ);
-    flowStart_->setContextPointer(readRequest_);
-    flowStart_->setOffset(0);
-    flowStart_->setDataSize(4);
-    flowStart_->setDist(distribution_);
-    flowStart_->setView(view_);
+    spfsClientDataFlowStart* flowStart = new spfsClientDataFlowStart(0, SPFS_DATA_FLOW_START);
+    flowStart->setContextPointer(readRequest_);
+    flowStart->setOffset(0);
+    flowStart->setDist(distribution_);
+    flowStart->setView(view_);
 }
 
 void JobManagerTest::tearDown()
