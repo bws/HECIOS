@@ -158,7 +158,13 @@ FileRegionSet FilePageUtils::determinePartialPageRegions(const FSSize& pageSize,
         // and add them to the list
         FSOffset regionBegin = requestRegions[i].offset;
         FSOffset regionEnd = regionBegin + requestRegions[i].extent;
-        if (regionBegin >= pageBegin && regionBegin < pageEnd)
+        if (regionBegin <= pageBegin && regionEnd >= pageEnd)
+        {
+            // This partial is actually the entire page
+            FileRegion partial = {pageBegin, pageSize};
+            pageRegions.insert(partial);
+        }
+        else if (regionBegin >= pageBegin && regionBegin < pageEnd)
         {
             // This region starts at offset and continues to the minimum
             // of the extent or the page end;

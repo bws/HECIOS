@@ -174,6 +174,35 @@ simple SharedPagedMiddlewareCacheMesi
 endsimple
 
 //
+// Middleware cache using pages of progressive paged cache
+//
+simple ProgressivePagedMiddlewareCache
+    parameters:
+    	byteCopyTime: const,
+    	pageSize: const,
+    	pageCapacity: const;
+    	
+	gates:
+		in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
+endsimple
+
+//
+// Middleware cache using shared pages of progressive paged cache
+//
+simple SharedProgressivePagedMiddlewareCache
+    parameters:
+    	byteCopyTime: const,
+    	pageSize: const,
+    	pageCapacity: const;
+    	
+	gates:
+		in: appIn, fsIn, mpiIn;
+        out: appOut, fsOut, mpiOut;
+endsimple
+
+
+//
 // Local variables:
 //  indent-tabs-mode: nil
 //  c-indent-level: 4

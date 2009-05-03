@@ -168,13 +168,6 @@ spfsMPIFileWriteAtRequest* PagedCache::createPageWriteRequest(
     return writeRequest;
 }
 
-void PagedCache::addCacheMemoryDelay(spfsMPIFileRequest* origRequest, double delay) const
-{
-    cPar* delayPar = new cPar("Delay");
-    delayPar->setDoubleValue(delay);
-    origRequest->addPar(delayPar);
-}
-
 FileDescriptor* PagedCache::getPageViewDescriptor(
     const Filename& filename, const set<size_t>& pageIds) const
 {

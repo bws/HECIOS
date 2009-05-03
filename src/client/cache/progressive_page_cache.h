@@ -173,6 +173,9 @@ private:
 /** @return true if the lhs key is ordered before the rhs key */
 bool operator<(const ProgressivePageCache::Key& lhs, const ProgressivePageCache::Key& rhs);
 
+/** @return true if the lhs key is ordered before the rhs key */
+bool operator<(const ProgressivePageCache::Page& lhs, const ProgressivePageCache::Page& rhs);
+
 /** Add progressive cache to the ostream */
 inline std::ostream& operator<<(std::ostream& ost, const ProgressivePageCache& cache)
 {

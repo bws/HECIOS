@@ -92,12 +92,11 @@ vector<FileRegion> IndexedDataType::getRegionsByBytes(
              i++)
         {
             size_t typeOffset = currentOffset % getTrueExtent();
-            size_t nextElementsSize = blockLengths_[i] *
-                oldType_.getTrueExtent();
+            size_t nextElementsSize = blockLengths_[i] * oldType_.getTrueExtent();
             if (typeOffset > elementsProcessedSize &&
                 typeOffset < (elementsProcessedSize + nextElementsSize))
             {
-                // Caclulate the offset into this element block
+                // Calculate the offset into this element block
                 FSOffset elementOffset = typeOffset - elementsProcessedSize;
 
                 // Need to perform processing for only a portion of this type

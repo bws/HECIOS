@@ -39,6 +39,13 @@ MiddlewareCache::~MiddlewareCache()
 {
 }
 
+void MiddlewareCache::addCacheMemoryDelay(cMessage* originalRequest, double delay) const
+{
+    cPar* delayPar = new cPar("Delay");
+    delayPar->setDoubleValue(delay);
+    originalRequest->addPar(delayPar);
+}
+
 void MiddlewareCache::initialize()
 {
     // Retrieve parameters
@@ -100,6 +107,7 @@ void MiddlewareCache::sendApplicationResponse(double delay, cMessage* response)
     assert(0 != ioApp);
     ioApp->directMessage(response);
 }
+
 
 //
 // NoMiddlewareCache implementation

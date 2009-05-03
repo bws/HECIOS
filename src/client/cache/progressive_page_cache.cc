@@ -34,6 +34,11 @@ bool operator<(const ProgressivePageCache::Key& lhs, const ProgressivePageCache:
     }
 }
 
+bool operator<(const ProgressivePageCache::Page& lhs, const ProgressivePageCache::Page& rhs)
+{
+    return (lhs.id < rhs.id);
+}
+
 ProgressivePageCache::ProgressivePageCache(int capacity)
     : maxEntries_(capacity)
 {
@@ -72,8 +77,9 @@ void ProgressivePageCache::insertPageAndRecall(const Key& key,
         MapType::iterator entry = keyEntryMap_.find(key);
 
         // Refresh the lru status
-        lruList_.push_front(key);
         lruList_.erase(entry->second->lruRef);
+        lruList_.push_front(key);
+        entry->second->lruRef = lruList_.begin();
 
         // Merge in the changes to the region set
         Page* page = entry->second->page;
@@ -81,9 +87,8 @@ void ProgressivePageCache::insertPageAndRecall(const Key& key,
         DirtyFileRegionSet::iterator newEnd = page->regions.end();
         while (newIter != newEnd)
         {
-            // Create a dirty page region and insert it into the set
-            DirtyFileRegion dfr(newIter->offset, newIter->extent, isDirty);
-            page->regions.insert(dfr);
+            // Insert dirty page region into the set
+            page->regions.insert(*newIter);
             ++newIter;
         }
 
@@ -143,7 +148,6 @@ void ProgressivePageCache::remove(const Key& key)
         }
 
         // Cleanup the EntryType memory
-        delete iter->second->page;
         delete iter->second;
 
         // Remove from the map

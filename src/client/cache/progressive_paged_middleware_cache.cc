@@ -22,23 +22,27 @@
 #include <cassert>
 #include <functional>
 #include "comm_man.h"
+#include "dirty_file_region_set.h"
+#include "file_page_utils.h"
 #include "mpi_proto_m.h"
+#include "page_access_mixin.h"
+#include "paged_cache.h"
+#include "progressive_page_access_strategy.h"
 using namespace std;
 
 // OMNet Registration Method
 Define_Module(ProgressivePagedMiddlewareCache);
 
 /** Functor for finding dirty pages for a cached file */
-class DirtyPageFilter : public LRUCache<PagedCache::Key,
-                                        ProgressivePagedMiddlewareCache::ProgressivePage*>::FilterFunctor
+class DirtyPageFilter : public ProgressivePagedMiddlewareCache::FileDataPageCache::FilterFunctor
 {
 public:
     /** Constructor */
     DirtyPageFilter(const Filename& filename) : filename_(filename) {};
 
     /** @return true if the page belongs to this file and is dirty */
-    virtual bool filter(const PagedCache::Key& key,
-                        const ProgressivePagedMiddlewareCache::ProgressivePage*& entry,
+    virtual bool filter(const ProgressivePagedMiddlewareCache::Key& key,
+                        const ProgressivePagedMiddlewareCache::ProgressivePage& entry,
                         bool isDirty) const
     {
         return ((key.filename == filename_) && (isDirty));
@@ -49,16 +53,15 @@ private:
 };
 
 /** Functor for finding all pages for a cached file */
-class FilePageFilter : public LRUCache<PagedCache::Key,
-                                       ProgressivePagedMiddlewareCache::ProgressivePage*>::FilterFunctor
+class FilePageFilter : public ProgressivePagedMiddlewareCache::FileDataPageCache::FilterFunctor
 {
 public:
     /** Constructor */
     FilePageFilter(const Filename& filename) : filename_(filename) {};
 
     /** @return true if the page belongs to this file and is dirty */
-    virtual bool filter(const PagedCache::Key& key,
-                        const ProgressivePagedMiddlewareCache::ProgressivePage*& entry,
+    virtual bool filter(const ProgressivePagedMiddlewareCache::Key& key,
+                        const ProgressivePagedMiddlewareCache::ProgressivePage& entry,
                         bool isDirty) const
     {
         return (key.filename == filename_);
@@ -71,22 +74,28 @@ private:
 
 ProgressivePagedMiddlewareCache::ProgressivePagedMiddlewareCache()
     : lruCache_(0),
-      pendingPages_(0),
-      openFileCounts_(0)
+      openFileCounts_(0),
+      pageCapacity_(0),
+      pageSize_(0),
+      pendingRequests_(0)
 {
 }
 
 void ProgressivePagedMiddlewareCache::initialize()
 {
     // Initialize parent
-    PagedCache::initialize();
+    MiddlewareCache::initialize();
+
+    // Extract cache paramters
+    pageCapacity_ = par("pageCapacity");
+    pageSize_ = par("pageSize");
 
     // Initialize LRU management
-    assert(0 != cacheCapacity());
-    lruCache_ = createFileDataPageCache(cacheCapacity());
+    assert(0 != pageCapacity_);
+    lruCache_ = createFileDataPageCache(pageCapacity_);
 
     // Initialize the pending request maps
-    pendingPages_ = createPendingPageMap();
+    pendingRequests_ = createPendingDataMap();
 
     // Initialize the open file map
     openFileCounts_ = createOpenFileMap();
@@ -99,7 +108,7 @@ ProgressivePagedMiddlewareCache::createFileDataPageCache(size_t cacheSize)
 }
 
 ProgressivePagedMiddlewareCache::RequestMap*
-ProgressivePagedMiddlewareCache::createPendingPageMap()
+ProgressivePagedMiddlewareCache::createPendingDataMap()
 {
     return new RequestMap();
 }
@@ -178,9 +187,7 @@ void ProgressivePagedMiddlewareCache::processRequest(cMessage* request, cMessage
             static_cast<spfsMPIFileWriteAtRequest*>(msg->contextPointer());
 
         // Determine the cache pages requested
-        set<PagedCache::Key> writtenPages;
-        getRequestCachePages(writeback, writtenPages);
-        resolvePendingWritePages(writtenPages);
+        resolvePendingRequest(writeback);
     }
     else if (SPFS_MPI_FILE_OPEN_REQUEST == request->kind())
     {
@@ -257,12 +264,10 @@ void ProgressivePagedMiddlewareCache::processFileClose(spfsMPIFileCloseRequest* 
         // If this is the last close, flush the dirty cache data to disk
         if (0 == openCount)
         {
-            set<PagedCache::Key> noPages;
             vector<WritebackPage> writePages = lookupDirtyPagesInCache(closeName);
-
+            cerr << "On close, writing back pages: " << writePages.size() << endl;
             beginWritebackEvictions(writePages, close);
             flushCache(closeName);
-            registerPendingWritePages(close, writePages);
         }
         else
         {
@@ -276,10 +281,8 @@ void ProgressivePagedMiddlewareCache::processFileClose(spfsMPIFileCloseRequest* 
         spfsMPIFileWriteAtRequest* flushReq =
             static_cast<spfsMPIFileWriteAtRequest*>(msg->contextPointer());
 
-        // Resolve the pending pages
-        set<PagedCache::Key> flushPages;
-        getRequestCachePages(flushReq, flushPages);
-        resolvePendingWritePages(flushPages);
+        // Resolve the pending request
+        resolvePendingRequest(flushReq);
     }
 }
 
@@ -288,21 +291,23 @@ void ProgressivePagedMiddlewareCache::processFileRead(spfsMPIFileReadAtRequest* 
     if (msg == read)
     {
         // Determine the cache pages requested
-        set<PagedCache::Key> requestPages;
+        set<Key> requestPages;
         getRequestCachePages(read, requestPages);
 
         // Remove cached pages
         lookupPagesInCache(requestPages);
 
         // Cull read pages that are already requested
-        set<PagedCache::Key> trimmedPages = trimPendingReadPages(requestPages);
+        set<Key> trimmedPages = trimPendingReadPages(requestPages);
 
         // Begin the read
         beginRead(trimmedPages, read);
 
         // Register the request's pending pages
-        set<PagedCache::Key> writePages;
-        registerPendingPages(read, requestPages, writePages);
+        registerPendingReadPages(read, requestPages);
+
+        // Set the total memory delay
+        addCacheMemoryDelay(read, 0.0);
     }
     else
     {
@@ -313,21 +318,20 @@ void ProgressivePagedMiddlewareCache::processFileRead(spfsMPIFileReadAtRequest* 
             static_cast<spfsMPIFileReadAtRequest*>(msg->contextPointer());
 
         // Determine the cache pages read
-        set<PagedCache::Key> requestPages;
+        set<Key> requestPages;
         getRequestCachePages(cacheRead, requestPages);
+        resolvePendingPages(requestPages);
 
         // Update the cache
         vector<WritebackPage> writebackPages;
-        //updateCache(requestPages, false, writebackPages);
-        assert(false);
-
-        // Update the pending requests
-        resolvePendingReadPages(requestPages);
+        updateCache(requestPages, false, writebackPages);
 
         // The writebuffer is not infinite, the request will need
         // to pause while writebacks occur
-        beginWritebackEvictions(writebackPages, 0);
-        registerPendingWritePages(read, writebackPages);
+        if (!writebackPages.empty())
+        {
+            beginWritebackEvictions(writebackPages, 0);
+        }
     }
 }
 
@@ -351,7 +355,7 @@ void ProgressivePagedMiddlewareCache::processFileWrite(spfsMPIFileWriteAtRequest
         case FSM_Exit(INIT):
         {
             // Determine the cache pages requested
-            set<PagedCache::Key> requestPages;
+            set<Key> requestPages;
             getRequestCachePages(write, requestPages);
 
             if (requestPages.size() > lruCache_->capacity())
@@ -360,6 +364,14 @@ void ProgressivePagedMiddlewareCache::processFileWrite(spfsMPIFileWriteAtRequest
             }
             else
             {
+                // Set the total memory delay
+                addCacheMemoryDelay(write, 0.0);
+
+                // Register the request with teh empty set so that it will
+                // complete correctly if no writebacks are required
+                set<Key> empty;
+                registerPendingReadPages(write, empty);
+
                 FSM_Goto(currentState, UPDATE_CACHE);
             }
             break;
@@ -391,14 +403,18 @@ void ProgressivePagedMiddlewareCache::processFileWrite(spfsMPIFileWriteAtRequest
         }
         case FSM_Enter(UPDATE_CACHE):
         {
+            cerr << "Updating cache on write." << endl;
             // Update the cache and acquire any necessary writebacks
             vector<WritebackPage> writebackPages;
             updateCache(write, writebackPages);
 
             // The writeback buffer is not infinite, the request will need
             // to pause while writebacks occur
-            beginWritebackEvictions(writebackPages, 0);
-            registerPendingWritePages(write, writebackPages);
+            cerr << "Performing writebacks: " << writebackPages.size() << endl;
+            if (!writebackPages.empty())
+            {
+                beginWritebackEvictions(writebackPages, 0);
+            }
             break;
         }
         case FSM_Exit(UPDATE_CACHE):
@@ -414,34 +430,52 @@ void ProgressivePagedMiddlewareCache::processFileWrite(spfsMPIFileWriteAtRequest
 template<class spfsMPIFileIORequest>
 void ProgressivePagedMiddlewareCache::getRequestCachePages(
     const spfsMPIFileIORequest* ioRequest,
-    std::set<PagedCache::Key>& outRequestPages) const
+    std::set<Key>& outRequestPages) const
 {
     // Convert regions into file pages
+    FilePageUtils& utils = FilePageUtils::instance();
     FileDescriptor* fd = ioRequest->getFileDes();
-    FSSize ioSize = ioRequest->getDataType()->getExtent() * ioRequest->getCount();
-    set<FilePageId> requestPages = determineRequestPages(ioRequest->getOffset(),
-                                                         ioSize,
-                                                         fd->getFileView());
+    FSOffset offset = ioRequest->getOffset();
+    FSSize size = ioRequest->getDataType()->getExtent() * ioRequest->getCount();
+    set<FilePageId> requestPages = utils.determineRequestPages(pageSize_,
+                                                               offset,
+                                                               size,
+                                                               fd->getFileView());
 
-    outRequestPages = PagedCache::convertPagesToCacheKeys(fd->getFilename(),
-                                                          requestPages);
+    // Convert file pages into cache keys
+    set<FilePageId>::const_iterator iter = requestPages.begin();
+    set<FilePageId>::const_iterator end = requestPages.end();
+    while (iter != end)
+    {
+        Key k(fd->getFilename(), *(iter++));
+        outRequestPages.insert(k);
+    }
 }
 
-template<class spfsMPIFileIORequest>
-void ProgressivePagedMiddlewareCache::getRequestPartialCachePages(
-    const spfsMPIFileIORequest* ioRequest,
-    std::set<PagedCache::Key>& outRequestPages) const
+void ProgressivePagedMiddlewareCache::beginRead(const set<Key>& readPages,
+                                                spfsMPIFileRequest* parentRequest)
 {
-    // Convert regions into file pages
-    FileDescriptor* fd = ioRequest->getFileDes();
-    FSSize ioSize = ioRequest->getDataType()->getExtent() * ioRequest->getCount();
-    set<FilePageId> partialPages =
-        determineRequestPartialPages(ioRequest->getOffset(),
-                                     ioSize,
-                                     fd->getFileView());
+    assert(0 != readPages.size());
 
-    outRequestPages = PagedCache::convertPagesToCacheKeys(fd->getFilename(),
-                                                          partialPages);
+    // Convert into paged cache keys
+    set<Key>::iterator iter = readPages.begin();
+    set<Key>::iterator end = readPages.end();
+    set<PagedCache::Key> pageKeys;
+    while (iter != end)
+    {
+        PagedCache::Key key(iter->filename, iter->key);
+        pageKeys.insert(key);
+        ++iter;
+    }
+
+    // Construct and send the requests
+    BlockIndexedPageAccessMixin pageAccessor;
+    vector<spfsMPIFileReadAtRequest*> reads =
+        pageAccessor.createPFSReadRequests(pageKeys, parentRequest);
+    for (size_t i = 0; i < reads.size(); i++)
+    {
+        send(reads[i], fsOutGateId());
+    }
 }
 
 
@@ -449,73 +483,38 @@ void ProgressivePagedMiddlewareCache::beginWritebackEvictions(
     const vector<WritebackPage>& writebackPages,
     spfsMPIFileRequest* parentRequest)
 {
-    // Accumulate the pages for each file and issue a writeback
-    set<FilePageId> pages;
-    Filename currentName = writebackPages.begin()->filename;
-    vector<WritebackPage>::const_iterator iter;
-        for (iter = writebackPages.begin(); iter != writebackPages.end(); ++iter)
-        {
-            // TODO: need to ensure that pages are stably sorted by current name
-            if (currentName == iter->filename)
-            {
-                //pages.insert(iter->key);
-            }
-            else
-            {
-                // Write back the accumulated pages for currentName
-                spfsMPIFileWriteAtRequest* writebackRequest =
-                    createPageWriteRequest(currentName, pages, parentRequest);
-                send(writebackRequest, fsOutGateId());
-                // Reset the loop state and append the page to the new set
-                pages.clear();
-                currentName = iter->filename;
-                //pages.insert(iter->key);
-            }
-        }
+    cerr << "beginning writeback" << endl;
+    // Use the progresive page write strategy to construct write requests
+    ProgressivePageAccessStrategy pageAccessor(pageSize_);
+    vector<spfsMPIFileWriteAtRequest*> writes =
+        pageAccessor.createPFSWriteRequests(writebackPages, parentRequest);
 
-        // Write back the final set of accumulated pages
-        spfsMPIFileWriteAtRequest* writeBackRequest =
-            createPageWriteRequest(currentName, pages, parentRequest);
-        send(writeBackRequest, fsOutGateId());
-    }
-
-void ProgressivePagedMiddlewareCache::beginRead(
-    const std::set<PagedCache::Key>& readPages,
-    spfsMPIFileRequest* parentRequest)
-{
-    assert(0 != readPages.size());
-
-    // Collect the page ids
-    set<PagedCache::Key>::iterator iter = readPages.begin();
-    set<PagedCache::Key>::iterator end = readPages.end();
-    Filename filename = iter->filename;
-    set<FilePageId> pages;
-    while (iter != end)
+    for (size_t i = 0; i < writes.size(); i++)
     {
-        assert(filename == iter->filename);
-        pages.insert(iter->key);
-        ++iter;
+        cerr << "Sending writeback" << endl;
+        send(writes[i], fsOutGateId());
     }
-
-    // Construct the request
-    spfsMPIFileReadAtRequest* readRequest =
-        createPageReadRequest(filename, pages, parentRequest);
-    send(readRequest, fsOutGateId());
+    registerPendingWriteRequests(parentRequest, writes);
 }
 
 vector<ProgressivePagedMiddlewareCache::WritebackPage>
 ProgressivePagedMiddlewareCache::lookupDirtyPagesInCache(const Filename& filename) const
 {
-        //DirtyPageFilter filter(filename);
-        //return lruCache_->getFilteredEntries(filter);
-    vector<ProgressivePagedMiddlewareCache::WritebackPage> writebacks;
+    DirtyPageFilter filter(filename);
+    vector<ProgressivePage*> dirtyPages = lruCache_->getFilteredEntries(filter);
+    vector<WritebackPage> writebacks;
+    for (size_t i = 0; i < dirtyPages.size(); i++)
+    {
+        WritebackPage writeback = {filename, dirtyPages[i]->id, dirtyPages[i]->regions};
+        writebacks.push_back(writeback);
+    }
     return writebacks;
 }
 
-void ProgressivePagedMiddlewareCache::lookupPagesInCache(set<PagedCache::Key>& requestPages)
+void ProgressivePagedMiddlewareCache::lookupPagesInCache(set<Key>& requestPages)
 {
-    set<PagedCache::Key>::iterator iter = requestPages.begin();
-    set<PagedCache::Key>::iterator end = requestPages.end();
+    set<Key>::iterator iter = requestPages.begin();
+    set<Key>::iterator end = requestPages.end();
     while (iter != end)
     {
         try
@@ -530,79 +529,136 @@ void ProgressivePagedMiddlewareCache::lookupPagesInCache(set<PagedCache::Key>& r
     }
 }
 
-void ProgressivePagedMiddlewareCache::updateCache(spfsMPIFileWriteAtRequest* write,
-                                                  vector<WritebackPage>& outWriteBacks)
+void ProgressivePagedMiddlewareCache::updateCache(const std::set<Key>& updatePages,
+                                                  bool updatesDirty,
+                                                  std::vector<WritebackPage>& outWriteBacks)
 {
-    /*
-    // Update the cache and accumulate any write backs required
-    set<PagedCache::Key>::const_iterator iter;
+    set<Key>::const_iterator iter;
     for (iter = updatePages.begin(); iter != updatePages.end(); iter++)
     {
+        // Create the cache entry
+        DirtyFileRegion fullRegion(iter->key * pageSize_,
+                                   pageSize_,
+                                   updatesDirty);
+        ProgressivePage newEntry;
+        newEntry.id = iter->key;
+        newEntry.regions.insert(fullRegion);
+
         try {
             // If the updates are dirty, then insert them into the cache
             // otherwise, if an existing entry isn't already dirty then
             //   insert the entry into the cache
-            PagedCache::Key evictedKey(Filename("/"), 0);
+            Key evictedKey(Filename("/"), 0);
             ProgressivePage* evictedValue = 0;
             bool isEvictedDirty = false;
-            if (updatesDirty)
-            {
-                // Insert dirty entries
-                lruCache_->insertAndRecall(*iter, iter->key, true,
+
+            // Insert the entry
+            lruCache_->insertPageAndRecall(*iter, newEntry, updatesDirty,
                                            evictedKey, evictedValue, isEvictedDirty);
-            }
-            else if (!lruCache_->exists(*iter) ||
-                     false == lruCache_->getDirtyBit(*iter))
-            {
-                // Insert clean entries that don't conflict with an existing
-                // dirty entry
-                lruCache_->insertAndRecall(*iter, iter->key, false,
-                                           evictedKey, evictedValue, isEvictedDirty);
-            }
 
             // Only add writeback if the eviction is dirty
             if (isEvictedDirty)
             {
-                WritebackPage w;
-                w.filename = evictedKey.filename;
-                w.id = evictedKey.key;
-                w.regions = evictedValue->regions;
+                WritebackPage w = {evictedKey.filename,
+                                   evictedKey.key,
+                                   evictedValue->regions};
                 outWriteBacks.push_back(w);
+            }
+            else
+            {
+                delete evictedValue;
             }
         } catch (const NoSuchEntry& e)
         {
             // No eviction was necessary
         }
     }
-    */
+}
+
+void ProgressivePagedMiddlewareCache::updateCache(spfsMPIFileWriteAtRequest* write,
+                                                  vector<WritebackPage>& outWriteBacks)
+{
+    // Get the set of page ids for this write
+    FilePageUtils& utils = FilePageUtils::instance();
+    FSOffset offset = write->getOffset();
+    FSSize size = write->getCount() * write->getDataType()->getExtent();
+    FileDescriptor* fd = write->getFileDes();
+    set<FilePageId> pageIds = utils.determineRequestPages(pageSize_,
+                                                          offset,
+                                                          size,
+                                                          fd->getFileView());
+    cerr << "Write Request is: " << offset << "," << size << endl;
+
+    set<FilePageId>::const_iterator end = pageIds.end();
+    for (set<FilePageId>::const_iterator iter = pageIds.begin() ; iter != end; ++iter)
+    {
+        FileRegionSet frs = utils.determinePartialPageRegions(pageSize_,
+                                                              *iter,
+                                                              offset,
+                                                              size,
+                                                              fd->getFileView());
+        DirtyFileRegionSet dirtyRegions(frs, true);
+        cerr << "Resulting page: " << *iter << " Regions: " << dirtyRegions << endl;
+        // Create the cache entry
+        Key newKey(fd->getFilename(), *iter);
+        ProgressivePage newPage = {*iter, dirtyRegions};
+        try {
+            // If the updates are dirty, then insert them into the cache
+            // otherwise, if an existing entry isn't already dirty then
+            //   insert the entry into the cache
+            Key evictedKey(Filename("/"), 0);
+            ProgressivePage* evictedValue = 0;
+            bool isEvictedDirty = false;
+
+            // Insert the entry
+            lruCache_->insertPageAndRecall(newKey, newPage, true,
+                                           evictedKey, evictedValue, isEvictedDirty);
+
+            // Only add writeback if the eviction is dirty
+            if (isEvictedDirty)
+            {
+                WritebackPage w = {evictedKey.filename,
+                                   evictedKey.key,
+                                   evictedValue->regions};
+                outWriteBacks.push_back(w);
+            }
+            else
+            {
+                delete evictedValue;
+            }
+        } catch (const NoSuchEntry& e)
+        {
+            // No eviction was necessary
+        }
+    }
 }
 
 void ProgressivePagedMiddlewareCache::flushCache(const Filename& flushName)
 {
-    /*
     if (0 == (*openFileCounts_)[flushName])
     {
         FilePageFilter filter(flushName);
-        set<PagedCache::Key> flushEntries = lruCache_->getFilteredEntries(filter);
-        set<PagedCache::Key>::const_iterator begin = flushEntries.begin();
-        set<PagedCache::Key>::const_iterator end = flushEntries.end();
-        while (begin != end)
+        vector<ProgressivePage*> flushEntries = lruCache_->getFilteredEntries(filter);
+        vector<ProgressivePage*>::const_iterator iter = flushEntries.begin();
+        vector<ProgressivePage*>::const_iterator end = flushEntries.end();
+        while (iter != end)
         {
             try
             {
-                lruCache_->remove(*begin);
-                begin++;
+                Key removeKey(flushName, (*iter)->id);
+                lruCache_->remove(removeKey);
+                delete *iter;
+                iter++;
             }
             catch(NoSuchEntry& nse)
             {
                 cerr << __FILE__ << ":" << __LINE__ << ":"
                      << "No such entry while flushing a file from the cache: "
-                     << begin->filename << " " << begin->key << endl;
+                     << flushName << " " << (*iter)->id << endl;
                 assert(0);
             }
         }
     }
-    */
 }
 
 void ProgressivePagedMiddlewareCache::completeRequests()
@@ -638,49 +694,37 @@ void ProgressivePagedMiddlewareCache::completeRequests()
     }
 }
 
-void ProgressivePagedMiddlewareCache::registerPendingPages(
+void ProgressivePagedMiddlewareCache::registerPendingReadPages(
     spfsMPIFileRequest* fileRequest,
-    const set<PagedCache::Key>& readPages,
-    const set<PagedCache::Key>& writePages)
+    const set<Key>& readPages)
 {
-    PagedCache::InProcessPages& inProcess = (*pendingPages_)[fileRequest];
+    PendingData& inProcess = (*pendingRequests_)[fileRequest];
     inProcess.readPages.insert(readPages.begin(), readPages.end());
-    inProcess.writePages.insert(writePages.begin(), writePages.end());
 }
 
-void ProgressivePagedMiddlewareCache::registerPendingWritePages(spfsMPIFileRequest* request,
-                                                                const vector<WritebackPage>& pendingWrites)
+void ProgressivePagedMiddlewareCache::registerPendingWriteRequests(
+    spfsMPIFileRequest* fileRequest,
+    const vector<spfsMPIFileWriteAtRequest*>& pendingWrites)
 {
-    /*
-    PagedCache::InProcessPages& inProcess = (*pendingPages_)[request];
-    vector<WritebackPage>::const_iterator writeBegin = pendingWrites.begin();
-    vector<WritebackPage>::const_iterator writeEnd = pendingWrites.end();
+    PendingData& inProcess = (*pendingRequests_)[fileRequest];
+
+    // Add requests
+    vector<spfsMPIFileWriteAtRequest*>::const_iterator writeBegin = pendingWrites.begin();
+    vector<spfsMPIFileWriteAtRequest*>::const_iterator writeEnd = pendingWrites.end();
     while (writeBegin != writeEnd)
     {
-        //PagedCache::Key writeKey;
-
-        //inProcess.writePages.insert(*writeBegin);
-        writeBegin++;
-    }
-    */
-}
-
-void ProgressivePagedMiddlewareCache::resolvePendingReadPage(const PagedCache::Key& resolvedPage)
-{
-    RequestMap::iterator iter;
-    for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
-    {
-        iter->second.readPages.erase(resolvedPage);
+        inProcess.writeRequests.insert(*(writeBegin++));
     }
 }
 
-void ProgressivePagedMiddlewareCache::resolvePendingReadPages(const set<PagedCache::Key>& resolvedPages)
+void ProgressivePagedMiddlewareCache::resolvePendingPages(
+    const set<Key>& resolvedPages)
 {
     RequestMap::iterator iter;
-    for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
+    for (iter = pendingRequests_->begin(); pendingRequests_->end() != iter; ++iter)
     {
-        set<PagedCache::Key> result;
-        set<PagedCache::Key>& inProcessReads = iter->second.readPages;
+        set<Key> result;
+        set<Key>& inProcessReads = iter->second.readPages;
         set_difference(inProcessReads.begin(), inProcessReads.end(),
                        resolvedPages.begin(), resolvedPages.end(),
                        inserter(result, result.begin()));
@@ -690,28 +734,12 @@ void ProgressivePagedMiddlewareCache::resolvePendingReadPages(const set<PagedCac
     }
 }
 
-void ProgressivePagedMiddlewareCache::resolvePendingWritePage(const PagedCache::Key& resolvedPage)
+void ProgressivePagedMiddlewareCache::resolvePendingRequest(spfsMPIFileRequest* completedRequest)
 {
     RequestMap::iterator iter;
-    for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
+    for (iter = pendingRequests_->begin(); pendingRequests_->end() != iter; ++iter)
     {
-        iter->second.writePages.erase(resolvedPage);
-    }
-}
-
-void ProgressivePagedMiddlewareCache::resolvePendingWritePages(const set<PagedCache::Key>& resolvedPages)
-{
-    RequestMap::iterator iter;
-    for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
-    {
-        set<PagedCache::Key> result;
-        set<PagedCache::Key>& inProcessWrites = iter->second.writePages;
-        set_difference(inProcessWrites.begin(), inProcessWrites.end(),
-                       resolvedPages.begin(), resolvedPages.end(),
-                       inserter(result, result.begin()));
-
-        // Assign the resulting set as the new pending requests
-        inProcessWrites = result;
+        iter->second.writeRequests.erase(completedRequest);
     }
 }
 
@@ -721,29 +749,29 @@ vector<spfsMPIFileRequest*> ProgressivePagedMiddlewareCache::popCompletedRequest
 
     // Iterate through the requests to find completed requests
     RequestMap::iterator iter;
-    for (iter = pendingPages_->begin(); pendingPages_->end() != iter; /* Do Nothing */)
+    for (iter = pendingRequests_->begin(); pendingRequests_->end() != iter; /* Do Nothing */)
     {
         RequestMap::iterator currentEle = iter++;
-        PagedCache::InProcessPages& inProcess = currentEle->second;
+        PendingData& inProcess = currentEle->second;
         if (0 != currentEle->first &&
             inProcess.readPages.size() == 0 &&
-            inProcess.writePages.size() == 0)
+            inProcess.writeRequests.size() == 0)
         {
             // Remove completed requests
             if (0 == dynamic_cast<spfsMPIFileCloseRequest*>(currentEle->first))
             {
                 completeRequests.push_back(currentEle->first);
-                pendingPages_->erase(currentEle->first);
+                pendingRequests_->erase(currentEle->first);
             }
             else
             {
                 // If this is a close, we need to additionally ensure that
                 // no other reads or writes for this file are ongoing
                 Filename closeName = currentEle->first->getFileDes()->getFilename();
-                if (!hasPendingPages(closeName))
+                if (!hasPendingData(closeName))
                 {
                     completeRequests.push_back(currentEle->first);
-                    pendingPages_->erase(currentEle);
+                    pendingRequests_->erase(currentEle);
                 }
             }
         }
@@ -751,75 +779,58 @@ vector<spfsMPIFileRequest*> ProgressivePagedMiddlewareCache::popCompletedRequest
     return completeRequests;
 }
 
-set<PagedCache::Key> ProgressivePagedMiddlewareCache::trimPendingReadPages(const set<PagedCache::Key>& pageIds)
+bool ProgressivePagedMiddlewareCache::hasPendingData(const Filename& filename) const
 {
-    if (!pendingPages_->empty())
+    RequestMap::const_iterator requestIter;
+    RequestMap::const_iterator requestMapEnd = pendingRequests_->end();
+    for (requestIter = pendingRequests_->begin(); requestIter != requestMapEnd; requestIter++)
     {
-        set<PagedCache::Key> result;
-        RequestMap::const_iterator iter;
-        for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
+        const set<Key>& pendingReads = requestIter->second.readPages;
+        set<Key>::const_iterator iter = pendingReads.begin();
+        set<Key>::const_iterator end = pendingReads.end();
+        while (iter != end)
         {
-            const PagedCache::InProcessPages& inProcess = iter->second;
-            set_difference(pageIds.begin(), pageIds.end(),
+            if (filename == iter->filename)
+            {
+                return true;
+            }
+            ++iter;
+        }
+
+        const set<spfsMPIFileRequest*>& pendingWrites = requestIter->second.writeRequests;
+        set<spfsMPIFileRequest*>::const_iterator iter2 = pendingWrites.begin();
+        set<spfsMPIFileRequest*>::const_iterator end2 = pendingWrites.end();
+        while (iter2 != end2)
+        {
+            spfsMPIFileRequest* request = *iter2;
+            if (filename == request->getFileDes()->getFilename())
+            {
+                return true;
+            }
+            ++iter2;
+        }
+    }
+    return false;
+}
+
+set<ProgressivePagedMiddlewareCache::Key>
+ProgressivePagedMiddlewareCache::trimPendingReadPages(const set<Key>& pageKeys)
+{
+    if (!pendingRequests_->empty())
+    {
+        set<Key> result;
+        RequestMap::const_iterator iter;
+        for (iter = pendingRequests_->begin(); pendingRequests_->end() != iter; ++iter)
+        {
+            const PendingData& inProcess = iter->second;
+            set_difference(pageKeys.begin(), pageKeys.end(),
                            inProcess.readPages.begin(), inProcess.readPages.end(),
                            inserter(result, result.begin()));
         }
         // Return the resulting set as the new set of trimmed pages
         return result;
     }
-    return pageIds;
-}
-
-set<PagedCache::Key> ProgressivePagedMiddlewareCache::trimPendingWritePages(const set<PagedCache::Key>& pages)
-{
-    if (!pendingPages_->empty())
-    {
-        set<PagedCache::Key> result;
-        RequestMap::const_iterator iter;
-        for (iter = pendingPages_->begin(); pendingPages_->end() != iter; ++iter)
-        {
-            const PagedCache::InProcessPages& inProcess = iter->second;
-            set_difference(pages.begin(), pages.end(),
-                           inProcess.writePages.begin(), inProcess.writePages.end(),
-                           inserter(result, result.begin()));
-        }
-        // Return the resulting set as the new set of trimmed pages
-        return result;
-    }
-    return pages;
-}
-
-bool ProgressivePagedMiddlewareCache::hasPendingPages(const Filename& filename) const
-{
-    RequestMap::const_iterator requestIter;
-    RequestMap::const_iterator requestMapEnd = pendingPages_->end();;
-    for (requestIter = pendingPages_->begin(); requestIter != requestMapEnd; requestIter++)
-    {
-        const set<PagedCache::Key>& pendingReads = requestIter->second.readPages;
-        set<PagedCache::Key>::const_iterator iter = pendingReads.begin();
-        set<PagedCache::Key>::const_iterator end = pendingReads.end();
-        while (iter != end)
-        {
-            if (filename == iter->filename)
-            {
-                return true;
-            }
-            ++iter;
-        }
-
-        const set<PagedCache::Key>& pendingWrites = requestIter->second.writePages;
-        iter = pendingWrites.begin();
-        end = pendingWrites.end();
-        while (iter != end)
-        {
-            if (filename == iter->filename)
-            {
-                return true;
-            }
-            ++iter;
-        }
-    }
-    return false;
+    return pageKeys;
 }
 
 /*

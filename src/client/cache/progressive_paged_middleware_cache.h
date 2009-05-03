@@ -24,11 +24,12 @@
 #include <set>
 #include <omnetpp.h>
 #include "basic_types.h"
+#include "dirty_file_region_set.h"
 #include "file_page.h"
-#include "file_region_set.h"
 #include "filename.h"
-#include "lru_cache.h"
-#include "paged_cache.h"
+#include "middleware_cache.h"
+#include "progressive_page_cache.h"
+class spfsMPIFileRequest;
 class spfsMPIFileCloseRequest;
 class spfsMPIFileOpenRequest;
 class spfsMPIFileReadAtRequest;
@@ -43,15 +44,14 @@ class spfsMPIFileWriteAtResponse;
  * then updates until an evict or close forces the page out of cache.  No
  * attempts are made to prevent false sharing to unwritten page regions
  */
-class ProgressivePagedMiddlewareCache : public PagedCache
+class ProgressivePagedMiddlewareCache : public MiddlewareCache
 {
 public:
-    /** A progressive cache page */
-    struct ProgressivePage
+    /** Data pending for an application request */
+    struct PendingData
     {
-        FilePageId id;
-
-        FileRegionSet regions;
+        std::set<ProgressivePageCache::Key> readPages;
+        std::set<spfsMPIFileRequest*> writeRequests;
     };
 
     /** A writeback entry */
@@ -61,22 +61,28 @@ public:
 
         FilePageId id;
 
-        FileRegionSet regions;
+        DirtyFileRegionSet regions;
     };
+
+    /** Typedef of the type used to store file data internally */
+    typedef ProgressivePageCache::Key Key;
+
+    /** Typedef of the type used to store file data internally */
+    typedef ProgressivePageCache::Page ProgressivePage;
+
+    /** Typedef of the type used to store file data internally */
+    typedef ProgressivePageCache FileDataPageCache;
+
+    /** Typedef mapping a pending request to its pending requests */
+    typedef std::map<spfsMPIFileRequest*, PendingData> RequestMap;
+
+    /** Typedef mapping filenames to the number of current openers */
+    typedef std::map<Filename, std::size_t> OpenFileMap;
 
     /** Constructor */
     ProgressivePagedMiddlewareCache();
 
 protected:
-    /** Typedef of the type used to store file data internally */
-    typedef LRUCache<PagedCache::Key, ProgressivePage*> FileDataPageCache;
-
-    /** Typedef mapping a pending request to its pending cache pages */
-    typedef std::map<spfsMPIFileRequest*, PagedCache::InProcessPages> RequestMap;
-
-    /** Typedef mapping filenames to the number of current openers */
-    typedef std::map<Filename, std::size_t> OpenFileMap;
-
     /** Perform module initialization */
     virtual void initialize();
 
@@ -84,7 +90,7 @@ protected:
     virtual FileDataPageCache* createFileDataPageCache(size_t cacheSize);
 
     /** @return the map of pending reads indexed by request */
-    virtual RequestMap* createPendingPageMap();
+    virtual RequestMap* createPendingDataMap();
 
     /**
      * @return the map of the number of times each file has been opened for
@@ -118,24 +124,10 @@ private:
     /** Determine the set of pages for this I/O request */
     template<class spfsMPIFileIORequest> void getRequestCachePages(
         const spfsMPIFileIORequest* ioRequest,
-        std::set<PagedCache::Key>& outRequestPages) const;
-
-    /** Determine the set of partial pages for this I/O request */
-    template<class spfsMPIFileIORequest> void getRequestPartialCachePages(
-        const spfsMPIFileIORequest* ioRequest,
-        std::set<PagedCache::Key>& outRequestPages) const;
-
-    /** @return pages from readPages not already scheduled for reading */
-    std::set<PagedCache::Key> trimPendingReadPages(const std::set<PagedCache::Key>& readPages);
-
-    /** @return pages from writePages not already scheduled for writing */
-    std::set<PagedCache::Key> trimPendingWritePages(const std::set<PagedCache::Key>& writePages);
-
-    void findEvictions(const std::set<PagedCache::Key> newPages,
-                       std::vector<WritebackPage>& outWritebacks) const;
+        std::set<Key>& outRequestPages) const;
 
     /** Read pages from the file system */
-    void beginRead(const std::set<PagedCache::Key>& readPages,
+    void beginRead(const std::set<Key>& readPages,
                    spfsMPIFileRequest* parentRequest);
 
     /** Evict pages from the cache and write them to the file system */
@@ -146,12 +138,20 @@ private:
     std::vector<WritebackPage> lookupDirtyPagesInCache(const Filename& fileame) const;
 
     /** Remove request pages satisfied in the cache */
-    void lookupPagesInCache(std::set<PagedCache::Key>& requestPages);
+    void lookupPagesInCache(std::set<Key>& requestPages);
 
     /**
      * Remove all cache entries for the name flushFile
      */
     void flushCache(const Filename& flushFile);
+
+    /**
+     * Update the cache with pages marking the dirty status.  The resulting
+     * writeback pages are returned in outWritebacks.
+     */
+    void updateCache(const std::set<Key>& requestPages,
+                     bool isDirty,
+                     std::vector<WritebackPage>& outWriteBacks);
 
     /**
      * Update the cache with pages marking the dirty status.  The resulting
@@ -170,41 +170,43 @@ private:
      */
     void completeRequests();
 
-    /** Register all the pages pending to satisfy a request */
-    void registerPendingPages(spfsMPIFileRequest* request,
-                                const std::set<PagedCache::Key>& pendingReads,
-                                const std::set<PagedCache::Key>& pendingWrites);
+    /** Register the pages pending to satisfy a request */
+    void registerPendingReadPages(spfsMPIFileRequest* parentRequest,
+                                  const std::set<Key>& readPages);
 
-    /** Register additional pending writes for a page */
-    void registerPendingWritePages(spfsMPIFileRequest* request,
-                                   const std::vector<WritebackPage>& pendingWrites);
+    /** Register the requests pending to satisfy a request */
+    void registerPendingWriteRequests(spfsMPIFileRequest* parentRequest,
+                                      const std::vector<spfsMPIFileWriteAtRequest*>& requests);
 
-    /** Mark page as read for requests */
-    void resolvePendingReadPage(const PagedCache::Key& readPage);
+    /** Mark request as finished */
+    void resolvePendingPages(const std::set<Key>& readPages);
 
-    /** Mark pages as read for requests */
-    void resolvePendingReadPages(const std::set<PagedCache::Key>& readPages);
-
-    /** Mark page as written for requests */
-    void resolvePendingWritePage(const PagedCache::Key& writePage);
-
-    /** Mark pages as written for requests */
-    void resolvePendingWritePages(const std::set<PagedCache::Key>& writePages);
+    /** Mark request as finished */
+    void resolvePendingRequest(spfsMPIFileRequest* finishedRequest);
 
     /** @return Removes and returns requests with no more pages remaining */
     std::vector<spfsMPIFileRequest*> popCompletedRequests();
 
     /** @return true if there are pending read or write pages for this file */
-    bool hasPendingPages(const Filename& filename) const;
+    bool hasPendingData(const Filename& filename) const;
+
+    /** @return the set of page keys with pending pages removed */
+    std::set<Key> trimPendingReadPages(const std::set<Key>& pageKeys);
 
     /** Data structure for holding the cached data */
     FileDataPageCache* lruCache_;
 
-    /** Map of request to the total pending pages */
-    RequestMap* pendingPages_;
-
     /** Map of the number of opens for each file */
     OpenFileMap* openFileCounts_;
+
+    /** Cache page capacity */
+    std::size_t pageCapacity_;
+
+    /** Cache progressive page size */
+    FSSize pageSize_;
+
+    /** Map of request to the total pending requests */
+    RequestMap* pendingRequests_;
 };
 
 #endif /* PROGRESSIVE_PAGED_MIDDLEWARE_CACHE_H_ */

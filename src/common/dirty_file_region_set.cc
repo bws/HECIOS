@@ -18,8 +18,10 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "dirty_file_region_set.h"
+#include <cassert>
 #include <algorithm>
 #include <functional>
+#include "file_region_set.h"
 using namespace std;
 
 /** Filter functor for finding the regions that are or aren't dirty */
@@ -55,6 +57,18 @@ DirtyFileRegionSet::DirtyFileRegionSet(const DirtyFileRegionSet& other)
 {
 }
 
+DirtyFileRegionSet::DirtyFileRegionSet(const FileRegionSet& regionSet, bool isDirty)
+{
+    FileRegionSet::const_iterator iter = regionSet.begin();
+    FileRegionSet::const_iterator end = regionSet.end();
+    while (iter != end)
+    {
+        DirtyFileRegion dfr(iter->offset, iter->extent, isDirty);
+        regions_.insert(dfr);
+        ++iter;
+    }
+}
+
 DirtyFileRegionSet::~DirtyFileRegionSet()
 {
 }
@@ -66,29 +80,33 @@ DirtyFileRegionSet& DirtyFileRegionSet::operator=(const DirtyFileRegionSet& othe
     return * this;
 }
 
-set<DirtyFileRegion>::const_iterator DirtyFileRegionSet::begin() const
+DirtyFileRegionSet::const_iterator DirtyFileRegionSet::begin() const
 {
     return regions_.begin();
 }
 
-set<DirtyFileRegion>::const_iterator DirtyFileRegionSet::begin(bool isDirty) const
+DirtyFileRegionSet::const_iterator DirtyFileRegionSet::begin(bool isDirty) const
 {
+    // We need the boost filtered iterator to support this method
+    assert(false);
     DirtyFileRegionDirtyFilter dirtyFilter(isDirty);
     return find_if(regions_.begin(), regions_.end(), dirtyFilter);
 }
 
-set<DirtyFileRegion>::const_iterator DirtyFileRegionSet::end() const
+DirtyFileRegionSet::const_iterator DirtyFileRegionSet::end() const
 {
     return regions_.end();
 }
 
-set<DirtyFileRegion>::iterator DirtyFileRegionSet::begin()
+DirtyFileRegionSet::iterator DirtyFileRegionSet::begin()
 {
     return regions_.begin();
 }
 
-set<DirtyFileRegion>::iterator DirtyFileRegionSet::begin(bool isDirty)
+DirtyFileRegionSet::iterator DirtyFileRegionSet::begin(bool isDirty)
 {
+    // We need the boost filtered iterator to support this method
+    assert(false);
     DirtyFileRegionDirtyFilter dirtyFilter(isDirty);
     return find_if(regions_.begin(), regions_.end(), dirtyFilter);
 }
@@ -139,7 +157,7 @@ size_t DirtyFileRegionSet::regionSpan() const
 
 void DirtyFileRegionSet::print(ostream& ost) const
 {
-    ost << "FileRegionSet {";
+    ost << "DirtyFileRegionSet {";
     set<DirtyFileRegion>::const_iterator first = regions_.begin();
     set<DirtyFileRegion>::const_iterator last = regions_.end();
     while (first != last)

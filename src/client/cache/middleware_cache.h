@@ -61,6 +61,9 @@ public:
     /** Return the world rank */
     int getRank() const { return rank_; };
 
+    /** Add the delay associated with copying the memory in and out of the cache */
+    void addCacheMemoryDelay(cMessage* origRequest, double delay) const;
+
 protected:
     /** Implementation of initialize */
     virtual void initialize();

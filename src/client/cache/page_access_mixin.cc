@@ -244,6 +244,7 @@ void BlockIndexedPageAccessMixin::groupPagesByFilename(
         pages.insert(iter->key);
     }
 }
+
 vector<spfsCacheReadExclusiveRequest*>
 BlockIndexedPageAccessMixin::createCacheReadExclusiveRequests(
     int cacheRank,

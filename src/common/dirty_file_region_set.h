@@ -23,6 +23,7 @@
 #include <iostream>
 #include <set>
 #include "basic_types.h"
+class FileRegionSet;
 
 /** A file region that includes a dirty bit */
 class DirtyFileRegion : public FileRegion
@@ -48,6 +49,9 @@ public:
     /** Copy constructor hidden */
     DirtyFileRegionSet(const DirtyFileRegionSet& other);
 
+    /** Constructor new dirty region set from plain regions and a dirty bit */
+    DirtyFileRegionSet(const FileRegionSet& regionSet, bool isDirty);
+
     /** Destructor */
    ~DirtyFileRegionSet();
 
@@ -57,7 +61,11 @@ public:
     /** @return an iterator to the beginning of the set */
     const_iterator begin() const;
 
-    /** @return an iterator to the beginning of the set of regions marked isDirty*/
+    /**
+     * @deprecated
+     * @return an iterator to the beginning of the set of regions
+     *   marked dirty
+     */
     const_iterator begin(bool isDirty) const;
 
     /** @return an iterator to the end of the set */
@@ -66,7 +74,11 @@ public:
     /** @return an iterator to the beginning of the set */
     iterator begin();
 
-    /** @return an iterator to the beginning of the set */
+    /**
+     * @deprecated
+     * @return an iterator to the beginning of the set of regions
+     *   marked dirty
+     */
     iterator begin(bool isDirty);
 
     /** @return an iterator to the end of the set */

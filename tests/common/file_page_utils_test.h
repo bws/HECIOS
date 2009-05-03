@@ -19,12 +19,16 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include <cstddef>
 #include <iostream>
+#include <set>
 #include <string>
 #include <cppunit/TestAssert.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include "basic_data_type.h"
 #include "file_page_utils.h"
+#include "file_view.h"
+#include "pfs_types.h"
 using namespace std;
 
 /** Unit test for FilePageUtils */
@@ -38,7 +42,7 @@ class FilePageUtilsTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testDetermineRequestPages);
     CPPUNIT_TEST(testDetermineRequestFullPages);
     CPPUNIT_TEST(testDetermineRequestPartialPages);
-    CPPUNIT_TEST(testDetermineRequestPartialPageRegions);
+    CPPUNIT_TEST(testDeterminePartialPageRegions);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -59,7 +63,7 @@ public:
 
     void testDetermineRequestPartialPages();
 
-    void testDetermineRequestPartialPageRegions();
+    void testDeterminePartialPageRegions();
 
 private:
 };
@@ -89,22 +93,103 @@ void FilePageUtilsTest::testPageBeginOffset()
 
 void FilePageUtilsTest::testDetermineRequestPages()
 {
-    CPPUNIT_FAIL("fail");
+    FilePageUtils& pageUtils = FilePageUtils::instance();
+
+    // Test condition that is failing at runtime
+    FSSize pageSize = 1024;
+    FSOffset offset = 34612;
+    FSSize size = 1960;
+    FileView view(0, new ByteDataType());
+    set<FilePageId> pageIds = pageUtils.determineRequestPages(pageSize,
+                                                              offset,
+                                                              size,
+                                                              view);
+    set<FilePageId>::const_iterator iter = pageIds.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(3), pageIds.size());
+    CPPUNIT_ASSERT_EQUAL(size_t(33), *(iter++));
+    CPPUNIT_ASSERT_EQUAL(size_t(34), *(iter++));
+    CPPUNIT_ASSERT_EQUAL(size_t(35), *(iter++));
 }
 
 void FilePageUtilsTest::testDetermineRequestFullPages()
 {
-    CPPUNIT_FAIL("fail");
+    FilePageUtils& pageUtils = FilePageUtils::instance();
+
+    // Test condition that is failing at runtime
+    FSSize pageSize = 1024;
+    FSOffset offset = 34612;
+    FSSize size = 1960;
+    FileView view(0, new ByteDataType());
+    set<FilePageId> pageIds = pageUtils.determineRequestFullPages(pageSize,
+                                                                  offset,
+                                                                  size,
+                                                                  view);
+    set<FilePageId>::const_iterator iter = pageIds.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), pageIds.size());
+    CPPUNIT_ASSERT_EQUAL(size_t(34), *(iter++));
 }
 
 void FilePageUtilsTest::testDetermineRequestPartialPages()
 {
-    CPPUNIT_FAIL("fail");
+    FilePageUtils& pageUtils = FilePageUtils::instance();
+
+    // Test condition that is failing at runtime
+    FSSize pageSize = 1024;
+    FSOffset offset = 34612;
+    FSSize size = 1960;
+    FileView view(0, new ByteDataType());
+    set<FilePageId> pageIds = pageUtils.determineRequestPartialPages(pageSize,
+                                                                     offset,
+                                                                     size,
+                                                                     view);
+    set<FilePageId>::const_iterator iter = pageIds.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), pageIds.size());
+    CPPUNIT_ASSERT_EQUAL(size_t(33), *(iter++));
+    CPPUNIT_ASSERT_EQUAL(size_t(35), *(iter++));
 }
 
-void FilePageUtilsTest::testDetermineRequestPartialPageRegions()
+void FilePageUtilsTest::testDeterminePartialPageRegions()
 {
-    CPPUNIT_FAIL("fail");
+    FilePageUtils& pageUtils = FilePageUtils::instance();
+
+    // Test condition that is failing at runtime
+    FSSize pageSize = 1024;
+    FSOffset offset = 34612;
+    FSSize size = 1960;
+    FileView view(0, new ByteDataType());
+
+    // Regions for page 33
+    FileRegionSet regionSet1 = pageUtils.determinePartialPageRegions(pageSize,
+                                                                     33,
+                                                                     offset,
+                                                                     size,
+                                                                     view);
+    FileRegionSet::const_iterator iter1 = regionSet1.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), regionSet1.size());
+    CPPUNIT_ASSERT_EQUAL(FSOffset(34612), iter1->offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(204), iter1->extent);
+
+    // Regions for page 34
+    FileRegionSet regionSet2 = pageUtils.determinePartialPageRegions(pageSize,
+                                                                     34,
+                                                                     offset,
+                                                                     size,
+                                                                     view);
+    FileRegionSet::const_iterator iter2 = regionSet2.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), regionSet2.size());
+    CPPUNIT_ASSERT_EQUAL(FSOffset(34816), iter2->offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(1024), iter2->extent);
+
+    // Regions for page 35
+    FileRegionSet regionSet3 = pageUtils.determinePartialPageRegions(pageSize,
+                                                                     35,
+                                                                     offset,
+                                                                     size,
+                                                                     view);
+    FileRegionSet::const_iterator iter3 = regionSet3.begin();
+    CPPUNIT_ASSERT_EQUAL(size_t(1), regionSet3.size());
+    CPPUNIT_ASSERT_EQUAL(FSOffset(35840), iter3->offset);
+    CPPUNIT_ASSERT_EQUAL(FSSize(732), iter3->extent);
 }
 
 #endif
