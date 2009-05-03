@@ -84,9 +84,11 @@ include @INSTALL_DIR@/ini/palmetto_myri10g.ini
 #**.mpi.middlewareCacheType = "PagedMiddlewareCacheMesi"
 #**.mpi.middlewareCacheType = "PagedMiddlewareCacheWithTwinNoBlockIndexed"
 #**.mpi.middlewareCacheType = "PagedMiddlewareCacheWithTwin"
+#**.mpi.middlewareCacheType = "ProgressivePagedMiddlewareCache"
 #**.mpi.middlewareCacheType = "SharedPagedMiddlewareCacheWithTwinNoBlockIndexed"
 #**.mpi.middlewareCacheType = "SharedDirectPagedMiddlewareCache"
 #**.mpi.middlewareCacheType = "SharedPagedMiddlewareCacheWithTwin"
+#**.mpi.middlewareCacheType = "SharedProgressivePagedMiddlewareCache"
 **.mpi.cache.pageCapacity = 16
 **.mpi.cache.pageSize = 32768
 
