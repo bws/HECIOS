@@ -120,7 +120,7 @@ void ProgressivePageAccessStrategy::groupPagesByFilename(
         ProgressivePage p = {iter->id, iter->regions};
 
         // Determine whether page is full or partial
-        if (pageSize_ == iter->regions.size())
+        if (pageSize_ == iter->regions.numBytes())
         {
             pages.fullPages.insert(p);
         }
@@ -174,14 +174,12 @@ FileDescriptor* ProgressivePageAccessStrategy::getRegionViewDescriptor(
     vector<size_t> displacements;
     while (idIter != idEnd)
     {
-        cerr << __FILE__ << ":" << __LINE__ << ":" << "Dirty page regions: " << idIter->regions << endl;
         DirtyFileRegionSet::const_iterator iter = idIter->regions.begin();
         DirtyFileRegionSet::const_iterator last = idIter->regions.end();
         while (iter != last)
         {
             if (iter->isDirty)
             {
-                cerr << __FILE__ << ":" << __LINE__ << ":" << "Adding Partial Region: " << *iter << endl;
                 displacements.push_back(iter->offset);
                 blockLengths.push_back(iter->extent);
             }

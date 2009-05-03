@@ -16,5 +16,6 @@ SIM_SRC +=  $(DIR)/direct_paged_middleware_cache.cc \
 		$(DIR)/progressive_paged_middleware_cache.cc \
 		$(DIR)/shared_direct_paged_middleware_cache.cc \
 		$(DIR)/shared_paged_middleware_cache_with_twin.cc \
-		$(DIR)/shared_paged_middleware_cache_with_twin_no_block_indexed.cc
+		$(DIR)/shared_paged_middleware_cache_with_twin_no_block_indexed.cc \
+		$(DIR)/shared_progressive_paged_middleware_cache.cc
 		

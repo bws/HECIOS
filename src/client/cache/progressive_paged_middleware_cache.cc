@@ -265,7 +265,6 @@ void ProgressivePagedMiddlewareCache::processFileClose(spfsMPIFileCloseRequest* 
         if (0 == openCount)
         {
             vector<WritebackPage> writePages = lookupDirtyPagesInCache(closeName);
-            cerr << "On close, writing back pages: " << writePages.size() << endl;
             beginWritebackEvictions(writePages, close);
             flushCache(closeName);
         }
@@ -365,7 +364,9 @@ void ProgressivePagedMiddlewareCache::processFileWrite(spfsMPIFileWriteAtRequest
             else
             {
                 // Set the total memory delay
-                addCacheMemoryDelay(write, 0.0);
+                double delay = byteCopyTime() * write->getCount() *
+                    write->getDataType()->getTrueExtent();
+                addCacheMemoryDelay(write, delay);
 
                 // Register the request with teh empty set so that it will
                 // complete correctly if no writebacks are required
@@ -403,14 +404,12 @@ void ProgressivePagedMiddlewareCache::processFileWrite(spfsMPIFileWriteAtRequest
         }
         case FSM_Enter(UPDATE_CACHE):
         {
-            cerr << "Updating cache on write." << endl;
             // Update the cache and acquire any necessary writebacks
             vector<WritebackPage> writebackPages;
             updateCache(write, writebackPages);
 
             // The writeback buffer is not infinite, the request will need
             // to pause while writebacks occur
-            cerr << "Performing writebacks: " << writebackPages.size() << endl;
             if (!writebackPages.empty())
             {
                 beginWritebackEvictions(writebackPages, 0);
@@ -483,7 +482,6 @@ void ProgressivePagedMiddlewareCache::beginWritebackEvictions(
     const vector<WritebackPage>& writebackPages,
     spfsMPIFileRequest* parentRequest)
 {
-    cerr << "beginning writeback" << endl;
     // Use the progresive page write strategy to construct write requests
     ProgressivePageAccessStrategy pageAccessor(pageSize_);
     vector<spfsMPIFileWriteAtRequest*> writes =
@@ -491,7 +489,6 @@ void ProgressivePagedMiddlewareCache::beginWritebackEvictions(
 
     for (size_t i = 0; i < writes.size(); i++)
     {
-        cerr << "Sending writeback" << endl;
         send(writes[i], fsOutGateId());
     }
     registerPendingWriteRequests(parentRequest, writes);
@@ -519,8 +516,16 @@ void ProgressivePagedMiddlewareCache::lookupPagesInCache(set<Key>& requestPages)
     {
         try
         {
-            lruCache_->lookup(*iter);
-            requestPages.erase(iter++);
+            ProgressivePage* page = lruCache_->lookup(*iter);
+
+            if (page->regions.numBytes() == pageSize_)
+            {
+                requestPages.erase(iter++);
+            }
+            else
+            {
+                ++iter;
+            }
         } catch (NoSuchEntry& e)
         {
             // Lookup failed, increment to next entry
@@ -587,7 +592,6 @@ void ProgressivePagedMiddlewareCache::updateCache(spfsMPIFileWriteAtRequest* wri
                                                           offset,
                                                           size,
                                                           fd->getFileView());
-    cerr << "Write Request is: " << offset << "," << size << endl;
 
     set<FilePageId>::const_iterator end = pageIds.end();
     for (set<FilePageId>::const_iterator iter = pageIds.begin() ; iter != end; ++iter)
@@ -598,7 +602,7 @@ void ProgressivePagedMiddlewareCache::updateCache(spfsMPIFileWriteAtRequest* wri
                                                               size,
                                                               fd->getFileView());
         DirtyFileRegionSet dirtyRegions(frs, true);
-        cerr << "Resulting page: " << *iter << " Regions: " << dirtyRegions << endl;
+
         // Create the cache entry
         Key newKey(fd->getFilename(), *iter);
         ProgressivePage newPage = {*iter, dirtyRegions};

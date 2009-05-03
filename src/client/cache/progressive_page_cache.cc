@@ -168,45 +168,28 @@ bool ProgressivePageCache::exists(const Key& key) const
     return false;
 }
 
-std::vector<ProgressivePageCache::Page*> ProgressivePageCache::lookup(const Key& key)
+ProgressivePageCache::Page* ProgressivePageCache::lookup(const Key& key)
 {
-    std::vector<Page*> values;
-
+    Page* page = 0;
     // Search the map for key
-    std::pair<MapType::iterator, MapType::iterator> range;
-    range = keyEntryMap_.equal_range(key);
-    MapType::iterator first = range.first;
-    MapType::iterator last = range.second;
-    if (first != last)
+    MapType::iterator iter = keyEntryMap_.find(key);
+    if (iter != keyEntryMap_.end())
     {
+        // Retrieve the value
+        EntryType* entry = iter->second;
+        page = entry->page;
+
+        // Refresh the LRU list
+        lruList_.erase(entry->lruRef);
         lruList_.push_front(key);
-        bool erased = false;
-        while (first != last)
-        {
-            // Retrieve the value
-            EntryType* entry = first->second;
-            values.push_back(entry->page);
-
-            // Remove the LRU ref exactly once
-            if (!erased)
-            {
-                lruList_.erase(entry->lruRef);
-                erased = true;
-            }
-
-            // Refresh the LRU list
-            entry->lruRef = lruList_.begin();
-
-            // Move to the next element for this key
-            first++;
-        }
+        entry->lruRef = lruList_.begin();
     }
     else
     {
         NoSuchEntry e;
         throw e;
     }
-    return values;
+    return page;
 }
 
 std::vector<ProgressivePageCache::Page*> ProgressivePageCache::getDirtyEntries() const

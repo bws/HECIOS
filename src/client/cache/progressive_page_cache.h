@@ -119,7 +119,7 @@ public:
      *
      * @throw NoSuchEntry if no entry exists for the key
      */
-    std::vector<Page*> lookup(const Key& key);
+    Page* lookup(const Key& key);
 
     /**
      * Check if an entry exists without modifying its LRU status
