@@ -120,7 +120,8 @@ void ProgressivePageAccessStrategy::groupPagesByFilename(
         ProgressivePage p = {iter->id, iter->regions};
 
         // Determine whether page is full or partial
-        if (pageSize_ == iter->regions.numBytes())
+        if (pageSize_ == iter->regions.numBytes() &&
+            1 == iter->regions.size())
         {
             pages.fullPages.insert(p);
         }
