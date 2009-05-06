@@ -93,15 +93,6 @@ bool FSReadSM::updateState(cFSM& currentState, cMessage* msg)
         case FSM_Enter(COUNT_SERVER_RESPONSE):
         {
             assert(0 != dynamic_cast<spfsReadResponse*>(msg));
-
-            // Need a quick workaround in case there isn't a need for a
-            // flow here
-            spfsReadRequest* readRequest =
-                static_cast<spfsReadRequest*>(msg->contextPointer());
-            if (0 != readRequest->getLocalSize())
-            {
-                startFlow(dynamic_cast<spfsReadResponse*>(msg));
-            }
             break;
         }
         case FSM_Exit(COUNT_SERVER_RESPONSE):
@@ -191,13 +182,14 @@ void FSReadSM::enterRead()
                 metaData->bstreamSizes[i],
                 aggregateSize);
 
-            // Create a request that the server will not flow data for
-            // because the read data is not present in the file
+            // Create a request for the server
             spfsReadRequest* req = static_cast<spfsReadRequest*>(read.dup());
             req->setAutoCleanup(true);
             req->setHandle(metaData->dataHandles[i]);
             req->setDataSize(aggregateSize);
             req->setBstreamSize(metaData->bstreamSizes[i]);
+
+            // If the local bytes are 0, no data should flow
             req->setLocalSize(reqBytes);
 
             // Add to the number of requests sent
@@ -208,6 +200,7 @@ void FSReadSM::enterRead()
                 req->setDist(metaData->dist->clone());
                 req->setClientFlowBmiTag(simulation.getUniqueNumber());
                 req->setServerFlowBmiTag(simulation.getUniqueNumber());
+                startFlow(req);
                 numFlows++;
             }
 
@@ -235,15 +228,11 @@ bool FSReadSM::fileHasReadData(size_t reqBytes)
     return (reqBytes <= fileSize);
 }
 
-void FSReadSM::startFlow(spfsReadResponse* readResponse)
+void FSReadSM::startFlow(spfsReadRequest* serverRequest)
 {
     // Extract the file descriptor
     FileDescriptor* fd = readRequest_->getFileDes();
     assert(0 != fd);
-
-    // Extract the server request
-    spfsReadRequest* serverRequest =
-        static_cast<spfsReadRequest*>(readResponse->contextPointer());
 
     // Create the flow start message
     spfsClientDataFlowStart* flowStart =

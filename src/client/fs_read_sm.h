@@ -26,7 +26,7 @@ class cMessage;
 class FSClient;
 class spfsMPIFileReadAtRequest;
 class spfsDataFlowFinish;
-class spfsReadResponse;
+class spfsReadRequest;
 
 /**
  * Class responsible for removing a file
@@ -61,7 +61,7 @@ private:
     bool isReadComplete();
 
     /** Start a flow */
-    void startFlow(spfsReadResponse* readResponse);
+    void startFlow(spfsReadRequest* serverRequest);
 
     /** The originating MPI request */
     spfsMPIFileReadAtRequest* readRequest_;
