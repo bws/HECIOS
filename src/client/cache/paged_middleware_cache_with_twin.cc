@@ -522,9 +522,7 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
             // Update the pending requests with the pages fully written here
             resolvePendingReadPages(filename, fullPages);
 
-            // TODO: If the writebuffer is not infinite, the request will need
-            // to pause while writebacks occur
-            //registerPendingWritePages(write, writebackPages);
+            registerPendingWritePages(write, writebackPages);
             beginWritebackEvictions(writebackPages, 0);
             break;
         }

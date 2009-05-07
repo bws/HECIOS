@@ -346,10 +346,7 @@ void PagedMiddlewareCacheWithTwinNoBlockIndexed::processFileRead(spfsMPIFileRead
         resolvePendingReadPages(requestPages);
 
         beginWritebackEvictions(writebackPages, 0);
-
-        // TODO: If the writebuffer is not infinite, the request will need
-        // to pause while writebacks occur
-        //addPendingWrites(read, writebackPages);
+        //TODO registerPendingWrites(read, writebackPages);
     }
 }
 
@@ -559,10 +556,7 @@ void PagedMiddlewareCacheWithTwinNoBlockIndexed::processFileWrite(spfsMPIFileWri
 
             // Update the pending requests with the pages fully written here
             resolvePendingReadPages(filename, fullPages);
-
-            // TODO: If the writebuffer is not infinite, the request will need
-            // to pause while writebacks occur
-            //registerPendingWritePages(write, writebackPages);
+            registerPendingWritePages(write, writebackPages);
             break;
         }
         case FSM_Exit(BEGIN_WRITEBACK):
