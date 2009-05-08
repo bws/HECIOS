@@ -349,10 +349,7 @@ void PagedMiddlewareCacheWithTwin::processFileRead(spfsMPIFileReadAtRequest* rea
         resolvePendingReadPages(requestPages);
 
         beginWritebackEvictions(writebackPages, 0);
-
-        // TODO: If the writebuffer is not infinite, the request will need
-        // to pause while writebacks occur
-        //addPendingWrites(read, writebackPages);
+        registerPendingWritePages(read, writebackPages);
     }
 }
 
