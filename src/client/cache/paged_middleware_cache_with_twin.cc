@@ -188,19 +188,8 @@ void PagedMiddlewareCacheWithTwin::handleFileSystemMessage(cMessage* msg)
 
 void PagedMiddlewareCacheWithTwin::processRequest(cMessage* request, cMessage* msg)
 {
-    if (0 == request)
-    {
-        // Extract the writeback pages and resolve the associated pages
-        assert(0 != dynamic_cast<spfsMPIFileWriteAtResponse*>(msg));
-        spfsMPIFileWriteAtRequest* writeback =
-            static_cast<spfsMPIFileWriteAtRequest*>(msg->contextPointer());
-
-        // Resolve this set of pending pages
-        set<PagedCache::Key> writtenPages;
-        getRequestCachePages(writeback, writtenPages);
-        resolvePendingWritePages(writtenPages);
-    }
-    else if (SPFS_MPI_FILE_OPEN_REQUEST == request->kind())
+    assert(0 != request);
+    if (SPFS_MPI_FILE_OPEN_REQUEST == request->kind())
     {
         spfsMPIFileOpenRequest* open = static_cast<spfsMPIFileOpenRequest*>(request);
         processFileOpen(open, msg);
@@ -214,13 +203,33 @@ void PagedMiddlewareCacheWithTwin::processRequest(cMessage* request, cMessage* m
     {
         spfsMPIFileReadAtRequest* readAt =
             static_cast<spfsMPIFileReadAtRequest*>(request);
-        processFileRead(readAt, msg);
+        spfsMPIFileRequest* parent = static_cast<spfsMPIFileRequest*>(msg->contextPointer());
+        if (0 != dynamic_cast<spfsMPIFileWriteAtResponse*>(msg) &&
+            (PARTIAL_PAGE_WRITEBACK_NAME == parent->name() ||
+             PAGE_WRITEBACK_NAME == parent->name()))
+        {
+            processWriteback(readAt, msg);
+        }
+        else
+        {
+            processFileRead(readAt, msg);
+        }
     }
     else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == request->kind())
     {
         spfsMPIFileWriteAtRequest* writeAt =
             static_cast<spfsMPIFileWriteAtRequest*>(request);
-        processFileWrite(writeAt, msg);
+        spfsMPIFileRequest* parent = static_cast<spfsMPIFileRequest*>(msg->contextPointer());
+        if (0 != dynamic_cast<spfsMPIFileWriteAtResponse*>(msg) &&
+            (PARTIAL_PAGE_WRITEBACK_NAME == parent->name() ||
+             PAGE_WRITEBACK_NAME == parent->name()))
+        {
+            processWriteback(writeAt, msg);
+        }
+        else
+        {
+            processFileWrite(writeAt, msg);
+        }
     }
     else
     {
@@ -232,6 +241,30 @@ void PagedMiddlewareCacheWithTwin::processRequest(cMessage* request, cMessage* m
 
     // Complete any requests satisfied by this message
     completeRequests();
+}
+
+void PagedMiddlewareCacheWithTwin::processWriteback(spfsMPIFileRequest* request,
+                                                    cMessage* msg)
+{
+    assert(0 != request);
+    assert(0 != dynamic_cast<spfsMPIFileWriteAtResponse*>(msg));
+
+    // Extract the writeback pages and resolve the associated pages
+    spfsMPIFileWriteAtRequest* writeback =
+        static_cast<spfsMPIFileWriteAtRequest*>(msg->contextPointer());
+
+    // If this is a partial page writeback, resolve it that way
+    // Otherwise, resolve the pages normally
+    if (PARTIAL_PAGE_WRITEBACK_NAME == writeback->name())
+    {
+        resolvePendingPartialWrite(request);
+    }
+    else
+    {
+        set<PagedCache::Key> writePages;
+        getRequestCachePages(writeback, writePages);
+        resolvePendingWritePages(writePages);
+    }
 }
 
 void PagedMiddlewareCacheWithTwin::processFileOpen(spfsMPIFileOpenRequest* open,
@@ -348,8 +381,8 @@ void PagedMiddlewareCacheWithTwin::processFileRead(spfsMPIFileReadAtRequest* rea
         // Update the pending requests
         resolvePendingReadPages(requestPages);
 
-        beginWritebackEvictions(writebackPages, 0);
         registerPendingWritePages(read, writebackPages);
+        beginWritebackEvictions(writebackPages, read);
     }
 }
 
@@ -460,7 +493,8 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
             {
                 vector<CacheEntry> writebackPages;
                 updateCacheWithReadPageUpdates(write, cachedPages, writebackPages);
-                beginWritebackEvictions(writebackPages, 0);
+                registerPendingWritePages(write, writebackPages);
+                beginWritebackEvictions(writebackPages, write);
             }
             break;
         }
@@ -520,7 +554,7 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
             resolvePendingReadPages(filename, fullPages);
 
             registerPendingWritePages(write, writebackPages);
-            beginWritebackEvictions(writebackPages, 0);
+            beginWritebackEvictions(writebackPages, write);
             break;
         }
         case FSM_Exit(UPDATE_CACHE):
@@ -674,6 +708,7 @@ void PagedMiddlewareCacheWithTwin::beginWritebackEvictions(
                 createPageWriteRequest(iter->first,
                                        iter->second,
                                        parentRequest);
+            writebackRequest->setName(PAGE_WRITEBACK_NAME.c_str());
             send(writebackRequest, fsOutGateId());
             iter++;
         }
@@ -1005,9 +1040,16 @@ void PagedMiddlewareCacheWithTwin::registerPendingWritePages(spfsMPIFileRequest*
             partialCount += partial->regions.size();
         }
     }
-    if (0 != partialCount)
+
+    // Update the partial count
+    PartialRequestMap::iterator iter = pendingPartialPages_->find(request);
+    if (pendingPartialPages_->end() == iter)
     {
         (*pendingPartialPages_)[request] = partialCount;
+    }
+    else
+    {
+        iter->second += partialCount;
     }
 }
 
@@ -1088,31 +1130,42 @@ vector<spfsMPIFileRequest*> PagedMiddlewareCacheWithTwin::popCompletedRequests()
     RequestMap::iterator iter;
     for (iter = pendingPages_->begin(); pendingPages_->end() != iter; /* Do Nothing */)
     {
+        assert (0 != iter->first);
         RequestMap::iterator currentEle = iter++;
         PagedCache::InProcessPages& inProcess = currentEle->second;
-        if (0 != currentEle->first &&
-            inProcess.readPages.size() == 0 &&
-            inProcess.writePages.size() == 0)
+        spfsMPIFileRequest* request = currentEle->first;
+
+        // Retrieve the partial count
+        size_t partialCount = 0;
+        PartialRequestMap::const_iterator iter = pendingPartialPages_->find(request);
+        if (iter != pendingPartialPages_->end())
+        {
+            partialCount = iter->second;
+        }
+
+        // Perform the completeness checks
+        if (0 == inProcess.readPages.size() &&
+            0 == inProcess.writePages.size() &&
+            0 == partialCount)
         {
             // Remove completed requests
             if (0 == dynamic_cast<spfsMPIFileCloseRequest*>(currentEle->first))
             {
-                completeRequests.push_back(currentEle->first);
-                pendingPages_->erase(currentEle->first);
+                completeRequests.push_back(request);
+                pendingPartialPages_->erase(request);
+                pendingPages_->erase(currentEle);
             }
             else
             {
                 // If this is a close, we need to additionally ensure that
                 // no other reads or writes for this file are ongoing and the
                 // partial count is zero
-                spfsMPIFileRequest* request = currentEle->first;
                 Filename closeName = request->getFileDes()->getFilename();
-                if (!hasPendingPages(closeName) &&
-                    0 == (*pendingPartialPages_)[request])
+                if (!hasPendingPages(closeName))
                 {
-                    completeRequests.push_back(currentEle->first);
-                    pendingPages_->erase(currentEle);
+                    completeRequests.push_back(request);
                     pendingPartialPages_->erase(request);
+                    pendingPages_->erase(currentEle);
                 }
             }
         }

@@ -101,6 +101,8 @@ private:
 
     void processRequest(cMessage* request, cMessage* msg);
 
+    void processWriteback(spfsMPIFileRequest* request, cMessage* msg);
+
     void processFileOpen(spfsMPIFileOpenRequest* open, cMessage* msg);
 
     void processFileClose(spfsMPIFileCloseRequest* close, cMessage* msg);
