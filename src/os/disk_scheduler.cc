@@ -60,7 +60,7 @@ void DiskScheduler::initialize()
     inGateId_ = gate("in")->id();
     outGateId_ = gate("out")->id();
     requestGateId_ = gate("request")->id();
-    
+
     // Initialize derived schedulers
     initializeScheduler();
 }
@@ -92,11 +92,11 @@ void DiskScheduler::handleMessage( cMessage *msg )
                 thisEntry->isReadRequest = true;
             }
             else if (spfsOSWriteDeviceRequest* write =
-                     dynamic_cast<spfsOSWriteDeviceRequest*>(write))
+                     dynamic_cast<spfsOSWriteDeviceRequest*>(msg))
             {
                 thisEntry = new SchedulerEntry();
                 thisEntry->lba = write->getAddress();
-                thisEntry->request = msg;            
+                thisEntry->request = msg;
                 thisEntry->isReadRequest = false;
             }
 
@@ -124,7 +124,7 @@ void DiskScheduler::handleMessage( cMessage *msg )
                static_cast<spfsOSWriteDeviceRequest*>(write->contextPointer());
             LogicalBlockAddress writtenBlock = writeReq->getAddress();
             completedReqs = popRequestsCompletedByWrite(writtenBlock);
-            
+
         }
 
         // Construct the responses for the completed requests
