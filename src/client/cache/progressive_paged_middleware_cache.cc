@@ -99,6 +99,17 @@ void ProgressivePagedMiddlewareCache::initialize()
 
     // Initialize the open file map
     openFileCounts_ = createOpenFileMap();
+
+    // Initialize statistical data
+    recordScalars_ = false;
+    maxPageRegions_ = 0;
+}
+
+void ProgressivePagedMiddlewareCache::finish()
+{
+    recordScalar("SPFS Max Progressive Page Regions", maxPageRegions_);
+
+    MiddlewareCache::finish();
 }
 
 ProgressivePagedMiddlewareCache::FileDataPageCache*
@@ -489,6 +500,11 @@ void ProgressivePagedMiddlewareCache::beginWritebackEvictions(
 
     for (size_t i = 0; i < writes.size(); i++)
     {
+        if (recordScalars_)
+        {
+            // Determine the max number of regions
+            maxPageRegions_ = 0;
+        }
         send(writes[i], fsOutGateId());
     }
     registerPendingWriteRequests(parentRequest, writes);

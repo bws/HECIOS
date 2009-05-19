@@ -86,6 +86,9 @@ protected:
     /** Perform module initialization */
     virtual void initialize();
 
+    /** Perform module finalization */
+    virtual void finish();
+
     /** @return the file data page cache for this middleware */
     virtual FileDataPageCache* createFileDataPageCache(size_t cacheSize);
 
@@ -207,6 +210,12 @@ private:
 
     /** Map of request to the total pending requests */
     RequestMap* pendingRequests_;
+
+    /** Configure whether scalars are reported */
+    bool recordScalars_;
+
+    /** Track the maximum number of page regions */
+    std::size_t maxPageRegions_;
 };
 
 #endif /* PROGRESSIVE_PAGED_MIDDLEWARE_CACHE_H_ */
