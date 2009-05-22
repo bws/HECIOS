@@ -64,6 +64,16 @@ void handleMPIBcast(const char* text)
     LanlTraceScanActions::instance().handleMPIBcast(text);
 }
 
+void handleMPICartCreate(const char* text)
+{
+    LanlTraceScanActions::instance().handleMPICartCreate(text);
+}
+
+void handleMPICartGet(const char* text)
+{
+    LanlTraceScanActions::instance().handleMPICartGet(text);
+}
+
 void handleMPICommCreate(const char* text)
 {
     LanlTraceScanActions::instance().handleMPICommCreate(text);
@@ -159,6 +169,16 @@ void handleMPIFileSetSize(const char* text)
     LanlTraceScanActions::instance().handleMPIFileSetSize(text);
 }
 
+void handleMPIFileSetView(const char* text)
+{
+    LanlTraceScanActions::instance().handleMPIFileSetView(text);
+}
+
+void handleMPIFileSync(const char* text)
+{
+    LanlTraceScanActions::instance().handleMPIFileSync(text);
+}
+
 void handleMPIFileWrite(const char* text)
 {
     LanlTraceScanActions::instance().handleMPIFileWrite(text);
@@ -213,6 +233,22 @@ void handleMPIInit(const char* text)
 {
     LanlTraceScanActions::instance().handleMPIInit(text);
 }
+
+void handleMPITypeCommit(const char* text)
+{
+    LanlTraceScanActions::instance().handleMPITypeCommit(text);
+}
+
+void handleMPITypeContiguous(const char* text)
+{
+    LanlTraceScanActions::instance().handleMPITypeContiguous(text);
+}
+
+void handleMPITypeCreateSubarray(const char* text)
+{
+    LanlTraceScanActions::instance().handleMPITypeCreateSubarray(text);
+}
+
 
 void handleMPITypeSize(const char* text)
 {
@@ -327,7 +363,7 @@ void LanlTraceScanActions::handleMPIBarrier(const string& text)
     string startTime = extractStartTime(text);
     string duration = extractDuration(text);
     size_t pos = text.find("MPI_Barrier(");
-    string comm = text.substr(pos + 12, 10);
+    string comm = text.substr(pos + 12, TRACE_ID_LENGTH);
 
     TraceCall tc = createTraceCall("MPI_BARRIER", startTime, duration);
     tc.params.push_back(comm);
@@ -346,7 +382,7 @@ void LanlTraceScanActions::handleMPIBcast(const string& text)
     string duration = "0.0";
 
     // Extract the buffer address
-    size_t begin = text.find("MPI_Bcast(") + 10;
+    size_t begin = text.find("MPI_Bcast(") + strlen("MPI_Bcast(");
     size_t end = text.find(",", begin);
     string bufferAddr = text.substr(begin, end - begin);
 
@@ -380,10 +416,106 @@ void LanlTraceScanActions::handleMPIBcast(const string& text)
     traceCalls_.push_back(tc);
 }
 
+void LanlTraceScanActions::handleMPICartCreate(const string& text)
+{
+    //cerr << __FILE__ << ":" << __LINE__ << ":" << "Handling MPI_CART_CREATE" << endl;
+    //cerr << "CartCreate Text: " << text << endl;
+    // Extract start time, duration, comm and newcomm
+    string startTime = extractStartTime(text);
+    string duration = extractDuration(text);
+
+    // Extract the old comm
+    size_t begin = text.find("MPI_Cart_create(") + strlen("MPI_Cart_create(");
+    size_t end = text.find(",", begin);
+    string oldCommId = text.substr(begin, end - begin);
+
+    // Extract number of dimensions
+    begin = end + 2;
+    end = text.find(",", begin);
+    string ndim = text.substr(begin, end - begin);
+
+    // Extract the dimensions
+    begin = end + 2;
+    end = text.find(",", begin);
+    string dims = "[]";
+
+    // Extract the periods
+    begin = end + 2;
+    end = text.find(",", begin);
+    string periods = "[]";
+
+    // Extract the reorder flag
+    begin = end + 2;
+    end = text.find(",", begin);
+    string reorderFlag = text.substr(begin, end - begin);
+
+    // Extract the new communicator
+    size_t pos = text.rfind("\"comm=") + 6;
+    string newCommId = text.substr(pos, TRACE_ID_LENGTH);
+
+
+    // Create the trace call
+    TraceCall tc = createTraceCall("MPI_CART_CREATE", startTime, duration);
+    tc.params.push_back(oldCommId);
+    tc.params.push_back(ndim);
+    tc.params.push_back(dims);
+    tc.params.push_back(periods);
+    tc.params.push_back(reorderFlag);
+    tc.params.push_back(newCommId);
+    traceCalls_.push_back(tc);
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Warning: MPI_Cart_create not fully supported." << endl;
+}
+
+void LanlTraceScanActions::handleMPICartGet(const string& text)
+{
+    //cerr << __FILE__ << ":" << __LINE__ << ":" << "Handling MPI_CART_GET" << endl;
+    //cerr << "CartGet Text: " << text << endl;
+    // Extract start time, duration, comm and newcomm
+    string startTime = extractStartTime(text);
+    string duration = extractDuration(text);
+
+    // Extract the old comm
+    size_t begin = text.find("MPI_Cart_get(") + strlen("MPI_Cart_get(");
+    size_t end = text.find(",", begin);
+    string commId = text.substr(begin, end - begin);
+
+    // Extract max number of dimensions
+    begin = end + 2;
+    end = text.find(",", begin);
+    string maxDims = text.substr(begin, end - begin);
+
+    // Extract the dimensions
+    begin = end + 2;
+    end = text.find(",", begin);
+    string dims = "[]";
+
+    // Extract the periods
+    begin = end + 2;
+    end = text.find(",", begin);
+    string periods = "[]";
+
+    // Extract the coordinates
+    begin = end + 2;
+    end = text.find(" ", begin);
+    string coords = "[]";
+
+    // Create the trace call
+    TraceCall tc = createTraceCall("MPI_CART_GET", startTime, duration);
+    tc.params.push_back(commId);
+    tc.params.push_back(maxDims);
+    tc.params.push_back(dims);
+    tc.params.push_back(periods);
+    tc.params.push_back(coords);
+    traceCalls_.push_back(tc);
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Warning: MPI_Cart_get not fully supported." << endl;
+}
+
 void LanlTraceScanActions::handleMPICommCreate(const string& text)
 {
     cerr << __FILE__ << ":" << __LINE__ << ":" << "Handling MPI_COMM_CREATE" << endl;
-    cerr << "Bcast Text: " << text << endl;
+    cerr << "CommCreate Text: " << text << endl;
     assert(0);
 }
 
@@ -402,9 +534,9 @@ void LanlTraceScanActions::handleMPICommDup(const string& text)
     string duration = extractDuration(text);
 
     size_t pos = text.rfind("\"comm=") + 6;
-    string commId = text.substr(pos, 10);
+    string commId = text.substr(pos, TRACE_ID_LENGTH);
     pos = text.rfind("\"newcomm=") + 9;
-    string newCommId = text.substr(pos, 10);
+    string newCommId = text.substr(pos, TRACE_ID_LENGTH);
 
     // Create the trace call
     TraceCall tc = createTraceCall("MPI_COMM_DUP", startTime, duration);
@@ -470,7 +602,34 @@ void LanlTraceScanActions::handleMPIFileClose(const string& text)
 
 void LanlTraceScanActions::handleMPIFileDelete(const string& text)
 {
-    cerr << __FILE__ << ":" << __LINE__ << ":" << "Unhandled MPI_FILE_DELETE" << endl;
+    //cerr << __FILE__ << ":" << __LINE__ << ":" << "Unhandled MPI_FILE_DELETE" << endl;
+    // Extract the start time and duration
+    string startTime = text.substr(0, 15);
+    size_t pos = text.rfind(" = ");
+    string duration = text.substr(pos + 6, 8);
+
+    // Extract the filename
+    size_t begin = text.find("MPI_File_delete(") + strlen("MPI_File_delete(");
+    size_t end = text.find(",", begin);
+    string deleteName = text.substr(begin, end - begin);
+
+    // Modify the filename to ensure it creates a valid file system path
+    string filename = deleteName;
+    if ('/' != filename[0])
+    {
+        filename = "/autopath/" + deleteName;
+    }
+
+    // Extract the info address
+    begin = end + 2;
+    end = text.find(" ", begin);
+    string infoAddr = text.substr(begin, end - begin);
+
+    // Create the trace call
+    TraceCall tc = createTraceCall("MPI_FILE_DELETE", startTime, duration);
+    tc.params.push_back(filename);
+    tc.params.push_back(infoAddr);
+    traceCalls_.push_back(tc);
 }
 
 void LanlTraceScanActions::handleMPIFileGetAMode(const string& text)
@@ -611,7 +770,48 @@ void LanlTraceScanActions::handleMPIFileRead(const string& text)
 
 void LanlTraceScanActions::handleMPIFileReadAll(const string& text)
 {
-    cerr << __FILE__ << ":" << __LINE__ << ":" << "Unhandled MPI_FILE_READ_ALL" << endl;
+    //cerr << __FILE__ << ":" << __LINE__ << ":" << "Unhandled MPI_FILE_READ_ALL" << endl;
+    // Extract the start time and duration
+    string startTime = extractStartTime(text);
+    string duration = extractDuration(text);
+
+    // Extract the current file handle
+    ostringstream oss;
+    oss << currentFile_.second;
+    string fileHandle = oss.str();
+
+    // Skip over the file handle address
+    size_t begin = text.find("MPI_File_read_all(") + strlen("MPI_File_read_all(");
+    size_t end = text.find(",", begin);
+
+    // Extract the bufferAddr
+    begin = end + 2;
+    end = text.find(",", begin);
+    string bufferAddr = text.substr(begin, end - begin);
+
+    // Extract the count
+    begin = end + 2;
+    end = text.find(",", begin);
+    string count = text.substr(begin, end - begin);
+
+    // Extract the datatype
+    begin = end + 2;
+    end = text.find(",", begin);
+    string datatype = text.substr(begin, end - begin);
+
+    // Extract the statusAddr
+    begin = end + 2;
+    end = text.find(" ", begin);
+    string statusAddr = text.substr(begin, end - begin);
+
+    // Create the trace call
+    TraceCall tc = createTraceCall("MPI_FILE_READ_ALL", startTime, duration);
+    tc.params.push_back(fileHandle);
+    tc.params.push_back(bufferAddr);
+    tc.params.push_back(count);
+    tc.params.push_back(datatype);
+    tc.params.push_back(statusAddr);
+    traceCalls_.push_back(tc);
 }
 
 void LanlTraceScanActions::handleMPIFileReadAt(const string& text)
@@ -740,6 +940,87 @@ void LanlTraceScanActions::handleMPIFileSetSize(const string& text)
 }
 
 
+void LanlTraceScanActions::handleMPIFileSetView(const string& text)
+{
+    //cerr << __FILE__ << ":" << __LINE__ << ":" << "Unhandled MPI_FILE_SET_VIEW" << endl;
+    //cerr << "Set View Text: " << text << endl;
+    // Extract the start time and duration
+    string startTime = extractStartTime(text);
+    string duration = extractDuration(text);
+
+    // Extract the current file handle
+    ostringstream oss;
+    oss << currentFile_.second;
+    string fileHandle = oss.str();
+
+    // Skip over the file handle address
+    size_t begin = text.find("MPI_File_set_view(") + strlen("MPI_File_set_view(");
+    size_t end = text.find(",", begin);
+
+    // Extract the displacement
+    begin = end + 2;
+    end = text.find(",", begin);
+    string displacement = text.substr(begin, end - begin);
+
+    // Extract the elementary data type
+    begin = end + 2;
+    end = text.find(",", begin);
+    string etype = text.substr(begin, end - begin);
+
+    // Extract the data type
+    begin = end + 2;
+    end = text.find(",", begin);
+    string dataType = text.substr(begin, end - begin);
+
+    // Extract the data type
+    begin = end + 2;
+    end = text.find(",", begin);
+    string dataRep = text.substr(begin, end - begin);
+    if (dataRep == "\"native\"")
+    {
+        dataRep = "NATIVE";
+    }
+    else
+    {
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "ERROR: Unknown data rep: " << dataRep << endl;
+    }
+
+    // Extract the info address
+    begin = end + 2;
+    end = text.find(" ", begin);
+    string infoAddr = text.substr(begin, end - begin);
+
+    // Create the trace call
+    TraceCall tc = createTraceCall("MPI_FILE_SET_VIEW", startTime, duration);
+    tc.params.push_back(fileHandle);
+    tc.params.push_back(displacement);
+    tc.params.push_back(etype);
+    tc.params.push_back(dataType);
+    tc.params.push_back(dataRep);
+    tc.params.push_back(infoAddr);
+    traceCalls_.push_back(tc);
+}
+
+void LanlTraceScanActions::handleMPIFileSync(const string& text)
+{
+    //cerr << __FILE__ << ":" << __LINE__ << ":" << "Unhandled MPI_FILE_SYNC" << endl;
+    //cerr << "FileSync Text: " << text << endl;
+    // Extract the start time and duration
+    string startTime = extractStartTime(text);
+    string duration = extractDuration(text);
+
+    // Extract the current file handle
+    ostringstream oss;
+    oss << currentFile_.second;
+    string fileHandle = oss.str();
+
+    // Create the trace call
+    TraceCall tc = createTraceCall("MPI_FILE_SYNC", startTime, duration);
+    tc.params.push_back(fileHandle);
+    traceCalls_.push_back(tc);
+}
+
 void LanlTraceScanActions::handleMPIFileWrite(const string& text)
 {
     //cerr << __FILE__ << ":" << __LINE__ << ":" << "Unhandled MPI_FILE_WRITE" << endl;
@@ -789,7 +1070,48 @@ void LanlTraceScanActions::handleMPIFileWrite(const string& text)
 
 void LanlTraceScanActions::handleMPIFileWriteAll(const string& text)
 {
-    cerr << __FILE__ << ":" << __LINE__ << ":" << "Unhandled MPI_FILE_WRITE_ALL" << endl;
+    //cerr << __FILE__ << ":" << __LINE__ << ":" << "Unhandled MPI_FILE_WRITE_ALL" << endl;
+    // Extract the start time and duration
+    string startTime = extractStartTime(text);
+    string duration = extractDuration(text);
+
+    // Extract the current file handle
+    ostringstream oss;
+    oss << currentFile_.second;
+    string fileHandle = oss.str();
+
+    // Skip over the file handle address
+    size_t begin = text.find("MPI_File_write_all(") + strlen("MPI_File_write_all(");
+    size_t end = text.find(",", begin);
+
+    // Extract the bufferAddr
+    begin = end + 2;
+    end = text.find(",", begin);
+    string bufferAddr = text.substr(begin, end - begin);
+
+    // Extract the count
+    begin = end + 2;
+    end = text.find(",", begin);
+    string count = text.substr(begin, end - begin);
+
+    // Extract the datatype
+    begin = end + 2;
+    end = text.find(",", begin);
+    string datatype = text.substr(begin, end - begin);
+
+    // Extract the statusAddr
+    begin = end + 2;
+    end = text.find(" ", begin);
+    string statusAddr = text.substr(begin, end - begin);
+
+    // Create the trace call
+    TraceCall tc = createTraceCall("MPI_FILE_WRITE_ALL", startTime, duration);
+    tc.params.push_back(fileHandle);
+    tc.params.push_back(bufferAddr);
+    tc.params.push_back(count);
+    tc.params.push_back(datatype);
+    tc.params.push_back(statusAddr);
+    traceCalls_.push_back(tc);
 }
 
 void LanlTraceScanActions::handleMPIFileWriteAt(const string& text)
@@ -916,6 +1238,122 @@ void LanlTraceScanActions::handleMPIInit(const string& text)
 
     // TODO: For now, this is a no-op
     TraceCall tc = createTraceCall(CPU_PHASE_CALLNAME, startTime, duration);
+    traceCalls_.push_back(tc);
+}
+
+void LanlTraceScanActions::handleMPITypeCommit(const string& text)
+{
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Handling MPI_TYPE_COMMIT" << endl;
+    //cerr << "TypeCommit Text: " << text << endl;
+    // TODO: This is currently an intentional no-op
+}
+
+void LanlTraceScanActions::handleMPITypeContiguous(const string& text)
+{
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Handling MPI_TYPE_CONTIGUOUS" << endl;
+    //cerr << "TypeContiguous Text: " << text << endl;
+    // Extract the start time and duration
+    string startTime = extractStartTime(text);
+    string duration = extractDuration(text);
+
+    // Extract the count
+    size_t begin = text.find("MPI_Type_contiguous(") + strlen("MPI_Type_contiguous(");
+    size_t end = text.find(",", begin);
+    string count = text.substr(begin, end - begin);
+
+    // Extract the old type
+    begin = end + 2;
+    end = text.find(",", begin);
+    string oldType = text.substr(begin, end - begin);
+
+    // Extract the new type
+    size_t pos = text.rfind("\"newtype=") + strlen("\"newtype=");
+    string newType = text.substr(pos, TRACE_ID_LENGTH);
+
+    // Create the trace call
+    TraceCall tc = createTraceCall("MPI_TYPE_CONTIGUOUS", startTime, duration);
+    tc.params.push_back(count);
+    tc.params.push_back(oldType);
+    tc.params.push_back(newType);
+    traceCalls_.push_back(tc);
+}
+
+void LanlTraceScanActions::handleMPITypeCreateSubarray(const string& text)
+{
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Handling MPI_TYPE_CREATE_SUBARRY" << endl;
+    //cerr << "TypeCreateSubarray Text: " << text << endl;
+    // Extract the start time and duration
+    string startTime = extractStartTime(text);
+    string duration = extractDuration(text);
+
+    // Extract the num dimensions
+    size_t begin = text.find("MPI_Type_create_subarray(") + strlen("MPI_Type_create_subarray(");
+    size_t end = text.find(",", begin);
+    string ndims = text.substr(begin, end - begin);
+
+    // Skip over the pointers to sizes, sub-sizes, and starts
+    size_t skipLen = end + 2;
+    skipLen = text.find(",", skipLen) + 2;
+    skipLen = text.find(",", skipLen) + 2;
+    end = text.find(",", skipLen);
+
+    // Extract the order
+    begin = end + 2;
+    end = text.find(",", begin);
+    string order = text.substr(begin, end - begin);
+
+    // Extract the old type
+    begin = end + 2;
+    end = text.find(",", begin);
+    string oldType = text.substr(begin, end - begin);
+
+    // Extract the new type
+    size_t pos = text.rfind("\"newtype=") + strlen("\"newtype=");
+    string newType = text.substr(pos, TRACE_ID_LENGTH);
+
+    // Populate the size, sub-size, and start arrays
+    string sizes = "[";
+    string subSizes = "[";
+    string starts = "[";
+    size_t cursor = end;
+    int count = atoi(ndims.c_str());
+    for (int i = 0; i < count; i++)
+    {
+        cursor = text.find("\"sizes=", cursor) + strlen("\"sizes=");
+        size_t end = text.find("\\n\"", cursor);
+        sizes.append(text.substr(cursor, end - cursor));
+
+        cursor = text.find("\"subsizes=", cursor) + strlen("\"subsizes=");
+        end = text.find("\\n", cursor);
+        subSizes.append(text.substr(cursor, end - cursor));
+
+        cursor = text.find("\"starts=", cursor) + strlen("\"starts=");
+        end = text.find("\\n", cursor);
+        starts.append(text.substr(cursor, end - cursor));
+
+        if (count != (i + 1))
+        {
+            sizes.append(" ");
+            subSizes.append(" ");
+            starts.append(" ");
+        }
+    }
+    sizes.append("]");
+    subSizes.append("]");
+    starts.append("]");
+
+    // Create the trace call
+    TraceCall tc = createTraceCall("MPI_TYPE_CREATE_SUBARRAY", startTime, duration);
+    tc.params.push_back(ndims);
+    tc.params.push_back(sizes);
+    tc.params.push_back(subSizes);
+    tc.params.push_back(starts);
+    tc.params.push_back(order);
+    tc.params.push_back(oldType);
+    tc.params.push_back(newType);
     traceCalls_.push_back(tc);
 }
 

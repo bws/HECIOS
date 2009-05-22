@@ -32,6 +32,12 @@ extern "C"
     /** C Wrapper to perform trace parsing for MPI_BCAST */
     void handleMPIBcast(const char* text);
 
+    /** C Wrapper to perform trace parsing for MPI_CART_CREATE */
+    void handleMPICartCreate(const char* text);
+
+    /** C Wrapper to perform trace parsing for MPI_CART_GET */
+    void handleMPICartGet(const char* text);
+
     /** C Wrapper to perform trace parsing for MPI_COMM_CREATE */
     void handleMPICommCreate(const char* text);
 
@@ -89,6 +95,12 @@ extern "C"
     /** C Wrapper to perform trace parsing for MPI_FILE_SET_SIZE */
     void handleMPIFileSetSize(const char* text);
 
+    /** C Wrapper to perform trace parsing for MPI_FILE_SET_VIEW */
+    void handleMPIFileSetView(const char* text);
+
+    /** C Wrapper to perform trace parsing for MPI_FILE_SET_SIZE */
+    void handleMPIFileSync(const char* text);
+
     /** C Wrapper to perform trace parsing for MPI_FILE_WRITE */
     void handleMPIFileWrite(const char* text);
 
@@ -123,6 +135,15 @@ extern "C"
     void handleMPIInit(const char* text);
 
     /** C Wrapper to perform trace parsing for MPI_TYPE_SIZE */
+    void handleMPITypeCommit(const char* text);
+
+    /** C Wrapper to perform trace parsing for MPI_TYPE_SIZE */
+    void handleMPITypeContiguous(const char* text);
+
+    /** C Wrapper to perform trace parsing for MPI_TYPE_SIZE */
+    void handleMPITypeCreateSubarray(const char* text);
+
+    /** C Wrapper to perform trace parsing for MPI_TYPE_SIZE */
     void handleMPITypeSize(const char* text);
 
     /** C Wrapper to perform trace parsing for MPI_WTIME */
@@ -146,6 +167,9 @@ class LanlTraceScanActions  : public Singleton<LanlTraceScanActions>
 public:
     /** Enable singleton construction */
     friend class Singleton<LanlTraceScanActions>;
+
+    /** Length of a trace id address */
+    static const std::size_t TRACE_ID_LENGTH = 10;
 
     /** Constant useful for converting seconds to nanoseconds */
     static const double NANOSECONDS_PER_SECOND = 1000000000.0;
@@ -205,6 +229,12 @@ public:
     /** Perform trace parsing for MPI_BCAST */
     void handleMPIBcast(const std::string& text);
 
+    /** Perform trace parsing for MPI_CART_CREATE */
+    void handleMPICartCreate(const std::string& text);
+
+    /** Perform trace parsing for MPI_CART_GET */
+    void handleMPICartGet(const std::string& text);
+
     /** Perform trace parsing for MPI_COMM_CREATE */
     void handleMPICommCreate(const std::string& text);
 
@@ -250,6 +280,12 @@ public:
     /** Perform trace parsing for MPI_FILE_SET_SIZE */
     void handleMPIFileSetSize(const std::string& text);
 
+    /** Perform trace parsing for MPI_FILE_SET_VIEW */
+    void handleMPIFileSetView(const std::string& text);
+
+    /** Perform trace parsing for MPI_FILE_SYNC */
+    void handleMPIFileSync(const std::string& text);
+
     /** Perform trace parsing for MPI_FILE_READ */
     void handleMPIFileRead(const std::string& text);
 
@@ -294,6 +330,15 @@ public:
 
     /** Perform trace parsing for MPI_INIT */
     void handleMPIInit(const std::string& text);
+
+    /** Perform trace parsing for MPI_TYPE_SIZE */
+    void handleMPITypeCommit(const std::string& text);
+
+    /** Perform trace parsing for MPI_TYPE_SIZE */
+    void handleMPITypeContiguous(const std::string& text);
+
+    /** Perform trace parsing for MPI_TYPE_SIZE */
+    void handleMPITypeCreateSubarray(const std::string& text);
 
     /** Perform trace parsing for MPI_TYPE_SIZE */
     void handleMPITypeSize(const std::string& text);

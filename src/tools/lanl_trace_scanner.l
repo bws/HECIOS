@@ -26,8 +26,8 @@
 
 /* Definition of bool for use in this translation unit only */
 #define bool int
-#define false 0
-#define true !0
+#define false (0)
+#define true (!0)
 
 /* Global variables */
 bool collectInput = false;
@@ -62,6 +62,8 @@ void checkState(int currentState, const char* currentText)
 %s allreduce
 %s barrier
 %s bcast
+%s cart_create
+%s cart_get
 %s comm_create
 %s comm_dup
 %s comm_free
@@ -90,18 +92,25 @@ void checkState(int currentState, const char* currentText)
 %s file_seek
 %s file_seek_shared
 %s file_set_size
+%s file_set_view
+%s file_sync
 %s file_write
 %s file_write_all
 %s file_write_at
 %s file_write_at_all
 %s file_write_shared
 %s finalize
+%s get_elements
 %s get_processor_name
 %s info_create
 %s info_dup
 %s info_free
 %s init
 %s io_wait
+%s type_commit
+%s type_contiguous
+%s type_create_subarray
+%s type_size
 %s wtime
 
 WILDCARD .+
@@ -118,6 +127,12 @@ MPI_BCAST_BEGIN ^.*\ MPI_Bcast\(
 MPI_BCAST_END ^.*MPI_Bcast\ resumed.*\n
 
 MPI_BCAST_IMMEDIATE ^.*\ MPI_Bcast\(.*\)\ =\ 0.*\n
+
+MPI_CART_CREATE_BEGIN ^.*\ MPI_Cart_create\(
+MPI_CART_CREATE_END ^.*MPI_Cart_create\ resumed.*\n
+
+MPI_CART_GET_BEGIN ^.*\ MPI_Cart_get\(
+MPI_CART_GET_END \n
 
 MPI_COMM_CREATE_BEGIN ^.*\ MPI_Comm_create\(
 MPI_COMM_CREATE_END ^.*MPI_Comm_create\ resumed.*\n
@@ -170,11 +185,17 @@ MPI_FILE_READ_AT_END MPI_File_read_at\ resumed.*\n
 MPI_FILE_READ_AT_ALL_BEGIN ^.*\ MPI_File_read_at_all\(
 MPI_FILE_READ_AT_ALL_END MPI_File_read_at_all\ resumed.*\n
 
+MPI_FILE_SEEK_BEGIN ^.*\ MPI_File_seek\(
+MPI_FILE_SEEK_END \n
+
 MPI_FILE_SET_SIZE_BEGIN ^.*\ MPI_File_set_size\(
 MPI_FILE_SET_SIZE_END MPI_File_set_size\ resumed.*\n
 
-MPI_FILE_SEEK_BEGIN ^.*\ MPI_File_seek\(
-MPI_FILE_SEEK_END \n
+MPI_FILE_SET_VIEW_BEGIN ^.*\ MPI_File_set_view\(
+MPI_FILE_SET_VIEW_END MPI_File_set_view\ resumed.*\n
+
+MPI_FILE_SYNC_BEGIN ^.*\ MPI_File_sync\(
+MPI_FILE_SYNC_END MPI_File_sync\ resumed.*\n
 
 MPI_FILE_WRITE_BEGIN ^.*\ MPI_File_write\(
 MPI_FILE_WRITE_END MPI_File_write\ resumed.*\n
@@ -203,12 +224,23 @@ MPI_INFO_FREE_END \n
 MPI_INIT_BEGIN ^.*\ MPI_Init\(
 MPI_INIT_END MPI_Init\ resumed.*\n
 
-MPI_GET_ELEMENTS ^.*\ MPI_Get_elements\(
+MPI_GET_ELEMENTS_BEGIN ^.*\ MPI_Get_elements\(
+MPI_GET_ELEMENTS_END \n
 
 MPI_GET_PROCESSOR_NAME_BEGIN ^.*\ MPI_Get_processor_name\(
 MPI_GET_PROCESSOR_NAME_END \n
 
-MPI_TYPE_SIZE ^.*\ MPI_Type_size\(
+MPI_TYPE_COMMIT_BEGIN ^.*\ MPI_Type_commit\(
+MPI_TYPE_COMMIT_END \n
+
+MPI_TYPE_CONTIGUOUS_BEGIN ^.*\ MPI_Type_contiguous\(
+MPI_TYPE_CONTIGUOUS_END MPI_Type_contiguous\ resumed.*\n
+
+MPI_TYPE_CREATE_SUBARRAY_BEGIN ^.*\ MPI_Type_create_subarray\(
+MPI_TYPE_CREATE_SUBARRAY_END MPI_Type_create_subarray\ resumed.*\n
+
+MPI_TYPE_SIZE_BEGIN ^.*\ MPI_Type_size\(
+MPI_TYPE_SIZE_END \n
 
 MPI_WTIME_BEGIN ^.*\ MPI_Wtime\(
 MPI_WTIME_END \n
@@ -258,6 +290,30 @@ UNMATCHED_MPI_CALL ^[0-9.:]+\ MPI_.*\(
 		handleMPIBcast(yytext);
         }
         
+{MPI_CART_CREATE_BEGIN} {
+		checkState(YY_START, yytext);
+        BEGIN(cart_create);
+        collectInput = true;
+        yymore();
+        }
+<cart_create>{MPI_CART_CREATE_END} {
+        collectInput = false;
+        handleMPICartCreate(yytext);
+        BEGIN(0);
+        }
+
+{MPI_CART_GET_BEGIN} {
+		checkState(YY_START, yytext);
+        BEGIN(cart_get);
+        collectInput = true;
+        yymore();
+        }
+<cart_get>{MPI_CART_GET_END} {
+        collectInput = false;
+        handleMPICartGet(yytext);
+        BEGIN(0);
+        }
+
 {MPI_COMM_CREATE_BEGIN} {
 		checkState(YY_START, yytext);
         BEGIN(comm_create);
@@ -462,6 +518,30 @@ UNMATCHED_MPI_CALL ^[0-9.:]+\ MPI_.*\(
         BEGIN(0);
         }
 
+{MPI_FILE_SET_VIEW_BEGIN} {
+		checkState(YY_START, yytext);
+        BEGIN(file_set_view);
+        collectInput = true;
+        yymore();
+        }
+<file_set_view>{MPI_FILE_SET_VIEW_END} {
+        collectInput = false;
+        handleMPIFileSetView(yytext);
+        BEGIN(0);
+        }
+
+{MPI_FILE_SYNC_BEGIN} {
+		checkState(YY_START, yytext);
+        BEGIN(file_sync);
+        collectInput = true;
+        yymore();
+        }
+<file_sync>{MPI_FILE_SYNC_END} {
+        collectInput = false;
+        handleMPIFileSync(yytext);
+        BEGIN(0);
+        }
+
 {MPI_FILE_WRITE_BEGIN} {
 		checkState(YY_START, yytext);
         BEGIN(file_write);
@@ -522,8 +602,16 @@ UNMATCHED_MPI_CALL ^[0-9.:]+\ MPI_.*\(
         BEGIN(0);
         }
 
-{MPI_GET_ELEMENTS} {
+{MPI_GET_ELEMENTS_BEGIN} {
+		checkState(YY_START, yytext);
+        BEGIN(get_elements);
+        collectInput = true;
+        yymore();
+        }
+<get_elements>{MPI_GET_ELEMENTS_END} {
+        collectInput = false;
         handleMPIGetElements(yytext);
+        BEGIN(0);
         }
 
 {MPI_GET_PROCESSOR_NAME_BEGIN} {
@@ -586,9 +674,52 @@ UNMATCHED_MPI_CALL ^[0-9.:]+\ MPI_.*\(
         BEGIN(0);
         }
 
-{MPI_TYPE_SIZE} {
+{MPI_TYPE_COMMIT_BEGIN} {
 		checkState(YY_START, yytext);
+		BEGIN(type_commit);
+		collectInput = true;
+		yymore();
+        }
+<type_commit>{MPI_TYPE_COMMIT_END} {
+        collectInput = false;
+        handleMPITypeCommit(yytext);
+        BEGIN(0);
+        }
+
+{MPI_TYPE_CONTIGUOUS_BEGIN} {
+		checkState(YY_START, yytext);
+		BEGIN(type_contiguous);
+		collectInput = true;
+		yymore();
+        }
+<type_contiguous>{MPI_TYPE_CONTIGUOUS_END} {
+        collectInput = false;
+        handleMPITypeContiguous(yytext);
+        BEGIN(0);
+        }
+
+{MPI_TYPE_CREATE_SUBARRAY_BEGIN} {
+		checkState(YY_START, yytext);
+		BEGIN(type_create_subarray);
+		collectInput = true;
+		yymore();
+        }
+<type_create_subarray>{MPI_TYPE_CREATE_SUBARRAY_END} {
+        collectInput = false;
+        handleMPITypeCreateSubarray(yytext);
+        BEGIN(0);
+        }
+
+{MPI_TYPE_SIZE_BEGIN} {
+		checkState(YY_START, yytext);
+		BEGIN(type_size);
+		collectInput = true;
+		yymore();
+        }
+<type_size>{MPI_TYPE_SIZE_END} {
+        collectInput = false;
         handleMPITypeSize(yytext);
+        BEGIN(0);
         }
 
 {MPI_WTIME_BEGIN} {
