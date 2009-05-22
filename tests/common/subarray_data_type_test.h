@@ -25,6 +25,7 @@
 #include <cppunit/TestAssert.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include "basic_data_type.h"
+#include "contiguous_data_type.h"
 #include "subarray_data_type.h"
 using namespace std;
 
@@ -38,6 +39,7 @@ class SubarrayDataTypeTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testGetRepresentationByteLength);
     CPPUNIT_TEST(testGetRegionsByBytes);
     CPPUNIT_TEST(testGetRegionsByCount);
+    CPPUNIT_TEST(testTileIOExample);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -55,6 +57,8 @@ public:
     void testGetRegionsByBytes();
 
     void testGetRegionsByCount();
+
+    void testTileIOExample();
 
 private:
 
@@ -174,6 +178,51 @@ void SubarrayDataTypeTest::testGetRegionsByBytes()
 
 void SubarrayDataTypeTest::testGetRegionsByCount()
 {
+}
+
+void SubarrayDataTypeTest::testTileIOExample()
+{
+    // Base type
+    ByteDataType byteType;
+    ContiguousDataType elementType(8, byteType);
+
+    // Tile Subarray processor 0
+    size_t sizes[] = {1000, 80};
+    size_t subSizes[] = {1000, 10};
+    size_t starts[] = {0, 0};
+    SubarrayDataType tileType0(vector<size_t>(sizes, sizes + 2),
+                               vector<size_t>(subSizes, subSizes + 2),
+                               vector<size_t>(starts, starts + 2),
+                               SubarrayDataType::C_ORDER,
+                               elementType);
+
+    // Check the correctness of the regions
+    vector<FileRegion> regions = tileType0.getRegionsByBytes(0, 80000);
+    CPPUNIT_ASSERT_EQUAL(size_t(1000), regions.size());
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        CPPUNIT_ASSERT_EQUAL(FSOffset(0 + i*640), regions[i].offset);
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), regions[i].extent);
+    }
+
+    // Tile Subarray processor 3
+    size_t sizes3[] = {1000, 80};
+    size_t subSizes3[] = {1000, 10};
+    size_t starts3[] = {0, 30};
+    SubarrayDataType tileType3(vector<size_t>(sizes3, sizes3 + 2),
+                               vector<size_t>(subSizes3, subSizes3 + 2),
+                               vector<size_t>(starts3, starts3 + 2),
+                               SubarrayDataType::C_ORDER,
+                               elementType);
+
+    // Check the correctness of the regions
+    vector<FileRegion> regions3 = tileType3.getRegionsByBytes(0, 80000);
+    CPPUNIT_ASSERT_EQUAL(size_t(1000), regions3.size());
+    for (size_t i = 0; i < regions3.size(); i++)
+    {
+        CPPUNIT_ASSERT_EQUAL(FSOffset(240 + i*640), regions3[i].offset);
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), regions3[i].extent);
+    }
 }
 
 #endif /*SUBARRAY_DATA_TYPE_TEST_H_*/

@@ -90,6 +90,7 @@ vector<FileRegion> SubarrayDataType::getRegionsByBytes(const FSOffset& byteOffse
     // Determine the size of the contiguous data type region
     size_t contigCount = getSubarrayContiguousCount();
     size_t contigLength = contigCount * oldType_.getTrueExtent();
+    //cerr << "Contig count: " << contigCount << " ContigLength: " << contigLength << endl;
 
     size_t bytesProcessed = 0;
     FSOffset arrayOffset = byteOffset;
@@ -213,6 +214,9 @@ size_t SubarrayDataType::getArrayMemoryLocation(size_t region) const
             arrayOffset = (starts_[i] + dimIdxs[i]) + sizes_[i] * arrayOffset;
         }
     }
+
+    // Modify the array offset to take into account the element size
+    arrayOffset *= oldType_.getTrueExtent();
 
     //cerr << "Memory Loc: " << region << " --> ";
     //for (size_t i = 0; i < dimIdxs.size(); i++)
