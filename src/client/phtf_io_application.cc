@@ -162,6 +162,9 @@ void PHTFIOApplication::rankChanged(int oldRank)
     CommMan::instance().registerRank(getRank());
 }
 
+void PHTFIOApplication::populateBasicDataTypes()
+{
+}
 
 void PHTFIOApplication::populateFileSystem()
 {
@@ -273,24 +276,44 @@ bool PHTFIOApplication::processEvent(PHTFEventRecord& eventRecord)
 {
     bool msgScheduled = false;
     int opType = eventRecord.recordOp();
-    if (CPU_PHASE == opType || OPEN == opType ||
-        SEEK == opType ||
-        IREAD == opType || IWRITE == opType || WAIT == opType ||
-        COMM_DUP == opType || COMM_RANK == opType)
+    switch(opType)
     {
-        msgScheduled = processIrregularEvent(&eventRecord);
-    }
-    else if (ALLREDUCE == opType || BARRIER == opType || BCAST == opType)
-    {
-        cMessage* request = createMessage(&eventRecord);
-        send(request, mpiOutGate_);
-        msgScheduled = true;
-    }
-    else
-    {
-        cMessage* request = createMessage(&eventRecord);
-        send(request, ioOutGate_);
-        msgScheduled = true;
+        case CART_CREATE:
+        case CART_GET:
+        case COMM_DUP:
+        case COMM_RANK:
+        case CPU_PHASE:
+        case IREAD:
+        case IWRITE:
+        case OPEN:
+        case SEEK:
+        case SET_VIEW:
+        case SYNC:
+        case TYPE_CONTIGUOUS:
+        case TYPE_CREATE_SUBARRAY:
+        case WAIT:
+        {
+            // Events processed on the client, or with multiple steps
+            msgScheduled = processIrregularEvent(&eventRecord);
+            break;
+        }
+        case ALLREDUCE:
+        case BARRIER:
+        case BCAST:
+        {
+            // MPI messaging events
+            cMessage* request = createMessage(&eventRecord);
+            send(request, mpiOutGate_);
+            msgScheduled = true;
+            break;
+        }
+        default:
+        {
+            // Normal file processing events
+            cMessage* request = createMessage(&eventRecord);
+            send(request, ioOutGate_);
+            msgScheduled = true;
+        }
     }
     return msgScheduled;
 }
@@ -316,17 +339,10 @@ bool PHTFIOApplication::processIrregularEvent(PHTFEventRecord* eventRecord)
             }
             break;
         }
-        case COMM_CREATE:
         case COMM_DUP:
-        //case COMM_JOIN:
-        case COMM_RANK:
-        //case COMM_SIZE:
-        case COMM_SPLIT:
         {
-            // Perform communicator create operation
-            performCommProcessing(eventRecord);
-
             // Retrieve the next operation, as this one is local
+            performCommDup(*eventRecord);
             msgScheduled = scheduleNextMessage();
             break;
         }
@@ -367,17 +383,25 @@ bool PHTFIOApplication::processIrregularEvent(PHTFEventRecord* eventRecord)
         }
         case SET_VIEW:
         {
-            performSetViewProcessing(eventRecord);
+            performFileSetView(*eventRecord);
+            msgScheduled = scheduleNextMessage();
+            break;
+        }
+        case SYNC:
+        {
+            //TODO: At present we ignore syncs -- not the right thing
             msgScheduled = scheduleNextMessage();
             break;
         }
         case TYPE_CONTIGUOUS:
-        case TYPE_STRUCT:
-        case TYPE_CREATE_SUBARRAY:
-        case TYPE_VECTOR:
         {
-            // Perform type_contiguous operation
-            performTypeProcessing(eventRecord);
+            performTypeContiguous(*eventRecord);
+            msgScheduled = scheduleNextMessage();
+            break;
+        }
+        case TYPE_CREATE_SUBARRAY:
+        {
+            performTypeCreateSubarray(*eventRecord);
             msgScheduled = scheduleNextMessage();
             break;
         }
@@ -414,12 +438,24 @@ bool PHTFIOApplication::processIrregularEvent(PHTFEventRecord* eventRecord)
             }
             break;
         }
+        case CART_CREATE:
+        {
+            performCartCreate(*eventRecord);
+            msgScheduled = scheduleNextMessage();
+            break;
+        }
+        case CART_GET:
+        {
+            performCartGet(*eventRecord);
+            msgScheduled = scheduleNextMessage();
+            break;
+        }
         default:
         {
             cerr << __FILE__ << ":" << __LINE__ << ":"
                  << "ERROR: Unable to handle irregular event: "
                  << eventRecord->recordStr() << endl;
-            assert(0);
+            assert(false);
             _Exit(25);
         }
     }
@@ -515,6 +551,28 @@ void PHTFIOApplication::scheduleCPUMessage(cMessage *msg)
     scheduleAt(schTime , msg);
 }
 
+void PHTFIOApplication::performCartCreate(const PHTFEventRecord& cartCreate)
+{
+    // In this case a simple duplication of the communicator should suffice
+    Communicator oldComm = cartCreate.paramAsAddress(0);
+    Communicator newComm = cartCreate.paramAsAddress(5);
+    assert(true == CommMan::instance().exists(oldComm));
+    CommMan::instance().dupComm(oldComm, newComm);
+}
+
+void PHTFIOApplication::performCartGet(const PHTFEventRecord& openRecord)
+{
+    // No-op
+}
+
+void PHTFIOApplication::performCommDup(const PHTFEventRecord& commDup)
+{
+    Communicator oldComm = commDup.paramAsAddress(0);
+    Communicator newComm = commDup.paramAsAddress(1);
+    assert(true == CommMan::instance().exists(oldComm));
+    CommMan::instance().dupComm(oldComm, newComm);
+}
+
 void PHTFIOApplication::performFakeOpenProcessing(const PHTFEventRecord& openRecord)
 {
     // Extract the descriptor number from the event record
@@ -602,408 +660,61 @@ void PHTFIOApplication::performWaitProcessing(PHTFEventRecord* waitRecord,
     }
 }
 
-void PHTFIOApplication::performSetViewProcessing(PHTFEventRecord* setViewRecord)
+void PHTFIOApplication::performFileSetView(const PHTFEventRecord& fileSetView)
 {
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "ERROR: Set view processing not currently implemented." << endl;
-    assert(0);
-    /*uint64_t handle = setViewRecord->paramAsAddress(0);
+    // Retrieve the descriptor
+    int handle = fileSetView.paramAsDescriptor(0, *phtfEvent_);
     FileDescriptor* fd = getDescriptor(handle);
+    assert(0 != fd);
 
-    size_t offset = setViewRecord->paramAsSizeT(1);
+    // Construct the new file view
+    size_t displacement = fileSetView.paramAsSizeT(1);
+    string elementTypeId = fileSetView.paramAt(2);
+    string fileTypeId = fileSetView.paramAt(3);
+    string dataRep = fileSetView.paramAt(4);
+    DataType* fileType = getDataTypeById(fileTypeId);
+    assert("NATIVE" == dataRep);
+    assert(0 != fileType);
 
-    string dtstr = setViewRecord->paramAt(3);
-    dtstr = getAlias(dtstr);
-    DataType* dataType = getDataTypeById(dtstr);
-    assert(dataType);
-
-    FileView fileView(offset, dataType->clone());
-    fd->setFileView(fileView);*/
+    // Set the file view for this descriptor
+    FileView fileView(displacement, fileType->clone());
+    fd->setFileView(fileView);
 }
 
-void PHTFIOApplication::performCommProcessing(PHTFEventRecord* commRecord)
+void PHTFIOApplication::performTypeContiguous(const PHTFEventRecord& typeContiguous)
 {
-    int op = commRecord->recordOp();
-    switch(op)
-    {
-        case COMM_DUP:
-        {
-            Communicator oldComm = commRecord->paramAsAddress(0);
-            Communicator newComm = commRecord->paramAsAddress(1);
+    // Create the data type
+    size_t count = typeContiguous.paramAsSizeT(0);
+    string oldTypeId = typeContiguous.paramAt(1);
+    DataType* oldType = getDataTypeById(oldTypeId);
+    ContiguousDataType* dataType = new ContiguousDataType(count, *oldType);
 
-            performDuplicateCommunicator(oldComm, newComm);
-            break;
-        }
-        case COMM_CREATE:
-        {
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "ERROR: Comm Create requires group support." << endl;
-            assert(false);
-            //string newcomm comm;
-            //performCreateCommunicator(newcomm);
-            break;
-        }
-        case COMM_SPLIT:
-        {
-            assert(false);
-            string newcomm = commRecord->paramAt(3);
-            break;
-        }
-        case COMM_RANK:
-        {
-            // TODO: It should be possible to make sure the rank matches
-            // the communicator rank here
-            //Communicator comm = commRecord->paramAsAddress(0);
-            //assert(CommMan::instance().exists(comm));
-            break;
-        }
-        default:
-        {
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "Error: unsupported comm op type: " << op << endl;
-            assert(false);
-            break;
-        }
-    }
+    // Register the data type
+    string newTypeId = typeContiguous.paramAt(2);
+    dataTypeById_[newTypeId] = dataType;
 }
 
-void PHTFIOApplication::performCreateCommunicator(string newcomm)
+void PHTFIOApplication::performTypeCreateSubarray(const PHTFEventRecord& createSubarray)
 {
-    cerr << __FILE__ << ":" << __LINE__
-         << "ERROR: Create Comm Support needs code. " << endl;
-    /*
-    string aliasComm = getAlias(newcomm);
-    Communicator comm = (Communicator)strtol(aliasComm.c_str(), NULL, 0);
+    // Create the data type
+    size_t ndims = createSubarray.paramAsSizeT(0);
+    vector<size_t> sizes = createSubarray.paramAsVector(1);
+    vector<size_t> subSizes = createSubarray.paramAsVector(2);
+    vector<size_t> starts = createSubarray.paramAsVector(3);
+    int order = createSubarray.paramAsSizeT(4);
+    string oldTypeId = createSubarray.paramAt(5);
+    DataType* oldType = getDataTypeById(oldTypeId);
+    SubarrayDataType* dataType = new SubarrayDataType(sizes,
+                                                      subSizes,
+                                                      starts,
+                                                      SubarrayDataType::C_ORDER,
+                                                      *oldType);
+    assert(56 == order);
+    assert (ndims == sizes.size());
 
-    cerr << " alias "  << comm;
-
-    // create only if communicator not yet exist
-    if(!CommMan::instance().exists(comm))
-    {
-        // if this is a new communicator, create it
-        if(phtfEvent_->memValue(aliasComm, "ranks").compare(""))
-        {
-            string ssize = phtfEvent_->memValue(aliasComm, "size");
-            string srank;
-            int commsize = (int)strtol(ssize.c_str(), NULL, 0);
-            int commrank;
-            stringstream ss("");
-            ss << phtfEvent_->memValue(aliasComm, "ranks");
-
-            cerr << " add " << ss.str();
-            for(int i = 0; i < commsize; i ++)
-            {
-                ss >> srank;
-                commrank = (int)strtol(srank.c_str(), NULL, 0);
-                CommMan::instance().joinComm(comm, commrank);
-            }
-        }
-        else
-        {
-            cerr << "Error: don't know how to create comm " << aliasComm << endl;
-            assert(false);
-        }
-    }
-    cerr << ": " << CommMan::instance().commSize(comm) << endl;*/
-}
-
-void PHTFIOApplication::performDuplicateCommunicator(const Communicator& oldComm,
-                                                     Communicator& newComm)
-{
-    assert(true == CommMan::instance().exists(oldComm));
-    CommMan::instance().dupComm(oldComm, newComm);
-}
-
-void PHTFIOApplication::performTypeProcessing(PHTFEventRecord* typeRecord)
-{
-    // get type id
-    string typeId = typeRecord->paramAt(typeRecord->paraNum() - 1);
-
-    // create type
-    performCreateDataType(typeId);
-}
-
-void PHTFIOApplication::performCreateDataType(string typeId)
-{
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "ERROR: Don't support create datatype yet" << endl;
-    assert(0);
-    /*
-    // create type based on datatype type
-
-    stringstream ss("");
-    ss << typeId << "@" << rec_id_;
-
-
-    string realtype = phtfEvent_->memValue("Pointer", ss.str());
-    stringstream ss2("");
-    ss2 << realtype << "@" << rec_id_;
-
-
-    int type = (int)strtol(phtfEvent_->memValue(ss2.str(), "type").c_str(), NULL, 0);
-    switch(type)
-    {
-        case BASIC:
-            performCreateBasicDataType(realtype);
-            break;
-        case CONTIGUOUS:
-            performCreateContiguousDataType(realtype);
-            break;
-        case STRUCT:
-            performCreateStructDataType(realtype);
-            break;
-        case SUBARRAY:
-            performCreateSubarrayDataType(realtype);
-            break;
-        case VECTOR:
-            performCreateVectorDataType(realtype);
-            break;
-        default:
-            cerr << "Error: unsupported datatype: " << type << endl;
-            assert(false);
-            break;
-    }*/
-}
-
-DataType * PHTFIOApplication::getDataTypeById(std::string typeId)
-{
-    stringstream ss("");
-    ss << typeId << "@" << rec_id_;
-
-    if(!dataTypeById_.count(typeId))
-    {
-        if(!dataTypeById_.count(ss.str()))
-        {
-            performCreateBasicDataType(typeId);
-            if(!dataTypeById_.count(typeId))
-            {
-                return NULL;
-            }
-            else
-            {
-                return dataTypeById_[typeId];
-            }
-        }
-        else
-        {
-            return dataTypeById_[ss.str()];
-        }
-    }
-    else
-    {
-        return dataTypeById_[typeId];
-    }
-}
-
-void PHTFIOApplication::performCreateBasicDataType(std::string typeId)
-{
-    // get parameter
-    size_t size;
-    string ssize = PHTFTrace::instance().getFs()->consts(typeId);
-    assert(0 != ssize.size());
-    size = (size_t)strtol(ssize.c_str(), 0, 0);
-
-    DataType * newDataType;
-    // create newtype
-    switch(size)
-    {
-        case 1:
-            newDataType = new BasicDataType<1>();
-            break;
-        case 2:
-            newDataType = new BasicDataType<2>();
-            break;
-        case 4:
-            newDataType = new BasicDataType<4>();
-            break;
-        case 8:
-            newDataType = new BasicDataType<8>();
-            break;
-        default:
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "Error: unsupported basic type: width " << size << endl;
-            assert(false);
-            break;
-    }
-
-    dataTypeById_[typeId] = newDataType;
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Data Type Width: " << dataTypeById_.size() << endl;
-}
-
-void PHTFIOApplication::performCreateContiguousDataType(std::string typeId)
-{
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "ERROR: This stuff doesn't work yet." << endl;
-    assert(0);
-
-    /*stringstream ss("");
-    ss << typeId << "@" << rec_id_;
-
-    // get parameter
-    size_t count = (size_t)strtol(phtfEvent_->memValue(ss.str(), "count").c_str(), NULL, 0);
-    string oldTypeId = phtfEvent_->memValue(ss.str(), "oldtype");
-
-    // create oldtype if not exist
-    DataType * oldType = getDataTypeById(oldTypeId);
-    if(!oldType)
-    {
-        performCreateDataType(oldTypeId);
-        oldType = getDataTypeById(oldTypeId);
-    }
-
-    assert(oldType);
-
-    // create newtype
-    ContiguousDataType * newDataType = new ContiguousDataType(count, *oldType);
-    dataTypeById_[typeId] = newDataType;
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Data Type Width: " << dataTypeById_.size() << endl;*/
-}
-
-void PHTFIOApplication::performCreateStructDataType(std::string typeId)
-{
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "ERROR: This stuff doesn't work yet." << endl;
-    assert(0);
-    /*stringstream ss("");
-    ss << typeId << "@" << rec_id_;
-
-    // get parameter
-    size_t count = (size_t)strtol(phtfEvent_->memValue(ss.str(), "count").c_str(), NULL, 0);
-    stringstream ssOldTypes("");
-    stringstream ssDisp("");
-    stringstream ssBlock("");
-    ssOldTypes << phtfEvent_->memValue(ss.str(), "oldtypes");
-    ssDisp << phtfEvent_->memValue(ss.str(), "indices");
-    ssBlock << phtfEvent_->memValue(ss.str(), "blocklens");
-
-    vector<size_t> blocklens;
-    vector<size_t> disp;
-    vector<const DataType*> oldTypes;
-
-    for(size_t i = 0; i < count; i ++)
-    {
-        string sBlock;
-        ssBlock >> sBlock;
-        size_t b = (size_t)strtol(sBlock.c_str(), NULL, 0);
-        blocklens.push_back(b);
-
-        string sDisp;
-        ssDisp >> sDisp;
-        size_t d = (size_t)strtol(sDisp.c_str(), NULL, 0);
-        disp.push_back(d);
-
-        string oldTypeId;
-        ssOldTypes >> oldTypeId;
-
-        // create old type if not exist
-        DataType *oldType = getDataTypeById(oldTypeId);
-        if(!oldType)
-        {
-            performCreateDataType(oldTypeId);
-            oldType = getDataTypeById(oldTypeId);
-        }
-        assert(oldType);
-        oldTypes.push_back(oldType);
-    }
-
-    // create new type
-    StructDataType * newDataType = new StructDataType(blocklens, disp, oldTypes);
-    dataTypeById_[typeId] = newDataType;
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Data Type Width: " << dataTypeById_.size() << endl;*/
-}
-
-void PHTFIOApplication::performCreateSubarrayDataType(std::string typeId)
-{
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "ERROR: This stuff doesn't work yet." << endl;
-    assert(0);
-    /*stringstream ss("");
-    ss << typeId << "@" << rec_id_;
-
-    // get parameter
-    size_t ndims = (size_t)strtol(phtfEvent_->memValue(ss.str(), "ndims").c_str(), NULL, 0);
-    string oldTypeId = phtfEvent_->memValue(ss.str(), "oldtype");
-    int order = (int)strtol(phtfEvent_->memValue(ss.str(), "order").c_str(), NULL, 0);
-    stringstream ssSizes("");
-    stringstream ssStarts("");
-    stringstream ssSubSizes("");
-
-    ssSizes << phtfEvent_->memValue(ss.str(), "sizes");
-    ssStarts << phtfEvent_->memValue(ss.str(), "starts");
-    ssSubSizes << phtfEvent_->memValue(ss.str(), "subsizes");
-
-    vector<size_t> sizes;
-    vector<size_t> subSizes;
-    vector<size_t> starts;
-
-    for(size_t i = 0; i < ndims; i ++)
-    {
-        string sSize;
-        ssSizes >> sSize;
-        size_t s = (size_t)strtol(sSize.c_str(), NULL, 0);
-        sizes.push_back(s);
-
-        string sSubSize;
-        ssSubSizes >> sSubSize;
-        size_t sb = (size_t)strtol(sSubSize.c_str(), NULL, 0);
-        subSizes.push_back(sb);
-
-        string sStart;
-        ssStarts >> sStart;
-        size_t st = (size_t)strtol(sStart.c_str(), NULL, 0);
-        starts.push_back(st);
-    }
-
-    // create old type if not exist
-    DataType * oldType = getDataTypeById(oldTypeId);
-    if(!oldType)
-    {
-        performCreateDataType(oldTypeId);
-        oldType = getDataTypeById(oldTypeId);
-    }
-    assert(oldType);
-
-    SubarrayDataType * newDataType;
-    // create new type
-    if(order == 57)
-        newDataType = new SubarrayDataType(sizes, subSizes, starts, SubarrayDataType::FORTRAN_ORDER, *oldType);
-    else
-        newDataType = new SubarrayDataType(sizes, subSizes, starts, SubarrayDataType::C_ORDER, *oldType);
-    dataTypeById_[typeId] = newDataType;
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Data Type Width: " << dataTypeById_.size() << endl;*/
-}
-
-void PHTFIOApplication::performCreateVectorDataType(std::string typeId)
-{
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "ERROR: This stuff doesn't work yet." << endl;
-    assert(0);
-    /*stringstream ss("");
-    ss << typeId << "@" << rec_id_;
-
-    // get parameter
-    size_t blocklength = (size_t)strtol(phtfEvent_->memValue(ss.str(), "blocklength").c_str(), NULL, 0);
-    size_t count = (size_t)strtol(phtfEvent_->memValue(ss.str(), "count").c_str(), NULL, 0);
-    string oldTypeId = phtfEvent_->memValue(ss.str(), "oldtype");
-    int stride = (int)strtol(phtfEvent_->memValue(ss.str(), "stride").c_str(), NULL, 0);
-
-    // create old type if not exist
-    DataType * oldType = getDataTypeById(oldTypeId);
-    if(!oldType)
-    {
-        performCreateDataType(oldTypeId);
-        oldType = getDataTypeById(oldTypeId);
-    }
-    assert(oldType);
-
-    VectorDataType * newDataType = new VectorDataType(count, blocklength, stride, *oldType);
-    dataTypeById_[typeId] = newDataType;
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Data Type Width: " << dataTypeById_.size() << endl;*/
+    // Register the new data type
+    string newTypeId = createSubarray.paramAt(6);
+    dataTypeById_[newTypeId] = dataType;
 }
 
 spfsMPIBarrierRequest* PHTFIOApplication::createAllReduceMessage(
@@ -1203,7 +914,8 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createFileReadMessage(
     read->setReqId(-1);
 
     // Increment the file pointer
-    fd->moveFilePointer(count * dataType->getExtent());
+    size_t incDistance = count * dataType->getExtent();
+    fd->moveFilePointer(incDistance);
 
     return read;
 }
@@ -1266,7 +978,8 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteMessage(
     write->setFileDes(fd);
 
     // Increment the file pointer
-    fd->moveFilePointer(count * dataType->getExtent());
+    size_t incDistance = count * dataType->getExtent();
+    fd->moveFilePointer(incDistance);
 
     return write;
 }
@@ -1282,6 +995,46 @@ spfsMPIBcastRequest* PHTFIOApplication::createBcastRequest(
     return bcast;
 }
 
+DataType* PHTFIOApplication::getDataTypeById(const string& typeId)
+{
+    DataType* dataType = 0;
+    DataTypeMap::const_iterator iter = dataTypeById_.find(typeId);
+    if (iter == dataTypeById_.end())
+    {
+        // No data type in map, so look it up in the configuration
+        string sizeString = PHTFTrace::instance().getFs()->consts(typeId);
+        istringstream iss(sizeString);
+        size_t typeWidth = 0;
+        iss >> typeWidth;
+        switch(typeWidth)
+        {
+            case 1:
+                dataType = new BasicDataType<1>();
+                break;
+            case 2:
+                dataType = new BasicDataType<2>();
+                break;
+            case 4:
+                dataType = new BasicDataType<4>();
+                break;
+            case 8:
+                dataType = new BasicDataType<8>();
+                break;
+            default:
+                cerr << __FILE__ << ":" << __LINE__ << ":"
+                     << "Error: unsupported basic type: width " << typeWidth << endl;
+                assert(false);
+                break;
+        }
+        dataTypeById_[typeId] = dataType;
+    }
+    else
+    {
+        dataType = iter->second;
+    }
+    assert(0 != dataType);
+    return dataType;
+}
 
 /*
  * Local variables:

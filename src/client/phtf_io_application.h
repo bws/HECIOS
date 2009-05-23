@@ -73,8 +73,14 @@ protected:
     spfsMPIRequest* createRequest(PHTFEventRecord* rec);
 
 private:
+    /** Data type map */
+    typedef std::map<std::string, DataType*> DataTypeMap;
+
     /** Join the correct communicators on rank change */
     virtual void rankChanged(int oldRank);
+
+    /** Create the basic data types for this trace */
+    void populateBasicDataTypes();
 
     /** Create the file system files for this trace */
     void populateFileSystem();
@@ -116,26 +122,23 @@ private:
     void performWaitProcessing(PHTFEventRecord* waitRecord,
                                bool& outWaitIsComplete);
 
-    void performSetViewProcessing(PHTFEventRecord* setViewRecord);
+    /** Perform the application processing to create a Cartesian communicator */
+    void performCartCreate(const PHTFEventRecord& cartCreate);
 
-    /** Perform the application processing to create a new communicator */
-    void performCommProcessing(PHTFEventRecord* commRecord);
+    /** Perform the application processing to retrieve Cartesian communicator */
+    void performCartGet(const PHTFEventRecord& cartGet);
 
-    void performCreateCommunicator(std::string newcomm);
+    /** Perform the application processing to duplicate a communicator */
+    void performCommDup(const PHTFEventRecord& commDup);
 
-    void performDuplicateCommunicator(const Communicator& oldComm,
-                                      Communicator& newComm);
+    /** Perform the application processing to set the file view */
+    void performFileSetView(const PHTFEventRecord& fileSetView);
 
-    /** Perform the application processing to do create a new datatype */
-    void performTypeProcessing(PHTFEventRecord* typeRecord);
+    /** Perform the application processing to duplicate a communicator */
+    void performTypeContiguous(const PHTFEventRecord& typeContiguous);
 
-    /** Recursively creates datatypes by datatype-id */
-    void performCreateDataType(std::string typeId);
-    void performCreateBasicDataType(std::string typeId);
-    void performCreateContiguousDataType(std::string typeId);
-    void performCreateStructDataType(std::string typeId);
-    void performCreateSubarrayDataType(std::string typeId);
-    void performCreateVectorDataType(std::string typeId);
+    /** Perform the application processing to duplicate a communicator */
+    void performTypeCreateSubarray(const PHTFEventRecord& createSubarray);
 
     /** @return a ALL_REDUCE request */
     spfsMPIBarrierRequest* createAllReduceMessage(
@@ -212,6 +215,9 @@ private:
     /** @return a BCAST for the communicator */
     spfsMPIBcastRequest* createBcastRequest(int communicatorId);
 
+    /** retrieve Datatype from map, NULL if none found */
+    DataType* getDataTypeById(const std::string& typeId);
+
     /** Trace file location */
     std::string traceDirectory_;
 
@@ -222,10 +228,7 @@ private:
     std::map<long, cMessage*> pendingRequestsById_;
 
     /** Map of defined Datatypes */
-    std::map<std::string, DataType*> dataTypeById_;
-
-    /** retrieve Datatype from map, NULL if none found */
-    DataType * getDataTypeById(std::string);
+    DataTypeMap dataTypeById_;
 
     /** This is a reckless approach to passing around the record ID */
     long rec_id_;

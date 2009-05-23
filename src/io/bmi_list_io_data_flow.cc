@@ -219,6 +219,7 @@ void BMIListIODataFlow::pushDataToStorage(FSSize pushSize)
         fileWrite->setOffset(i, regions[i].offset);
         fileWrite->setExtent(i, regions[i].extent);
         updateBstreamSize(regions[i].offset + regions[i].extent);
+        //cerr << "Writing To Disk Off: " << regions[i].offset << " Ext: " << regions[i].extent << endl;
     }
 
     // Send the request to the storage layer

@@ -40,6 +40,7 @@ class PHTFIni;
 enum PHTFOperation{
     INVALID = 0,
     ALLREDUCE, BARRIER, BCAST, CPU_PHASE,
+    CART_CREATE, CART_GET,
     COMM_CREATE, COMM_DUP, COMM_RANK, COMM_SPLIT,
     OPEN,   CLOSE,    DELETE,    SET_SIZE,    PREALLOCATE,    GET_SIZE,    GET_GROUP,
     GET_AMODE,    SET_INFO,    GET_INFO,    SET_VIEW,    READ_AT,    READ_AT_ALL,
@@ -154,6 +155,9 @@ public:
 
     /** @return The paramindex-th parameter as a file name */
     std::string paramAsFilename(std::size_t paramindex, const PHTFEvent & event) const;
+
+    /** @return the idx-th parameter as a vector of size_t */
+    std::vector<size_t> paramAsVector(std::size_t idx) const;
 
     /** @return The string contains the parameters */
     std::string params();

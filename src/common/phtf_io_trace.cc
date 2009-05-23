@@ -184,6 +184,31 @@ int PHTFEventRecord::paramAsDescriptor(size_t paramindex, const PHTFEvent & even
     return descriptor;
 }
 
+vector<size_t> PHTFEventRecord::paramAsVector(size_t idx) const
+{
+    assert(idx < paraNum());
+    string s = paramAt(idx);
+    assert('[' == s[0]);
+    assert(']' == s[s.size() - 1]);
+    vector<size_t> param;
+    size_t begin = 1;
+    size_t end = s.find_first_of(" ]", begin);
+    while (end != string::npos)
+    {
+        // Add the value to the vector
+        string valStr = s.substr(begin, end - begin);
+        istringstream iss(valStr);
+        size_t val;
+        iss >> val;
+        param.push_back(val);
+
+        // Search for the next value
+        begin = end + 1;
+        end = s.find_first_of(" ]", begin);
+    }
+    return param;
+}
+
 /** @return The string contains the parameters */
 std::string PHTFEventRecord::params()
 {
@@ -230,6 +255,8 @@ void PHTFEventRecord::buildOpMap()
     PHTFEventRecord::_opmap["MPI_ALLREDUCE"] = ALLREDUCE;
     PHTFEventRecord::_opmap["MPI_BARRIER"] = BARRIER;
     PHTFEventRecord::_opmap["MPI_BCAST"] = BCAST;
+    PHTFEventRecord::_opmap["MPI_CART_CREATE"] = CART_CREATE;
+    PHTFEventRecord::_opmap["MPI_CART_GET"] = CART_GET;
     PHTFEventRecord::_opmap["MPI_COMM_DUP"] = COMM_DUP;
     PHTFEventRecord::_opmap["MPI_COMM_CREATE"] = COMM_CREATE;
     PHTFEventRecord::_opmap["MPI_COMM_SPLIT"] = COMM_SPLIT;
@@ -345,13 +372,36 @@ void PHTFEventRecord::buildRecordFields()
 
     _parameters.resize(0);
     int failsafe = 25;
+    bool isVector = false;
+    string vectorText;
     while(!ss.eof())
     {
-        string pa = "";
-        ss >> pa;
-        if(pa != "")
+        string token;
+        ss >> token;
+        if (token.size() > 0)
         {
-            _parameters.push_back(pa);
+            // Process vector text independently
+            if ('[' == token[0])
+            {
+                isVector = true;
+                vectorText = token;
+            }
+            else if(isVector)
+            {
+                vectorText.append(" ");
+                vectorText.append(token);
+            }
+
+            // Add completed vectors or regular tokens to parameters
+            if (isVector && ']' == token[token.size() - 1])
+            {
+                _parameters.push_back(vectorText);
+                isVector = false;
+            }
+            else if (!isVector)
+            {
+                _parameters.push_back(token);
+            }
         }
 
         if (0 == failsafe)
@@ -359,7 +409,7 @@ void PHTFEventRecord::buildRecordFields()
             cerr << __FILE__ << ":" << __LINE__ << ":"
                  << "WARNING: Reached infinite loop failsafe catch "
                  << "Record: " << _recordstr << " "
-                 << "PA String: >" << pa << "<"
+                 << "Current Token: >" << token << "<"
                  << " Remaining in stream >" << ss << "<" << endl;
             _Exit(1);
         }
