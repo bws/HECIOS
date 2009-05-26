@@ -21,13 +21,14 @@
 //
 #include <omnetpp.h>
 #include <string>
+#include "direct_message_interface.h"
 #include "io_trace.h"
 class FileDescriptor;
 
 /**
  * Model of an application process.
  */
-class IOApplication : public cSimpleModule
+class IOApplication : public cSimpleModule, public DirectMessageInterface
 {
 public:
     /** Name string for CPU Phase Messages */

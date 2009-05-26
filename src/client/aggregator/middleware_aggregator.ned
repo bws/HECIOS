@@ -1,7 +1,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Yang Wu
+// Copyright (C) 2007 Brad Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,15 +19,40 @@
 //
 
 //
-// MPI middleware
+// Template for middleware MPI-IO process aggregator
 //
-
-simple MpiMiddleware
+simple MiddlewareAggregator
     gates:
-        in: appIn, aggIn, cacheIn, netIn;
-        out: appOut, aggOut, cacheOut, netOut;
+        in: appIn, ioIn, mpiIn;
+        out: appOut, ioOut, mpiOut;
 endsimple
 
+//
+// Passthrough/No-op middleware cache
+//
+simple NoMiddlewareAggregator
+    gates:
+        in: appIn, ioIn, mpiIn;
+        out: appOut, ioOut, mpiOut;
+endsimple
+
+//
+// Middleware cache using pages of direct cache
+//
+simple DataSievingMiddlewareAggregator
+	gates:
+		in: appIn, ioIn, mpiIn;
+        out: appOut, ioOut, mpiOut;
+endsimple
+
+//
+// Middleware cache using pages of direct cache
+//
+simple ViewAwareMiddlewareAggregator
+	gates:
+		in: appIn, ioIn, mpiIn;
+        out: appOut, ioOut, mpiOut;
+endsimple
 
 //
 // Local variables:

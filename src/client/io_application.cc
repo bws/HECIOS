@@ -62,7 +62,7 @@ void IOApplication::setRank(int rank)
 
 void IOApplication::directMessage(cMessage* msg)
 {
-    Enter_Method("Application is receving a direct message");
+    Enter_Method("Application is receiving a direct message");
     take(msg);
     double delay = msg->par("Delay");
     scheduleAt(simTime() + delay, msg);
@@ -180,7 +180,7 @@ void IOApplication::handleSelfMessage(cMessage* msg)
     }
     else
     {
-        // This is a file system response sent directly from the cache
+        // This is a file system response sent directly from the I/O middleware
         handleIOMessage(msg);
     }
 }

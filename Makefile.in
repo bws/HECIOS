@@ -42,6 +42,7 @@ DOC_DIR = doc
 SRC_DIR = src
 INET_DIR = INET
 CLIENT_DIR = $(SRC_DIR)/client
+CLIENT_AGGREGATOR_DIR = $(SRC_DIR)/client/aggregator
 CLIENT_CACHE_DIR = $(SRC_DIR)/client/cache
 COMMON_DIR = $(SRC_DIR)/common
 CONFIG_DIR = $(SRC_DIR)/config
@@ -76,8 +77,9 @@ default: $(DEFAULT_TARGETS)
 #
 INCLUDES = $(OMNET_DIR)/include \
         $(HECIOS_DIR) \
-        $(CLIENT_DIR) \
+        $(CLIENT_AGGREGATOR_DIR) \
         $(CLIENT_CACHE_DIR) \
+        $(CLIENT_DIR) \
         $(COMMON_DIR) \
         $(CONFIG_DIR) \
         $(IO_DIR) \
@@ -144,6 +146,7 @@ TOOLS_SRC :=
 include $(HECIOS_DIR)/mf/inet.mk
 include $(DOC_DIR)/module.mk
 include $(CLIENT_DIR)/module.mk
+include $(CLIENT_AGGREGATOR_DIR)/module.mk
 include $(CLIENT_CACHE_DIR)/module.mk
 include $(COMMON_DIR)/module.mk
 include $(CONFIG_DIR)/module.mk

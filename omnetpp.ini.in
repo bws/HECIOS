@@ -73,6 +73,15 @@ include @INSTALL_DIR@/ini/palmetto_myri10g.ini
 #**.mpi.app.traceFile = "/data/traces/phtf/flash-io_128p"
 #**.mpi.app.traceFile = "/data/traces/phtf/flash-io_256p"
 #**.mpi.app.traceFile = "/data/traces/phtf/flash-io_512p"
+#**.mpi.app.traceFile = "/data/traces/phtf/mpi-tile-io-read_8p"
+#**.mpi.app.traceFile = "/data/traces/phtf/mpi-tile-io-write_8p"
+
+###############################################################################
+#
+# MPI-IO Aggregator settings
+#
+###############################################################################
+**.mpi.middlewareAggregatorType = "NoMiddlewareAggregator"
 
 ###############################################################################
 #

@@ -22,6 +22,7 @@
 #include <iostream>
 #include <omnetpp.h>
 #include "io_application.h"
+#include "middleware_aggregator.h"
 using namespace std;
 
 MiddlewareCache::MiddlewareCache()
@@ -94,18 +95,18 @@ void MiddlewareCache::handleMessage(cMessage* msg)
 void MiddlewareCache::sendApplicationResponse(double delay, cMessage* response)
 {
     // Determine the original sender
-    cMessage* origRequest = static_cast<cMessage*>(response->contextPointer());
-    cModule* originator = origRequest->senderModule();
+    cMessage* parentRequest = static_cast<cMessage*>(response->contextPointer());
+    cModule*  parent = parentRequest->senderModule();
 
     // Add the delay to the message
     cPar* delayParameter = new cPar("Delay");
     *delayParameter = delay;
     response->addPar(delayParameter);
 
-    // Locate the correct IOApplication
-    IOApplication* ioApp = dynamic_cast<IOApplication*>(originator);
-    assert(0 != ioApp);
-    ioApp->directMessage(response);
+    // Locate the correct originator
+    MiddlewareAggregator* originator = dynamic_cast<MiddlewareAggregator*>(parent);
+    assert(0 != originator);
+    originator->directMessage(response);
 }
 
 
@@ -113,7 +114,7 @@ void MiddlewareCache::sendApplicationResponse(double delay, cMessage* response)
 // NoMiddlewareCache implementation
 //
 //
-// OMNet Registriation Method
+// OMNet Registration Method
 Define_Module(NoMiddlewareCache);
 
 NoMiddlewareCache::NoMiddlewareCache()

@@ -31,6 +31,7 @@ import
 //
 module MPIProcess
     parameters:
+        middlewareAggregatorType : string,
         middlewareCacheType : string,
         IOApplicationType : string;
 
@@ -45,6 +46,9 @@ module MPIProcess
 		mpiMiddleware: MpiMiddleware;
 	    	display: "p=180,180;i=block/classifier,red";
 
+        aggregator: middlewareAggregatorType like MiddlewareAggregator;
+            display: "p=120,180;i=block/buffer2,green";
+
         cache: middlewareCacheType like MiddlewareCache;
             display: "p=120,180;i=block/buffer2,green";
 
@@ -53,14 +57,22 @@ module MPIProcess
 		app.mpiOut --> mpiMiddleware.appIn;
 		app.mpiIn <-- mpiMiddleware.appOut;
 
-        // Connect the MPI application to the cache middleware
-        app.ioOut --> cache.appIn;
-        app.ioIn <-- cache.appOut;
-        
+        // Connect the Aggregator to the MPI Middleware
+		aggregator.mpiOut --> mpiMiddleware.aggIn;
+		aggregator.mpiIn <-- mpiMiddleware.aggOut;
+
         // Connect the Cache to the MPI Middleware
 		cache.mpiOut --> mpiMiddleware.cacheIn;
 		cache.mpiIn <-- mpiMiddleware.cacheOut;
 
+        // Connect the MPI application to the aggregator middleware
+        app.ioOut --> aggregator.appIn;
+        app.ioIn <-- aggregator.appOut;
+        
+        // Connect the aggregator to the cache middleware
+        aggregator.ioOut --> cache.appIn;
+        aggregator.ioIn <-- cache.appOut;
+        
         // Connect the Cache to the I/O subsystem
 		cache.fsOut --> ioOut;
 		cache.fsIn <-- ioIn;

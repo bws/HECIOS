@@ -1,7 +1,9 @@
+#ifndef DIRECT_MESSAGE_INTERFACE_H_
+#define DIRECT_MESSAGE_INTERFACE_H_
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Yang Wu
+// Copyright (C) 2009 bradles
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -17,24 +19,22 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+class cMessage;
 
-//
-// MPI middleware
-//
+class DirectMessageInterface
+{
+public:
+    /** Constructor */
+    DirectMessageInterface() {};
 
-simple MpiMiddleware
-    gates:
-        in: appIn, aggIn, cacheIn, netIn;
-        out: appOut, aggOut, cacheOut, netOut;
-endsimple
+    /** Destructor */
+    virtual ~DirectMessageInterface() {};
+
+    /** Receive and schedule a direct message */
+    virtual void directMessage(cMessage* msg) = 0;
+
+private:
+};
 
 
-//
-// Local variables:
-//  indent-tabs-mode: nil
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//
+#endif /* DIRECT_MESSAGE_INTERFACE_H_ */
