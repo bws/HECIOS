@@ -28,11 +28,18 @@
 #include "mpi_proto_m.h"
 using namespace std;
 
+static ByteDataType byteDataType;
+
 //
 // Implementation for Page Access Mixin
 //
 PageAccessMixin::PageAccessMixin()
     : pageSize_(0)
+{
+}
+
+PageAccessMixin::PageAccessMixin(FSSize pageSize)
+    : pageSize_(pageSize)
 {
 }
 
@@ -227,6 +234,11 @@ BlockIndexedPageAccessMixin::BlockIndexedPageAccessMixin()
 {
 }
 
+BlockIndexedPageAccessMixin::BlockIndexedPageAccessMixin(FSSize pageSize)
+  : PageAccessMixin(pageSize)
+{
+}
+
 BlockIndexedPageAccessMixin::~BlockIndexedPageAccessMixin()
 {
 }
@@ -242,6 +254,7 @@ void BlockIndexedPageAccessMixin::groupPagesByFilename(
     {
         set<FilePageId>& pages = outPageGroups[iter->filename];
         pages.insert(iter->key);
+        ++iter;
     }
 }
 
@@ -448,7 +461,7 @@ FileDescriptor* BlockIndexedPageAccessMixin::getPageViewDescriptor(
     // Create the block indexed data type to use as the view
     BlockIndexedDataType* pageView = new BlockIndexedDataType(pageSize,
                                                               displacements,
-                                                              byteDataType_);
+                                                              byteDataType);
     FileView cacheView(0, pageView);
 
     // Create a descriptor with which to apply the view

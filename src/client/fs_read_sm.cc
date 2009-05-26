@@ -171,7 +171,7 @@ void FSReadSM::enterRead()
 
         if (0 != serverBytes)
         {
-            // Now reprocess the data using the client read functionality
+            // Now re-process the data using the client read functionality
             // to figure out the actual data to send to server
             FSSize reqBytes = DataTypeProcessor::createClientFileLayoutForRead(
                 readRequest_->getOffset(),

@@ -76,6 +76,7 @@ vector<FileRegion> IndexedDataType::getRegionsByBytes(
     const FSOffset& byteOffset,
     size_t numBytes) const
 {
+    cerr << "Arg 3: " << oldType_.clone()->getExtent() << endl;
     // The total regions produced
     vector<FileRegion> vectorRegions;
 

@@ -479,7 +479,7 @@ void ProgressivePagedMiddlewareCache::beginRead(const set<Key>& readPages,
     }
 
     // Construct and send the requests
-    BlockIndexedPageAccessMixin pageAccessor;
+    BlockIndexedPageAccessMixin pageAccessor(pageSize_);
     vector<spfsMPIFileReadAtRequest*> reads =
         pageAccessor.createPFSReadRequests(pageKeys, parentRequest);
     for (size_t i = 0; i < reads.size(); i++)

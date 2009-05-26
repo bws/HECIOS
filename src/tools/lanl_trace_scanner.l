@@ -36,6 +36,9 @@ char* beginLine = 0;
 /* Definitions controlling lex code generation */
 #define YY_MAIN 0
 
+/* Adjust the buffer size to be large for large traces */
+#define YY_BUF_SIZE 268435456
+
 /** Determine if the current state is correct */
 void checkState(int currentState, const char* currentText)
 {

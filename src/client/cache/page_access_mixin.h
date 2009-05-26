@@ -46,6 +46,9 @@ public:
     /** Default constructor */
     PageAccessMixin();
 
+    /** Constructor */
+    PageAccessMixin(FSSize pageSize);
+
     /** Destructor */
     virtual ~PageAccessMixin() = 0;
 
@@ -135,7 +138,10 @@ public:
     /** Default constructor */
     BlockIndexedPageAccessMixin();
 
-    /** */
+    /** Constructor */
+    BlockIndexedPageAccessMixin(FSSize pageSize);
+
+    /** Destructor */
     ~BlockIndexedPageAccessMixin();
 
     /** @return the read exclusive requests for this set of pages */
@@ -178,9 +184,6 @@ private:
     /** @return a block indexed view of the file for the pages */
     FileDescriptor* getPageViewDescriptor(const Filename& filename,
                                           const std::set<FilePageId>& pageIds) const;
-
-    /** */
-    ByteDataType byteDataType_;
 };
 
 #endif /* PAGE_ACCESS_MIXIN_H_ */
