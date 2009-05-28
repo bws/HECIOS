@@ -61,6 +61,7 @@ include @INSTALL_DIR@/ini/palmetto_myri10g.ini
 #   application's process rank.
 #
 ###############################################################################
+**.mpiConfig.randomizeRanks = false
 **.mpi.IOApplicationType = "PHTFIOApplication"
 **.mpi.app.disableCPUPhase = true
 **.mpi.app.isVerbose = false

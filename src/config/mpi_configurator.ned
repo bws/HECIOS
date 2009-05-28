@@ -24,7 +24,8 @@
 simple MPIConfigurator
     parameters:
         listenPortMin: numeric const,
-        listenPortMax: numeric const;
+        listenPortMax: numeric const,
+        randomizeRanks: bool;
 endsimple
 
 //

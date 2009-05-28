@@ -20,6 +20,7 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include <set>
 #include "InterfaceTableAccess.h"
 #include "IPv4InterfaceData.h"
 #include "IPvXAddress.h"
@@ -55,6 +56,9 @@ protected:
     virtual void handleMessage(cMessage* msg);
 
 private:
+    /** @return the next rank to assign */
+    size_t getNextRank() const;
+
     /** @return the IP address registered to the compute node */
     IPvXAddress* getComputeNodeIP(cModule* computeNode);
 
@@ -76,7 +80,13 @@ private:
     size_t nextPortToAssign_;
 
     /** The next process rank to assign to an MPI process */
-    size_t nextProcessRank_;
+    mutable size_t nextProcessRank_;
+
+    /** Determine if ranks should be randomized */
+    bool randomizeRanks_;
+
+    /** The total number of processes to assign */
+    size_t totalProcessCount_;
 };
 
 // OMNet Registriation Method
@@ -97,8 +107,10 @@ void MPIConfigurator::initialize(int stage)
         cerr << "DIAGNOSTIC: Max number of MPI processes is: "
              << maxListenPort_ - minListenPort_ << endl;
 
-        // Initializae the next rank to 0
+        // Initialize the rank setting variables
+        randomizeRanks_ = par("randomizeRanks");
         nextProcessRank_ = 0;
+        totalProcessCount_ = 0;
 
         // Set the listen ports for the servers
         cModule* cluster = parentModule();
@@ -116,6 +128,9 @@ void MPIConfigurator::initialize(int stage)
                 size_t listenPort = nextPortToAssign_++;
                 setMPIServerListenPort(cpun, j, listenPort);
             }
+
+            // Update bookkeeping info
+            totalProcessCount_ += numProcesses;
         }
     }
     else if (3 == stage)
@@ -186,6 +201,33 @@ void MPIConfigurator::handleMessage(cMessage* msg)
     cerr << __FILE__ << ":" << __LINE__ << ":"
          << "ERROR: MPIConfigurator cannot receive messages!!!" << endl;
     assert(false);
+}
+
+size_t MPIConfigurator::getNextRank() const
+{
+    size_t nextRank;
+    if (randomizeRanks_)
+    {
+        // Select a random rank from a hat
+        static vector<size_t> rankHat(totalProcessCount_, 0);
+        if (rankHat.empty())
+        {
+            assert(0 == nextProcessRank_);
+            for (size_t i = 0; i < totalProcessCount_; i++)
+            {
+                rankHat[i] = i;
+            }
+        }
+        int idx = intuniform(0, rankHat.size() - 1);
+        nextRank = rankHat[idx];
+        rankHat.erase(rankHat.begin() + idx);
+        nextProcessRank_++;
+    }
+    else
+    {
+        nextRank = nextProcessRank_++;
+    }
+    return nextRank;
 }
 
 IPvXAddress* MPIConfigurator::getComputeNodeIP(cModule* computeNode)

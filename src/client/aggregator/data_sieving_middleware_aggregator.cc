@@ -17,7 +17,11 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+#include <map>
+#include <vector>
+#include "file_region_set.h"
 #include "middleware_aggregator.h"
+class spfsMPIFileRequest;
 using namespace std;
 
 /** Model of an aggregator that does Argonne data sieving semantics */
@@ -28,15 +32,35 @@ public:
     DataSievingMiddlewareAggregator();
 
 private:
+    struct CollectiveOperation
+    {
+        vector<spfsMPIFileRequest*> requests;
+        FileRegionSet regions;
+    };
+
+    /** */
+    typedef int CollectiveId;
+
+    /** */
+    typedef std::map<CollectiveId, CollectiveOperation*> CollectiveMap;
+
+    /** */
+    typedef std::map<spfsMPIFileRequest*, CollectiveOperation*> CollectiveRequestMap;
+
     /** Forward application messages to file system */
     virtual void handleApplicationMessage(cMessage* msg);
 
     /** Forward application messages to file system */
     virtual void handleFileSystemMessage(cMessage* msg);
+
+    static CollectiveId currentCollId_;
 };
 
 // OMNet Registration Method
 Define_Module(DataSievingMiddlewareAggregator);
+
+// Static variable storage
+DataSievingMiddlewareAggregator::CollectiveId DataSievingMiddlewareAggregator::currentCollId_ = 0;
 
 DataSievingMiddlewareAggregator::DataSievingMiddlewareAggregator()
 {
