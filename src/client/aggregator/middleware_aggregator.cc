@@ -24,6 +24,11 @@
 #include "io_application.h"
 using namespace std;
 
+// Static variable declarations
+map<cModule*, MiddlewareAggregator::CollectiveMap*> MiddlewareAggregator::sharedCollectiveMap_;
+map<cModule*, MiddlewareAggregator::CollectiveRequestMap*> MiddlewareAggregator::sharedPendingRequestMap_;
+
+// Method implementations
 MiddlewareAggregator::MiddlewareAggregator()
     : cSimpleModule(),
       appInGateId_(-1),
@@ -35,6 +40,11 @@ MiddlewareAggregator::MiddlewareAggregator()
 
 MiddlewareAggregator::~MiddlewareAggregator()
 {
+}
+
+void MiddlewareAggregator::setAggregatorSize(size_t size)
+{
+    aggregatorSize_ = size;
 }
 
 void MiddlewareAggregator::initialize()
@@ -99,6 +109,53 @@ void MiddlewareAggregator::directMessage(cMessage* msg)
     take(msg);
     double delay = msg->par("Delay");
     scheduleAt(simTime() + delay, msg);
+}
+
+MiddlewareAggregator::CollectiveMap* MiddlewareAggregator::createCollectiveMap()
+{
+    return createSharedResource(sharedCollectiveMap_);
+}
+
+MiddlewareAggregator::CollectiveRequestMap* MiddlewareAggregator::createPendingRequestMap()
+{
+    return createSharedResource(sharedPendingRequestMap_);
+}
+
+template<class SharedResource>
+SharedResource*
+MiddlewareAggregator::createSharedResource(map<cModule*, SharedResource*>& sharedResourceMap)
+{
+    typedef map<cModule*, SharedResource*> SharedResourceMap;
+
+    // Retrieve the compute node model
+    cModule* cpun = findParentComputeNode();
+
+    // If a shared resource for this node exists, return it
+    // Otherwise, create and return it
+    SharedResource* sharedResource = 0;
+    typename SharedResourceMap::iterator iter = sharedResourceMap.find(cpun);
+    if (iter != sharedResourceMap.end())
+    {
+        sharedResource = iter->second;
+    }
+    else
+    {
+        sharedResource = new SharedResource();
+        sharedResourceMap[cpun] = sharedResource;
+    }
+    return sharedResource;
+}
+
+cModule* MiddlewareAggregator::findParentComputeNode() const
+{
+    // Extract the compute node model
+    cModule* mpiProcess = parentModule();
+    assert(0 != mpiProcess);
+    cModule* jobProcess = mpiProcess->parentModule();
+    assert(0 != jobProcess);
+    cModule* cpun = jobProcess->parentModule();
+    assert(0 != cpun);
+    return cpun;
 }
 
 

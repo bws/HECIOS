@@ -113,7 +113,7 @@ private:
 
     /** Perform the application processing to do an open */
     void performOpenProcessing(PHTFEventRecord* openRecord,
-                               uint64_t& outCommunicatorId);
+                               Communicator& outCommunicatorId);
 
     /** Perform the application processing to simulate a seek */
     void performSeekProcessing(PHTFEventRecord* seekRecord);
@@ -196,6 +196,10 @@ private:
     spfsMPIFileReadAtRequest * createFileReadMessage(
         const PHTFEventRecord* readRecord);
 
+    /** @return an MPI File Read request */
+    spfsMPIFileReadAtRequest * createFileReadAllMessage(
+        const PHTFEventRecord* readRecord);
+
     /** @return an MPI File Set Size Message */
     spfsMPIFileStatRequest* createFileSetSizeMessage(
         const PHTFEventRecord* setSizeRecord);
@@ -204,16 +208,20 @@ private:
     spfsMPIFileUpdateTimeRequest* createFileUpdateTimeMessage(
         const PHTFEventRecord* utimeRecord);
 
-    /** @return an MPI File Write At request */
-    spfsMPIFileWriteAtRequest* createFileWriteAtMessage(
+    /** @return an MPI File Write All request */
+    spfsMPIFileWriteAtRequest* createFileWriteAllMessage(
         const PHTFEventRecord* writeAtRecord);
+
+    /** @return an MPI File Write At request */
+    spfsMPIFileWriteAtRequest * createFileWriteAtMessage(
+        const PHTFEventRecord* writeRecord);
 
     /** @return an MPI File Write request */
     spfsMPIFileWriteAtRequest * createFileWriteMessage(
         const PHTFEventRecord* writeRecord);
 
     /** @return a BCAST for the communicator */
-    spfsMPIBcastRequest* createBcastRequest(int communicatorId);
+    spfsMPIBcastRequest* createBcastRequest(Communicator communicatorId);
 
     /** retrieve Datatype from map, NULL if none found */
     DataType* getDataTypeById(const std::string& typeId);

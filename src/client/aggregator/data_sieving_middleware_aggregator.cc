@@ -32,21 +32,6 @@ public:
     DataSievingMiddlewareAggregator();
 
 private:
-    struct CollectiveOperation
-    {
-        vector<spfsMPIFileRequest*> requests;
-        FileRegionSet regions;
-    };
-
-    /** */
-    typedef int CollectiveId;
-
-    /** */
-    typedef std::map<CollectiveId, CollectiveOperation*> CollectiveMap;
-
-    /** */
-    typedef std::map<spfsMPIFileRequest*, CollectiveOperation*> CollectiveRequestMap;
-
     /** Forward application messages to file system */
     virtual void handleApplicationMessage(cMessage* msg);
 

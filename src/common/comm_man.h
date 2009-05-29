@@ -19,13 +19,14 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+#include <stdint.h>
 #include <map>
 #include <vector>
 #include "singleton.h"
 #include "pfs_types.h"
 
 /** Type for a collective communicator descriptor */
-typedef int Communicator;
+typedef int64_t Communicator;
 
 /**
  * Communicator Manager (singleton)

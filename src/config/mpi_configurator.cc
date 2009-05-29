@@ -25,6 +25,7 @@
 #include "IPv4InterfaceData.h"
 #include "IPvXAddress.h"
 #include "io_application.h"
+#include "middleware_aggregator.h"
 #include "middleware_cache.h"
 #include "mpi_middleware.h"
 #include "pfs_types.h"
@@ -175,6 +176,13 @@ void MPIConfigurator::initialize(int stage)
                     mpiProcess->submodule("mpiMiddleware"));
                 assert(0 != mpiMid);
                 mpiMid->setRank(rank);
+
+                // Set the rank and size for the aggregator middleware
+                MiddlewareAggregator* mwAgg = dynamic_cast<MiddlewareAggregator*>(
+                    mpiProcess->submodule("aggregator"));
+                assert(0 != mwAgg);
+                mwAgg->setRank(rank);
+                mwAgg->setAggregatorSize(numProcesses);
 
                 // Set the rank for the cache middleware
                 MiddlewareCache* mwCache = dynamic_cast<MiddlewareCache*>(

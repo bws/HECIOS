@@ -24,6 +24,7 @@
 
 // allow a pointer field in a message 
 cplusplus {{
+#include <comm_man.h>
 #include <data_type.h>
 #include <file_descriptor.h>
 #include <fs_operation_state.h>
@@ -37,6 +38,7 @@ typedef DataTypePtr MPIDataType;
 }}
 
 class cFSM;
+class noncobject Communicator;
 class noncobject MPIDataType;
 class noncobject FileDescriptorPtr;
 class noncobject FSOperationState;
@@ -124,7 +126,7 @@ message spfsMPICollectiveRequest extends spfsMPIRequest
     fields:
         bool isCollective = false;
         int rank;
-        int communicator;        
+        Communicator communicator;        
 }
 
 // The abstract base class for all MPI message requests requiring a descriptor

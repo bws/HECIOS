@@ -189,7 +189,7 @@ void PHTFIOApplication::handleMessage(cMessage* msg)
         spfsMPIFileOpenRequest* openRequest =
             static_cast<spfsMPIFileOpenRequest*>(msg->contextPointer());
         assert(0 != openRequest);
-        int commId = openRequest->getCommunicator();
+        Communicator commId = openRequest->getCommunicator();
 
         // Broadcast result to the remainder of the communicator if necessary
         if (SPFS_COMM_SELF != commId)
@@ -349,7 +349,7 @@ bool PHTFIOApplication::processIrregularEvent(PHTFEventRecord* eventRecord)
         case OPEN:
         {
             // Perform the open processing
-            uint64_t commId = 0;
+            Communicator commId = 0;
             performOpenProcessing(eventRecord, commId);
             assert(0 != commId);
 
@@ -505,13 +505,16 @@ cMessage* PHTFIOApplication::createMessage(const PHTFEventRecord* eventRecord)
             break;
         }
         case READ:
-        case READ_ALL:
         {
             request = createFileReadMessage(eventRecord);
             break;
         }
+        case READ_ALL:
+        {
+            request = createFileReadAllMessage(eventRecord);
+            break;
+        }
         case READ_AT:
-        case READ_AT_ALL:
         {
             request = createFileReadAtMessage(eventRecord);
             break;
@@ -522,13 +525,16 @@ cMessage* PHTFIOApplication::createMessage(const PHTFEventRecord* eventRecord)
             break;
         }
         case WRITE:
-        case WRITE_ALL:
         {
             request = createFileWriteMessage(eventRecord);
             break;
         }
+        case WRITE_ALL:
+        {
+            request = createFileWriteAllMessage(eventRecord);
+            break;
+        }
         case WRITE_AT:
-        case WRITE_AT_ALL:
         {
             request = createFileWriteAtMessage(eventRecord);
             break;
@@ -557,6 +563,7 @@ void PHTFIOApplication::performCartCreate(const PHTFEventRecord& cartCreate)
     Communicator oldComm = cartCreate.paramAsAddress(0);
     Communicator newComm = cartCreate.paramAsAddress(5);
     assert(true == CommMan::instance().exists(oldComm));
+    cerr << "Duplicating comm: " << oldComm << " as new: " << newComm << endl;
     CommMan::instance().dupComm(oldComm, newComm);
 }
 
@@ -593,7 +600,7 @@ void PHTFIOApplication::performFakeOpenProcessing(const PHTFEventRecord& openRec
 }
 
 void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
-                                              uint64_t& outCommunicatorId)
+                                              Communicator& outCommunicatorId)
 {
     // Extract the filename
     Filename openFilename(openRecord->paramAt(1));
@@ -601,15 +608,16 @@ void PHTFIOApplication::performOpenProcessing(PHTFEventRecord* openRecord,
     // Extract the descriptor number from the event record
     int fileId = openRecord->paramAsDescriptor(4, *phtfEvent_);
 
-    // Construct a file descriptor for use in simulaiton
+    // Extract the communicator id
+    outCommunicatorId = openRecord->paramAsAddress(0);
+
+    // Construct a file descriptor for use in simulation
     FileDescriptor* fd = FileBuilder::instance().getDescriptor(openFilename);
+    fd->setCommunicator(outCommunicatorId);
     assert(0 != fd);
 
     // Associate the file id with a file descriptor
     setDescriptor(fileId, fd);
-
-    // Extract the communicator id
-    outCommunicatorId = openRecord->paramAsAddress(0);
 }
 
 void PHTFIOApplication::performSeekProcessing(PHTFEventRecord* seekRecord)
@@ -720,7 +728,7 @@ void PHTFIOApplication::performTypeCreateSubarray(const PHTFEventRecord& createS
 spfsMPIBarrierRequest* PHTFIOApplication::createAllReduceMessage(
     const PHTFEventRecord* allReduceRecord)
 {
-    uint64_t communicatorId = allReduceRecord->paramAsAddress(5);
+    Communicator communicatorId = allReduceRecord->paramAsAddress(5);
 
     spfsMPIBarrierRequest* barrier =
         new spfsMPIBarrierRequest(0, SPFS_MPI_BARRIER_REQUEST);
@@ -731,7 +739,7 @@ spfsMPIBarrierRequest* PHTFIOApplication::createAllReduceMessage(
 spfsMPIBarrierRequest* PHTFIOApplication::createBarrierMessage(
     const PHTFEventRecord* barrierRecord)
 {
-    uint64_t communicatorId = barrierRecord->paramAsAddress(0);
+    Communicator communicatorId = barrierRecord->paramAsAddress(0);
 
     spfsMPIBarrierRequest* barrier =
         new spfsMPIBarrierRequest(0, SPFS_MPI_BARRIER_REQUEST);
@@ -742,7 +750,7 @@ spfsMPIBarrierRequest* PHTFIOApplication::createBarrierMessage(
 spfsMPIBcastRequest* PHTFIOApplication::createBcastMessage(
     const PHTFEventRecord* bcastRecord)
 {
-    uint64_t communicatorId = bcastRecord->paramAsAddress(4);
+    Communicator communicatorId = bcastRecord->paramAsAddress(4);
 
     spfsMPIBcastRequest* bcast =
         new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);
@@ -848,7 +856,7 @@ spfsMPIFileOpenRequest* PHTFIOApplication::createFileOpenMessage(
     const PHTFEventRecord* openRecord)
 {
     // Extract the communicator id
-    int communicatorId = openRecord->paramAsAddress(0);
+    Communicator communicatorId = openRecord->paramAsAddress(0);
 
     // Extract the open mode
     int mode = openRecord->paramAsSizeT(2);
@@ -891,6 +899,22 @@ spfsMPIFileReadAtRequest* PHTFIOApplication::createFileReadAtMessage(
     read->setOffset(offset);
     read->setFileDes(fd);
     read->setReqId(-1);
+    return read;
+}
+
+spfsMPIFileReadAtRequest* PHTFIOApplication::createFileReadAllMessage(
+    const PHTFEventRecord* readRecord)
+{
+    spfsMPIFileReadAtRequest* read = createFileReadMessage(readRecord);
+
+    // Set the collective attributes
+    int handle = readRecord->paramAsDescriptor(0, *phtfEvent_);
+    FileDescriptor* fd = getDescriptor(handle);
+    Communicator comm = fd->getCommunicator();
+    read->setIsCollective(true);
+    read->setCommunicator(comm);
+    read->setRank(CommMan::instance().commRank(comm, getRank()));
+
     return read;
 }
 
@@ -957,6 +981,22 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteAtMessage(
     return write;
 }
 
+spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteAllMessage(
+    const PHTFEventRecord* writeRecord)
+{
+    spfsMPIFileWriteAtRequest* write = createFileWriteMessage(writeRecord);
+
+    // Set the collective attributes
+    int handle = writeRecord->paramAsDescriptor(0, *phtfEvent_);
+    FileDescriptor* fd = getDescriptor(handle);
+    Communicator comm = fd->getCommunicator();
+    write->setIsCollective(true);
+    write->setCommunicator(comm);
+    write->setRank(CommMan::instance().commRank(comm, getRank()));
+
+    return write;
+}
+
 spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteMessage(
     const PHTFEventRecord* writeRecord)
 {
@@ -985,9 +1025,9 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteMessage(
 }
 
 spfsMPIBcastRequest* PHTFIOApplication::createBcastRequest(
-    int communicatorId)
+    Communicator communicatorId)
 {
-    assert(-1 != communicatorId);
+    assert(CommMan::instance().commExists(communicatorId));
 
     spfsMPIBcastRequest* bcast =
         new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);

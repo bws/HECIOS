@@ -20,6 +20,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "basic_types.h"
+#include "comm_man.h"
 #include "file_view.h"
 #include "filename.h"
 #include "pfs_types.h"
@@ -39,6 +40,9 @@ public:
 
     /** Destructor */
     ~FileDescriptor();
+
+    /** @return the communicator used during file open */
+    Communicator getCommunicator() const { return communicator_; };
 
     /** @return the file's name */
     Filename getFilename() const { return filename_; };
@@ -61,6 +65,9 @@ public:
     /** @return the resolved handle for the filename path segment */
     FSHandle getParentHandle(std::size_t segmentIdx) const;
 
+    /** Set the open communicator */
+    void setCommunicator(const Communicator& communicator);
+
     /** Set the file view */
     void setFileView(const FileView& fileView);
 
@@ -79,6 +86,9 @@ private:
 
     /** Assignement operator hidden */
     FileDescriptor& operator=(const FileDescriptor& other);
+
+    /** Communicator used to open file */
+    Communicator communicator_;
 
     /** File name */
     Filename filename_;

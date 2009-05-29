@@ -25,7 +25,8 @@ using namespace std;
 
 FileDescriptor::FileDescriptor(const Filename& name,
                                const FSMetaData& metaData)
-    : filename_(name),
+    : communicator_(SPFS_COMM_SELF),
+      filename_(name),
       metaData_(metaData),
       fileView_(0, new ByteDataType()),
       filePtr_(0)
@@ -50,6 +51,11 @@ FSHandle FileDescriptor::getParentHandle(size_t segmentIdx) const
 {
     assert(segmentIdx < parentHandles_.size());
     return parentHandles_[segmentIdx];
+}
+
+void FileDescriptor::setCommunicator(const Communicator& communicator)
+{
+    communicator_ = communicator;
 }
 
 void FileDescriptor::setFileView(const FileView& fileView)

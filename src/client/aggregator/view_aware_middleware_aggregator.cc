@@ -17,7 +17,10 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
+#include <cassert>
+#include <map>
 #include "middleware_aggregator.h"
+#include "mpi_proto_m.h"
 using namespace std;
 
 /** Model of an aggregator that does view aware semantics */
@@ -27,16 +30,37 @@ public:
     /** Constructor */
     ViewAwareMiddlewareAggregator();
 
+protected:
+    /** Perform module initialization */
+    void initialize();
+
 private:
     /** Forward application messages to file system */
     virtual void handleApplicationMessage(cMessage* msg);
 
     /** Forward application messages to file system */
     virtual void handleFileSystemMessage(cMessage* msg);
+
+    /** */
+    void handleCollectiveIO(spfsMPIFileRequest* fileRequest);
+
+    CollectiveMap* currentCollective_;
+
+    CollectiveRequestMap* pendingCollectives_;
+
+    int aggregatorSize_;
 };
 
 // OMNet Registration Method
 Define_Module(ViewAwareMiddlewareAggregator);
+
+void ViewAwareMiddlewareAggregator::initialize()
+{
+    MiddlewareAggregator::initialize();
+    currentCollective_ = createCollectiveMap();
+    pendingCollectives_ = createPendingRequestMap();
+    setAggregatorSize(8);
+}
 
 ViewAwareMiddlewareAggregator::ViewAwareMiddlewareAggregator()
 {
@@ -45,12 +69,55 @@ ViewAwareMiddlewareAggregator::ViewAwareMiddlewareAggregator()
 // Perform simple pass through on all messages
 void ViewAwareMiddlewareAggregator::handleApplicationMessage(cMessage* msg)
 {
-    send(msg, ioOutGateId());
+    if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind() ||
+        SPFS_MPI_FILE_WRITE_AT_REQUEST == msg->kind())
+    {
+        // Check if the op is collective
+        spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(msg);
+        if (fileRequest->getIsCollective())
+        {
+            handleCollectiveIO(fileRequest);
+        }
+        else
+        {
+            send(msg, ioOutGateId());
+        }
+    }
+    else
+    {
+        send(msg, ioOutGateId());
+    }
 }
 
 void ViewAwareMiddlewareAggregator::handleFileSystemMessage(cMessage* msg)
 {
     send(msg, appOutGateId());
+}
+
+void ViewAwareMiddlewareAggregator::handleCollectiveIO(spfsMPIFileRequest* fileRequest)
+{
+    CommMan& commMgr = CommMan::instance();
+    Communicator comm = fileRequest->getCommunicator();
+    currentCollective_->insert(fileRequest);
+    if (currentCollective_->size() == aggregatorSize_)
+    {
+        CollectiveMap::const_iterator first = currentCollective_->begin();
+        CollectiveMap::const_iterator last = currentCollective_->end();
+        while (first != last)
+        {
+            send(*(first++), ioOutGateId());
+        }
+        currentCollective_->clear();
+    }
+    else
+    {
+        cerr << "Waiting bitches" << endl;
+    }
+    cerr << __FILE__ << ":" << __LINE__ << ":"
+         << "Handling collective comm: " << fileRequest->getCommunicator()
+         << " rank: " << fileRequest->getRank()
+         << " of: " << commMgr.commSize(comm)
+         << endl;
 }
 
 /*
