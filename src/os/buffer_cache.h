@@ -3,7 +3,9 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007 Bradley W. Settlemyer
+// Copyright (C) 2008 Bradley W. Settlemyer
+// Copyright (C) 2009 Bradley W. Settlemyer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -19,7 +21,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-
+#include <map>
 #include <omnetpp.h>
 #include "basic_types.h"
 #include "lru_cache.h"
@@ -88,15 +90,18 @@ protected:
     /** Register a write through */
     void registerWriteThrough();
 
+    /** in gate id */
+    int inGateId_;
+
+    /** in gate id */
+    int outGateId_;
+
 private:
     /** Handle caching for incoming block requests from the file system */
     virtual void handleBlockRequest(cMessage* msg) = 0;
 
     /** Handle caching for incoming block device responses */
     virtual void handleBlockResponse(cMessage* msg) = 0;
-
-    /** in gate id */
-    int inGateId_;
 
     // Metric data collected at runtime
     double statNumRequests_;
@@ -169,11 +174,19 @@ protected:
     virtual Entry getNextEviction();
 
 private:
+    typedef std::multimap<LogicalBlockAddress, cMessage*> PendingRequestMap;
+
     /** Handle caching for incoming block requests from the file system */
     virtual void handleBlockRequest(cMessage* msg);
 
     /** Handle caching for incoming block device responses */
     virtual void handleBlockResponse(cMessage* msg);
+
+    void addPending(LogicalBlockAddress lba, cMessage* msg);
+
+    bool isPending(LogicalBlockAddress lba);
+
+    void satisfyPending(LogicalBlockAddress lba);
 
     /**
      * Evict a cache entry if the cache is full and write the block to disk
@@ -186,6 +199,8 @@ private:
 
     /** Cache helper class */
     LRUCache<LogicalBlockAddress, char>* cache_;
+
+    PendingRequestMap pendingRequests_;
 };
 
 #endif

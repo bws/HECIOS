@@ -76,7 +76,8 @@ void MpiMiddleware::completeCommunicationCB(spfsMPIRequest* request)
                  << "Invalid MPI message kind: " << request->kind() << endl;
         }
     }
-    send(response, appOutGate_);
+    double delay = exponential(randomDelayMean_);
+    sendDelayed(response, delay, appOutGate_);
     assert(0 != response);
 }
 
@@ -89,6 +90,10 @@ void MpiMiddleware::initialize()
     cacheOutGate_ = findGate("cacheOut");
     netInGate_  = findGate("netIn");
     netOutGate_ = findGate("netOut");
+
+    // Set the mean delay
+    // TODO: Make this a parameter
+    randomDelayMean_ = 0.000002;
 }
 
 void MpiMiddleware::finish()

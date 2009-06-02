@@ -42,6 +42,7 @@ void BufferCache::initialize()
 
     // Store gate ids
     inGateId_ = gate("in")->id();
+    outGateId_ = gate("out")->id();
 
     // Initialize derived cache implementations
     initializeCache();
@@ -155,7 +156,8 @@ void LRUBufferCache::handleBlockRequest(cMessage* msg)
     if (spfsOSReadDeviceRequest* read =
         dynamic_cast<spfsOSReadDeviceRequest*>(msg))
     {
-        if (isCached(read->getAddress()))
+        LogicalBlockAddress readLBA = read->getAddress();
+        if (isCached(readLBA))
         {
             // Update statistics
             registerHit();
@@ -163,12 +165,19 @@ void LRUBufferCache::handleBlockRequest(cMessage* msg)
             // Create and send response
             spfsOSReadDeviceResponse* resp = new spfsOSReadDeviceResponse();
             resp->setContextPointer(msg);
-            send(resp, "out");
+            send(resp, outGateId_);
+        }
+        else if (isPending(readLBA))
+        {
+            addPending(readLBA, msg);
         }
         else
         {
             // Update statistics
             registerMiss();
+
+            // Add to pending list
+            addPending(readLBA, msg);
 
             // Forward request to next module
             send(msg, "request");
@@ -237,7 +246,8 @@ void LRUBufferCache::handleBlockResponse(cMessage* msg)
         }
 
         // Forward completed response up the chain
-        send( msg, "out" );
+        satisfyPending(lba);
+        delete msg;
     }
     else if (spfsOSWriteDeviceRequest* write =
              dynamic_cast<spfsOSWriteDeviceRequest*>(req))
@@ -303,6 +313,42 @@ LRUBufferCache::Entry LRUBufferCache::getNextEviction()
     evictee.lba = lruEntry.first;
     evictee.isDirty = cache_->getDirtyBit(evictee.lba);
     return evictee;
+}
+
+void LRUBufferCache::addPending(LogicalBlockAddress lba, cMessage* msg)
+{
+    pendingRequests_.insert(make_pair(lba, msg));
+}
+
+bool LRUBufferCache::isPending(LogicalBlockAddress lba)
+{
+    bool isPending = false;
+    PendingRequestMap::const_iterator iter = pendingRequests_.find(lba);
+    if (pendingRequests_.end() != iter)
+    {
+        isPending = true;
+    }
+    return isPending;
+}
+
+void LRUBufferCache::satisfyPending(LogicalBlockAddress lba)
+{
+    // Iterate messages
+    pair<PendingRequestMap::iterator, PendingRequestMap::iterator> range =
+        pendingRequests_.equal_range(lba);
+    while (range.first != range.second)
+    {
+        PendingRequestMap::iterator ele = range.first++;
+        cMessage* request = ele->second;
+
+        // Create and send response
+        spfsOSReadDeviceResponse* resp = new spfsOSReadDeviceResponse();
+        resp->setContextPointer(request);
+        send(resp, outGateId_);
+
+        // Delete the element
+        pendingRequests_.erase(ele);
+    }
 }
 
 /*

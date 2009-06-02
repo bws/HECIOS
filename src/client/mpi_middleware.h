@@ -82,6 +82,9 @@ private:
 
     /** Process rank for this MPI middleware */
     int rank_;
+
+    /** The mean of the random delay from middleware messaging */
+    double randomDelayMean_;
 };
 
 

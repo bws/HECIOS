@@ -191,6 +191,13 @@ void BMIListIODataFlow::pullDataFromStorage(FSSize pullSize)
         {
             fileRead->setOffset(i, regions[i].offset);
             fileRead->setExtent(i, regions[i].extent);
+
+            static size_t total = 0;
+            total += regions[i].extent;
+            //cerr << __FILE__ << ":" << __LINE__ << ":"
+            //     << "Server File Read: off: " << regions[i].offset
+            //     << " ext: " << regions[i].extent
+            //     << " total: " << total << endl;
         }
 
         // Send the request to the storage layer

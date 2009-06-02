@@ -69,9 +69,14 @@ private:
     /** Out gate id */
     int outGateId_;
 
+    /** Total number of blocks read */
+    double totalBlocksRead_;
+
+    /** Total number of blocks written */
+    double totalBlocksWritten_;
+
     /** Total time spent accessing the disk */
     double totalDelay_;
-
 };
 
 /**

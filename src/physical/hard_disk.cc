@@ -38,6 +38,8 @@ void HardDisk::initialize()
 {
     // Initialize collection data
     totalDelay_ = 0;
+    totalBlocksRead_ = 0;
+    totalBlocksWritten_ = 0;
 
     // Retrieve gate id
     outGateId_ = findGate("out");
@@ -46,6 +48,8 @@ void HardDisk::initialize()
 void HardDisk::finish()
 {
     recordScalar("SPFS Disk Delay", totalDelay_);
+    recordScalar("SPFS Disk Blocks Read", totalBlocksRead_);
+    recordScalar("SPFS Disk Blocks Written", totalBlocksWritten_);
 }
 
 void HardDisk::handleMessage(cMessage *msg)
@@ -59,6 +63,7 @@ void HardDisk::handleMessage(cMessage *msg)
         LogicalBlockAddress diskBlock = read->getAddress();
         delay = service(diskBlock, true);
         resp = new spfsOSReadDeviceResponse();
+        totalBlocksRead_++;
     }
     else if (spfsOSWriteDeviceRequest* write =
              dynamic_cast<spfsOSWriteDeviceRequest*>(msg))
@@ -66,6 +71,7 @@ void HardDisk::handleMessage(cMessage *msg)
         LogicalBlockAddress diskBlock = write->getAddress();
         delay = service(diskBlock, false);
         resp = new spfsOSWriteDeviceResponse();
+        totalBlocksWritten_++;
     }
     else
     {

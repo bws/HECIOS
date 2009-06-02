@@ -210,6 +210,14 @@ void FSReadSM::enterRead()
                                fd->getFileView().getRepresentationByteLength() +
                                8 + 8);
             client_->send(req, client_->getNetOutGate());
+            static size_t total = 0;
+            total += serverBytes;
+            //cerr << __FILE__ << ":" << __LINE__ << ":"
+            //     << "Read Req: " << " off: " << readRequest_->getOffset()
+            //     << " count " << readRequest_->getCount()
+            //     << " serverBytes: " << serverBytes
+            //     << " reqBytes: " << reqBytes
+            //     << " totalBytes: " << total << endl;
         }
     }
 
