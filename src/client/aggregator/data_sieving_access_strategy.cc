@@ -48,7 +48,6 @@ DataSievingAccessStrategy::performUnion(const set<AggregationIO>& requests)
     {
         assert(AggregationIO::READ == first->getIOType());
         FSSize bufferSize = first->getCount() * first->getDataType()->getTrueExtent();
-        cerr << "Buffer size: " << bufferSize << endl;
         vector<FileRegion> regions = DataTypeProcessor::locateFileRegions(first->getOffset(),
                                                                           bufferSize,
                                                                           *(first->getView()));
@@ -66,8 +65,8 @@ DataSievingAccessStrategy::performUnion(const set<AggregationIO>& requests)
             reqEnd = max(reqEnd, FSOffset(regions[i].offset + regions[i].extent));
         }
 
-        cerr << "Request off: " << first->getOffset() << "BufSize: " << bufferSize
-             << "Begin: " << reqBegin << " ext: " << reqEnd - reqBegin << endl;
+        //cerr << "Request off: " << first->getOffset() << "BufSize: " << bufferSize
+        //     << "Begin: " << reqBegin << " ext: " << reqEnd - reqBegin << endl;
         first++;
     }
 
@@ -90,8 +89,8 @@ FileDescriptor* DataSievingAccessStrategy::createDescriptor(const set<Aggregatio
                                                             FSOffset offset,
                                                             FSSize extent)
 {
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Data sieving request: " << offset << " " << extent << endl;
+    //cerr << __FILE__ << ":" << __LINE__ << ":"
+    //     << "Data sieving request: " << offset << " " << extent << endl;
     AggregationIO aggIO = *(requests.begin());
     spfsMPIFileRequest* request = aggIO.getRequest();
     FileDescriptor* origDescriptor = request->getFileDes();

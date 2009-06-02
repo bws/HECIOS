@@ -130,7 +130,7 @@ void DataSievingMiddlewareAggregator::handleCollectiveIORequest(spfsMPIFileReque
     }
     else
     {
-        cerr << "Waiting bitches" << endl;
+        //cerr << "Waiting bitches" << endl;
     }
 }
 
