@@ -24,10 +24,11 @@ using namespace std;
 size_t SubarrayDataType::calculateExtent(vector<size_t> sizes,
                                          const DataType& oldDataType)
 {
-    size_t extent = 1;
+    //cerr << "Old Type Ext: " << oldDataType.getTrueExtent() << endl;
+    size_t extent = oldDataType.getTrueExtent();
     for (size_t i = 0; i < sizes.size(); i++)
     {
-        extent *= sizes[i] * oldDataType.getTrueExtent();
+        extent *= sizes[i];
     }
     return extent;
 }
@@ -93,11 +94,13 @@ vector<FileRegion> SubarrayDataType::getRegionsByBytes(const FSOffset& byteOffse
     //cerr << "Contig count: " << contigCount << " ContigLength: " << contigLength << endl;
 
     size_t bytesProcessed = 0;
-    FSOffset arrayOffset = byteOffset;
+    size_t subSizeExtent = getSubSizeExtent();
+    //cerr << "ByteOff: " << byteOffset << " SubExt: " << subSizeExtent << endl;
+    FSOffset fullArrayOffset = (byteOffset / subSizeExtent) * getTrueExtent();
+    FSOffset subArrayOffset = byteOffset % subSizeExtent;
     while (bytesProcessed < numBytes)
     {
-        // Determine the number discontiguous regions within the sub-array
-        size_t firstRegion = (arrayOffset % getTrueExtent()) / contigLength;
+        size_t firstRegion = subArrayOffset / subSizeExtent;
         size_t numRegions = getNumArrayRegions();
         //cerr << "Num Regions: " << numRegions << " begin: " << firstRegion << endl;
 
@@ -123,8 +126,8 @@ vector<FileRegion> SubarrayDataType::getRegionsByBytes(const FSOffset& byteOffse
 
             // Get region data
             vector<FileRegion> elementRegions =
-                oldType_.getRegionsByBytes(arrayOffset + regionOffset,
-                                            dataLength);
+                oldType_.getRegionsByBytes(fullArrayOffset + regionOffset,
+                                           dataLength);
 
             // Add regions to the total regions vector
             copy(elementRegions.begin(),
@@ -137,7 +140,10 @@ vector<FileRegion> SubarrayDataType::getRegionsByBytes(const FSOffset& byteOffse
         }
 
         // Increment the array offset to the next subarray
-        arrayOffset = ((arrayOffset/getTrueExtent()) + 1) * getTrueExtent();
+        //cerr << "Array offset: " << fullArrayOffset << " TrueExt: " << getTrueExtent();
+        fullArrayOffset += getTrueExtent();
+        subArrayOffset = 0;
+        //cerr << " New array offset: " << fullArrayOffset << endl;
     }
     return regions;
 }
@@ -242,6 +248,16 @@ size_t SubarrayDataType::getSubarrayContiguousCount() const
         }
     }
     return contiguousCount;
+}
+
+size_t SubarrayDataType::getSubSizeExtent() const
+{
+    size_t extent = oldType_.getTrueExtent();
+    for (size_t i = 0; i < subSizes_.size(); i++)
+    {
+        extent *= subSizes_[i];
+    }
+    return extent;
 }
 
 /*

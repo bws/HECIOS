@@ -40,6 +40,7 @@ class SubarrayDataTypeTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testGetRegionsByBytes);
     CPPUNIT_TEST(testGetRegionsByCount);
     CPPUNIT_TEST(testTileIOExample);
+    CPPUNIT_TEST(testTileIOIteration);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -59,6 +60,8 @@ public:
     void testGetRegionsByCount();
 
     void testTileIOExample();
+
+    void testTileIOIteration();
 
 private:
 
@@ -223,6 +226,79 @@ void SubarrayDataTypeTest::testTileIOExample()
         CPPUNIT_ASSERT_EQUAL(FSOffset(240 + i*640), regions3[i].offset);
         CPPUNIT_ASSERT_EQUAL(FSSize(80), regions3[i].extent);
     }
+}
+
+void SubarrayDataTypeTest::testTileIOIteration()
+{
+    // Base type
+    ByteDataType byteType;
+    ContiguousDataType elementType(8, byteType);
+
+    // Tile Subarray processor 0
+    size_t sizes[] = {1000, 80};
+    size_t subSizes[] = {1000, 10};
+    size_t starts[] = {0, 0};
+    SubarrayDataType tileType0(vector<size_t>(sizes, sizes + 2),
+                               vector<size_t>(subSizes, subSizes + 2),
+                               vector<size_t>(starts, starts + 2),
+                               SubarrayDataType::C_ORDER,
+                               elementType);
+
+    // Check the correctness of the regions
+    vector<FileRegion> regions = tileType0.getRegionsByBytes(0, 80000);
+    CPPUNIT_ASSERT_EQUAL(size_t(1000), regions.size());
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        CPPUNIT_ASSERT_EQUAL(FSOffset(0 + i*640), regions[i].offset);
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), regions[i].extent);
+    }
+
+    // Now get the second set of regions
+    regions = tileType0.getRegionsByBytes(80000, 800);
+    CPPUNIT_ASSERT_EQUAL(size_t(10), regions.size());
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        CPPUNIT_ASSERT_EQUAL(FSOffset(640000 + i*640), regions[i].offset);
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), regions[i].extent);
+    }
+
+    // Tile Sub-array processor 3
+    size_t sizes3[] = {1000, 80};
+    size_t subSizes3[] = {1000, 10};
+    size_t starts3[] = {0, 30};
+    SubarrayDataType tileType3(vector<size_t>(sizes3, sizes3 + 2),
+                               vector<size_t>(subSizes3, subSizes3 + 2),
+                               vector<size_t>(starts3, starts3 + 2),
+                               SubarrayDataType::C_ORDER,
+                               elementType);
+
+    // Check the correctness of the regions
+    vector<FileRegion> regions3 = tileType3.getRegionsByBytes(0, 80000);
+    CPPUNIT_ASSERT_EQUAL(size_t(1000), regions3.size());
+    for (size_t i = 0; i < regions3.size(); i++)
+    {
+        CPPUNIT_ASSERT_EQUAL(FSOffset(240 + i*640), regions3[i].offset);
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), regions3[i].extent);
+    }
+
+    // Now get the second set of regions
+    regions3 = tileType3.getRegionsByBytes(80000, 800);
+    CPPUNIT_ASSERT_EQUAL(size_t(10), regions3.size());
+    for (size_t i = 0; i < regions3.size(); i++)
+    {
+        CPPUNIT_ASSERT_EQUAL(FSOffset(640240 + i*640), regions3[i].offset);
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), regions3[i].extent);
+    }
+
+    // Now get the third set of regions
+    regions3 = tileType3.getRegionsByBytes(160000, 800);
+    CPPUNIT_ASSERT_EQUAL(size_t(10), regions3.size());
+    for (size_t i = 0; i < regions3.size(); i++)
+    {
+        CPPUNIT_ASSERT_EQUAL(FSOffset(1280240 + i*640), regions3[i].offset);
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), regions3[i].extent);
+    }
+
 }
 
 #endif /*SUBARRAY_DATA_TYPE_TEST_H_*/

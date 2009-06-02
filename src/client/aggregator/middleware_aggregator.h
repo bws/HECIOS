@@ -24,6 +24,7 @@
 #include <set>
 #include <vector>
 #include <omnetpp.h>
+#include "aggregation_io.h"
 #include "direct_message_interface.h"
 class Filename;
 class spfsMPIFileRequest;
@@ -43,10 +44,10 @@ public:
     typedef int CollectiveId;
 
     /** */
-    typedef std::set<spfsMPIFileRequest*> CollectiveMap;
+    typedef std::set<AggregationIO> CollectiveMap;
 
     /** */
-    typedef std::map<spfsMPIFileRequest*, CollectiveOperation*> CollectiveRequestMap;
+    typedef std::map<spfsMPIFileRequest*, AggregationIO> CollectiveRequestMap;
 
     /** Constructor */
     MiddlewareAggregator();
@@ -71,6 +72,9 @@ public:
 
     /** @return the fsOut gate id */
     int ioOutGateId() const { return ioOutGateId_; };
+
+    /** Return the aggregation size */
+    std::size_t getAggregatorSize() const { return aggregatorSize_; };
 
     /** Return the world rank */
     int getRank() const { return rank_; };

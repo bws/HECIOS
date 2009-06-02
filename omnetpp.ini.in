@@ -83,6 +83,8 @@ include @INSTALL_DIR@/ini/palmetto_myri10g.ini
 #
 ###############################################################################
 **.mpi.middlewareAggregatorType = "NoMiddlewareAggregator"
+#**.mpi.middlewareAggregatorType = "DataSievingMiddlewareAggregator"
+#**.mpi.middlewareAggregatorType = "ViewAwareMiddlewareAggregator"
 
 ###############################################################################
 #

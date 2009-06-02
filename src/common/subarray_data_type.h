@@ -81,16 +81,21 @@ private:
     /**
      * @return the number of contiguous regions in the array for this subarray
      */
-    size_t getNumArrayRegions() const;
+    std::size_t getNumArrayRegions() const;
 
     /** @return the memory location for region number */
-    size_t getArrayMemoryLocation(size_t region) const;
+    std::size_t getArrayMemoryLocation(size_t region) const;
 
     /**
-     * @ the number of elements in the contiguous dimension
+     * @return the number of elements in the contiguous dimension
      *   (dim 0 for column-major, the last dimension for row-major)
      */
-    size_t getSubarrayContiguousCount() const;
+    std::size_t getSubarrayContiguousCount() const;
+
+    /**
+     * @return the extent of just the data for this process
+     */
+    std::size_t getSubSizeExtent() const;
 
     /** Hidden assignment operator */
     SubarrayDataType& operator=(const SubarrayDataType& other);

@@ -1027,7 +1027,7 @@ spfsMPIFileWriteAtRequest* PHTFIOApplication::createFileWriteMessage(
 spfsMPIBcastRequest* PHTFIOApplication::createBcastRequest(
     Communicator communicatorId)
 {
-    assert(CommMan::instance().commExists(communicatorId));
+    assert(CommMan::instance().exists(communicatorId));
 
     spfsMPIBcastRequest* bcast =
         new spfsMPIBcastRequest(0, SPFS_MPI_BCAST_REQUEST);

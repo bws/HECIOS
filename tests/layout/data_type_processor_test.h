@@ -27,10 +27,12 @@
 #include "data_type_processor.h"
 #include "basic_data_type.h"
 #include "basic_types.h"
+#include "contiguous_data_type.h"
 #include "data_type_layout.h"
 #include "file_page_utils.h"
 #include "file_view.h"
 #include "simple_stripe_distribution.h"
+#include "subarray_data_type.h"
 using namespace std;
 
 /** Unit test for DataTypeProcessor */
@@ -43,6 +45,7 @@ class DataTypeProcessorTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testCreateServerFileLayoutForRead);
     CPPUNIT_TEST(testCreateServerFileLayoutForWrite);
     CPPUNIT_TEST(test512kFileLayoutForServer);
+    CPPUNIT_TEST(testTileIO);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -56,6 +59,7 @@ public:
     void testCreateServerFileLayoutForRead();
     void testCreateServerFileLayoutForWrite();
     void test512kFileLayoutForServer();
+    void testTileIO();
 };
 
 void DataTypeProcessorTest::setUp()
@@ -220,6 +224,59 @@ void DataTypeProcessorTest::test512kFileLayoutForServer()
     CPPUNIT_ASSERT_EQUAL(FSSize(65536), layout2.getRegion(2).extent);
     CPPUNIT_ASSERT_EQUAL(FSOffset(196608), layout2.getRegion(3).offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(65536), layout2.getRegion(3).extent);
+}
+
+void DataTypeProcessorTest::testTileIO()
+{
+    ByteDataType byteType;
+    ContiguousDataType elementType(8, byteType);
+
+    // Tile I/O for process 0
+    size_t sizes[] = {1000, 80};
+    size_t subSizes[] = {1000, 10};
+    size_t starts[] = {0, 0};
+    SubarrayDataType* subarray = new SubarrayDataType(vector<size_t>(sizes, sizes + 2),
+                                                      vector<size_t>(subSizes, subSizes + 2),
+                                                      vector<size_t>(starts, starts + 2),
+                                                      SubarrayDataType::C_ORDER, elementType);
+    FileView subarrayView(0, subarray);
+
+    // Retrieve the first read
+    FileRegionSet regions0_0 = DataTypeProcessor::locateFileRegionSet(0,
+                                                                    80000,
+                                                                    subarrayView);
+    FileRegionSet::const_iterator first = regions0_0.begin();
+    FileRegionSet::const_iterator last = regions0_0.end();
+    while (first != last)
+    {
+        first++;
+        //cerr << *(first++) << endl;
+    }
+    CPPUNIT_ASSERT_EQUAL(size_t(1000), regions0_0.size());
+
+    // Retrieve the second read
+    vector<FileRegion> regions0_1 = DataTypeProcessor::locateFileRegions(80000,
+                                                                         80000,
+                                                                         subarrayView);
+    vector<FileRegion>::const_iterator first0_1 = regions0_1.begin();
+    vector<FileRegion>::const_iterator last0_1 = regions0_1.end();
+    while (first0_1 != last0_1)
+    {
+        cerr << *(first0_1++) << endl;
+    }
+    CPPUNIT_ASSERT_EQUAL(size_t(1000), regions0_1.size());
+
+    // Retrieve the third read
+    vector<FileRegion> regions0_2 = DataTypeProcessor::locateFileRegions(160000,
+                                                                         80000,
+                                                                         subarrayView);
+    vector<FileRegion>::const_iterator first0_2 = regions0_2.begin();
+    vector<FileRegion>::const_iterator last0_2 = regions0_2.end();
+    while (first0_2 != last0_2)
+    {
+        cerr << *(first0_2++) << endl;
+    }
+    CPPUNIT_ASSERT_EQUAL(size_t(1000), regions0_2.size());
 }
 
 #endif

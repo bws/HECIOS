@@ -19,6 +19,7 @@
 //
 #include <cassert>
 #include <map>
+#include "view_aware_access_strategy.h"
 #include "middleware_aggregator.h"
 #include "mpi_proto_m.h"
 using namespace std;
@@ -42,13 +43,16 @@ private:
     virtual void handleFileSystemMessage(cMessage* msg);
 
     /** */
-    void handleCollectiveIO(spfsMPIFileRequest* fileRequest);
+    void handleCollectiveIORequest(spfsMPIFileRequest* fileRequest);
+
+    /** */
+    void handleCollectiveIOResponse(cMessage* msg);
 
     CollectiveMap* currentCollective_;
 
     CollectiveRequestMap* pendingCollectives_;
 
-    int aggregatorSize_;
+    AggregatorAccessStrategy* aggregator_;
 };
 
 // OMNet Registration Method
@@ -59,7 +63,7 @@ void ViewAwareMiddlewareAggregator::initialize()
     MiddlewareAggregator::initialize();
     currentCollective_ = createCollectiveMap();
     pendingCollectives_ = createPendingRequestMap();
-    setAggregatorSize(8);
+    aggregator_ = new ViewAwareAccessStrategy();
 }
 
 ViewAwareMiddlewareAggregator::ViewAwareMiddlewareAggregator()
@@ -76,7 +80,7 @@ void ViewAwareMiddlewareAggregator::handleApplicationMessage(cMessage* msg)
         spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(msg);
         if (fileRequest->getIsCollective())
         {
-            handleCollectiveIO(fileRequest);
+            handleCollectiveIORequest(fileRequest);
         }
         else
         {
@@ -91,23 +95,47 @@ void ViewAwareMiddlewareAggregator::handleApplicationMessage(cMessage* msg)
 
 void ViewAwareMiddlewareAggregator::handleFileSystemMessage(cMessage* msg)
 {
-    send(msg, appOutGateId());
+    if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind() ||
+        SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->kind())
+    {
+        // Check if the op was collective
+        cMessage* parent = static_cast<cMessage*>(msg->contextPointer());
+        spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(parent);
+        if (fileRequest->getIsCollective())
+        {
+            cerr << "1" << endl;
+            handleCollectiveIOResponse(msg);
+        }
+        else
+        {
+            cerr << "2" << endl;
+            send(msg, appOutGateId());
+        }
+    }
+    else
+    {
+        cerr << "3" << endl;
+        send(msg, appOutGateId());
+    }
 }
 
-void ViewAwareMiddlewareAggregator::handleCollectiveIO(spfsMPIFileRequest* fileRequest)
+void ViewAwareMiddlewareAggregator::handleCollectiveIORequest(spfsMPIFileRequest* fileRequest)
 {
     CommMan& commMgr = CommMan::instance();
     Communicator comm = fileRequest->getCommunicator();
-    currentCollective_->insert(fileRequest);
-    if (currentCollective_->size() == aggregatorSize_)
+    AggregationIO aggIO = AggregationIO::createAggregationIO(fileRequest);
+    currentCollective_->insert(aggIO);
+    cerr << "Agg size: " << getAggregatorSize() << " current: " << currentCollective_->size();
+    if (currentCollective_->size() == getAggregatorSize())
     {
-        CollectiveMap::const_iterator first = currentCollective_->begin();
-        CollectiveMap::const_iterator last = currentCollective_->end();
-        while (first != last)
-        {
-            send(*(first++), ioOutGateId());
-        }
-        currentCollective_->clear();
+        //vector<spfsMPIFileRequest*> aggRequests =
+        //    aggregator_->joinRequests(currentCollective_);
+        //for(size_t i = 0; i < aggRequests.size(); i++)
+        //{
+        //    AggregationIO aggIO = aggRequests[0];
+        //    send(aggIO.getRequest(), ioOutGateId());
+        //}
+        //currentCollective_->clear();
     }
     else
     {
@@ -118,6 +146,12 @@ void ViewAwareMiddlewareAggregator::handleCollectiveIO(spfsMPIFileRequest* fileR
          << " rank: " << fileRequest->getRank()
          << " of: " << commMgr.commSize(comm)
          << endl;
+}
+
+void ViewAwareMiddlewareAggregator::handleCollectiveIOResponse(cMessage* msg)
+{
+    cerr << "Sending collective response" << endl;
+    sendApplicationResponse(0.0, msg);
 }
 
 /*

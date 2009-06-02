@@ -22,6 +22,7 @@
 
 #include <cstddef>
 #include <vector>
+#include "file_region_set.h"
 #include "pfs_types.h"
 class DataType;
 class DataTypeLayout;
@@ -89,6 +90,15 @@ public:
     static std::vector<FileRegion> locateFileRegions(const FSOffset& offset,
                                                      const FSSize& dataSize,
                                                      const FileView& view);
+
+    /**
+     * @return the file regions for the first requestSize bytes of the
+     *   supplied MPI view.  This step 'flattens' the view into list I/O
+     *   offsets and extents.
+     */
+    static FileRegionSet locateFileRegionSet(const FSOffset& offset,
+                                             const FSSize& dataSize,
+                                             const FileView& view);
 
 private:
 

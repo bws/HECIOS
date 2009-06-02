@@ -129,6 +129,27 @@ vector<FileRegion> DataTypeProcessor::locateFileRegions(const FSOffset& offset,
     return fileRegions;
 }
 
+FileRegionSet DataTypeProcessor::locateFileRegionSet(const FSOffset& offset,
+                                                     const FSSize& dataSize,
+                                                     const FileView& view)
+{
+    // Determine the amount of contiguous file regions that correspond to
+    // this server's physical file locations
+    FSSize disp = view.getDisplacement();
+    const DataType* fileDataType = view.getDataType();
+    vector<FileRegion> fileRegions = fileDataType->getRegionsByBytes(offset,
+                                                                     dataSize);
+
+    // Modify the file regions to take into account the view displacement
+    // and insert into a file region set
+    FileRegionSet frs;
+    for (size_t i = 0; i < fileRegions.size(); i++)
+    {
+        fileRegions[i].offset += disp;
+        frs.insert(fileRegions[i]);
+    }
+    return frs;
+}
 
 FSSize DataTypeProcessor::processClientRequest(
     const FSOffset& offset,
