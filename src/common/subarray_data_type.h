@@ -56,6 +56,24 @@ public:
     /** @return a copy of this */
     virtual SubarrayDataType* clone() const;
 
+    /** @return the array order */
+    ArrayOrder getArrayOrder() const { return order_; };
+
+    /** @return the contiguous dimension length for the entire array */
+    std::size_t getArrayContiguousCount() const;
+
+    /** @return the array of sizes */
+    std::vector<std::size_t> getSizes() const { return sizes_; };
+
+    /** @return the array of sub-sizes */
+    std::vector<std::size_t> getSubSizes() const { return subSizes_; };
+
+    /** @return the array of starts */
+    std::vector<std::size_t> getStarts() const { return starts_; };
+
+    /** @return pointer to old type */
+    const DataType* getOldType() const { return &oldType_; };
+
     /** @return the number of bytes required to represent this data type */
     std::size_t getRepresentationByteLength() const;
 
@@ -73,32 +91,32 @@ public:
     virtual std::vector<FileRegion> getRegionsByCount(
         const FSOffset& byteOffset, std::size_t count) const;
 
-protected:
-    /** Copy constructor for use by clone */
-    SubarrayDataType(const SubarrayDataType& other);
-
-private:
-    /**
-     * @return the number of contiguous regions in the array for this subarray
-     */
-    std::size_t getNumArrayRegions() const;
-
-    /** @return the memory location for region number */
-    std::size_t getArrayMemoryLocation(size_t region) const;
-
     /**
      * @return the number of elements in the contiguous dimension
      *   (dim 0 for column-major, the last dimension for row-major)
      */
     std::size_t getSubarrayContiguousCount() const;
 
+    /** @return the memory location for region number */
+    std::size_t getArrayMemoryLocation(size_t region) const;
+
+protected:
+    /** Copy constructor for use by clone */
+    SubarrayDataType(const SubarrayDataType& other);
+
+private:
+    /** Hidden assignment operator */
+    SubarrayDataType& operator=(const SubarrayDataType& other);
+
+    /**
+     * @return the number of contiguous regions in the array for this subarray
+     */
+    std::size_t getNumArrayRegions() const;
+
     /**
      * @return the extent of just the data for this process
      */
     std::size_t getSubSizeExtent() const;
-
-    /** Hidden assignment operator */
-    SubarrayDataType& operator=(const SubarrayDataType& other);
 
     /** Sizes of each dimension in the array */
     std::vector<std::size_t> sizes_;

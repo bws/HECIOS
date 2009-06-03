@@ -20,6 +20,9 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include "aggregator_access_strategy.h"
+class CyclicRegionSet;
+class Filename;
+class FileDescriptor;
 
 class ViewAwareAccessStrategy : public AggregatorAccessStrategy
 {
@@ -36,7 +39,12 @@ protected:
 
 private:
     /** Construct union of request regions */
-    std::vector<spfsMPIFileRequest*> subarrayUnion(const std::set<AggregationIO>& requests);
+    std::vector<spfsMPIFileRequest*> subarrayUnion(const std::set<AggregationIO>& requests,
+                                                   bool isRead);
+
+    /** @return a descriptor with a view for the cyclic region set */
+    FileDescriptor* createDescriptor(const Filename& filename,
+                                     const CyclicRegionSet& crs);
 };
 
 

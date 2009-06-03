@@ -99,22 +99,17 @@ void ViewAwareMiddlewareAggregator::handleFileSystemMessage(cMessage* msg)
         SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->kind())
     {
         // Check if the op was collective
-        cMessage* parent = static_cast<cMessage*>(msg->contextPointer());
-        spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(parent);
-        if (fileRequest->getIsCollective())
+        if (0 != currentCollective_->size())
         {
-            cerr << "1" << endl;
             handleCollectiveIOResponse(msg);
         }
         else
         {
-            cerr << "2" << endl;
             send(msg, appOutGateId());
         }
     }
     else
     {
-        cerr << "3" << endl;
         send(msg, appOutGateId());
     }
 }
@@ -128,14 +123,13 @@ void ViewAwareMiddlewareAggregator::handleCollectiveIORequest(spfsMPIFileRequest
     cerr << "Agg size: " << getAggregatorSize() << " current: " << currentCollective_->size();
     if (currentCollective_->size() == getAggregatorSize())
     {
-        //vector<spfsMPIFileRequest*> aggRequests =
-        //    aggregator_->joinRequests(currentCollective_);
-        //for(size_t i = 0; i < aggRequests.size(); i++)
-        //{
-        //    AggregationIO aggIO = aggRequests[0];
-        //    send(aggIO.getRequest(), ioOutGateId());
-        //}
-        //currentCollective_->clear();
+        vector<spfsMPIFileRequest*> reqs =
+            aggregator_->joinRequests(*currentCollective_);
+        assert(size_t(1) == reqs.size());
+        for (size_t i = 0; i < reqs.size(); i++)
+        {
+            send(reqs[0], ioOutGateId());
+        }
     }
     else
     {
@@ -150,8 +144,28 @@ void ViewAwareMiddlewareAggregator::handleCollectiveIORequest(spfsMPIFileRequest
 
 void ViewAwareMiddlewareAggregator::handleCollectiveIOResponse(cMessage* msg)
 {
-    cerr << "Sending collective response" << endl;
-    sendApplicationResponse(0.0, msg);
+    // Construct responses
+    CollectiveMap::const_iterator first = currentCollective_->begin();
+    CollectiveMap::const_iterator last = currentCollective_->end();
+    while (first != last)
+    {
+        spfsMPIFileRequest* appRequest = (first++)->getRequest();
+        spfsMPIFileReadAtResponse* appResponse =
+            new spfsMPIFileReadAtResponse("ViewAwareResp", SPFS_MPI_FILE_READ_AT_RESPONSE);
+        appResponse->setContextPointer(appRequest);
+        sendApplicationResponse(0.0, appResponse);
+    }
+
+    // Cleanup the data sieving request's data
+    cMessage* request = static_cast<cMessage*>(msg->contextPointer());
+    spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(request);
+    FileDescriptor* fd = fileRequest->getFileDes();
+    delete fd;
+    delete fileRequest;
+    delete msg;
+
+    // Cleanup the current collective data
+    currentCollective_->clear();
 }
 
 /*

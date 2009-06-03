@@ -250,6 +250,23 @@ size_t SubarrayDataType::getSubarrayContiguousCount() const
     return contiguousCount;
 }
 
+size_t SubarrayDataType::getArrayContiguousCount() const
+{
+    size_t contiguousCount = 0;
+    if (sizes_.size() > 0)
+    {
+        if (C_ORDER == order_)
+        {
+            contiguousCount = sizes_[sizes_.size() - 1];
+        }
+        else
+        {
+            contiguousCount = sizes_[0];
+        }
+    }
+    return contiguousCount;
+}
+
 size_t SubarrayDataType::getSubSizeExtent() const
 {
     size_t extent = oldType_.getTrueExtent();

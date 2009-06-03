@@ -5,6 +5,7 @@ DIR := src/client/aggregator
 
 SIM_SRC +=  $(DIR)/aggregation_io.cc \
 		$(DIR)/aggregator_access_strategy.cc \
+		$(DIR)/cyclic_region_set.cc \
 		$(DIR)/data_sieving_access_strategy.cc \
 		$(DIR)/data_sieving_middleware_aggregator.cc \
 		$(DIR)/middleware_aggregator.cc \

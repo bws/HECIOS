@@ -81,8 +81,9 @@ vector<FileRegion> IndexedDataType::getRegionsByBytes(
 
     // Construct the regions required to map numBytes of data to data regions
     size_t bytesProcessed = 0;
-    FSOffset typeBegin = (byteOffset / getTrueExtent()) * getTrueExtent();
-    FSOffset currentOffset = byteOffset;
+    size_t typeDataSize = getDataSize();
+    FSOffset typeBegin = (byteOffset / typeDataSize) * getExtent();
+    FSOffset currentOffset = byteOffset % typeDataSize;
     while (bytesProcessed < numBytes)
     {
         // Begin processing the indexed blocks
@@ -142,13 +143,23 @@ vector<FileRegion> IndexedDataType::getRegionsByBytes(
         }
 
         // Increment to the next count
-        typeBegin += getTrueExtent();
+        typeBegin += getExtent();
         currentOffset = typeBegin;
     }
     assert(bytesProcessed == numBytes);
     return vectorRegions;
 }
 
+size_t IndexedDataType::getDataSize() const
+{
+    size_t dataSize = 0;
+    size_t oldTypeSize = oldType_.getTrueExtent();
+    for (size_t i = 0; i < blockLengths_.size(); i++)
+    {
+        dataSize += blockLengths_[i] * oldTypeSize;
+    }
+    return dataSize;
+}
 /*
  * Local variables:
  *  indent-tabs-mode: nil

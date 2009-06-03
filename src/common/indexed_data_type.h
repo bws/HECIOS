@@ -65,10 +65,13 @@ protected:
 
     /** @return The old data type */
     const DataType& oldType() const { return oldType_; };
-    
+
 private:
     /** Hidden assignment operator */
     IndexedDataType& operator=(const IndexedDataType& other);
+
+    /** @return the number of bytes of data contained in this type */
+    size_t getDataSize() const;
 
     /** The number of elements in each indexed block */
     std::vector<std::size_t> blockLengths_;

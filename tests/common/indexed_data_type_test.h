@@ -38,6 +38,7 @@ class IndexedDataTypeTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testGetRepresentationByteLength);
     CPPUNIT_TEST(testGetRegionsByBytes);
     CPPUNIT_TEST(testGetRegionsByCount);
+    CPPUNIT_TEST(testTileIteration);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -56,6 +57,7 @@ public:
 
     void testGetRegionsByCount();
 
+    void testTileIteration();
 private:
 };
 
@@ -159,6 +161,75 @@ void IndexedDataTypeTest::testGetRegionsByBytes()
 void IndexedDataTypeTest::testGetRegionsByCount()
 {
 }
+
+void IndexedDataTypeTest::testTileIteration()
+{
+    ByteDataType byteType;
+    ContiguousDataType elementType(8, byteType);
+
+    size_t blockLengths[] = {10, 10};
+    size_t displacements[] = {10, 30};
+    IndexedDataType indexedType(vector<size_t>(blockLengths, blockLengths + 2),
+                                vector<size_t>(displacements, displacements + 2),
+                                elementType);
+
+    // Resize the type to the array's contiguous length
+    indexedType.resize(0, 80 * elementType.getExtent());
+    CPPUNIT_ASSERT_EQUAL(size_t(8), elementType.getExtent());
+    CPPUNIT_ASSERT_EQUAL(size_t(640), indexedType.getExtent());
+
+    // Check the correctness of the regions
+    vector<FileRegion> regions = indexedType.getRegionsByBytes(0, 160000);
+    //CPPUNIT_ASSERT_EQUAL(size_t(2000), regions.size());
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        // Even begin offset 10, odd begin offset 30
+        if (0 == i % 2)
+        {
+            CPPUNIT_ASSERT_EQUAL(FSOffset(80 + (i/2)*640), regions[i].offset);
+        }
+        else
+        {
+            CPPUNIT_ASSERT_EQUAL(FSOffset(240 + (i/2)*640), regions[i].offset);
+        }
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), regions[i].extent);
+    }
+
+    // Now get the second set of regions
+    regions = indexedType.getRegionsByBytes(160000, 1600);
+    CPPUNIT_ASSERT_EQUAL(size_t(20), regions.size());
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        // Even begin offset 10, odd begin offset 30
+        if (0 == i % 2)
+        {
+            CPPUNIT_ASSERT_EQUAL(FSOffset(640080 + (i/2)*640), regions[i].offset);
+        }
+        else
+        {
+            CPPUNIT_ASSERT_EQUAL(FSOffset(640240 + (i/2)*640), regions[i].offset);
+        }
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), regions[i].extent);
+    }
+
+    // Now get the third set of regions
+    regions = indexedType.getRegionsByBytes(320000, 800);
+    CPPUNIT_ASSERT_EQUAL(size_t(10), regions.size());
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        // Even begin offset 10, odd begin offset 30
+        if (0 == i % 2)
+        {
+            CPPUNIT_ASSERT_EQUAL(FSOffset(1280080 + (i/2)*640), regions[i].offset);
+        }
+        else
+        {
+            CPPUNIT_ASSERT_EQUAL(FSOffset(1280240 + (i/2)*640), regions[i].offset);
+        }
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), regions[i].extent);
+    }
+}
+
 
 #endif
 

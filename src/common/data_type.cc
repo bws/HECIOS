@@ -76,7 +76,7 @@ void DataType::resize(int lowerBound, size_t extent)
 {
     cerr << __FILE__ << ":" << __LINE__ << ": Calling resize is dangerous!\n";
     assert(0 <= extent);
-    extent = lowerBound + extent;
+    extent_ = lowerBound + extent;
 }
 
 /*
