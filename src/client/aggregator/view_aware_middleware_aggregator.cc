@@ -116,11 +116,9 @@ void ViewAwareMiddlewareAggregator::handleFileSystemMessage(cMessage* msg)
 
 void ViewAwareMiddlewareAggregator::handleCollectiveIORequest(spfsMPIFileRequest* fileRequest)
 {
-    CommMan& commMgr = CommMan::instance();
-    Communicator comm = fileRequest->getCommunicator();
     AggregationIO aggIO = AggregationIO::createAggregationIO(fileRequest);
     currentCollective_->insert(aggIO);
-    cerr << "Agg size: " << getAggregatorSize() << " current: " << currentCollective_->size();
+    //cerr << "Agg size: " << getAggregatorSize() << " current: " << currentCollective_->size();
     if (currentCollective_->size() == getAggregatorSize())
     {
         vector<spfsMPIFileRequest*> reqs =
@@ -133,13 +131,8 @@ void ViewAwareMiddlewareAggregator::handleCollectiveIORequest(spfsMPIFileRequest
     }
     else
     {
-        cerr << "Waiting bitches" << endl;
+        //cerr << "Waiting bitches" << endl;
     }
-    cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Handling collective comm: " << fileRequest->getCommunicator()
-         << " rank: " << fileRequest->getRank()
-         << " of: " << commMgr.commSize(comm)
-         << endl;
 }
 
 void ViewAwareMiddlewareAggregator::handleCollectiveIOResponse(cMessage* msg)

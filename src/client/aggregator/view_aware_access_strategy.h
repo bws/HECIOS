@@ -21,6 +21,7 @@
 //
 #include "aggregator_access_strategy.h"
 class CyclicRegionSet;
+class DataType;
 class Filename;
 class FileDescriptor;
 
@@ -44,7 +45,9 @@ private:
 
     /** @return a descriptor with a view for the cyclic region set */
     FileDescriptor* createDescriptor(const Filename& filename,
-                                     const CyclicRegionSet& crs);
+                                     const CyclicRegionSet& crs,
+                                     const DataType* elementType,
+                                     const std::vector<std::size_t>& sizes);
 };
 
 

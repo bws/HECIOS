@@ -168,7 +168,7 @@ void MPIConfigurator::initialize(int stage)
                 assert(0 != ioApp);
 
                 // Set the rank for the IO Application
-                size_t rank = nextProcessRank_++;
+                size_t rank = getNextRank();
                 ioApp->setRank(rank);
 
                 // Set the rank for the MPI Middleware
@@ -217,19 +217,21 @@ size_t MPIConfigurator::getNextRank() const
     if (randomizeRanks_)
     {
         // Select a random rank from a hat
-        static vector<size_t> rankHat(totalProcessCount_, 0);
+        static vector<size_t> rankHat;
         if (rankHat.empty())
         {
             assert(0 == nextProcessRank_);
             for (size_t i = 0; i < totalProcessCount_; i++)
             {
-                rankHat[i] = i;
+                rankHat.push_back(i);
             }
         }
         int idx = intuniform(0, rankHat.size() - 1);
         nextRank = rankHat[idx];
         rankHat.erase(rankHat.begin() + idx);
         nextProcessRank_++;
+        cerr << __FILE__ << ":" << __LINE__ << ":"
+             << "DIAGNOSTIC: random rank assigned: " << nextRank << endl;
     }
     else
     {

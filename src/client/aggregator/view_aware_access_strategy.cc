@@ -23,10 +23,12 @@
 #include "basic_data_type.h"
 #include "contiguous_data_type.h"
 #include "cyclic_region_set.h"
+#include "data_type.h"
 #include "data_type_processor.h"
 #include "file_builder.h"
-#include "subarray_data_type.h"
+#include "indexed_data_type.h"
 #include "mpi_proto_m.h"
+#include "subarray_data_type.h"
 using namespace std;
 
 static ByteDataType byteType;
@@ -64,6 +66,8 @@ ViewAwareAccessStrategy::subarrayUnion(const set<AggregationIO>& requests,
     size_t bufferSize = 0;
     size_t fileOffset;
     size_t dilationSize;
+    const DataType* elementType = 0;
+    vector<size_t> sizes;
     set<AggregationIO>::const_iterator first = requests.begin();
     set<AggregationIO>::const_iterator last = requests.end();
     while (first != last)
@@ -80,6 +84,8 @@ ViewAwareAccessStrategy::subarrayUnion(const set<AggregationIO>& requests,
             filename = new Filename(first->getRequest()->getFileDes()->getFilename());
             fileOffset = first->getOffset();
             dilationSize = subArray->getOldType()->getTrueExtent();
+            elementType = subArray->getOldType();
+            sizes = subArray->getSizes();
         }
         crs->insert(subArray);
 
@@ -88,14 +94,17 @@ ViewAwareAccessStrategy::subarrayUnion(const set<AggregationIO>& requests,
         first++;
     }
 
-    // Now perform dilation for the composition type
-    crs->dilate(dilationSize);
 
-    // Todo: Need a selection for non-contiguous types here
+    // TODO: Need a selection for non-contiguous types here?
+    // Now perform dilation for the composition type?
+    //crs->dilate(dilationSize);
 
     // Create the new request using the new data type
     vector<spfsMPIFileRequest*> viewAwareRequests;
-    FileDescriptor* viewAwareDescriptor = createDescriptor(*filename, *crs);
+    FileDescriptor* viewAwareDescriptor = createDescriptor(*filename,
+                                                           *crs,
+                                                           elementType,
+                                                           sizes);
     if (isRead)
     {
         spfsMPIFileReadAtRequest* aggRead =
@@ -125,21 +134,77 @@ ViewAwareAccessStrategy::subarrayUnion(const set<AggregationIO>& requests,
 }
 
 FileDescriptor* ViewAwareAccessStrategy::createDescriptor(const Filename& filename,
-                                                          const CyclicRegionSet& crs)
+                                                          const CyclicRegionSet& crs,
+                                                          const DataType* elementType,
+                                                          const vector<size_t>& sizes)
 {
+    assert(0 != crs.size());
+
     // The default file view will be fine here
     FileDescriptor* viewAwareDescriptor =
         FileBuilder::instance().getDescriptor(filename);
 
     if (1 < crs.size())
     {
+        vector<size_t> blockLengths;
+        vector<size_t> displacements;
+        CyclicRegionSet::const_iterator first = crs.begin();
+        CyclicRegionSet::const_iterator last = crs.end();
+        while (first != last)
+        {
+            //cerr << "Cyclic regions: " << *first << endl;
+            FileRegion fr = *(first++);
+            blockLengths.push_back(fr.extent);
+            displacements.push_back(fr.offset);
+        }
+
         // Construct an indexed data type here
-        //IndexedDataType* indexed = new IndexedDataType();
+        IndexedDataType* indexed = new IndexedDataType(blockLengths,
+                                                       displacements,
+                                                       *elementType);
+        indexed->resize(0, crs.cycleSize());
+
+        // Set the file view
+        FileView view(0, indexed);
+        viewAwareDescriptor->setFileView(view);
+
+        //cerr << "Using the aggregate indexed type" << endl;
+        //for (size_t i = 0; i < sizes.size(); i++)
+        //{
+        //    cerr << "BlockLen: " << blockLengths[i] << " Displacements: " << displacements[i] << endl;
+        //}
     }
-    else if (crs.cycleSize() != crs.regionSpan())
+    else if (crs.cycleSize() != crs.regionSpan() &&
+             1 == crs.size())
     {
+        vector<size_t> subSizes;
+        vector<size_t> starts;
+
+        // This assumes C Order, and is way too simplistic
+        subSizes.push_back(sizes[0]);
+        starts.push_back(0);
+
+        // Initialize the remainder of the dimensions
+        CyclicRegionSet::const_iterator iter = crs.begin();
+        subSizes.push_back(iter->extent);
+        starts.push_back(iter->offset);
+
         // Construct a new subarray type here
-        //SubarrayDataType* subarray = new SubarrayDataType();
+        SubarrayDataType* subarray = new SubarrayDataType(sizes,
+                                                          subSizes,
+                                                          starts,
+                                                          SubarrayDataType::C_ORDER,
+                                                          *elementType);
+
+        // Set the file view
+        FileView view(0, subarray);
+        viewAwareDescriptor->setFileView(view);
+
+        //cerr << "Using the new subarray jobu" << endl;
+        //for (size_t i = 0; i < sizes.size(); i++)
+        //{
+        //    cerr << "Size: " << sizes[i] << " Subsize: " << subSizes[i] << " start: " << starts[i] << endl;
+        //}
     }
     return viewAwareDescriptor;
 }

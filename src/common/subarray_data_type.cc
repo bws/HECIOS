@@ -45,12 +45,13 @@ SubarrayDataType::SubarrayDataType(vector<size_t> sizes,
     order_(ordering),
     oldType_(oldDataType)
 {
-    // Validate that subarray specification is valid
+    // Validate that subarray specification is valid (p 162 of MPI-I)
     for (size_t i = 0; i < sizes_.size(); i++)
     {
-        assert(0 < sizes_[i]);
-        assert(0 < subSizes_[i]);
-        assert(starts_[i] + subSizes_[i] <= sizes_[i]);
+        assert(1 <= subSizes_[i]);
+        assert(0 <= starts_[i]);
+        assert(subSizes[i] <= sizes_[i]);
+        assert(starts_[i] <=  sizes_[i] - subSizes_[i]);
     }
 }
 

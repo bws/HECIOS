@@ -160,8 +160,8 @@ void CyclicRegionSet::insert(const SubarrayDataType* subarray)
              << cycleSize_ << " Subarray: " << subarray->getTrueExtent()
              << endl;
     }
-
-    size_t offset = subarray->getArrayMemoryLocation(0);
+    size_t elementSize = subarray->getOldType()->getExtent();
+    size_t offset = subarray->getArrayMemoryLocation(0) / elementSize;
     size_t extent = subarray->getSubarrayContiguousCount();
     FileRegion fr = {offset, extent};
     insert(fr);
@@ -179,6 +179,7 @@ void CyclicRegionSet::dilate(size_t scalar)
         FSSize dilatedExtent = first->extent * scalar;
         FileRegion fr = {dilatedOffset, dilatedExtent};
         dilatedSet.insert(fr);
+        first++;
     }
 
     // Let the dilated set replace this set
