@@ -126,12 +126,13 @@ void ViewAwareMiddlewareAggregator::handleCollectiveIORequest(spfsMPIFileRequest
         assert(size_t(1) == reqs.size());
         for (size_t i = 0; i < reqs.size(); i++)
         {
-            send(reqs[0], ioOutGateId());
+            //cerr << "Sending Aggregate Request Kind: " << reqs[i]->kind() << endl;
+            send(reqs[i], ioOutGateId());
         }
     }
     else
     {
-        //cerr << "Waiting bitches" << endl;
+        //cerr << "Aggregator waiting for more requests." << endl;
     }
 }
 
@@ -143,10 +144,20 @@ void ViewAwareMiddlewareAggregator::handleCollectiveIOResponse(cMessage* msg)
     while (first != last)
     {
         spfsMPIFileRequest* appRequest = (first++)->getRequest();
-        spfsMPIFileReadAtResponse* appResponse =
-            new spfsMPIFileReadAtResponse("ViewAwareResp", SPFS_MPI_FILE_READ_AT_RESPONSE);
-        appResponse->setContextPointer(appRequest);
-        sendApplicationResponse(0.0, appResponse);
+        if (msg->kind() ==SPFS_MPI_FILE_READ_AT_RESPONSE)
+        {
+            spfsMPIFileReadAtResponse* appResponse =
+                new spfsMPIFileReadAtResponse("ViewAwareResp", SPFS_MPI_FILE_READ_AT_RESPONSE);
+            appResponse->setContextPointer(appRequest);
+            sendApplicationResponse(0.0, appResponse);
+        }
+        else
+        {
+            spfsMPIFileWriteAtResponse* appResponse =
+                new spfsMPIFileWriteAtResponse("ViewAwareResp", SPFS_MPI_FILE_WRITE_AT_RESPONSE);
+            appResponse->setContextPointer(appRequest);
+            sendApplicationResponse(0.0, appResponse);
+        }
     }
 
     // Cleanup the data sieving request's data
