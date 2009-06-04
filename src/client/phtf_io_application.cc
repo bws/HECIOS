@@ -724,7 +724,7 @@ void PHTFIOApplication::performTypeCreateSubarray(const PHTFEventRecord& createS
     string newTypeId = createSubarray.paramAt(6);
     dataTypeById_[newTypeId] = dataType;
 
-    cerr << "Created new type: " << *dataType << endl;
+    //cerr << "Created new type: " << *dataType << endl;
 }
 
 spfsMPIBarrierRequest* PHTFIOApplication::createAllReduceMessage(
