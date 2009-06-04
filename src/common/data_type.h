@@ -20,7 +20,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #include <cstddef>
-#include <stdint.h>
+#include <iostream>
 #include <vector>
 #include "basic_types.h"
 
@@ -44,7 +44,7 @@ public:
 
     /** @return a copy of the correct concrete derived class */
     virtual DataType* clone() const = 0;
-    
+
     /** @return the size of a single element of this data type */
     std::size_t getExtent() const;
 
@@ -53,7 +53,7 @@ public:
 
     /** Sets the extent to lowerBound + extent */
     void resize(int lowerBound, std::size_t extent);
-    
+
     /** @return the number of bytes required to represent this data type */
     virtual std::size_t getRepresentationByteLength() const = 0;
 
@@ -65,10 +65,12 @@ public:
     virtual std::vector<FileRegion> getRegionsByBytes(
         const FSOffset& byteOffset, std::size_t numBytes) const = 0;
 
+    virtual std::ostream& print(std::ostream& ost) const;
+
 protected:
     /** Copy constructor may be called by clone */
     DataType(const DataType& other);
-    
+
 private:
     /** Hidden assignment operator */
     DataType& operator=(const DataType& other);
@@ -79,6 +81,12 @@ private:
     /** The true data type extent */
     std::size_t trueExtent_;
 };
+
+/** Add the data type to output stream */
+inline std::ostream& operator<<(std::ostream& ost, const DataType& dataType)
+{
+    return dataType.print(ost);
+}
 
 #endif
 

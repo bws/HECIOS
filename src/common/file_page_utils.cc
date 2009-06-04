@@ -49,6 +49,8 @@ set<FilePageId> FilePageUtils::determineRequestPages(const FSSize& pageSize,
                                                      const FSSize& size,
                                                      const FileView& view) const
 {
+    //cerr << "PageSize: " << pageSize << " off: " << offset << " size: " << size;
+    //cerr << "View: " << view.getDisplacement() << " Type: " << *(view.getDataType()) << endl;
     // Flatten view into file regions for the correct size
     vector<FileRegion> requestRegions =
         DataTypeProcessor::locateFileRegions(offset, size, view);
@@ -140,6 +142,8 @@ FileRegionSet FilePageUtils::determinePartialPageRegions(const FSSize& pageSize,
                                                          const FSSize& size,
                                                          const FileView& view) const
 {
+    //cerr << "PageSize: " << pageSize << " pageId: " << pageId << " off: " << offset << " size: " << size;
+    //cerr << "View: " << view.getDisplacement() << " Type: " << *(view.getDataType()) << endl;
     FileRegionSet pageRegions;
 
     // Flatten view into file regions for the correct size
@@ -186,10 +190,10 @@ FileRegionSet FilePageUtils::determinePartialPageRegions(const FSSize& pageSize,
         }
         else
         {
-            cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "ERROR: Region: " << requestRegions[i]
-                 << " does not have a partial region on page: " << pageId << endl;
-            assert(0);
+            //cerr << __FILE__ << ":" << __LINE__ << ":"
+            //     << "ERROR: Region: " << requestRegions[i]
+            //     << " does not have a partial region on page: " << pageId << endl;
+            //assert(0);
         }
     }
     return pageRegions;

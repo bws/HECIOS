@@ -278,6 +278,44 @@ size_t SubarrayDataType::getSubSizeExtent() const
     return extent;
 }
 
+ostream& SubarrayDataType::print(ostream& ost) const
+{
+    ost << "Subarray Sizes[";
+    for (size_t i = 0; i < sizes_.size(); i++)
+    {
+        if (i != 0)
+            ost << ",";
+        ost << sizes_[i];
+    }
+
+    ost << "] SubSizes[";
+    for (size_t i = 0; i < subSizes_.size(); i++)
+    {
+        if (i != 0)
+            ost << ",";
+        ost << subSizes_[i];
+    }
+
+    ost << "] Starts [";
+    for (size_t i = 0; i < starts_.size(); i++)
+    {
+        if (i != 0)
+            ost << ",";
+        ost << starts_[i];
+    }
+
+    if (C_ORDER == order_)
+    {
+        ost << "] C Order ";
+    }
+    else
+    {
+        ost << "] Fortran Order ";
+    }
+    ost << "OldType: " << oldType_;
+    return ost;
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

@@ -26,9 +26,11 @@
 #include <cppunit/TestAssert.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include "basic_data_type.h"
+#include "contiguous_data_type.h"
 #include "file_page_utils.h"
 #include "file_view.h"
 #include "pfs_types.h"
+#include "subarray_data_type.h"
 using namespace std;
 
 /** Unit test for FilePageUtils */
@@ -43,6 +45,7 @@ class FilePageUtilsTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testDetermineRequestFullPages);
     CPPUNIT_TEST(testDetermineRequestPartialPages);
     CPPUNIT_TEST(testDeterminePartialPageRegions);
+    CPPUNIT_TEST(testTileIOPageRegions);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -64,6 +67,8 @@ public:
     void testDetermineRequestPartialPages();
 
     void testDeterminePartialPageRegions();
+
+    void testTileIOPageRegions();
 
 private:
 };
@@ -190,6 +195,59 @@ void FilePageUtilsTest::testDeterminePartialPageRegions()
     CPPUNIT_ASSERT_EQUAL(size_t(1), regionSet3.size());
     CPPUNIT_ASSERT_EQUAL(FSOffset(35840), iter3->offset);
     CPPUNIT_ASSERT_EQUAL(FSSize(732), iter3->extent);
+}
+
+void FilePageUtilsTest::testTileIOPageRegions()
+{
+    // Base type
+    ByteDataType byteType;
+    ContiguousDataType elementType(8, byteType);
+    FilePageUtils& pageUtils = FilePageUtils::instance();
+
+    // Tile Subarray processor 0
+    size_t sizes[] = {1000, 5120};
+    size_t subSizes[] = {1000, 10};
+    size_t starts[] = {0, 0};
+    SubarrayDataType* tileType0 = new SubarrayDataType(vector<size_t>(sizes, sizes + 2),
+                                                       vector<size_t>(subSizes, subSizes + 2),
+                                                       vector<size_t>(starts, starts + 2),
+                                                       SubarrayDataType::C_ORDER,
+                                                       elementType);
+    FileView view0(0, tileType0);
+
+    set<FilePageId> pages = pageUtils.determineRequestPages(4096,
+                                                            0,
+                                                            80000,
+                                                            view0);
+    CPPUNIT_ASSERT_EQUAL(size_t(1000), pages.size());
+    set<FilePageId>::const_iterator first = pages.begin();
+    set<FilePageId>::const_iterator last = pages.end();
+    size_t counter = 0;
+    while (first != last)
+    {
+        CPPUNIT_ASSERT_EQUAL(counter*10, *first);
+        first++;
+        counter++;
+    }
+
+    // Now retrieve the partial regions for each page
+    first = pages.begin();
+    last = pages.end();
+    counter = 0;
+    while (first != last)
+    {
+        FileRegionSet frs = pageUtils.determinePartialPageRegions(4096,
+                                                              *first,
+                                                              0,
+                                                              80000,
+                                                              view0);
+        CPPUNIT_ASSERT_EQUAL(size_t(1), frs.size());
+        CPPUNIT_ASSERT_EQUAL(FSOffset(4096 * counter), frs.begin()->offset);
+        CPPUNIT_ASSERT_EQUAL(FSSize(80), frs.begin()->extent);
+        first++;
+        counter++;
+    }
+
 }
 
 #endif

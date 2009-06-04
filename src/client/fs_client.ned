@@ -30,6 +30,7 @@ simple FSClient
         directoryReadProcessingDelaySecs: numeric const,
         directoryRemoveProcessingDelaySecs: numeric const,
         fileCloseProcessingDelaySecs: numeric const,
+        fileDeleteProcessingDelaySecs: numeric const,
         fileOpenProcessingDelaySecs: numeric const,
         fileReadProcessingDelaySecs: numeric const,
         fileStatProcessingDelaySecs: numeric const,

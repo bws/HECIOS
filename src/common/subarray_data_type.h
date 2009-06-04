@@ -100,6 +100,8 @@ public:
     /** @return the memory location for region number */
     std::size_t getArrayMemoryLocation(size_t region) const;
 
+    virtual std::ostream& print(std::ostream& ost) const;
+
 protected:
     /** Copy constructor for use by clone */
     SubarrayDataType(const SubarrayDataType& other);

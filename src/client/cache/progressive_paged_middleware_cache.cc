@@ -618,6 +618,7 @@ void ProgressivePagedMiddlewareCache::updateCache(spfsMPIFileWriteAtRequest* wri
                                                               size,
                                                               fd->getFileView());
         DirtyFileRegionSet dirtyRegions(frs, true);
+        assert(0 < dirtyRegions.size());
 
         // Create the cache entry
         Key newKey(fd->getFilename(), *iter);

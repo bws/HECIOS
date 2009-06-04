@@ -79,6 +79,12 @@ void DataType::resize(int lowerBound, size_t extent)
     extent_ = lowerBound + extent;
 }
 
+ostream& DataType::print(ostream& ost) const
+{
+    ost << "Not Implemented for this data type.";
+    return ost;
+}
+
 /*
  * Local variables:
  *  indent-tabs-mode: nil

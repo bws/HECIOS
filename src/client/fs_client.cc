@@ -317,6 +317,7 @@ void FSClient::initialize()
     directoryReadProcessingDelay_ = par("directoryReadProcessingDelaySecs");
     directoryRemoveProcessingDelay_ = par("directoryRemoveProcessingDelaySecs");
     fileCloseProcessingDelay_ = par("fileCloseProcessingDelaySecs");
+    fileDeleteProcessingDelay_ = par("fileDeleteProcessingDelaySecs");
     fileOpenProcessingDelay_ = par("fileOpenProcessingDelaySecs");
     fileReadProcessingDelay_ = par("fileReadProcessingDelaySecs");
     fileStatProcessingDelay_ = par("fileStatProcessingDelaySecs");
@@ -331,6 +332,7 @@ void FSClient::initialize()
     numDirCreates_ = 0;
     numDirReads_ = 0;
     numFileCloses_ = 0;
+    numFileDeletes_ = 0;
     numFileOpens_ = 0;
     numFileReads_ = 0;
     numFileStats_ = 0;
