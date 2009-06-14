@@ -93,7 +93,7 @@ void MpiMiddleware::initialize()
 
     // Set the mean delay
     // TODO: Make this a parameter
-    randomDelayMean_ = 0.000001;
+    randomDelayMean_ = 0.00000001;
 }
 
 void MpiMiddleware::finish()
