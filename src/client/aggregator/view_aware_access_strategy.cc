@@ -101,7 +101,7 @@ ViewAwareAccessStrategy::subarrayUnion(const set<AggregationIO>& requests,
     // Now perform dilation for the composition type?
     int dilationIdx = sizes.size() - 1;
     dilationSize = sizes[dilationIdx] / subSizes[dilationIdx];
-    fileOffset *= dilationSize;
+    fileOffset *= 8;
 
     // Create the new request using the new data type
     vector<spfsMPIFileRequest*> viewAwareRequests;
