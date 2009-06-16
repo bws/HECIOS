@@ -175,6 +175,7 @@ void FSRemoveSM::removeNameAndAttributesFromCache()
     {
         meta->bstreamSizes[i] = 0;
     }
+    cerr << "Setting bstream sizes." << endl;
 }
 
 /*

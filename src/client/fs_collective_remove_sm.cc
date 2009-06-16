@@ -86,6 +86,12 @@ void FSCollectiveRemoveSM::collectiveRemove()
         parentMeta->dataHandles[0], meta->handle, meta->dataHandles);
     req->setContextPointer(mpiReq_);
     client_->send(req, client_->getNetOutGate());
+
+    // Set the file size to 0
+    for (size_t i = 0; i < meta->bstreamSizes.size(); i++)
+    {
+        meta->bstreamSizes[i] = 0;
+    }
 }
 
 /*
