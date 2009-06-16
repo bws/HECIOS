@@ -68,6 +68,7 @@ ViewAwareAccessStrategy::subarrayUnion(const set<AggregationIO>& requests,
     size_t dilationSize;
     const DataType* elementType = 0;
     vector<size_t> sizes;
+    vector<size_t> subSizes;
     set<AggregationIO>::const_iterator first = requests.begin();
     set<AggregationIO>::const_iterator last = requests.end();
     while (first != last)
@@ -86,6 +87,7 @@ ViewAwareAccessStrategy::subarrayUnion(const set<AggregationIO>& requests,
             dilationSize = subArray->getOldType()->getTrueExtent();
             elementType = subArray->getOldType();
             sizes = subArray->getSizes();
+            subSizes = subArray->getSubSizes();
         }
         crs->insert(subArray);
 
@@ -97,7 +99,9 @@ ViewAwareAccessStrategy::subarrayUnion(const set<AggregationIO>& requests,
 
     // TODO: Need a selection for non-contiguous types here?
     // Now perform dilation for the composition type?
-    //crs->dilate(dilationSize);
+    int dilationIdx = sizes.size() - 1;
+    dilationSize = sizes[dilationIdx] / subSizes[dilationIdx];
+    fileOffset *= dilationSize;
 
     // Create the new request using the new data type
     vector<spfsMPIFileRequest*> viewAwareRequests;

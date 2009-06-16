@@ -46,6 +46,7 @@ class DataTypeProcessorTest : public CppUnit::TestFixture
     CPPUNIT_TEST(testCreateServerFileLayoutForWrite);
     CPPUNIT_TEST(test512kFileLayoutForServer);
     CPPUNIT_TEST(testTileIO);
+    CPPUNIT_TEST(testCreateServerFileLayoutSubarray);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -60,6 +61,7 @@ public:
     void testCreateServerFileLayoutForWrite();
     void test512kFileLayoutForServer();
     void testTileIO();
+    void testCreateServerFileLayoutSubarray();
 };
 
 void DataTypeProcessorTest::setUp()
@@ -277,6 +279,26 @@ void DataTypeProcessorTest::testTileIO()
         cerr << *(first0_2++) << endl;
     }
     CPPUNIT_ASSERT_EQUAL(size_t(1000), regions0_2.size());
+}
+
+void DataTypeProcessorTest::testCreateServerFileLayoutSubarray()
+{
+    SimpleStripeDistribution dist0(0, 2, 65536);
+    SimpleStripeDistribution dist1(1, 2, 65536);
+
+    ByteDataType byteType;
+    ContiguousDataType elementType(8, byteType);
+
+    // Tile I/O for process 0
+    size_t sizes[] = {1000, 80};
+    size_t subSizes[] = {1000, 10};
+    size_t starts[] = {0, 0};
+    SubarrayDataType* subarray = new SubarrayDataType(vector<size_t>(sizes, sizes + 2),
+                                                      vector<size_t>(subSizes, subSizes + 2),
+                                                      vector<size_t>(starts, starts + 2),
+                                                      SubarrayDataType::C_ORDER, elementType);
+    FileView subarrayView(0, subarray);
+
 }
 
 #endif
