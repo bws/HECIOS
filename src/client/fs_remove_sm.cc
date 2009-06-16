@@ -169,6 +169,12 @@ void FSRemoveSM::removeNameAndAttributesFromCache()
     FSMetaData* meta = FileBuilder::instance().getMetaData(removeName_);
     client_->fsState().removeName(removeName_.str());
     client_->fsState().removeAttr(meta->handle);
+
+    // Set the file size to 0
+    for (size_t i = 0; i < meta->bstreamSizes.size(); i++)
+    {
+        meta->bstreamSizes[i] = 0;
+    }
 }
 
 /*
