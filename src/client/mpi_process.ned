@@ -41,16 +41,16 @@ module MPIProcess
 
     submodules:
         app:IOApplicationType like IOApplication;
-            display: "p=130,80;i=block/app,white";
+            display: "p=150,80;i=block/app,white";
 
 		mpiMiddleware: MpiMiddleware;
-	    	display: "p=180,180;i=block/classifier,red";
+	    	display: "p=60,180;i=block/classifier,red";
 
         aggregator: middlewareAggregatorType like MiddlewareAggregator;
-            display: "p=120,180;i=block/buffer2,green";
+            display: "p=240,180;i=block/join,yellow";
 
         cache: middlewareCacheType like MiddlewareCache;
-            display: "p=120,180;i=block/buffer2,green";
+            display: "p=150,280;i=block/buffer2,green";
 
     connections:
         // Connect the I/O application to the MPI Middleware

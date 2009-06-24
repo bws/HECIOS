@@ -69,13 +69,13 @@ module BeowulfClusterFastE
 
     submodules:
         cpun: ComputeNode[numCPUNodes];
-            display: "p=20,150,m,4;i=abstract/server,yellow";
+            display: "p=40,120,m,4;i=abstract/server,yellow";
 
         ion: IONode[numIONodes];
-            display: "p=450,150,m,2;i=abstract/cache,magenta";
+            display: "p=40,380,m,4;i=abstract/cache,magenta";
 
         switch: EnhancedEtherSwitch2;
-            display: "p=350,150;i=abstract/switch,cyan";
+            display: "p=140,290;i=abstract/switch,cyan";
 
         pfsConfig: FSServerConfigurator;
             parameters:
@@ -115,13 +115,13 @@ module BeowulfClusterGigE
 
     submodules:
         cpun: ComputeNode[numCPUNodes];
-            display: "p=20,150,m,4;i=abstract/server,yellow";
+            display: "p=40,120,m,4;i=abstract/server,yellow";
 
         ion: IONode[numIONodes];
-            display: "p=450,150,m,2;i=abstract/cache,magenta";
+            display: "p=40,380,m,2;i=abstract/cache,magenta";
 
         switch: EnhancedEtherSwitch2;
-            display: "p=350,150;i=abstract/switch,cyan";
+            display: "p=140,290;i=abstract/switch,cyan";
 
         pfsConfig: FSServerConfigurator;
             parameters:
@@ -161,13 +161,13 @@ module BeowulfClusterMyri10G
 
     submodules:
         cpun: ComputeNode[numCPUNodes];
-            display: "p=20,150,m,4;i=abstract/server,yellow";
+            display: "p=40,120,m,4;i=abstract/server,yellow";
 
         ion: IONode[numIONodes];
-            display: "p=450,150,m,2;i=abstract/cache,magenta";
+            display: "p=40,380,m,2;i=abstract/cache,magenta";
 
         switch: EnhancedEtherSwitch2;
-            display: "p=350,150;i=abstract/switch,cyan";
+            display: "p=140,290;i=abstract/switch,cyan";
 
         pfsConfig: FSServerConfigurator;
             parameters:
