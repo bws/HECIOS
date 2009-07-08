@@ -4,7 +4,7 @@ Ubuntu Linux (as of 2-4-2008)
 
 PREQUISITES
 --
-Before installing OmNet++t is neccesary to obtain several packages.  Some
+Before installing OmNet++ it is necessary to obtain several packages.  Some
 distributions provide some of these packages by default.  Individual
 instructions for each platform follow below.  The required packages are:
 
