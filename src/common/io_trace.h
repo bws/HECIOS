@@ -3,21 +3,11 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
+// Copyright (C) 2008 Yang Wu
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
 #include <cstddef>
 #include <iostream>
@@ -36,7 +26,7 @@ public:
      * Operation Types
      */
     enum Operation {INVALID = 0,
-                    ACCESS, CPU_PHASE, OPEN, 
+                    ACCESS, CPU_PHASE, OPEN,
                     MKDIR, UNLINK, UTIME, STAT, CLOSE, SEEK,
                     READ_AT, READ, READDIR, RMDIR, WRITE, WRITE_AT};
 
@@ -59,31 +49,31 @@ public:
 
         /** @return the operation's duration in seconds */
         double duration() const { return duration_; };
-        
+
         /** @return the file id */
         std::string filename() const { return filename_; };
 
         /** Set the filename */
         void filename(const std::string& filename) { filename_ = filename; };
-        
+
         /** @return the File id */
         int fileId() const { return fileId_; };
-    
+
         /** Set the file id */
         void fileId(int fileId) { fileId_ = fileId; };
-    
+
         /** @return read dir count */
         std::size_t count() const { return count_; };
 
         /** Set the read dir count */
         void count(std::size_t count) { count_ = count; };
-        
+
         /** @return file access offset */
         std::size_t offset() const { return offset_; };
 
         /** Set the file access offset */
         void offset(std::size_t offset) { offset_ = offset; };
-        
+
         /** @return file access length */
         std::size_t length() const { return length_; };
 
@@ -113,7 +103,7 @@ public:
 
         /** Set the Read Only flag */
         void isReadOnly(bool isReadOnly) { isReadOnly_ = isReadOnly; };
-        
+
         /** @return true if this is a Write Only */
         bool isWriteOnly() const { return isWriteOnly_; };
 
@@ -143,7 +133,7 @@ public:
 
         /** Set the file exists flag */
         void fileExists(bool fileExists) { fileExists_ = fileExists; };
-        
+
     public:
         Operation opType_;
         double timeStamp_;
@@ -175,7 +165,7 @@ public:
 
     /** @return true if more records remain */
     virtual bool hasMoreRecords() const = 0;
-    
+
     /** @return the next IOTraceRecord */
     virtual Record* nextRecord() = 0;
 
@@ -187,16 +177,16 @@ public:
 
     /** @return a pointer to directories in this trace's file system */
     const FileSystemMap* getDirectories() const;
-    
+
     /** @return a pointer to files in this trace's file system */
     const FileSystemMap* getFiles() const;
-    
+
     /** Register a filename by file id */
     void addFilename(int fileId, std::string filename);
-    
+
     /** @return the file name for a file id */
     std::string getFilename(int fileId) const;
-    
+
 private:
 
     /** The number of processes for this trace */

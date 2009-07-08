@@ -1,6 +1,13 @@
 #ifndef REQUEST_SCHEDULER_H
 #define REQUEST_SCHEDULER_H
-
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
+//
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
+//
 #include <map>
 #include <queue>
 #include <omnetpp.h>

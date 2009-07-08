@@ -1,21 +1,10 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
 #include "shtf_io_trace.h"
 #include <cassert>
@@ -38,14 +27,14 @@ SHTFIOTrace::SHTFIOTrace(const string& traceFileName)
 {
     // Open the trace file
     traceFile_.open(traceFileName_.c_str(), ios::in|ios::binary);
-    
+
     // Determine if the trace file opened successfully
     if (traceFile_)
     {
         // The first line should contain the trace format
         string traceMeta;
         getline(traceFile_, traceMeta);
-        
+
         // Read the header info
         traceFile_ >> numFiles_;
         traceFile_ >> numRecords_;
@@ -70,7 +59,7 @@ SHTFIOTrace::SHTFIOTrace(const string& traceFileName)
                 traceFile_ >> numEntries;
                 registerDirectory(filename, numEntries);
             }
-            
+
             // Discard the trailing \n
             string tmp;
             getline(traceFile_, tmp);
@@ -105,7 +94,7 @@ IOTrace::Record* SHTFIOTrace::nextRecord()
 
     string line;
     getline(traceFile_, line);
-        
+
     // Create a new message and fill it out with the relevant data
     istringstream recordStream(line);
     IOTrace::Record* rec = createIOTraceRecord(recordStream);
@@ -114,10 +103,10 @@ IOTrace::Record* SHTFIOTrace::nextRecord()
         cerr << __FILE__ << ":" << __LINE__ << ":"
              << "Unable to construct record from: " << line << endl;
     }
-    
+
     // Increment the next record ptr
     nextRecord_++;
-    
+
     return rec;
 }
 
@@ -223,7 +212,7 @@ IOTrace::Record* SHTFIOTrace::createIOTraceRecord(istream& recordStream)
         rec = createWriteRecord(descriptor, offset, extent,
                                 startTime, duration);
     }
-    
+
     return rec;
 }
 
@@ -291,22 +280,22 @@ IOTrace::Record* SHTFIOTrace::createOpenRecord(const string& filename,
     {
         rec->isExclusive(true);
     }
-    
+
     if (string::npos != mode.find("O_RDONLY"))
     {
         rec->isReadOnly(true);
     }
-    
+
     if (string::npos != mode.find("O_RDWR"))
     {
         rec->isReadWrite(true);
     }
-    
+
     if (string::npos != mode.find("O_WRONLY"))
     {
         rec->isWriteOnly(true);
     }
-    
+
     if (string::npos != mode.find("O_APPEND"))
     {
         rec->isAppend(true);

@@ -3,7 +3,7 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2008 Yang Wu, Brad Settlemyer
+// Copyright (C) 2008 Yang Wu
 // Copyright (C) 2008,2009 Brad Settlemyer
 //
 // This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'

@@ -1,23 +1,11 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-//
-
 #include "block_translator.h"
 #include <cassert>
 #include "os_proto_m.h"
@@ -47,7 +35,7 @@ void BlockTranslator::handleMessage(cMessage *msg)
         spfsOSBlockIORequest* blockIO = 0;
         spfsOSReadBlocksRequest* blockRead = 0;
         spfsOSWriteBlocksRequest* blockWrite = 0;
-        
+
         if ((blockRead = dynamic_cast<spfsOSReadBlocksRequest*>(msg)))
         {
             blockIO = blockRead;
@@ -120,7 +108,7 @@ void BlockTranslator::handleMessage(cMessage *msg)
         {
             ioRequest->setNumRemainingResponses(numRemainingResponses - 1);
         }
-        
+
         // Clean up the device request and response
         delete devRequest;
         delete msg;

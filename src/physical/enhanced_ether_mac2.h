@@ -1,6 +1,7 @@
 #ifndef ENHANCED_ETHER_MAC2_H
 #define ENHANCED_ETHER_MAC2_H
 //
+// Copyright (C) 2009 Brad Settlemyer
 // Copyright (C) 2006 Levente Meszaros
 //
 // This program is free software; you can redistribute it and/or

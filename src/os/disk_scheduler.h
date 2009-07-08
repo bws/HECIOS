@@ -4,23 +4,11 @@
 // This file is part of Hecios
 //
 // Copyright (C) 2006 Joel Sherrill <joel@oarcorp.com>
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-//
-
 #include <vector>
 #include <omnetpp.h>
 #include "basic_types.h"
@@ -75,13 +63,13 @@ protected:
     virtual void finish();
 
     virtual void handleMessage(cMessage* msg);
-    
+
     /** Perform initialization tasks on scheduler before messages arrive */
     virtual void initializeScheduler() = 0;
 
     /** @return true if the disk scheduler has no outstanding entries */
     virtual bool isEmpty() const = 0;
-    
+
     /** Add entry to the scheduler */
     virtual void addEntry(SchedulerEntry* entry) = 0;
 
@@ -120,15 +108,15 @@ class FCFSDiskScheduler : public DiskScheduler
   public:
     /** Constructor */
     FCFSDiskScheduler();
-    
+
 protected:
 
     virtual void initializeScheduler() {};
 
     virtual bool isEmpty() const { return fcfsQueue.empty(); };
-    
+
     virtual void addEntry( SchedulerEntry* entry);
-    
+
     virtual SchedulerEntry* popNextEntry();
 
     virtual std::vector<SchedulerEntry*> popRequestsCompletedByRead(
@@ -139,7 +127,7 @@ protected:
 private:
 
     cQueue fcfsQueue;
-    
+
 };
 
 /**
@@ -156,9 +144,9 @@ protected:
     virtual void initializeScheduler();
 
     virtual bool isEmpty() const {return sstfQueue.empty(); };
-    
+
     virtual void addEntry( SchedulerEntry* entry);
-    
+
     virtual SchedulerEntry* popNextEntry();
 
     virtual std::vector<SchedulerEntry*> popRequestsCompletedByRead(
@@ -187,7 +175,7 @@ protected:
     virtual void initializeScheduler() {};
 
     virtual void addEntry( SchedulerEntry* entry);
-    
+
     virtual SchedulerEntry* popNextEntry();
 
     virtual std::vector<SchedulerEntry*> popSupercededRequests(
@@ -216,7 +204,7 @@ protected:
     virtual void initializeScheduler() {};
 
     virtual void addEntry( SchedulerEntry* entry);
-    
+
     virtual SchedulerEntry* popNextEntry();
 
     virtual std::vector<SchedulerEntry*> popSupercededRequests(
@@ -245,7 +233,7 @@ protected:
     virtual void initializeScheduler() {};
 
     virtual void addEntry( SchedulerEntry* entry);
-    
+
     virtual SchedulerEntry* popNextEntry();
 
     virtual std::vector<SchedulerEntry*> popSupercededRequests(
@@ -274,7 +262,7 @@ protected:
     virtual void initializeScheduler() {};
 
     virtual void addEntry( SchedulerEntry* entry);
-    
+
     virtual SchedulerEntry* popNextEntry();
 
     virtual std::vector<SchedulerEntry*> popSupercededRequests(

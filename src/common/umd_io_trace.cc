@@ -1,21 +1,10 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
 #include "umd_io_trace.h"
 #include <cassert>
@@ -38,12 +27,12 @@ UMDIOTrace::UMDIOTrace(int numProcs, string traceFileName)
 {
     // Open the trace file
     traceFile_.open(traceFileName_.c_str(), ios::in|ios::binary);
-    
+
     // Determine if the trace file opened successfully
     if (traceFile_)
     {
         string temp;
-        
+
         // Read the header info
         traceFile_ >> numProcs_;
         traceFile_ >> numFiles_;
@@ -109,7 +98,7 @@ IOTrace::Record* UMDIOTrace::nextRecord()
         source >> numRecords;
         source >> pid >> fileId >> wallClock >> processClock;
         source >> offset >> length;
-        
+
         // Create a new message and fill it out with the relevant data
         rec = createIOTraceRecord(static_cast<OpType>(opType), fileId,
                                   offset, length);
@@ -117,11 +106,11 @@ IOTrace::Record* UMDIOTrace::nextRecord()
         // Add the trace source to the record
         if (0 != rec)
             rec->setSource(sourceLine);
-        
+
         // Increment the current record count
-        curRecord_++;    
+        curRecord_++;
     }
-    
+
     return rec;
 }
 

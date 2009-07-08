@@ -3,21 +3,10 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
 #include "pfs_types.h"
 class cArray;
@@ -42,29 +31,29 @@ public:
 protected:
     /** Send the collective metadata creation message */
     void sendMeta();
-    
+
     /** Send the file creation message to the OS */
     void enterCreate();
 
     /** Send a message to set the attributes */
     void setAttributes();
-    
+
     /** Send the file write message to the OS */
     void createDirEnt();
-    
+
     /** Send the child collective create requests for this node */
     void sendCollectiveRequests();
-    
+
     /**
      * Process responses from servers and OS
      *
      * @return true if no more outstanding responses exist
      */
     bool processResponse(cMessage* response);
-    
+
     /** Send the final response to the client */
     void enterFinish();
-    
+
 private:
     /** Create a child collective request */
     spfsCollectiveCreateRequest* createChildCollectiveRequest(
@@ -72,7 +61,7 @@ private:
 
     /** The parent module */
     FSServer* module_;
-    
+
     /** The originating collective create request */
     spfsCollectiveCreateRequest* createReq_;
 };

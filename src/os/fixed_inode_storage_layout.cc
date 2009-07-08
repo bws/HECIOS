@@ -1,21 +1,10 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
 #include "fixed_inode_storage_layout.h"
 #include <algorithm>
@@ -27,7 +16,7 @@ FixedINodeStorageLayout::FixedINodeStorageLayout(size_t blockSize)
       fsBlockSize_(blockSize)
 {
     assert(0 < fsBlockSize_);
-    
+
     // Assume the IONodes are in blocks 0 - 999
     nextMetaDataBlock_ = 0;
     nextDataBlock_ = 1000;
@@ -53,7 +42,7 @@ void FixedINodeStorageLayout::addFileToLayout(const Filename& filename,
     int64_t numBlocks = fileSize / fsBlockSize_;
     dataBlocks_[filename] = nextDataBlock_;
     nextDataBlock_ += numBlocks;
-    
+
 }
 
 vector<FSBlock> FixedINodeStorageLayout::getLayoutFileMetaDataBlocks(
@@ -80,13 +69,13 @@ vector<FSBlock> FixedINodeStorageLayout::getLayoutFileDataBlocks(
         dataBlocks_.find(filename);
     assert(dataBlocks_.end() != iter);
     FSBlock firstFileBlock = iter->second;
-    
+
     // Process each file region
     for (size_t i = 0; i < regions.size(); i++)
     {
         FSOffset offset = regions[i].offset;
         FSSize extent = regions[i].extent;
-        
+
         // Find the offset block
         int64_t blocksOffset = offset / fsBlockSize_;
 
@@ -101,14 +90,14 @@ vector<FSBlock> FixedINodeStorageLayout::getLayoutFileDataBlocks(
         {
             blocksToAccess += 1;
         }
-    
+
         // Add a block for any partial block access at end of request
         int64_t lastBlockPortion = (extent - firstBlockPortion) % fsBlockSize_;
         if (0 != lastBlockPortion)
         {
             blocksToAccess += 1;
         }
-    
+
         // Add region's blocks the list of blocks to access
         FSBlock firstBlock = firstFileBlock + blocksOffset;
         for (uint64_t i = 0; i < blocksToAccess; i++)

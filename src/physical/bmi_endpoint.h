@@ -1,21 +1,10 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
 #include <omnetpp.h>
 #include "basic_types.h"
@@ -39,16 +28,16 @@ public:
 
     /** Number of bytes required as overhead to send a BMI expected response */
     static const unsigned int BMI_EXPECTED_MSG_BYTES = 0;
-    
+
     /** Constructor */
     BMIEndpoint();
 
     /** Set the enpoints shandle range to provide service to */
     void setHandleRange(const HandleRange& handleRange);
-    
+
     /** @return a BMIExpected message encapsulating msg */
     virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg) = 0;
-    
+
     /** @return a BMIUnexpected message encapsulating msg */
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
         spfsRequest* request) = 0;
@@ -74,7 +63,7 @@ protected:
 
     /** Send a BMIExpected message over the network */
     virtual void sendOverNetwork(spfsBMIExpectedMessage* expectedMsg) = 0;
-    
+
     /** Send a BMIExpected message over the network */
     virtual void sendOverNetwork(spfsBMIUnexpectedMessage* unexpectedMsg) = 0;
 
@@ -90,7 +79,7 @@ private:
 
     /** @return the delay before the outbound message can be delivered */
     simtime_t getNextMessageOutScheduleTime(size_t byteLength);
-    
+
     /** Gate id for appIn */
     int appInGateId_;
 
@@ -103,11 +92,11 @@ private:
     /** Variable for serializing all inbound messages */
     SerialMessageScheduler messageInScheduler_;
     double nextMessageScheduledInTime_;
-    
+
     /** Variable for serializing all outbound messages */
     SerialMessageScheduler messageOutScheduler_;
     double nextMessageScheduledOutTime_;
-    
+
     /** Fixed overhead for sending and receiving a BMI message */
     double fixedOverheadSecs_;
 

@@ -8,7 +8,7 @@
 // This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
 // for details on this and other legal matters.
 //
-include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/extensions/HelperMacros.h>
 #include "filename.h"
 using namespace std;
 
@@ -91,6 +91,7 @@ void FilenameTest::testGetSegment()
 
 /*
  * Local variables:
+ *  indent-tabs-mode: nil
  *  c-indent-level: 4
  *  c-basic-offset: 4
  * End:

@@ -1,8 +1,13 @@
 #ifndef REPLACE_POLICY_H
 #define REPLACE_POLICY_H
-
-//Name: replace_policy.h
-//Purpose: to provide an abstract class for policy based replacement
+//
+// This file is part of Hecios
+//
+// Copyright (C)
+//
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
+//
 #include <map>
 #include <cassert>
 #include <list>
@@ -41,7 +46,7 @@ class ReplacePolicy
 	/*virtual int GetEvictIndex(map <int, EntryType*> keyEntryMap,
                                         list<int> *lruList) = 0;*/
 	virtual int GetEvictIndex(list<int> *lruList) = 0;
-        virtual list<int>::iterator PolicyUpdate(list<int> *lruList, 
+        virtual list<int>::iterator PolicyUpdate(list<int> *lruList,
                 list<int>::iterator &lruRef, int key, int toDelete)=0;
         virtual list<int>::iterator PolicyInsert(list<int> *lruList, int key)=0;
         /*{

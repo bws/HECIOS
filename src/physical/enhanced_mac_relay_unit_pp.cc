@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2009 Brad Settlemyer
  * Copyright (C) 2003 CTIE, Monash University
  *
  * This program is free software; you can redistribute it and/or

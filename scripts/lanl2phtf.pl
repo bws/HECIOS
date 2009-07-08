@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright 2008,2009 Wu Yang, Brad Settlemyer
+# Copyright 2008,2009 Yang Wu, Brad Settlemyer
 #
 # ALL RIGHTS RESERVED.
 #

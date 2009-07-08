@@ -1,4 +1,5 @@
 //
+// Copyright (C) 2009 Brad Settlemyer
 // Copyright (C) 2006 Levente Meszaros
 // Copyright (C) 2004 Andras Varga
 //

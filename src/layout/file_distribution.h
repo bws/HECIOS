@@ -3,23 +3,11 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-//
-
 #include <cstddef>
 #include "pfs_types.h"
 
@@ -36,22 +24,22 @@ public:
 
     /** Copy Constructor */
     FileDistribution(const FileDistribution& other);
-    
+
     /** Destructor */
     virtual ~FileDistribution() {};
 
     /** @return a pointer to a correctly copied concrete FileDistribution */
     FileDistribution* clone() const { return doClone(); };
-    
+
     /** @return the object index for this node's file distribution */
     int getObjectIdx() const { return objectIdx_; };
-    
+
     /** @return the number of data objects used by this distribution */
     int getNumObjects() const { return numObjects_; };
 
     /** Set object index */
     void setObjectIdx(std::size_t objectIdx) { objectIdx_ = objectIdx; };
-    
+
     /** @return the physical offset for a logical offset */
     FSOffset logicalToPhysicalOffset(FSOffset logicalOffset) const;
 
@@ -79,7 +67,7 @@ private:
 
     /** @return a pointer to a correctly copied derived FileDistribution */
     virtual FileDistribution* doClone() const = 0;
-    
+
     /** @return the contiguous length forward from a physical offset */
     virtual FSSize getContiguousLength(std::size_t objectIdx,
                                        FSOffset physicalOffset) const = 0;

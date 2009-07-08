@@ -3,21 +3,10 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
 #include "filename.h"
 #include "fs_state_machine.h"
@@ -38,15 +27,15 @@ public:
                                 bool calculateSize,
                                 spfsMPIRequest* mpiRequest,
                                 FSClient* client);
-    
+
 protected:
     /** Message processing for client name lookup*/
     virtual bool updateState(cFSM& currentState, cMessage* msg);
-    
+
 private:
     /** @return true if the attributes are in the client cache */
     bool isAttrCached();
-    
+
     /** Send the requests to get the data attributes */
     void getAttributesCollective();
 
@@ -58,7 +47,7 @@ private:
 
     /** Flag to indicate whether the file size needs to be calculated */
     bool calculateSize_;
-    
+
     /** The originating MPI request */
     spfsMPIRequest* mpiReq_;
 

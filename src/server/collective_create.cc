@@ -1,21 +1,10 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
 #define FSM_DEBUG  // Enable FSM Debug output
 #include <cassert>
@@ -198,7 +187,7 @@ void CollectiveCreate::enterCreate()
     Filename f(createReq_->getHandle());
     openRequest->setFilename(f.c_str());
     openRequest->setIsCreate(true);
-    
+
     // Send the request to the storage layer
     module_->send(openRequest);
 
@@ -212,7 +201,7 @@ void CollectiveCreate::setAttributes()
     spfsSetAttrRequest* setAttr =
         new spfsSetAttrRequest(0, SPFS_SET_ATTR_REQUEST);
     setAttr->setContextPointer(createReq_);
-    
+
     // The meta handle is used for addressing
     setAttr->setHandle(createReq_->getMetaHandle());
     setAttr->setObjectType(SPFS_METADATA_OBJECT);
@@ -233,7 +222,7 @@ void CollectiveCreate::createDirEnt()
     fileWrite->setExtentArraySize(1);
     fileWrite->setOffset(0, 0);
     fileWrite->setExtent(0, module_->getDirectoryEntrySize());
-    
+
     // Send the write request
     module_->send(fileWrite);
 }
@@ -243,7 +232,7 @@ void CollectiveCreate::sendCollectiveRequests()
     // Divide the list of data handles into two partitions
     //   Send the second partition to another server
     //   Repeat process with first half of the list
-    int numRemainingHandles = createReq_->getDataHandlesArraySize(); 
+    int numRemainingHandles = createReq_->getDataHandlesArraySize();
     while (0 < numRemainingHandles)
     {
         // Determine the next partition
@@ -314,7 +303,7 @@ spfsCollectiveCreateRequest*
 CollectiveCreate::createChildCollectiveRequest(int idx, int numHandles) const
 {
     assert(0 < numHandles);
-    
+
     spfsCollectiveCreateRequest* childCreate =
         new spfsCollectiveCreateRequest(0, SPFS_COLLECTIVE_CREATE_REQUEST);
     childCreate->setObjectType(SPFS_DATA_OBJECT);
@@ -323,7 +312,7 @@ CollectiveCreate::createChildCollectiveRequest(int idx, int numHandles) const
     childCreate->setHandle(createReq_->getDataHandles(idx));
     idx++;
     numHandles--;
-    
+
     // The remaining handles are sent as data
     childCreate->setDataHandlesArraySize(numHandles);
     for (int i = 0; i < numHandles; i++)

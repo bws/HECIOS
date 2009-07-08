@@ -1,21 +1,10 @@
 //
 // This file is part of Hecios
 //
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
 //
 #include <cassert>
 #include <cstring>
@@ -39,12 +28,12 @@ class FSServerConfigurator : public cSimpleModule
 public:
     /** Constructor */
     FSServerConfigurator() : cSimpleModule() {};
-    
+
 protected:
 
     /** Must have more stages than it takes to assign IPs */
     virtual int numInitStages() const {return 4;};
-    
+
     /** Implementation of initialize */
     virtual void initialize(int stage);
 
@@ -81,17 +70,17 @@ void FSServerConfigurator::initialize(int stage)
         // Get the server processing delays for each message
         double changeDirEntDelay = par("changeDirEntProcessingDelaySecs");
         FSServer::setChangeDirEntProcessingDelay(changeDirEntDelay);
-        
+
         double createDFileDelay = par("createDFileProcessingDelaySecs");
         FSServer::setCreateDFileProcessingDelay(createDFileDelay);
-        
+
         double createDirDelay = par("createDirectoryProcessingDelaySecs");
         FSServer::setCreateDirectoryProcessingDelay(createDirDelay);
-        
+
         double createMetaDelay = par("createMetadataProcessingDelaySecs");
         FSServer::setCreateMetadataProcessingDelay(createMetaDelay);
-        
-        double createDirEntDelay = par("createDirEntProcessingDelaySecs"); 
+
+        double createDirEntDelay = par("createDirEntProcessingDelaySecs");
         FSServer::setCreateDirEntProcessingDelay(createDirEntDelay);
 
         double getAttrDelay = par("getAttrProcessingDelaySecs");
@@ -102,16 +91,16 @@ void FSServerConfigurator::initialize(int stage)
 
         double readDirDelay = par("readDirProcessingDelaySecs");
         FSServer::setReadDirProcessingDelay(readDirDelay);
-        
+
         double removeDirEntDelay = par("removeDirEntProcessingDelaySecs");
         FSServer::setRemoveDirEntProcessingDelay(removeDirEntDelay);
-        
+
         double removeMetaDelay = par("removeMetaProcessingDelaySecs");
         FSServer::setRemoveMetaProcessingDelay(removeMetaDelay);
-        
+
         double removeObjectDelay = par("removeObjectProcessingDelaySecs");
         FSServer::setRemoveObjectProcessingDelay(removeObjectDelay);
-        
+
         double setAttrDelay = par("setAttrProcessingDelaySecs");
         FSServer::setSetAttrProcessingDelay(setAttrDelay);
 
@@ -120,7 +109,7 @@ void FSServerConfigurator::initialize(int stage)
 
         // Get the flag controlling disk data collection
         bool collectDiskData = par("collectDiskData");
-        FSServer::setCollectDiskData(collectDiskData);        
+        FSServer::setCollectDiskData(collectDiskData);
     }
     else if (3 == stage)
     {
@@ -128,13 +117,13 @@ void FSServerConfigurator::initialize(int stage)
         handlesPerServer_ = par("handlesPerServer");
         cerr << "DIAGNOSTIC: Maximum handles per server is: "
              << handlesPerServer_ << endl;
-        
+
         // Retrieve the interface table for this module
         cModule* cluster = parentModule();
         assert(0 != cluster);
 
         // Register the handles and IP for each IONode
-        long numIONodes = cluster->par("numIONodes");        
+        long numIONodes = cluster->par("numIONodes");
         for (int i = 0; i < numIONodes; i++)
         {
             cModule* ion = cluster->submodule("ion", i);
@@ -151,7 +140,7 @@ void FSServerConfigurator::initialize(int stage)
             range.first = i * handlesPerServer_;
             range.last = ((i + 1) * handlesPerServer_) - 1;
             server->setHandleRange(range);
-            
+
             // Register the server's handle range
             int serverNum;
             //if (0 == i)
@@ -164,7 +153,7 @@ void FSServerConfigurator::initialize(int stage)
             //serverNum = FileBuilder::instance().registerFSServer(
             //    server->getHandleRange(), false);
             //}
-            
+
             // Set the server's server number (will construct ranges also)
             server->setNumber(serverNum);
 
@@ -186,14 +175,14 @@ IPvXAddress* FSServerConfigurator::getServerIP(cModule* ioNode)
 {
     assert(0 != ioNode);
     IPvXAddress* serverIP = 0;
-    
+
     // Retrieve the INET host
     cModule* hca = ioNode->submodule("hca");
     assert(0 != hca);
     InterfaceTable* ifTable = dynamic_cast<InterfaceTable*>(
         hca->submodule("interfaceTable"));
     assert(0 != ifTable);
-            
+
     // Find eth0's IP address
     InterfaceEntry* ie = 0;
     for (int j = 0; j < ifTable->numInterfaces(); j++)
