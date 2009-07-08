@@ -1,3 +1,12 @@
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2008 Wu Yang
+// Copyright (C) 2009 Brad Settlemyer
+//
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
+//
 #include <iostream>
 #include "lanl_trace_parser.h"
 using namespace std;

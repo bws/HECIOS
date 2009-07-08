@@ -1,7 +1,10 @@
 #!/usr/bin/perl
 #
-# Copyright 2008 Wu Yang, Brad Settlemyer
+# Copyright 2008,2009 Wu Yang, Brad Settlemyer
 #
+# ALL RIGHTS RESERVED.
+#
+
 # Parses LANL formatted trace files.  Requires you to be in a directory
 # full of LANL trace information, and the lanl_trace_parser executable
 # to be in your path.  Also probably requires some configuration files.

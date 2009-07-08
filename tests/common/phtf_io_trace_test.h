@@ -1,3 +1,13 @@
+#ifndef PHTF_IO_TRACE_TEST_H
+#define PHTF_IO_TRACE_TEST_H
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
+//
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
+//
 #include <string>
 #include <vector>
 #include <cppunit/extensions/HelperMacros.h>
@@ -113,3 +123,5 @@ void PHTFIOTraceTest::testIniHandler()
     CPPUNIT_ASSERT_EQUAL(ini.iniValue("Sec2", "F1"), string("V1"));
     CPPUNIT_ASSERT_EQUAL(ini.iniValue("Sec2", "F3"), string("V3"));
 }
+
+#endif

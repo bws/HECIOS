@@ -1,6 +1,12 @@
 #!/usr/bin/perl -w
 #
-# Copyright 2008 Brad Settlemyer
+# This file is part of Hecios
+#
+# Copyright 2008,2009 Brad Settlemyer
+#
+# ALL RIGHTS RESERVED.
+#
+
 #
 # Program for converting strace output into the serial HECIOS trace format
 # Trace files must be generated with the following invocation:

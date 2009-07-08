@@ -1,4 +1,12 @@
 dnl
+dnl This file is part of Hecios
+dnl
+dnl Copyright (C) 2007,2008,2009 Brad Settlemyer
+dnl
+dnl ALL RIGHTS RESERVED.
+dnl
+
+dnl
 dnl Process this file with autoconf to produce a configure script
 dnl
 AC_INIT(Hecios,0.0.0.0)

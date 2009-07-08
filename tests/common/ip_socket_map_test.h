@@ -1,6 +1,13 @@
 #ifndef IP_SOCKET_MAP_TEST_H
 #define IP_SOCKET_MAP_TEST_H
-
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
+//
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
+//
 #include <string>
 #include <cppunit/extensions/HelperMacros.h>
 #include <omnetpp.h>

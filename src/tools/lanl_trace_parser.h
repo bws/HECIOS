@@ -1,6 +1,14 @@
 #ifndef LANL_TRACE_PARSER_H
 #define LANL_TRACE_PARSER_H
-
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2008 Wu Yang
+// Copyright (C) 2009 Brad Settlemyer
+//
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
+//
 #include <cstdio>
 #include <string>
 #include <fstream>

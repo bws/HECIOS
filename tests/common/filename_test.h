@@ -1,4 +1,14 @@
-#include <cppunit/extensions/HelperMacros.h>
+#ifndef FILENAME_TEST_H
+#define FILENAME_TEST_H
+//
+// This file is part of Hecios
+//
+// Copyright (C) 2007,2008,2009 Brad Settlemyer
+//
+// This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
+// for details on this and other legal matters.
+//
+include <cppunit/extensions/HelperMacros.h>
 #include "filename.h"
 using namespace std;
 
@@ -76,6 +86,8 @@ void FilenameTest::testGetSegment()
     CPPUNIT_ASSERT_EQUAL(Filename("/foo"), f3.getSegment(1));
     CPPUNIT_ASSERT_EQUAL(Filename("/foo/baz"), f3.getSegment(2));
 }
+
+#endif
 
 /*
  * Local variables:

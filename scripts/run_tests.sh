@@ -1,4 +1,11 @@
 #!/bin/sh
+#
+# This file is part of Hecios
+#
+# Copyright (C) 2007,2008,2009 Brad Settlemyer
+#
+# ALL RIGHTS RESERVED.
+#
 
 #
 # Run test drivers nd log result to file and std out
