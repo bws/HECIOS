@@ -7,6 +7,7 @@
 // for details on this and other legal matters.
 //
 #include <cassert>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>

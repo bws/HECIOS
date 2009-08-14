@@ -10,6 +10,7 @@
 // for details on this and other legal matters.
 //
 #include <cstddef>
+#include <stdint.h>
 #include <vector>
 #include <map>
 #include <string>
