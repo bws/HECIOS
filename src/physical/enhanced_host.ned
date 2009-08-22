@@ -1,166 +1,225 @@
 //
-// This file is part of Hecios
-//
-// Copyright (C) 2006 Andras Vargas
-// Copyright (C) 2007 Brad Settlemyer
+// Copyright (C) 2009 Bradley W. Settlemyer
+// Copyright (C) 2004 Andras Varga
+// Copyright (C) 2000 Institut fuer Telematik, Universitaet Karlsruhe
 //
 // This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
+// modify it under the terms of the GNU Lesser General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
-
-//
-// A replacement for INET's standard host that includes additional
-// gates for connecting to the tcpApp's messaging gates in the case
-// of a BMI application
-//
-
-import
-    "NotificationBoard",
-    "NAMTraceWriter",
-    "InterfaceTable",
-    "RoutingTable",
-    "TCPApp.ned",
-    "TCP.ned",
-    "UDP",
-    "UDPApp",
-    "NetworkLayer",
-    "PingApp",
-    "PPPInterface",
-    "EthernetInterface";
-
+import inet.applications.pingapp.PingApp;
+import inet.applications.tcpapp.TCPApp;
+import inet.applications.udpapp.UDPApp;
+import inet.applications.sctpapp.SCTPApp; //I.R.
+import inet.base.NotificationBoard;
+import inet.linklayer.ethernet.EthernetInterface2;
+import inet.linklayer.ppp.PPPInterface;
+import inet.linklayer.ext.ExtInterface; //I.R.
+import inet.networklayer.common.InterfaceTable;
+import inet.networklayer.ipv4.RoutingTable;
+import inet.nodes.inet.NetworkLayer;
+import inet.transport.tcp.TCP;
+import inet.transport.udp.UDP;
+import inet.transport.sctp.SCTP; //I.R.
+import inet.util.TCPDump; //I.R.
+import inet.util.NAMTraceWriter;
 
 
 //
-// An embellishment of INET's StandardHost that also provides BMI and MPI support
-// in the TCP Application.
+// \IP host with TCP, UDP layers and applications.
 //
 module EnhancedHost
+{
     parameters:
-        numBMIApps: numeric const,
-        numMPIApps: numeric const,
-        numUdpApps: numeric const,
-        bmiAppType: string,
-        mpiAppType: string,
-        udpAppType: string,
-        IPForward: bool,
-        namid: numeric const,
-        routingFile: string;
+        @node();
+        int numBmiApps = default(0);
+        int numMpiApps = default(0);
+        int numTcpApps = default(0);
+        int numUdpApps = default(0);
+        int numSctpApps = default(0); //I.R.
+        string bmiAppType = default("n/a");
+        string mpiAppType = default("n/a");
+        string tcpAppType = default("n/a");
+        string udpAppType = default("n/a");
+        string sctpAppType = default("n/a"); //I.R.
+        bool IPForward = default(false);
+        int namid = default(-1);
+        string routingFile = default("");
+        int numExtInterfaces = default(0);
+        @display("i=device/pc2");
     gates:
-        in: in[];
-        out: out[];
-        in: ethIn[];
-        out: ethOut[];
-
-        in: bmiIn[];
-        out: bmiOut[];
-
-        in: mpiIn[];
-        out: mpiOut[];
-
+    	inout bmig[];
+    	inout mpig[];
+        inout pppg[];
+        inout ethg[];
     submodules:
-        namTrace: NAMTraceWriter;
+        namTrace: NAMTraceWriter {
             parameters:
                 namid = namid;
-            display: "p=60,310;i=block/sink";
-        notificationBoard: NotificationBoard;
-            display: "p=60,70;i=block/control";
-        interfaceTable: InterfaceTable;
-            display: "p=60,150;i=block/table";
-        routingTable: RoutingTable;
+                @display("p=60,310");
+        }
+        notificationBoard: NotificationBoard {
             parameters:
-                IPForward = IPForward,
-                routerId = "",
+                @display("p=60,70");
+        }
+        interfaceTable: InterfaceTable {
+            parameters:
+                @display("p=60,150");
+        }
+        routingTable: RoutingTable {
+            parameters:
+                IPForward = IPForward;
+                routerId = "";
                 routingFile = routingFile;
-            display: "p=60,230;i=block/table";
-            
-        bmiTcpApp: bmiAppType[numBMIApps] like TCPApp;
-            display: "p=275,91,m,3;i=block/app";
-            
-        mpiTcpApp: mpiAppType[numMPIApps] like TCPApp;
-            display: "p=275,91,m,3;i=block/app";
-            
-        tcp: TCP;
-            display: "p=243,186;i=block/wheelbarrow";
-        udpApp: udpAppType[numUdpApps] like UDPApp;
-            display: "i=block/app;p=400,91";
-        udp: UDP;
-            display: "p=344,186;i=block/transport";
-        pingApp: PingApp;
-            display: "i=block/app;p=391,272";
-        networkLayer: NetworkLayer;
+                @display("p=60,230");
+        }
+        bmiApp[numBmiApps]: <bmiAppType> like TCPApp {
+            parameters:
+                @display("p=400,67");
+        }
+        mpiApp[numMpiApps]: <mpiAppType> like TCPApp {
+            parameters:
+                @display("p=450,67");
+        }
+        tcpApp[numTcpApps]: <tcpAppType> like TCPApp {
+            parameters:
+                @display("p=163,67");
+        }
+        tcp: TCP {
+            parameters:
+                @display("p=163,154");
+        }
+        udpApp[numUdpApps]: <udpAppType> like UDPApp {
+            parameters:
+                @display("p=272,67");
+        }
+        udp: UDP {
+            parameters:
+                @display("p=272,154");
+        }
+        sctpApp[numSctpApps]: <sctpAppType> like SCTPApp { //I.R.
+            parameters:
+                @display("p=385,85");
+        }
+        sctp: SCTP { //I.R.
+            @display("p=382,170;i=block/wheelbarrow");
+        }
+        pingApp: PingApp {
+            parameters:
+                @display("p=343,200");
+        }
+        networkLayer: NetworkLayer {
             parameters:
                 proxyARP = false;
-            gatesizes:
-                ifIn[sizeof(out)+sizeof(ethOut)],
-                ifOut[sizeof(out)+sizeof(ethOut)];
-            display: "p=296,271;i=block/fork;q=queue";
-        ppp: PPPInterface[sizeof(out)];
-            display: "p=237,358,row,90;q=txQueue;i=block/ifcard";
-        eth: EnhancedEthernetInterface2[sizeof(ethOut)];
-            display: "p=360,358,row,90;q=txQueue;i=block/ifcard";
-    connections nocheck:
-        for i=0..numBMIApps-1 do
-            bmiTcpApp[i].tcpOut --> tcp.from_appl++;
-            bmiTcpApp[i].tcpIn <-- tcp.to_appl++;
-        endfor;
+                @display("p=248,247;q=queue");
+            gates:
+                ifIn[(sizeof(pppg)+sizeof(ethg))+numExtInterfaces]; //I.R.
+                ifOut[(sizeof(pppg)+sizeof(ethg))+numExtInterfaces];
+        }
+        ppp[sizeof(pppg)]: PPPInterface {
+            parameters:
+                @display("p=205,350,row,90;q=txQueue");
+        }
+        eth[sizeof(ethg)]: EthernetInterface2 {
+            parameters:
+                @display("p=240,350,row,90;q=txQueue");
+        }
+        ext[numExtInterfaces]: ExtInterface { //I.R.
+            parameters:
+                @display("p=399,390,row,90;q=txQueue;i=block/ifcard");
+        }
+        tcpdump: TCPDump { //I.R.
+            parameters:
+                @display("p=254,310;i=abstract/cache_s");
+            gates:
+                ifIn[(sizeof(pppg)+sizeof(ethg))+numExtInterfaces];
+                in2[(sizeof(pppg)+sizeof(ethg))+numExtInterfaces];
+                ifOut[(sizeof(pppg)+sizeof(ethg))+numExtInterfaces];
+                out2[(sizeof(pppg)+sizeof(ethg))+numExtInterfaces];
+        }
+    connections allowunconnected:
+        for i=0..numBmiApps-1 {
+            bmiApp[i].tcpOut --> tcp.appIn++;
+            bmiApp[i].tcpIn <-- tcp.appOut++;
+        }
 
-        for i=0..numMPIApps-1 do
-            mpiTcpApp[i].tcpOut --> tcp.from_appl++;
-            mpiTcpApp[i].tcpIn <-- tcp.to_appl++;
-        endfor;
+        for i=0..numMpiApps-1 {
+            mpiApp[i].tcpOut --> tcp.appIn++;
+            mpiApp[i].tcpIn <-- tcp.appOut++;
+        }
 
-        tcp.to_ip --> networkLayer.TCPIn;
-        tcp.from_ip <-- networkLayer.TCPOut;
+        for i=0..numTcpApps-1 {
+            tcpApp[i].tcpOut --> tcp.appIn++;
+            tcpApp[i].tcpIn <-- tcp.appOut++;
+        }
 
-        for i=0..numUdpApps-1 do
-            udpApp[i].to_udp --> udp.from_app++;
-            udpApp[i].from_udp <-- udp.to_app++;
-        endfor;
+        tcp.ipOut --> networkLayer.tcpIn;
+        tcp.ipIn <-- networkLayer.TCPOut;
 
-        udp.to_ip --> networkLayer.UDPIn;
-        udp.from_ip <-- networkLayer.UDPOut;
+        for i=0..numUdpApps-1 {
+            udpApp[i].udpOut --> udp.appIn++;
+            udpApp[i].udpIn <-- udp.appOut++;
+        }
+
+        udp.ipOut --> networkLayer.udpIn;
+        udp.ipIn <-- networkLayer.udpOut;
+
+        for i=0..numSctpApps-1 {
+            sctpApp[i].sctpOut --> sctp.from_appl++;
+            sctp.to_appl++ --> sctpApp[i].sctpIn;
+        }
+        sctp.to_ip --> networkLayer.sctpIn;
+        networkLayer.sctpOut --> sctp.from_ip;
 
         networkLayer.pingOut --> pingApp.pingIn;
         networkLayer.pingIn <-- pingApp.pingOut;
 
         // connections to network outside
-        for i=0..sizeof(out)-1 do
-            in[i] --> ppp[i].physIn;
-            out[i] <-- ppp[i].physOut;
-            ppp[i].netwOut --> networkLayer.ifIn[i];
-            ppp[i].netwIn <-- networkLayer.ifOut[i];
-        endfor;
+        for i=0..sizeof(pppg)-1 {
+            pppg[i] <--> ppp[i].phys;
+            ppp[i].netwOut --> tcpdump.ifIn[i]; //I.R.
+            tcpdump.out2[i] --> networkLayer.ifIn[i];
+            ppp[i].netwIn <-- tcpdump.ifOut[i];
+            tcpdump.in2[i] <-- networkLayer.ifOut[i];
+        }
 
-        for i=0..sizeof(ethOut)-1 do
-            ethIn[i] --> eth[i].physIn;
-            ethOut[i] <-- eth[i].physOut;
-            eth[i].netwOut --> networkLayer.ifIn[sizeof(out)+i];
-            eth[i].netwIn <-- networkLayer.ifOut[sizeof(out)+i];
-        endfor;
+        for i=0..sizeof(ethg)-1 {
+            ethg[i] <--> eth[i].phys;
+            eth[i].netwOut --> tcpdump.ifIn[sizeof(pppg)+i]; //I.R.
+            tcpdump.out2[sizeof(pppg)+i] --> networkLayer.ifIn[sizeof(pppg)+i];
+            eth[i].netwIn <-- tcpdump.ifOut[sizeof(pppg)+i];
+            tcpdump.in2[sizeof(pppg)+i] <-- networkLayer.ifOut[sizeof(pppg)+i];
+        }
 
+        for i=0..numExtInterfaces-1 {
+            ext[i].netwOut --> tcpdump.ifIn[(sizeof(pppg)+sizeof(ethg))+i];
+            tcpdump.out2[(sizeof(pppg)+sizeof(ethg))+i] --> networkLayer.ifIn[(sizeof(pppg)+sizeof(ethg))+i];
+            ext[i].netwIn <-- tcpdump.ifOut[(sizeof(pppg)+sizeof(ethg))+i];
+            tcpdump.in2[(sizeof(pppg)+sizeof(ethg))+i] <-- networkLayer.ifOut[(sizeof(pppg)+sizeof(ethg))+i];
+        }
+        
+        
         // Connections for BMI messaging applications
-        for i=0..numBMIApps-1 do
-            bmiIn[i] --> bmiTcpApp[i].appIn;
-            bmiOut[i] <-- bmiTcpApp[i].appOut;
-        endfor;
+        for i=0..numBmiApps-1 {
+            bmig$i[i] --> bmiApp[i].appIn;
+            bmig$o[i] <-- bmiApp[i].appOut;
+        }
 
         // Connections for MPI messaging applications
-        for i=0..numMPIApps-1 do
-            mpiIn[i] --> mpiTcpApp[i].appIn;
-            mpiOut[i] <-- mpiTcpApp[i].appOut;
-        endfor;
+        for i=0..numMpiApps-1 {
+            mpig$i[i] --> mpiApp[i].appIn;
+            mpig$o[i] <-- mpiApp[i].appOut;
+        }
 
-    display: "b=457,419";
-endmodule
+        
+}
 

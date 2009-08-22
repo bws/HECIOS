@@ -10,40 +10,49 @@
 //
 // Abstract interface for all I/O applications
 //
-simple IOApplication
-	parameters:
-        traceFile: string,
-        maxBeginTime: numeric;
+moduleinterface IOApplication
+{
+    parameters:
+        string traceFile;
+        volatile double maxBeginTime;
     gates:
-        in: ioIn, mpiIn;
-        out: ioOut, mpiOut;
+        input ioIn;
+        input mpiIn;
+        output ioOut;
+        output mpiOut;
 
-endsimple
+}
 
 //
 // An IOApplication using the PHTF trace file format
 //
-simple PHTFIOApplication
+simple PHTFIOApplication like IOApplication
+{
     parameters:
-        disableCPUPhase: bool,
-        isVerbose: bool,
-        traceFile: string,
-        maxBeginTime: numeric;
+        bool disableCPUPhase;
+        bool isVerbose;
+        string traceFile;
+        volatile double maxBeginTime;
     gates:
-        in: ioIn, mpiIn;
-        out: ioOut, mpiOut;
+        input ioIn;
+        input mpiIn;
+        output ioOut;
+        output mpiOut;
 
-endsimple
+}
 
 //
 // An IOApplication using the SHTF trace file format
 //
-simple SHTFIOApplication
-	parameters:
-        traceFile: string,
-        maxBeginTime: numeric;
+simple SHTFIOApplication like IOApplication
+{
+    parameters:
+        string traceFile;
+        volatile double maxBeginTime;
     gates:
-        in: ioIn, mpiIn;
-        out: ioOut, mpiOut;
+        input ioIn;
+        input mpiIn;
+        output ioOut;
+        output mpiOut;
 
-endsimple
+}

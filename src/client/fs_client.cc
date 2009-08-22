@@ -350,7 +350,7 @@ void FSClient::handleMessage(cMessage *msg)
     // Else if its a self message, then it has been delayed, and will
     //   need to be processed immediately
     // Else its a response and needs to be processed immediately
-    if (msg->arrivalGateId() == appInGateId_)
+    if (msg->getArrivalGateId() == appInGateId_)
     {
         // Account for the request processing delay
         scheduleRequest(msg);
@@ -365,9 +365,9 @@ void FSClient::handleMessage(cMessage *msg)
         collectServerResponseData(msg);
 
         // Extract the originating client request
-        cMessage* parentReq = static_cast<cMessage*>(msg->contextPointer());
+        cMessage* parentReq = static_cast<cMessage*>(msg->getContextPointer());
         cMessage* originalClientRequest =
-            static_cast<cMessage*>(parentReq->contextPointer());
+            static_cast<cMessage*>(parentReq->getContextPointer());
         processMessage(originalClientRequest, msg);
 
         // Only cleanup the server request if the autoCleanup
@@ -392,7 +392,7 @@ void FSClient::scheduleRequest(cMessage* request)
     simtime_t scheduleTime = simTime() + clientOverheadDelay_;
 
     // Add additional delay for individual message processing
-    switch(request->kind())
+    switch(request->getKind())
     {
         case SPFS_MPI_DIRECTORY_CREATE_REQUEST:
         {
@@ -467,7 +467,7 @@ void FSClient::scheduleRequest(cMessage* request)
         default:
         {
             cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "ERROR: Unknown Message: " << request->kind()
+                 << "ERROR: Unknown Message: " << request->getKind()
                  << " " << request->info() << endl;
             break;
         }
@@ -479,7 +479,7 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
 {
     //cerr << __FILE__ << ":" << __LINE__ << ":"
     //     << "Processing: " << request->kind() << endl;
-    switch(request->kind())
+    switch(request->getKind())
     {
         case SPFS_MPI_DIRECTORY_CREATE_REQUEST:
         {
@@ -578,7 +578,7 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         {
             cerr << __FILE__ << ":" << __LINE__ <<
                 "ERROR: Unsupported client request type: "
-                 << request->kind()
+                 << request->getKind()
                  << endl;
             break;
         }
@@ -599,7 +599,7 @@ void FSClient::processMessage(cMessage* request, cMessage* msg)
         default:
         {
             cerr << __FILE__ << ":" << __LINE__ <<
-                ": Unknown Message: " << request->kind()
+                ": Unknown Message: " << request->getKind()
                  << " " << request->info() << endl;
             break;
         }
@@ -612,12 +612,12 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
 {
     // Determine the request response roundtrip time
     cMessage* parentRequest =
-        static_cast<cMessage*>(serverResponse->contextPointer());
-    simtime_t reqSendTime = parentRequest->creationTime();
+        static_cast<cMessage*>(serverResponse->getContextPointer());
+    simtime_t reqSendTime = parentRequest->getCreationTime();
     simtime_t respArriveTime = simTime();
     simtime_t delay = respArriveTime - reqSendTime;
 
-    switch(serverResponse->kind())
+    switch(serverResponse->getKind())
     {
         case SPFS_COLLECTIVE_CREATE_RESPONSE:
         {
@@ -703,7 +703,7 @@ void FSClient::collectServerResponseData(cMessage* serverResponse)
         {
             cerr << __FILE__ << ":" << __LINE__ << ":"
                  << "Unable to collect data for message: "
-                 << serverResponse->kind() << endl;
+                 << serverResponse->getKind() << endl;
         }
     }
 }

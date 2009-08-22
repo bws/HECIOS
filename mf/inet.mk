@@ -13,300 +13,305 @@
 #
 
 #
+# INET locations
+#
+INET_OBJ_DIR = $(INET_DIR)/out/gcc-release/src
+
+#
 # INET framework object files for use in Hecios
 #
-INET_OBJS = $(INET_DIR)/Applications/Ethernet/EtherApp_m.o \
-	$(INET_DIR)/Applications/Ethernet/EtherAppCli.o \
-	$(INET_DIR)/Applications/Ethernet/EtherAppSrv.o \
-	$(INET_DIR)/Applications/Generic/IPTrafGen.o \
-	$(INET_DIR)/Applications/PingApp/PingPayload_m.o \
-	$(INET_DIR)/Applications/PingApp/PingApp.o \
-	$(INET_DIR)/Applications/TCPApp/GenericAppMsg_m.o \
-	$(INET_DIR)/Applications/TCPApp/TCPBasicClientApp.o \
-	$(INET_DIR)/Applications/TCPApp/TCPEchoApp.o \
-	$(INET_DIR)/Applications/TCPApp/TCPGenericCliAppBase.o \
-	$(INET_DIR)/Applications/TCPApp/TCPGenericSrvApp.o \
-	$(INET_DIR)/Applications/TCPApp/TCPGenericSrvThread.o \
-	$(INET_DIR)/Applications/TCPApp/TCPSessionApp.o \
-	$(INET_DIR)/Applications/TCPApp/TCPSinkApp.o \
-	$(INET_DIR)/Applications/TCPApp/TCPSpoof.o \
-	$(INET_DIR)/Applications/TCPApp/TCPSrvHostApp.o \
-	$(INET_DIR)/Applications/TCPApp/TelnetApp.o \
-	$(INET_DIR)/Applications/UDPApp/UDPEchoAppMsg_m.o \
-	$(INET_DIR)/Applications/UDPApp/UDPAppBase.o \
-	$(INET_DIR)/Applications/UDPApp/UDPBasicApp.o \
-	$(INET_DIR)/Applications/UDPApp/UDPEchoApp.o \
-	$(INET_DIR)/Applications/UDPApp/UDPSink.o \
-	$(INET_DIR)/Applications/UDPApp/UDPVideoStreamCli.o \
-	$(INET_DIR)/Applications/UDPApp/UDPVideoStreamSvr.o \
-	$(INET_DIR)/Base/ByteArrayMessage_m.o \
-	$(INET_DIR)/Base/AbstractQueue.o \
-	$(INET_DIR)/Base/BasicModule.o \
-	$(INET_DIR)/Base/Blackboard.o \
-	$(INET_DIR)/Base/ByteArrayMessage.o \
-	$(INET_DIR)/Base/Join.o \
-	$(INET_DIR)/Base/ModuleAccess.o \
-	$(INET_DIR)/Base/NotificationBoard.o \
-	$(INET_DIR)/Base/NotifierConsts.o \
-	$(INET_DIR)/Base/PassiveQueueBase.o \
-	$(INET_DIR)/Base/ProtocolMap.o \
-	$(INET_DIR)/Base/QueueBase.o \
-	$(INET_DIR)/Base/QueueWithQoS.o \
-	$(INET_DIR)/Base/ReassemblyBuffer.o \
-	$(INET_DIR)/Base/Sink.o \
-	$(INET_DIR)/Mobility/ANSimMobility.o \
-	$(INET_DIR)/Mobility/BasicMobility.o \
-	$(INET_DIR)/Mobility/BonnMotionFileCache.o \
-	$(INET_DIR)/Mobility/BonnMotionMobility.o \
-	$(INET_DIR)/Mobility/CircleMobility.o \
-	$(INET_DIR)/Mobility/ConstSpeedMobility.o \
-	$(INET_DIR)/Mobility/LinearMobility.o \
-	$(INET_DIR)/Mobility/LineSegmentsMobilityBase.o \
-	$(INET_DIR)/Mobility/MassMobility.o \
-	$(INET_DIR)/Mobility/NullMobility.o \
-	$(INET_DIR)/Mobility/RandomWPMobility.o \
-	$(INET_DIR)/Mobility/RectangleMobility.o \
-	$(INET_DIR)/Mobility/TurtleMobility.o \
-	$(INET_DIR)/Network/ARP/ARPPacket_m.o \
-	$(INET_DIR)/Network/ARP/ARP.o \
-	$(INET_DIR)/Network/AutoRouting/FlatNetworkConfigurator6.o \
-	$(INET_DIR)/Network/AutoRouting/FlatNetworkConfigurator.o \
-	$(INET_DIR)/Network/AutoRouting/NetworkConfigurator.o \
-	$(INET_DIR)/Network/Contract/IPControlInfo_m.o \
-	$(INET_DIR)/Network/Contract/IPProtocolId_m.o \
-	$(INET_DIR)/Network/Contract/IPv6ControlInfo_m.o \
-	$(INET_DIR)/Network/Contract/InterfaceEntry.o \
-	$(INET_DIR)/Network/Contract/InterfaceTable.o \
-	$(INET_DIR)/Network/Contract/IPAddress.o \
-	$(INET_DIR)/Network/Contract/IPAddressResolver.o \
-	$(INET_DIR)/Network/Contract/IPControlInfo.o \
-	$(INET_DIR)/Network/Contract/IPv6Address.o \
-	$(INET_DIR)/Network/Contract/IPv6ControlInfo.o \
-	$(INET_DIR)/Network/Contract/IPvXAddress.o \
-	$(INET_DIR)/Network/Extras/Dummy.o \
-	$(INET_DIR)/Network/Extras/FailureManager.o \
-	$(INET_DIR)/Network/ICMPv6/ICMPv6Message_m.o \
-	$(INET_DIR)/Network/ICMPv6/IPv6NDMessage_m.o \
-	$(INET_DIR)/Network/ICMPv6/ICMPv6.o \
-	$(INET_DIR)/Network/ICMPv6/IPv6NeighbourCache.o \
-	$(INET_DIR)/Network/ICMPv6/IPv6NeighbourDiscovery.o \
-	$(INET_DIR)/Network/IPv4/ControlManetRouting_m.o \
-	$(INET_DIR)/Network/IPv4/ICMPMessage_m.o \
-	$(INET_DIR)/Network/IPv4/IPDatagram_m.o \
-	$(INET_DIR)/Network/IPv4/ErrorHandling.o \
-	$(INET_DIR)/Network/IPv4/ICMP.o \
-	$(INET_DIR)/Network/IPv4/IP.o \
-	$(INET_DIR)/Network/IPv4/IPFragBuf.o \
-	$(INET_DIR)/Network/IPv4/IPv4InterfaceData.o \
-	$(INET_DIR)/Network/IPv4/RoutingTable.o \
-	$(INET_DIR)/Network/IPv4/RoutingTableParser.o \
-	$(INET_DIR)/Network/IPv6/IPv6Datagram_m.o \
-	$(INET_DIR)/Network/IPv6/IPv6ExtensionHeaders_m.o \
-	$(INET_DIR)/Network/IPv6/IPv6.o \
-	$(INET_DIR)/Network/IPv6/IPv6Datagram.o \
-	$(INET_DIR)/Network/IPv6/IPv6ErrorHandling.o \
-	$(INET_DIR)/Network/IPv6/IPv6FragBuf.o \
-	$(INET_DIR)/Network/IPv6/IPv6InterfaceData.o \
-	$(INET_DIR)/Network/IPv6/RoutingTable6.o \
-	$(INET_DIR)/Network/LDP/LDPPacket_m.o \
-	$(INET_DIR)/Network/LDP/LDP.o \
-	$(INET_DIR)/Network/MPLS/LIBTable.o \
-	$(INET_DIR)/Network/MPLS/MPLS.o \
-	$(INET_DIR)/Network/MPLS/MPLSPacket.o \
-	$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterface.o \
-	$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateBackup.o \
-	$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceState.o \
-	$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateDesignatedRouter.o \
-	$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateDown.o \
-	$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateLoopback.o \
-	$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateNotDesignatedRouter.o \
-	$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStatePointToPoint.o \
-	$(INET_DIR)/Network/OSPFv2/Interface/OSPFInterfaceStateWaiting.o \
-	$(INET_DIR)/Network/OSPFv2/MessageHandler/DatabaseDescriptionHandler.o \
-	$(INET_DIR)/Network/OSPFv2/MessageHandler/HelloHandler.o \
-	$(INET_DIR)/Network/OSPFv2/MessageHandler/LinkStateAcknowledgementHandler.o \
-	$(INET_DIR)/Network/OSPFv2/MessageHandler/LinkStateRequestHandler.o \
-	$(INET_DIR)/Network/OSPFv2/MessageHandler/LinkStateUpdateHandler.o \
-	$(INET_DIR)/Network/OSPFv2/MessageHandler/MessageHandler.o \
-	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighbor.o \
-	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateAttempt.o \
-	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborState.o \
-	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateDown.o \
-	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateExchange.o \
-	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateExchangeStart.o \
-	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateFull.o \
-	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateInit.o \
-	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateLoading.o \
-	$(INET_DIR)/Network/OSPFv2/Neighbor/OSPFNeighborStateTwoWay.o \
-	$(INET_DIR)/Network/OSPFv2/Router/ASExternalLSA.o \
-	$(INET_DIR)/Network/OSPFv2/Router/NetworkLSA.o \
-	$(INET_DIR)/Network/OSPFv2/Router/OSPFArea.o \
-	$(INET_DIR)/Network/OSPFv2/Router/OSPFRouter.o \
-	$(INET_DIR)/Network/OSPFv2/Router/RouterLSA.o \
-	$(INET_DIR)/Network/OSPFv2/Router/SummaryLSA.o \
-	$(INET_DIR)/Network/OSPFv2/OSPFPacket_m.o \
-	$(INET_DIR)/Network/OSPFv2/OSPFTimer_m.o \
-	$(INET_DIR)/Network/OSPFv2/OSPFRouting.o \
-	$(INET_DIR)/Network/Quagga/Daemon.o \
-	$(INET_DIR)/Network/Quagga/glue.o \
-	$(INET_DIR)/Network/Quagga/Netlink.o \
-	$(INET_DIR)/Network/Quagga/oppsim_kernel.o \
-	$(INET_DIR)/Network/Quagga/RawSocket.o \
-	$(INET_DIR)/Network/Quagga/SocketMsg_m.o \
-	$(INET_DIR)/Network/Quagga/SocketMsg.o \
-	$(INET_DIR)/Network/Queue/BasicDSCPClassifier.o \
-	$(INET_DIR)/Network/Queue/DropTailQoSQueue.o \
-	$(INET_DIR)/Network/Queue/DropTailQueue.o \
-	$(INET_DIR)/Network/Queue/REDQueue.o \
-	$(INET_DIR)/Network/RSVP_TE/IntServ_m.o \
-	$(INET_DIR)/Network/RSVP_TE/RSVPHello_m.o \
-	$(INET_DIR)/Network/RSVP_TE/RSVPPacket_m.o \
-	$(INET_DIR)/Network/RSVP_TE/RSVPPathMsg_m.o \
-	$(INET_DIR)/Network/RSVP_TE/RSVPResvMsg_m.o \
-	$(INET_DIR)/Network/RSVP_TE/SignallingMsg_m.o \
-	$(INET_DIR)/Network/RSVP_TE/RSVP.o \
-	$(INET_DIR)/Network/RSVP_TE/SimpleClassifier.o \
-	$(INET_DIR)/Network/RSVP_TE/Utils.o \
-	$(INET_DIR)/Network/TED/LinkStatePacket_m.o \
-	$(INET_DIR)/Network/TED/TED_m.o \
-	$(INET_DIR)/Network/TED/LinkStateRouting.o \
-	$(INET_DIR)/Network/TED/TED.o \
-	$(INET_DIR)/NetworkInterfaces/Contract/Ieee802Ctrl_m.o \
-	$(INET_DIR)/NetworkInterfaces/Contract/PhyControlInfo_m.o \
-	$(INET_DIR)/NetworkInterfaces/Contract/MACAddress.o \
-	$(INET_DIR)/NetworkInterfaces/EtherSwitch/MACRelayUnitBase.o \
-	$(INET_DIR)/NetworkInterfaces/EtherSwitch/MACRelayUnitNP.o \
-	$(INET_DIR)/NetworkInterfaces/EtherSwitch/MACRelayUnitPP.o \
-	$(INET_DIR)/NetworkInterfaces/Ethernet/EtherFrame_m.o \
-	$(INET_DIR)/NetworkInterfaces/Ethernet/EtherBus.o \
-	$(INET_DIR)/NetworkInterfaces/Ethernet/EtherEncap.o \
-	$(INET_DIR)/NetworkInterfaces/Ethernet/EtherHub.o \
-	$(INET_DIR)/NetworkInterfaces/Ethernet/EtherLLC.o \
-	$(INET_DIR)/NetworkInterfaces/Ethernet/EtherMAC2.o \
-	$(INET_DIR)/NetworkInterfaces/Ethernet/EtherMACBase.o \
-	$(INET_DIR)/NetworkInterfaces/Ethernet/EtherMAC.o \
-	$(INET_DIR)/NetworkInterfaces/Ethernet/utils.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mac/Ieee80211Frame_m.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mac/Ieee80211Mac.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mgmt/Ieee80211MgmtFrames_m.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mgmt/Ieee80211Primitives_m.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mgmt/Ieee80211AgentSTA.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mgmt/Ieee80211MgmtAdhoc.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mgmt/Ieee80211MgmtAPBase.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mgmt/Ieee80211MgmtAP.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mgmt/Ieee80211MgmtAPSimplified.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mgmt/Ieee80211MgmtBase.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mgmt/Ieee80211MgmtSTA.o \
-	$(INET_DIR)/NetworkInterfaces/Ieee80211/Mgmt/Ieee80211MgmtSTASimplified.o \
-	$(INET_DIR)/NetworkInterfaces/MF80211/macLayer/Mac80211Pkt_m.o \
-	$(INET_DIR)/NetworkInterfaces/MF80211/macLayer/MacPkt_m.o \
-	$(INET_DIR)/NetworkInterfaces/MF80211/macLayer/CSMAMacLayer.o \
-	$(INET_DIR)/NetworkInterfaces/MF80211/macLayer/Mac80211.o \
-	$(INET_DIR)/NetworkInterfaces/MF80211/phyLayer/decider/Decider80211.o \
-	$(INET_DIR)/NetworkInterfaces/MF80211/phyLayer/decider/ErrAndCollDecider.o \
-	$(INET_DIR)/NetworkInterfaces/MF80211/phyLayer/decider/SnrDecider.o \
-	$(INET_DIR)/NetworkInterfaces/MF80211/phyLayer/snrEval/GilbertElliotSnr.o \
-	$(INET_DIR)/NetworkInterfaces/MF80211/phyLayer/snrEval/SnrEval80211.o \
-	$(INET_DIR)/NetworkInterfaces/MF80211/phyLayer/snrEval/SnrEval.o \
-	$(INET_DIR)/NetworkInterfaces/MFCore/AirFrame_m.o \
-	$(INET_DIR)/NetworkInterfaces/MFCore/SnrControlInfo_m.o \
-	$(INET_DIR)/NetworkInterfaces/MFCore/TransmComplete_m.o \
-	$(INET_DIR)/NetworkInterfaces/MFCore/BasicDecider.o \
-	$(INET_DIR)/NetworkInterfaces/MFCore/BasicSnrEval.o \
-	$(INET_DIR)/NetworkInterfaces/MFCore/WirelessMacBase.o \
-	$(INET_DIR)/NetworkInterfaces/PPP/PPPFrame_m.o \
-	$(INET_DIR)/NetworkInterfaces/PPP/PPP.o \
-	$(INET_DIR)/NetworkInterfaces/PPP/ThruputMeter.o \
-	$(INET_DIR)/NetworkInterfaces/Radio/AbstractRadio.o \
-	$(INET_DIR)/NetworkInterfaces/Radio/GenericRadio.o \
-	$(INET_DIR)/NetworkInterfaces/Radio/GenericRadioModel.o \
-	$(INET_DIR)/NetworkInterfaces/Radio/Ieee80211Radio.o \
-	$(INET_DIR)/NetworkInterfaces/Radio/Ieee80211RadioModel.o \
-	$(INET_DIR)/NetworkInterfaces/Radio/Modulation.o \
-	$(INET_DIR)/NetworkInterfaces/Radio/PathLossReceptionModel.o \
-	$(INET_DIR)/Transport/Contract/TCPCommand_m.o \
-	$(INET_DIR)/Transport/Contract/UDPControlInfo_m.o \
-	$(INET_DIR)/Transport/Contract/TCPSocket.o \
-	$(INET_DIR)/Transport/Contract/TCPSocketMap.o \
-	$(INET_DIR)/Transport/Contract/UDPSocket.o \
-	$(INET_DIR)/Transport/TCP/flavours/DumbTCP.o \
-	$(INET_DIR)/Transport/TCP/flavours/TCPBaseAlg.o \
-	$(INET_DIR)/Transport/TCP/flavours/TCPNoCongestionControl.o \
-	$(INET_DIR)/Transport/TCP/flavours/TCPReno.o \
-	$(INET_DIR)/Transport/TCP/flavours/TCPTahoe.o \
-	$(INET_DIR)/Transport/TCP/flavours/TCPTahoeRenoFamily.o \
-	$(INET_DIR)/Transport/TCP/queues/TCPMsgBasedRcvQueue.o \
-	$(INET_DIR)/Transport/TCP/queues/TCPMsgBasedSendQueue.o \
-	$(INET_DIR)/Transport/TCP/queues/TCPVirtualDataRcvQueue.o \
-	$(INET_DIR)/Transport/TCP/queues/TCPVirtualDataSendQueue.o \
-	$(INET_DIR)/Transport/TCP/TCPSegment_m.o \
-	$(INET_DIR)/Transport/TCP/TCP.o \
-	$(INET_DIR)/Transport/TCP/TCPConnectionBase.o \
-	$(INET_DIR)/Transport/TCP/TCPConnectionEventProc.o \
-	$(INET_DIR)/Transport/TCP/TCPConnectionRcvSegment.o \
-	$(INET_DIR)/Transport/TCP/TCPConnectionUtil.o \
-	$(INET_DIR)/Transport/TCP/TCPSegment.o \
-	$(INET_DIR)/Transport/UDP/UDPPacket_m.o \
-	$(INET_DIR)/Transport/UDP/UDP.o \
-	$(INET_DIR)/Util/HeaderSerializers/ICMPSerializer.o \
-	$(INET_DIR)/Util/HeaderSerializers/IPSerializer.o \
-	$(INET_DIR)/Util/HeaderSerializers/UDPSerializer.o \
-	$(INET_DIR)/Util/common.o \
-	$(INET_DIR)/Util/NAMTraceWriter.o \
-	$(INET_DIR)/Util/opp_utils.o \
-	$(INET_DIR)/Util/TCPDump.o \
-	$(INET_DIR)/Util/ThruputMeteringChannel.o \
-	$(INET_DIR)/Util/XMLUtils.o \
-	$(INET_DIR)/World/ChannelAccess.o \
-	$(INET_DIR)/World/ChannelControl.o \
-	$(INET_DIR)/World/ChannelInstaller.o \
-	$(INET_DIR)/World/NAMTrace.o \
-	$(INET_DIR)/World/ScenarioManager.o \
-	$(INET_DIR)/Network/Quagga/quaggasrc/quagga/globalvars.o
+INET_OBJS = $(INET_OBJ_DIR)/applications/ethernet/EtherApp_m.o \
+	$(INET_OBJ_DIR)/applications/ethernet/EtherAppCli.o \
+	$(INET_OBJ_DIR)/applications/ethernet/EtherAppSrv.o \
+	$(INET_OBJ_DIR)/applications/generic/IPTrafGen.o \
+	$(INET_OBJ_DIR)/applications/pingapp/PingPayload_m.o \
+	$(INET_OBJ_DIR)/applications/pingapp/PingApp.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/GenericAppMsg_m.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/TCPBasicClientApp.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/TCPEchoApp.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/TCPGenericCliAppBase.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/TCPGenericSrvApp.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/TCPGenericSrvThread.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/TCPSessionApp.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/TCPSinkApp.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/TCPSpoof.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/TCPSrvHostApp.o \
+	$(INET_OBJ_DIR)/applications/tcpapp/TelnetApp.o \
+	$(INET_OBJ_DIR)/applications/udpapp/UDPEchoAppMsg_m.o \
+	$(INET_OBJ_DIR)/applications/udpapp/UDPAppBase.o \
+	$(INET_OBJ_DIR)/applications/udpapp/UDPBasicApp.o \
+	$(INET_OBJ_DIR)/applications/udpapp/UDPEchoApp.o \
+	$(INET_OBJ_DIR)/applications/udpapp/UDPSink.o \
+	$(INET_OBJ_DIR)/applications/udpapp/UDPVideoStreamCli.o \
+	$(INET_OBJ_DIR)/applications/udpapp/UDPVideoStreamSvr.o \
+	$(INET_OBJ_DIR)/base/ByteArrayMessage_m.o \
+	$(INET_OBJ_DIR)/base/AbstractQueue.o \
+	$(INET_OBJ_DIR)/base/BasicModule.o \
+	$(INET_OBJ_DIR)/base/Blackboard.o \
+	$(INET_OBJ_DIR)/base/ByteArrayMessage.o \
+	$(INET_OBJ_DIR)/base/Join.o \
+	$(INET_OBJ_DIR)/base/ModuleAccess.o \
+	$(INET_OBJ_DIR)/base/NotificationBoard.o \
+	$(INET_OBJ_DIR)/base/NotifierConsts.o \
+	$(INET_OBJ_DIR)/base/PassiveQueueBase.o \
+	$(INET_OBJ_DIR)/base/ProtocolMap.o \
+	$(INET_OBJ_DIR)/base/QueueBase.o \
+	$(INET_OBJ_DIR)/base/QueueWithQoS.o \
+	$(INET_OBJ_DIR)/base/ReassemblyBuffer.o \
+	$(INET_OBJ_DIR)/base/Sink.o \
+	$(INET_OBJ_DIR)/mobility/ANSimMobility.o \
+	$(INET_OBJ_DIR)/mobility/BasicMobility.o \
+	$(INET_OBJ_DIR)/mobility/BonnMotionFileCache.o \
+	$(INET_OBJ_DIR)/mobility/BonnMotionMobility.o \
+	$(INET_OBJ_DIR)/mobility/CircleMobility.o \
+	$(INET_OBJ_DIR)/mobility/ConstSpeedMobility.o \
+	$(INET_OBJ_DIR)/mobility/LinearMobility.o \
+	$(INET_OBJ_DIR)/mobility/LineSegmentsMobilityBase.o \
+	$(INET_OBJ_DIR)/mobility/MassMobility.o \
+	$(INET_OBJ_DIR)/mobility/NullMobility.o \
+	$(INET_OBJ_DIR)/mobility/RandomWPMobility.o \
+	$(INET_OBJ_DIR)/mobility/RectangleMobility.o \
+	$(INET_OBJ_DIR)/mobility/TurtleMobility.o \
+	$(INET_OBJ_DIR)/networklayer/arp/ARPPacket_m.o \
+	$(INET_OBJ_DIR)/networklayer/arp/ARP.o \
+	$(INET_OBJ_DIR)/networklayer/autorouting/FlatNetworkConfigurator6.o \
+	$(INET_OBJ_DIR)/networklayer/autorouting/FlatNetworkConfigurator.o \
+	$(INET_OBJ_DIR)/networklayer/autorouting/NetworkConfigurator.o \
+	$(INET_OBJ_DIR)/networklayer/common/InterfaceEntry.o \
+	$(INET_OBJ_DIR)/networklayer/common/InterfaceTable.o \
+	$(INET_OBJ_DIR)/networklayer/contract/IPControlInfo_m.o \
+	$(INET_OBJ_DIR)/networklayer/contract/IPProtocolId_m.o \
+	$(INET_OBJ_DIR)/networklayer/contract/IPv6ControlInfo_m.o \
+	$(INET_OBJ_DIR)/networklayer/contract/IPAddress.o \
+	$(INET_OBJ_DIR)/networklayer/contract/IPAddressResolver.o \
+	$(INET_OBJ_DIR)/networklayer/contract/IPControlInfo.o \
+	$(INET_OBJ_DIR)/networklayer/contract/IPv6Address.o \
+	$(INET_OBJ_DIR)/networklayer/contract/IPv6ControlInfo.o \
+	$(INET_OBJ_DIR)/networklayer/contract/IPvXAddress.o \
+	$(INET_OBJ_DIR)/networklayer/extras/Dummy.o \
+	$(INET_OBJ_DIR)/networklayer/extras/FailureManager.o \
+	$(INET_OBJ_DIR)/networklayer/icmpv6/ICMPv6Message_m.o \
+	$(INET_OBJ_DIR)/networklayer/icmpv6/IPv6NDMessage_m.o \
+	$(INET_OBJ_DIR)/networklayer/icmpv6/ICMPv6.o \
+	$(INET_OBJ_DIR)/networklayer/icmpv6/IPv6NeighbourCache.o \
+	$(INET_OBJ_DIR)/networklayer/icmpv6/IPv6NeighbourDiscovery.o \
+	$(INET_OBJ_DIR)/networklayer/ipv4/ControlManetRouting_m.o \
+	$(INET_OBJ_DIR)/networklayer/ipv4/ICMPMessage_m.o \
+	$(INET_OBJ_DIR)/networklayer/ipv4/IPDatagram_m.o \
+	$(INET_OBJ_DIR)/networklayer/ipv4/ErrorHandling.o \
+	$(INET_OBJ_DIR)/networklayer/ipv4/ICMP.o \
+	$(INET_OBJ_DIR)/networklayer/ipv4/IP.o \
+	$(INET_OBJ_DIR)/networklayer/ipv4/IPFragBuf.o \
+	$(INET_OBJ_DIR)/networklayer/ipv4/IPv4InterfaceData.o \
+	$(INET_OBJ_DIR)/networklayer/ipv4/RoutingTable.o \
+	$(INET_OBJ_DIR)/networklayer/ipv4/RoutingTableParser.o \
+	$(INET_OBJ_DIR)/networklayer/ipv6/IPv6Datagram_m.o \
+	$(INET_OBJ_DIR)/networklayer/ipv6/IPv6ExtensionHeaders_m.o \
+	$(INET_OBJ_DIR)/networklayer/ipv6/IPv6.o \
+	$(INET_OBJ_DIR)/networklayer/ipv6/IPv6Datagram.o \
+	$(INET_OBJ_DIR)/networklayer/ipv6/IPv6ErrorHandling.o \
+	$(INET_OBJ_DIR)/networklayer/ipv6/IPv6FragBuf.o \
+	$(INET_OBJ_DIR)/networklayer/ipv6/IPv6InterfaceData.o \
+	$(INET_OBJ_DIR)/networklayer/ipv6/RoutingTable6.o \
+	$(INET_OBJ_DIR)/networklayer/ldp/LDPPacket_m.o \
+	$(INET_OBJ_DIR)/networklayer/ldp/LDP.o \
+	$(INET_OBJ_DIR)/networklayer/mpls/LIBTable.o \
+	$(INET_OBJ_DIR)/networklayer/mpls/MPLS.o \
+	$(INET_OBJ_DIR)/networklayer/mpls/MPLSPacket.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/interface/OSPFInterface.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/interface/OSPFInterfaceStateBackup.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/interface/OSPFInterfaceState.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/interface/OSPFInterfaceStateDesignatedRouter.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/interface/OSPFInterfaceStateDown.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/interface/OSPFInterfaceStateLoopback.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/interface/OSPFInterfaceStateNotDesignatedRouter.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/interface/OSPFInterfaceStatePointToPoint.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/interface/OSPFInterfaceStateWaiting.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/messagehandler/DatabaseDescriptionHandler.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/messagehandler/HelloHandler.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/messagehandler/LinkStateAcknowledgementHandler.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/messagehandler/LinkStateRequestHandler.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/messagehandler/LinkStateUpdateHandler.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/messagehandler/MessageHandler.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/neighbor/OSPFNeighbor.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/neighbor/OSPFNeighborStateAttempt.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/neighbor/OSPFNeighborState.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/neighbor/OSPFNeighborStateDown.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/neighbor/OSPFNeighborStateExchange.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/neighbor/OSPFNeighborStateExchangeStart.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/neighbor/OSPFNeighborStateFull.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/neighbor/OSPFNeighborStateInit.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/neighbor/OSPFNeighborStateLoading.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/neighbor/OSPFNeighborStateTwoWay.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/router/ASExternalLSA.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/router/NetworkLSA.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/router/OSPFArea.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/router/OSPFRouter.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/router/RouterLSA.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/router/SummaryLSA.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/OSPFPacket_m.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/OSPFTimer_m.o \
+	$(INET_OBJ_DIR)/networklayer/ospfv2/OSPFRouting.o \
+	$(INET_OBJ_DIR)/networklayer/queue/BasicDSCPClassifier.o \
+	$(INET_OBJ_DIR)/networklayer/queue/DropTailQoSQueue.o \
+	$(INET_OBJ_DIR)/networklayer/queue/DropTailQueue.o \
+	$(INET_OBJ_DIR)/networklayer/queue/REDQueue.o \
+	$(INET_OBJ_DIR)/networklayer/rsvp_te/IntServ_m.o \
+	$(INET_OBJ_DIR)/networklayer/rsvp_te/RSVPHello_m.o \
+	$(INET_OBJ_DIR)/networklayer/rsvp_te/RSVPPacket_m.o \
+	$(INET_OBJ_DIR)/networklayer/rsvp_te/RSVPPathMsg_m.o \
+	$(INET_OBJ_DIR)/networklayer/rsvp_te/RSVPResvMsg_m.o \
+	$(INET_OBJ_DIR)/networklayer/rsvp_te/SignallingMsg_m.o \
+	$(INET_OBJ_DIR)/networklayer/rsvp_te/RSVP.o \
+	$(INET_OBJ_DIR)/networklayer/rsvp_te/SimpleClassifier.o \
+	$(INET_OBJ_DIR)/networklayer/rsvp_te/Utils.o \
+	$(INET_OBJ_DIR)/networklayer/ted/LinkStatePacket_m.o \
+	$(INET_OBJ_DIR)/networklayer/ted/TED_m.o \
+	$(INET_OBJ_DIR)/networklayer/ted/LinkStateRouting.o \
+	$(INET_OBJ_DIR)/networklayer/ted/TED.o \
+	$(INET_OBJ_DIR)/linklayer/contract/Ieee802Ctrl_m.o \
+	$(INET_OBJ_DIR)/linklayer/contract/PhyControlInfo_m.o \
+	$(INET_OBJ_DIR)/linklayer/contract/MACAddress.o \
+	$(INET_OBJ_DIR)/linklayer/etherswitch/MACRelayUnitBase.o \
+	$(INET_OBJ_DIR)/linklayer/etherswitch/MACRelayUnitNP.o \
+	$(INET_OBJ_DIR)/linklayer/etherswitch/MACRelayUnitPP.o \
+	$(INET_OBJ_DIR)/linklayer/ethernet/EtherFrame_m.o \
+	$(INET_OBJ_DIR)/linklayer/ethernet/EtherBus.o \
+	$(INET_OBJ_DIR)/linklayer/ethernet/EtherEncap.o \
+	$(INET_OBJ_DIR)/linklayer/ethernet/EtherHub.o \
+	$(INET_OBJ_DIR)/linklayer/ethernet/EtherLLC.o \
+	$(INET_OBJ_DIR)/linklayer/ethernet/EtherMAC2.o \
+	$(INET_OBJ_DIR)/linklayer/ethernet/EtherMACBase.o \
+	$(INET_OBJ_DIR)/linklayer/ethernet/EtherMAC.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mac/Ieee80211Frame_m.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mac/Ieee80211Mac.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mgmt/Ieee80211Primitives_m.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mgmt/Ieee80211AgentSTA.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mgmt/Ieee80211MgmtAdhoc.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mgmt/Ieee80211MgmtAPBase.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mgmt/Ieee80211MgmtAP.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mgmt/Ieee80211MgmtAPSimplified.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mgmt/Ieee80211MgmtSTA.o \
+	$(INET_OBJ_DIR)/linklayer/ieee80211/mgmt/Ieee80211MgmtSTASimplified.o \
+	$(INET_OBJ_DIR)/linklayer/mf80211/macLayer/Mac80211Pkt_m.o \
+	$(INET_OBJ_DIR)/linklayer/mf80211/macLayer/MacPkt_m.o \
+	$(INET_OBJ_DIR)/linklayer/mf80211/macLayer/CSMAMacLayer.o \
+	$(INET_OBJ_DIR)/linklayer/mf80211/macLayer/Mac80211.o \
+	$(INET_OBJ_DIR)/linklayer/mf80211/phyLayer/decider/Decider80211.o \
+	$(INET_OBJ_DIR)/linklayer/mf80211/phyLayer/decider/ErrAndCollDecider.o \
+	$(INET_OBJ_DIR)/linklayer/mf80211/phyLayer/decider/SnrDecider.o \
+	$(INET_OBJ_DIR)/linklayer/mf80211/phyLayer/snrEval/GilbertElliotSnr.o \
+	$(INET_OBJ_DIR)/linklayer/mf80211/phyLayer/snrEval/SnrEval80211.o \
+	$(INET_OBJ_DIR)/linklayer/mf80211/phyLayer/snrEval/SnrEval.o \
+	$(INET_OBJ_DIR)/linklayer/mfcore/AirFrame_m.o \
+	$(INET_OBJ_DIR)/linklayer/mfcore/SnrControlInfo_m.o \
+	$(INET_OBJ_DIR)/linklayer/mfcore/TransmComplete_m.o \
+	$(INET_OBJ_DIR)/linklayer/mfcore/BasicDecider.o \
+	$(INET_OBJ_DIR)/linklayer/mfcore/BasicSnrEval.o \
+	$(INET_OBJ_DIR)/linklayer/mfcore/WirelessMacBase.o \
+	$(INET_OBJ_DIR)/linklayer/ppp/PPPFrame_m.o \
+	$(INET_OBJ_DIR)/linklayer/ppp/PPP.o \
+	$(INET_OBJ_DIR)/linklayer/ppp/ThruputMeter.o \
+	$(INET_OBJ_DIR)/linklayer/radio/AbstractRadio.o \
+	$(INET_OBJ_DIR)/linklayer/radio/GenericRadio.o \
+	$(INET_OBJ_DIR)/linklayer/radio/GenericRadioModel.o \
+	$(INET_OBJ_DIR)/linklayer/radio/Ieee80211Radio.o \
+	$(INET_OBJ_DIR)/linklayer/radio/Ieee80211RadioModel.o \
+	$(INET_OBJ_DIR)/linklayer/radio/Modulation.o \
+	$(INET_OBJ_DIR)/linklayer/radio/PathLossReceptionModel.o \
+	$(INET_OBJ_DIR)/transport/contract/TCPCommand_m.o \
+	$(INET_OBJ_DIR)/transport/contract/UDPControlInfo_m.o \
+	$(INET_OBJ_DIR)/transport/contract/TCPSocket.o \
+	$(INET_OBJ_DIR)/transport/contract/TCPSocketMap.o \
+	$(INET_OBJ_DIR)/transport/contract/UDPSocket.o \
+	$(INET_OBJ_DIR)/transport/tcp/flavours/DumbTCP.o \
+	$(INET_OBJ_DIR)/transport/tcp/flavours/TCPBaseAlg.o \
+	$(INET_OBJ_DIR)/transport/tcp/flavours/TCPNoCongestionControl.o \
+	$(INET_OBJ_DIR)/transport/tcp/flavours/TCPReno.o \
+	$(INET_OBJ_DIR)/transport/tcp/flavours/TCPTahoe.o \
+	$(INET_OBJ_DIR)/transport/tcp/flavours/TCPTahoeRenoFamily.o \
+	$(INET_OBJ_DIR)/transport/tcp/queues/TCPMsgBasedRcvQueue.o \
+	$(INET_OBJ_DIR)/transport/tcp/queues/TCPMsgBasedSendQueue.o \
+	$(INET_OBJ_DIR)/transport/tcp/queues/TCPVirtualDataRcvQueue.o \
+	$(INET_OBJ_DIR)/transport/tcp/queues/TCPVirtualDataSendQueue.o \
+	$(INET_OBJ_DIR)/transport/tcp/TCPSegment_m.o \
+	$(INET_OBJ_DIR)/transport/tcp/TCP.o \
+	$(INET_OBJ_DIR)/transport/tcp/TCPConnectionBase.o \
+	$(INET_OBJ_DIR)/transport/tcp/TCPConnectionEventProc.o \
+	$(INET_OBJ_DIR)/transport/tcp/TCPConnectionRcvSegment.o \
+	$(INET_OBJ_DIR)/transport/tcp/TCPConnectionUtil.o \
+	$(INET_OBJ_DIR)/transport/tcp/TCPSegment.o \
+	$(INET_OBJ_DIR)/transport/udp/UDPPacket_m.o \
+	$(INET_OBJ_DIR)/transport/udp/UDP.o \
+	$(INET_OBJ_DIR)/util/headerserializers/ICMPSerializer.o \
+	$(INET_OBJ_DIR)/util/headerserializers/IPSerializer.o \
+	$(INET_OBJ_DIR)/util/headerserializers/UDPSerializer.o \
+	$(INET_OBJ_DIR)/util/common.o \
+	$(INET_OBJ_DIR)/util/NAMTraceWriter.o \
+	$(INET_OBJ_DIR)/util/opp_utils.o \
+	$(INET_OBJ_DIR)/util/TCPDump.o \
+	$(INET_OBJ_DIR)/util/ThruputMeteringChannel.o \
+	$(INET_OBJ_DIR)/util/XMLUtils.o \
+	$(INET_OBJ_DIR)/world/ChannelAccess.o \
+	$(INET_OBJ_DIR)/world/ChannelControl.o \
+	$(INET_OBJ_DIR)/world/ChannelInstaller.o \
+	$(INET_OBJ_DIR)/world/NAMTrace.o \
+	$(INET_OBJ_DIR)/world/ScenarioManager.o
 
-INET_LIBS = \
-	$(LIB_DIR)/libospfd.a \
-	$(LIB_DIR)/libripd.a \
-	$(LIB_DIR)/libzebra.a \
-	$(LIB_DIR)/libzebra2.a
+INET_LIBS = 
+
+#	$(LIB_DIR)/libospfd.a \
+#	$(LIB_DIR)/libripd.a \
+#	$(LIB_DIR)/libzebra.a \
+#	$(LIB_DIR)/libzebra2.a
 
 INET_CMD_LIBS = -lenvir -lcmdenv
 
-$(INET_DIR)/bin/INET:
-	cd INET && PATH="$(OMNET_DIR)/bin:$(shell echo $${PATH})" && ./makemake
-	cd INET && PATH="$(OMNET_DIR)/bin:$(shell echo $${PATH})" && make ROOT=$(shell pwd)/$(INET_DIR) USERIF_LIBS="$(INET_CMD_LIBS)"
+INET_OUT_DIR = $(INET_DIR)/out/gcc-release/src
+
+INET_TOPLEVEL_TARGET = $(INET_OUT_DIR)/libinet.so
+
+$(INET_TOPLEVEL_TARGET):
+	cd INET && PATH=$(OMNET_DIR)/bin:$$PATH && make makefiles
+	cd INET && PATH=$(OMNET_DIR)/bin:$$PATH && make MODE=release
 
 #
 # A little hack to get the inet objects to build first
 #
-$(INET_OBJS): $(INET_DIR)/bin/INET
+$(INET_OBJS): $(INET_TOPLEVEL_TARGET)
 
 #
 # Archives created by and for the INET framework package
 #
-lib/libospfd.a: $(INET_DIR)/bin/INET
+lib/libospfd.a: $(INET_TOPLEVEL_TARGET)
 	mkdir -p lib
-	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/ospfd/ospfd.a $@
+	$(CP) $(INET_DIR)/Network/quagga/quaggasrc/quagga/ospfd/ospfd.a $@
 
-lib/libripd.a: $(INET_DIR)/bin/INET
+lib/libripd.a: $(INET_TOPLEVEL_TARGET)
 	mkdir -p lib
-	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/ripd/ripd.a $@
+	$(CP) $(INET_DIR)/Network/quagga/quaggasrc/quagga/ripd/ripd.a $@
 
-lib/libzebra2.a: $(INET_DIR)/bin/INET
+lib/libzebra2.a: $(INET_TOPLEVEL_TARGET)
 	mkdir -p lib
-	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/zebra/zebra.a $@
+	$(CP) $(INET_DIR)/Network/quagga/quaggasrc/quagga/zebra/zebra.a $@
 
-lib/libzebra.a: $(INET_DIR)/bin/INET
+lib/libzebra.a: $(INET_TOPLEVEL_TARGET)
 	mkdir -p lib
-	$(CP) $(INET_DIR)/Network/Quagga/quaggasrc/quagga/lib/libzebra.a $@
+	$(CP) $(INET_DIR)/Network/quagga/quaggasrc/quagga/lib/libzebra.a $@
 
 #
 # INET prelinked object file
 #
-lib/inet.o: $(INET_DIR)/bin/INET $(INET_LIBS) lib/libzebra.a
+lib/inet.o: $(INET_TOPLEVEL_TARGET) $(INET_LIBS) lib/libinet.so
 	mkdir -p lib
-	$(PRELINK) -L/lib -L/usr/lib -Llib $(INET_OBJS) -lospfd -lripd -lzebra2 -lzebra -o $@
+	$(PRELINK) -L/lib -L/usr/lib -Llib $(INET_OBJS) -o $@
 
+lib/libinet.so: $(INET_OUT_DIR)/libinet.so
+	mkdir -p lib
+	$(CP) $(INET_OUT_DIR)/libinet.so $@
+	
 #
 # Clean out INET build
 #

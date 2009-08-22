@@ -178,7 +178,7 @@ double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
     simtime_t currentTime = simTime();
     long sectorsToMove = 0;
     long currentSector =
-        static_cast<long>(fmod(currentTime, timePerRevolution_)/timePerSector_);
+        static_cast<long>(fmod(currentTime.dbl(), timePerRevolution_)/timePerSector_);
     if (currentSector != destSector)
     {
         if (currentSector < destSector)
@@ -206,7 +206,7 @@ double BasicModelDisk::service(LogicalBlockAddress blockNumber, bool isRead)
     // Modify the delay to take into account that the disk can only service
     // one request at a time
     simtime_t completionDelay = (lastCompletionTime_ - currentTime) + totalDelay;
-    return completionDelay;
+    return completionDelay.dbl();
 }
 
 uint32_t BasicModelDisk::basicBlockSize() const

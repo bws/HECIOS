@@ -173,11 +173,11 @@ void PHTFIOApplication::populateFileSystem()
 void PHTFIOApplication::handleMessage(cMessage* msg)
 {
     // Add code to allow opens to finish by broadcasting result
-    if (SPFS_MPI_FILE_OPEN_RESPONSE == msg->kind())
+    if (SPFS_MPI_FILE_OPEN_RESPONSE == msg->getKind())
     {
         // Extract the communicator
         spfsMPIFileOpenRequest* openRequest =
-            static_cast<spfsMPIFileOpenRequest*>(msg->contextPointer());
+            static_cast<spfsMPIFileOpenRequest*>(msg->getContextPointer());
         assert(0 != openRequest);
         Communicator commId = openRequest->getCommunicator();
 
@@ -206,24 +206,24 @@ void PHTFIOApplication::handleMPIMessage(cMessage* msg)
 {
     // Cleanup the message
     cMessage* originatingRequest =
-        static_cast<cMessage*>(msg->contextPointer());
+        static_cast<cMessage*>(msg->getContextPointer());
     delete originatingRequest;
     delete msg;
 }
 
 void PHTFIOApplication::handleIOMessage(cMessage* msg)
 {
-    cMessage* originatingRequest = (cMessage*)msg->contextPointer();
+    cMessage* originatingRequest = (cMessage*)msg->getContextPointer();
     assert(0 != originatingRequest);
 
 
-    if (originatingRequest->kind() == SPFS_MPI_FILE_WRITE_AT_REQUEST)
+    if (originatingRequest->getKind() == SPFS_MPI_FILE_WRITE_AT_REQUEST)
     {
         int requestId = static_cast<spfsMPIFileWriteAtRequest*>(
             originatingRequest)->getReqId();
         pendingRequestsById_.erase(requestId);
     }
-    else if(originatingRequest->kind() == SPFS_MPI_FILE_READ_AT_REQUEST)
+    else if(originatingRequest->getKind() == SPFS_MPI_FILE_READ_AT_REQUEST)
     {
         int requestId = dynamic_cast<spfsMPIFileReadAtRequest*>(
             originatingRequest)->getReqId();
@@ -543,7 +543,7 @@ cMessage* PHTFIOApplication::createMessage(const PHTFEventRecord* eventRecord)
 
 void PHTFIOApplication::scheduleCPUMessage(cMessage *msg)
 {
-    double schTime = simTime() + msg->par("Delay").doubleValue();
+    double schTime = simTime().dbl() + msg->par("Delay").doubleValue();
     scheduleAt(schTime , msg);
 }
 
@@ -580,9 +580,9 @@ void PHTFIOApplication::performFakeOpenProcessing(const PHTFEventRecord& openRec
     // This is a brutal hack to work around the open-bcast optimization
     // In effect, we'll simply tell the cache directly to open the file
     // for its own record keeping
-    cModule* mpiProcess = parentModule();
+    cModule* mpiProcess = getParentModule();
     assert(0 != mpiProcess);
-    cModule* cacheModule = mpiProcess->submodule("cache");
+    cModule* cacheModule = mpiProcess->getSubmodule("cache");
     assert(0 != cacheModule);
     MiddlewareCache* middlewareCache = dynamic_cast<MiddlewareCache*>(cacheModule);
     assert(0 != middlewareCache);
@@ -756,7 +756,7 @@ cMessage* PHTFIOApplication::createCPUPhaseMessage(
     double delay = cpuRecord->duration();
 
     cMessage *msg = new cMessage(CPU_PHASE_MESSAGE_NAME);
-    cPar *cp = new cPar("Delay");
+    cMsgPar *cp = new cMsgPar("Delay");
     *cp = delay;
     msg->addPar(cp);
     return msg;

@@ -23,6 +23,7 @@ CONFIG_CXXFLAGS := @CONFIG_CXXFLAGS@
 CONFIG_UNSAFE_CXXFLAGS := @CONFIG_UNSAFE_CXXFLAGS@
 CONFIG_LDFLAGS := @CONFIG_LDFLAGS@
 CONFIG_XML_LIBS := @CONFIG_XML_LIB@
+MODE := debug
 
 #
 # Module locations
@@ -78,26 +79,27 @@ INCLUDES = $(OMNET_DIR)/include \
         $(PHYSICAL_DIR) \
         $(SERVER_DIR) \
         $(INET_DIR) \
-        $(INET_DIR)/Applications/Ethernet \
-        $(INET_DIR)/Applications/Generic \
-        $(INET_DIR)/Applications/PingApp \
-        $(INET_DIR)/Applications/TCPApp \
-        $(INET_DIR)/Applications/UDPApp \
-        $(INET_DIR)/Base \
-        $(INET_DIR)/Network/ARP \
-        $(INET_DIR)/Network/AutoRouting \
-        $(INET_DIR)/Network/Contract \
-        $(INET_DIR)/Network/IPv4 \
-        $(INET_DIR)/Network/Queue \
-        $(INET_DIR)/NetworkInterfaces/Contract \
-        $(INET_DIR)/NetworkInterfaces/EtherSwitch \
-        $(INET_DIR)/NetworkInterfaces/Ethernet \
-        $(INET_DIR)/NetworkInterfaces/PPP \
-        $(INET_DIR)/Nodes/INET \
-        $(INET_DIR)/Transport/Contract \
-        $(INET_DIR)/Transport/TCP \
-        $(INET_DIR)/Transport/UDP \
-        $(INET_DIR)/Util
+        $(INET_DIR)/src/applications/ethernet \
+        $(INET_DIR)/src/applications/generic \
+        $(INET_DIR)/src/applications/pingapp \
+        $(INET_DIR)/src/applications/tcpapp \
+        $(INET_DIR)/src/applications/udpapp \
+        $(INET_DIR)/src/base \
+        $(INET_DIR)/src/networklayer/arp \
+        $(INET_DIR)/src/networklayer/autorouting \
+        $(INET_DIR)/src/networklayer/common \
+        $(INET_DIR)/src/networklayer/contract \
+        $(INET_DIR)/src/networklayer/ipv4 \
+        $(INET_DIR)/src/networklayer/queue \
+        $(INET_DIR)/src/linklayer/contract \
+        $(INET_DIR)/src/linklayer/etherswitch \
+        $(INET_DIR)/src/linklayer/ethernet \
+        $(INET_DIR)/src/linklayer/ppp \
+        $(INET_DIR)/src/nodes/inet \
+        $(INET_DIR)/src/transport/contract \
+        $(INET_DIR)/src/transport/tcp \
+        $(INET_DIR)/src/transport/udp \
+        $(INET_DIR)/src/util
 
 #
 # Testing subsystem include files.  Setup in tests.mk, but referenced here
@@ -108,16 +110,18 @@ TEST_INCLUDES =
 #
 # Libraries to link
 #
+OMNET_LIB_MODE_EXT = 
+
 LIB_DIR = lib
 
-OMNET_SIM_LIBS = -lsim_std -lnedxml $(CONFIG_XML_LIBS)
+OMNET_SIM_LIBS = -loppsim$(OMNET_LIB_MODE_EXT) -loppnedxml$(OMNET_LIB_MODE_EXT) $(CONFIG_XML_LIBS)
 
-OMNET_GUI_LIBS = -lenvir -ltkenv -ltk -ltcl
+OMNET_GUI_LIBS = -loppenvir$(OMNET_LIB_MODE_EXT) -lopptkenv$(OMNET_LIB_MODE_EXT)
 
-OMNET_CMD_LIBS = -lenvir -lcmdenv
+OMNET_CMD_LIBS = -loppenvir$(OMNET_LIB_MODE_EXT) -loppcmdenv$(OMNET_LIB_MODE_EXT)
 
 LIBS_GUI = -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
-        $(OMNET_GUI_LIBS) $(OMNET_SIM_LIBS) -ldl -lstdc++
+        $(OMNET_GUI_LIBS) $(OMNET_SIM_LIBS) -ltk -ltcl -ldl -lstdc++
 
 LIBS_CMD = -L$(OMNET_DIR)/lib -L$(LIB_DIR) \
 	$(OMNET_CMD_LIBS) $(OMNET_SIM_LIBS) -ldl -lstdc++
@@ -197,7 +201,7 @@ include $(HECIOS_DIR)/mf/tests.mk
 #
 # Top level psuedo targets
 #
-all: $(BIN_DIR)/hecios_cmd $(BIN_DIR)/hecios $(BIN_DIR)/lanl_trace_scanner $(BUILD_DIR)/omnetpp.ini
+all: $(BIN_DIR)/hecios $(BIN_DIR)/hecios_gui $(BIN_DIR)/lanl_trace_scanner $(BUILD_DIR)/omnetpp.ini
 
 gui: $(BIN_DIR)/hecios $(BUILD_DIR)/omnetpp.ini
 
@@ -237,8 +241,10 @@ install:
 	$(INSTALL) -c -m 644 lib/*.* $(INSTALL_DIR)/lib
 	$(INSTALL) -c -m 644 ini/*.ini $(INSTALL_DIR)/ini
 	$(INSTALL) -c -m 755 scripts/*.pl $(INSTALL_DIR)/scripts
-	find . -name *.ned -exec $(INSTALL) -c {} $(INSTALL_DIR)/lib/ned \;
-	find $(INSTALL_DIR) -name *.ned > $(INSTALL_DIR)/lib/ned/hecios_ned.lst
+	#find . -name *.ned -exec $(INSTALL) -c {} $(INSTALL_DIR)/lib/ned \;
+	#find $(INSTALL_DIR) -name *.ned > $(INSTALL_DIR)/lib/ned/hecios_ned.lst
+	rsync -rv --include="+ */" --include="*.ned" --exclude="*" INET/src $(INSTALL_DIR)/lib/ned/inet
+	rsync -rv --include="+ */" --include="*.ned" --exclude="*" src $(INSTALL_DIR)/lib/ned/spfs
 	sed -e "s|@INSTALL_DIR@|$(INSTALL_DIR)|" \
             $(HECIOS_DIR)/omnetpp.ini.in > $(INSTALL_DIR)/example.ini
 	@echo "HECIOS successfully installed."
@@ -279,17 +285,17 @@ incremental: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) $(TOOLS_OBJS) tests_i
 #
 # Targets to build HECIOS simulator (gui and command line versions)
 #
-$(SIM_MSG_OUTPUT): $(LIB_DIR)/inet.o
+$(SIM_MSG_OUTPUT): $(LIB_DIR)/libinet.so
 
 $(SIM_OBJS): $(SIM_MSG_OUTPUT)
 
-$(BIN_DIR)/hecios: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) 
+$(BIN_DIR)/hecios_gui: $(LIB_DIR)/libinet.so $(SIM_MSG_OBJS) $(SIM_OBJS) 
 	@mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(LIB_DIR)/inet.o $(LIBS_GUI) -o $@
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(LIB_DIR)/libinet.so $(LIBS_GUI) -o $@
 
-$(BIN_DIR)/hecios_cmd: $(LIB_DIR)/inet.o $(SIM_MSG_OBJS) $(SIM_OBJS) 
+$(BIN_DIR)/hecios: $(LIB_DIR)/libinet.so $(SIM_MSG_OBJS) $(SIM_OBJS) 
 	@mkdir -p $(BIN_DIR)
-	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(LIB_DIR)/inet.o $(LIBS_CMD) -o $@
+	$(LD) $(LDFLAGS) $(SIM_MSG_OBJS) $(SIM_OBJS) $(LIB_DIR)/libinet.so $(LIBS_CMD) -o $@
 
 
 #

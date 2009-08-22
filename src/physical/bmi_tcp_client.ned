@@ -6,30 +6,24 @@
 // This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
 // for details on this and other legal matters.
 //
+import inet.applications.tcpapp.TCPApp;
 
 // Implements the TCPApp and BMIEndpoint interface (gates)
-simple BMITcpClient
+simple BMITcpClient like TCPApp
 
+{
     parameters:
-        connectPort: numeric const, // port to connect to
-        fixedOverheadSecs: numeric const,
-        scaledOverheadSecs : numeric const;
+    	@class(BMITcpClient);
+        double connectPort; // port to connect to
+        double fixedOverheadSecs;
+        double scaledOverheadSecs;
 
     gates:
-        in: appIn;
-        out: appOut;
+        input appIn;
+        output appOut;
 
-        in: tcpIn;
-        out: tcpOut;
+        input tcpIn;
+        output tcpOut;
 
-endsimple
+}
 
-//
-// Local variables:
-//  indent-tabs-mode: nil
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
-//

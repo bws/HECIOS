@@ -64,7 +64,7 @@ void DataSievingMiddlewareAggregator::initialize()
 // Perform simple pass through on all messages
 void DataSievingMiddlewareAggregator::handleApplicationMessage(cMessage* msg)
 {
-    if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind())
+    if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->getKind())
     {
         // Check if the op is collective
         spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(msg);
@@ -85,7 +85,7 @@ void DataSievingMiddlewareAggregator::handleApplicationMessage(cMessage* msg)
 
 void DataSievingMiddlewareAggregator::handleFileSystemMessage(cMessage* msg)
 {
-    if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind())
+    if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->getKind())
     {
         // Check if the op was collective
         if (0 != currentCollective_->size())
@@ -138,7 +138,7 @@ void DataSievingMiddlewareAggregator::handleCollectiveIOResponse(cMessage* msg)
     }
 
     // Cleanup the data sieving request's data
-    cMessage* request = static_cast<cMessage*>(msg->contextPointer());
+    cMessage* request = static_cast<cMessage*>(msg->getContextPointer());
     spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(request);
     FileDescriptor* fd = fileRequest->getFileDes();
     delete fd;

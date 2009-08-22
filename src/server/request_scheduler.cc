@@ -20,10 +20,10 @@ Define_Module(RequestScheduler);
  */
 void RequestScheduler::initialize()
 {
-    requestInGateId_ = gate("requestIn")->id();
-    requestOutGateId_ = gate("requestOut")->id();
-    serverInGateId_ = gate("serverIn")->id();
-    serverOutGateId_ = gate("serverOut")->id();
+    requestInGateId_ = findGate("requestIn");
+    requestOutGateId_ = findGate("requestOut");
+    serverInGateId_ = findGate("serverIn");
+    serverOutGateId_ = findGate("serverOut");
 }
 
 void RequestScheduler::finish()
@@ -35,10 +35,10 @@ void RequestScheduler::finish()
  */
 void RequestScheduler::handleMessage(cMessage* msg)
 {
-    if (msg->arrivalGateId() == requestInGateId_)
+    if (msg->getArrivalGateId() == requestInGateId_)
     {
         // Only pfs and cache messages require scheduling
-        if ((400 <= msg->kind()) && (600 > msg->kind()))
+        if ((400 <= msg->getKind()) && (600 > msg->getKind()))
         {
             scheduleRequest(msg);
         }
@@ -47,10 +47,10 @@ void RequestScheduler::handleMessage(cMessage* msg)
             send(msg, serverOutGateId_);
         }
     }
-    else if (msg->arrivalGateId() == serverInGateId_)
+    else if (msg->getArrivalGateId() == serverInGateId_)
     {
         // Only pfs and cache messages require completion
-        if ((400 <= msg->kind()) && (600 > msg->kind()))
+        if ((400 <= msg->getKind()) && (600 > msg->getKind()))
         {
             completeRequest(msg);
         }

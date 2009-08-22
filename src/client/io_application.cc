@@ -118,11 +118,11 @@ void IOApplication::handleMessage(cMessage* msg)
     {
         handleSelfMessage(msg);
     }
-    else if (msg->arrivalGateId() == ioInGate_)
+    else if (msg->getArrivalGateId() == ioInGate_)
     {
         handleIOMessage(msg);
     }
-    else if (msg->arrivalGateId() == mpiInGate_)
+    else if (msg->getArrivalGateId() == mpiInGate_)
     {
         handleMPIMessage(msg);
     }
@@ -139,7 +139,7 @@ void IOApplication::handleMessage(cMessage* msg)
     {
         cerr << __FILE__ << ":" << __LINE__ << ":"
              << "No more messages to schedule." << endl;
-        applicationCompletionTime_ = simTime();
+        applicationCompletionTime_ = simulation.getSimTime().dbl();
     }
 }
 
@@ -154,14 +154,14 @@ void IOApplication::handleSelfMessage(cMessage* msg)
     }
 
     // Record the length of this CPU Phase
-    if (0 == strcmp(CPU_PHASE_MESSAGE_NAME, msg->name()))
+    if (0 == strcmp(CPU_PHASE_MESSAGE_NAME, msg->getName()))
     {
         // Determine the request response roundtrip time
-        simtime_t phaseBeginTime = msg->creationTime();
-        simtime_t phaseEndTime = simTime();
+        simtime_t phaseBeginTime = msg->getCreationTime();
+        simtime_t phaseEndTime = simulation.getSimTime();
         simtime_t delay = phaseEndTime - phaseBeginTime;
         cpuPhaseDelay_.record(delay);
-        totalCpuPhaseTime_ += delay;
+        totalCpuPhaseTime_ += delay.dbl();
 
         // Cleanup the message
         delete msg;
@@ -177,13 +177,13 @@ void IOApplication::handleSelfMessage(cMessage* msg)
 void IOApplication::handleIOMessage(cMessage* msg)
 {
     // Determine the request response roundtrip time
-    cMessage* parentRequest = static_cast<cMessage*>(msg->contextPointer());
-    simtime_t reqSendTime = parentRequest->creationTime();
+    cMessage* parentRequest = static_cast<cMessage*>(msg->getContextPointer());
+    simtime_t reqSendTime = parentRequest->getCreationTime();
     simtime_t respArriveTime = simTime();
     simtime_t delay = respArriveTime - reqSendTime;
 
     // Collect statistics for the operation's total delay
-    switch(msg->kind())
+    switch(msg->getKind())
     {
         case SPFS_MPI_DIRECTORY_CREATE_RESPONSE:
         {
@@ -234,7 +234,7 @@ void IOApplication::handleIOMessage(cMessage* msg)
             fileReadDelay_.record(delay);
 
             // Collect aggregate statistics
-            totalReadTime_ += delay;
+            totalReadTime_ += delay.dbl();
             spfsMPIFileReadAtRequest* readAt =
                 static_cast<spfsMPIFileReadAtRequest*>(parentRequest);
             DataType* dt = readAt->getDataType();
@@ -265,7 +265,7 @@ void IOApplication::handleIOMessage(cMessage* msg)
             fileWriteDelay_.record(delay);
 
             // Collect aggregate statistics
-            totalWriteTime_ += delay;
+            totalWriteTime_ += delay.dbl();
             spfsMPIFileWriteAtRequest* writeAt =
                 static_cast<spfsMPIFileWriteAtRequest*>(parentRequest);
             DataType* dt = writeAt->getDataType();
@@ -276,7 +276,7 @@ void IOApplication::handleIOMessage(cMessage* msg)
         {
             cerr << "ERROR: " << __FILE__ << ":" << __LINE__
                  << ":handleMessage not yet implemented for kind: "
-                 << msg->kind() << endl;
+                 << msg->getKind() << endl;
             break;
         }
     }

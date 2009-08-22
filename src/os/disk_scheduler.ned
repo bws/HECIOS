@@ -19,10 +19,73 @@
 // -  ScanScheduler: Scan Disk Scheduler
 // -  NStepScanScheduler: NStep Scan Disk Scheduler
 //
-simple DiskScheduler
-  gates:
-     in: in, response;
-     out: out, request;
-endsimple
+moduleinterface DiskScheduler
+{
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
+
+simple FCFSDiskScheduler like DiskScheduler
+{
+	@class(FCFSDiskScheduler);
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
+
+simple SSTFDiskScheduler like DiskScheduler
+{
+	@class(SSTFDiskScheduler);
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
+
+simple ScanDiskScheduler like DiskScheduler
+{
+	@class(ScanDiskScheduler);
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
+
+simple CScanDiskScheduler like DiskScheduler
+{
+	@class(CScanDiskScheduler);
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
+
+simple NStepDiskScheduler like DiskScheduler
+{
+	@class(NStepDiskScheduler);
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
+
+simple NStepCScanDiskScheduler like DiskScheduler
+{
+	@class(NStepCScanDiskScheduler);
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
 

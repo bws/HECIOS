@@ -43,11 +43,12 @@ enum spfsCacheMessageKind
     SPFS_CACHE_SEND_PAGES = 507;
 };
 
-message spfsCacheRequest
+packet spfsCacheRequest
 {
     fields:
-        FileDescriptorPtr descriptor = 0;
+        FileDescriptorPtr fileDescriptor = 0;
         FSHandle handle;
+        long byteLength;
 
         // internal fields
         FSOperationState opState;
@@ -56,23 +57,23 @@ message spfsCacheRequest
         int destinationRank;
 }
 
-message spfsCacheResponse
+packet spfsCacheResponse
 {
 }
 
-message spfsCacheInvalidateRequest extends spfsCacheRequest
+packet spfsCacheInvalidateRequest extends spfsCacheRequest
 {
     fields:
     	FSSize pageSize;
     	unsigned long pageIds[];
 }
 
-message spfsCacheInvalidateResponse extends spfsCacheResponse
+packet spfsCacheInvalidateResponse extends spfsCacheResponse
 {
     fields:
 }
 
-message spfsCacheReadRequest extends spfsCacheRequest
+packet spfsCacheReadRequest extends spfsCacheRequest
 {
     fields:
     	// Info about sender
@@ -95,43 +96,43 @@ message spfsCacheReadRequest extends spfsCacheRequest
 		
 }
 
-message spfsCacheReadResponse extends spfsCacheResponse
+packet spfsCacheReadResponse extends spfsCacheResponse
 {
     fields:
     	string filename;
     	unsigned long pageIds[];
 }
 
-message spfsCacheReadExclusiveRequest extends spfsCacheReadRequest
+packet spfsCacheReadExclusiveRequest extends spfsCacheReadRequest
 {
 	fields:
 }
 
-message spfsCacheReadExclusiveResponse extends spfsCacheReadResponse
+packet spfsCacheReadExclusiveResponse extends spfsCacheReadResponse
 {
 }
 
-message spfsCacheReadSharedRequest extends spfsCacheReadRequest
+packet spfsCacheReadSharedRequest extends spfsCacheReadRequest
 {
 }
 
-message spfsCacheReadSharedResponse extends spfsCacheReadResponse
+packet spfsCacheReadSharedResponse extends spfsCacheReadResponse
 {
 }
 
-message spfsCacheUpgradeRequest extends spfsCacheRequest
+packet spfsCacheUpgradeRequest extends spfsCacheRequest
 {
     fields:
     	FSSize pageSize;
     	unsigned long pageIds[];
 }
 
-message spfsCacheUpgradeResponse extends spfsCacheResponse
+packet spfsCacheUpgradeResponse extends spfsCacheResponse
 {
     fields:
 }
 
-message spfsCacheSendPages extends spfsCacheReadResponse
+packet spfsCacheSendPages extends spfsCacheReadResponse
 {
     fields:
 }

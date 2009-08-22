@@ -31,7 +31,7 @@ MiddlewareCache::~MiddlewareCache()
 
 void MiddlewareCache::addCacheMemoryDelay(cMessage* originalRequest, double delay) const
 {
-    cPar* delayPar = new cPar("Delay");
+    cMsgPar* delayPar = new cMsgPar("Delay");
     delayPar->setDoubleValue(delay);
     originalRequest->addPar(delayPar);
 }
@@ -65,11 +65,11 @@ void MiddlewareCache::finish()
 
 void MiddlewareCache::handleMessage(cMessage* msg)
 {
-     if (msg->arrivalGateId() == appInGateId())
+     if (msg->getArrivalGateId() == appInGateId())
      {
          handleApplicationMessage(msg);
      }
-     else if (msg->arrivalGateId() == fsInGateId())
+     else if (msg->getArrivalGateId() == fsInGateId())
      {
          handleFileSystemMessage(msg);
      }
@@ -84,11 +84,11 @@ void MiddlewareCache::handleMessage(cMessage* msg)
 void MiddlewareCache::sendApplicationResponse(double delay, cMessage* response)
 {
     // Determine the original sender
-    cMessage* parentRequest = static_cast<cMessage*>(response->contextPointer());
-    cModule*  parent = parentRequest->senderModule();
+    cMessage* parentRequest = static_cast<cMessage*>(response->getContextPointer());
+    cModule*  parent = parentRequest->getSenderModule();
 
     // Add the delay to the message
-    cPar* delayParameter = new cPar("Delay");
+    cMsgPar* delayParameter = new cMsgPar("Delay");
     *delayParameter = delay;
     response->addPar(delayParameter);
 

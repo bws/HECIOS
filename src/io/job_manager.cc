@@ -110,18 +110,18 @@ void JobManager::handleMessage(cMessage* msg)
     {
         handleSelfMessage(msg);
     }
-    else if (msg->arrivalGateId() == netInGateId_ ||
-             msg->arrivalGateId() == directInGateId_)
+    else if (msg->getArrivalGateId() == netInGateId_ ||
+             msg->getArrivalGateId() == directInGateId_)
     {
         handleNetworkMessage(msg);
     }
-    else if (msg->arrivalGateId() == pfsInGateId_)
+    else if (msg->getArrivalGateId() == pfsInGateId_)
     {
         handlePFSMessage(msg);
     }
     else
     {
-        assert(msg->arrivalGateId() == storageInGateId_);
+        assert(msg->getArrivalGateId() == storageInGateId_);
         handleStorageMessage(msg);
     }
 }
@@ -200,11 +200,11 @@ void JobManager::handlePFSMessage(cMessage* msg)
 void JobManager::handleStorageMessage(cMessage* msg)
 {
     assert(0 != msg);
-    assert(0 != msg->contextPointer());
+    assert(0 != msg->getContextPointer());
 
     // Route message to the flow or PFS depending on its originator
-    cMessage* request = static_cast<cMessage*>(msg->contextPointer());
-    cMessage* origReq = static_cast<cMessage*>(request->contextPointer());
+    cMessage* request = static_cast<cMessage*>(msg->getContextPointer());
+    cMessage* origReq = static_cast<cMessage*>(request->getContextPointer());
     if (spfsDataFlowStart* flowStart = dynamic_cast<spfsDataFlowStart*>(origReq))
     {
         int flowId = flowStart->getFlowId();

@@ -6,26 +6,19 @@
 // This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
 // for details on this and other legal matters.
 //
+import inet.applications.tcpapp.TCPApp;
 
 // Implements the TCPApp interface (gates)
-simple MPITcpServer
+simple MPITcpServer like TCPApp
+{
     parameters:
-        listenPort: numeric const; // port to listen on
+        double listenPort; // port to listen on
 
     gates:
-        in: appIn;
-        out: appOut;
+        input appIn;
+        output appOut;
 
-        in: tcpIn;
-        out: tcpOut;
-endsimple
+        input tcpIn;
+        output tcpOut;
+}
 
-//
-// Local variables:
-//  indent-tabs-mode: nil
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//

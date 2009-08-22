@@ -30,8 +30,8 @@ void BufferCache::initialize()
     statNumWriteThroughs_ = 0;
 
     // Store gate ids
-    inGateId_ = gate("in")->id();
-    outGateId_ = gate("out")->id();
+    inGateId_ = gate("in")->getId();
+    outGateId_ = gate("out")->getId();
 
     // Initialize derived cache implementations
     initializeCache();
@@ -57,7 +57,7 @@ void BufferCache::handleMessage(cMessage *msg)
 {
     //  Either the message is a request of the cache or it is a response
     //  to a disk access request made as the result of a miss.
-    if ( msg->arrivalGateId() == inGateId_ )
+    if ( msg->getArrivalGateId() == inGateId_ )
     {
         statNumRequests_++;
         handleBlockRequest(msg);
@@ -217,7 +217,7 @@ void LRUBufferCache::handleBlockRequest(cMessage* msg)
 void LRUBufferCache::handleBlockResponse(cMessage* msg)
 {
     // Add data read from the disk to the cache
-    cMessage* req = static_cast<cMessage*>(msg->contextPointer());
+    cMessage* req = static_cast<cMessage*>(msg->getContextPointer());
     if (spfsOSReadDeviceRequest* read =
         dynamic_cast<spfsOSReadDeviceRequest*>(req))
     {

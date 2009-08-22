@@ -12,22 +12,23 @@
 //
 simple FSServerConfigurator
 
+{
     parameters:
-        handlesPerServer: const,
-        metaDataSizeInBytes: const,
-        changeDirEntProcessingDelaySecs: numeric const,
-        createDirEntProcessingDelaySecs: numeric const,
-        createDFileProcessingDelaySecs: numeric const,
-        createDirectoryProcessingDelaySecs: numeric const,
-        createMetadataProcessingDelaySecs: numeric const,
-        getAttrProcessingDelaySecs: numeric const,
-        lookupPathProcessingDelaySecs: numeric const,
-        readDirProcessingDelaySecs: numeric const,
-        removeDirEntProcessingDelaySecs: numeric const,
-        removeMetaProcessingDelaySecs: numeric const,
-        removeObjectProcessingDelaySecs: numeric const,
-        setAttrProcessingDelaySecs: numeric const,
-        serverOverheadDelaySecs: numeric const,
-        collectDiskData: bool;
+        double handlesPerServer;
+        double metaDataSizeInBytes;
+        double changeDirEntProcessingDelaySecs;
+        double createDirEntProcessingDelaySecs;
+        double createDFileProcessingDelaySecs;
+        double createDirectoryProcessingDelaySecs;
+        double createMetadataProcessingDelaySecs;
+        double getAttrProcessingDelaySecs;
+        double lookupPathProcessingDelaySecs;
+        double readDirProcessingDelaySecs;
+        double removeDirEntProcessingDelaySecs;
+        double removeMetaProcessingDelaySecs;
+        double removeObjectProcessingDelaySecs;
+        double setAttrProcessingDelaySecs;
+        double serverOverheadDelaySecs;
+        bool collectDiskData;
 
-endsimple
+}

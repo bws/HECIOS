@@ -103,13 +103,13 @@ void MPIConfigurator::initialize(int stage)
         totalProcessCount_ = 0;
 
         // Set the listen ports for the servers
-        cModule* cluster = parentModule();
+        cModule* cluster = getParentModule();
         assert(0 != cluster);
         size_t numComputeNodes = cluster->par("numCPUNodes");
         for (size_t i = 0; i < numComputeNodes; i++)
         {
             // Retrieve the number of job processes on the cpu node
-            cModule* cpun = cluster->submodule("cpun", i);
+            cModule* cpun = cluster->getSubmodule("cpun", i);
             assert(0 != cpun);
             size_t numProcesses = cpun->par("numProcs");
             for (size_t j = 0; j < numProcesses; j++)
@@ -129,14 +129,14 @@ void MPIConfigurator::initialize(int stage)
         // assigned
 
         // Retrieve the interface table for this module
-        cModule* cluster = parentModule();
+        cModule* cluster = getParentModule();
         assert(0 != cluster);
 
         // Register the rank and IP for each ComputeNode
         long numComputeNodes = cluster->par("numCPUNodes");
         for (int i = 0; i < numComputeNodes; i++)
         {
-            cModule* cpun = cluster->submodule("cpun", i);
+            cModule* cpun = cluster->getSubmodule("cpun", i);
             assert(0 != cpun);
 
             // Retrieve the IP address for this compute node
@@ -148,12 +148,12 @@ void MPIConfigurator::initialize(int stage)
             for (size_t j = 0; j < numProcesses; j++)
             {
                 // Retrieve the IO Application
-                cModule* process = cpun->submodule("process", j);
+                cModule* process = cpun->getSubmodule("process", j);
                 assert(0 != process);
-                cModule* mpiProcess = process->submodule("mpi");
+                cModule* mpiProcess = process->getSubmodule("mpi");
                 assert(0 != mpiProcess);
                 IOApplication* ioApp =
-                    dynamic_cast<IOApplication*>(mpiProcess->submodule("app"));
+                    dynamic_cast<IOApplication*>(mpiProcess->getSubmodule("app"));
                 assert(0 != ioApp);
 
                 // Set the rank for the IO Application
@@ -162,20 +162,20 @@ void MPIConfigurator::initialize(int stage)
 
                 // Set the rank for the MPI Middleware
                 MpiMiddleware* mpiMid = dynamic_cast<MpiMiddleware*>(
-                    mpiProcess->submodule("mpiMiddleware"));
+                    mpiProcess->getSubmodule("mpiMiddleware"));
                 assert(0 != mpiMid);
                 mpiMid->setRank(rank);
 
                 // Set the rank and size for the aggregator middleware
                 MiddlewareAggregator* mwAgg = dynamic_cast<MiddlewareAggregator*>(
-                    mpiProcess->submodule("aggregator"));
+                    mpiProcess->getSubmodule("aggregator"));
                 assert(0 != mwAgg);
                 mwAgg->setRank(rank);
                 mwAgg->setAggregatorSize(numProcesses);
 
                 // Set the rank for the cache middleware
                 MiddlewareCache* mwCache = dynamic_cast<MiddlewareCache*>(
-                    mpiProcess->submodule("cache"));
+                    mpiProcess->getSubmodule("cache"));
                 assert(0 != mwCache);
                 mwCache->setRank(rank);
 
@@ -235,21 +235,21 @@ IPvXAddress* MPIConfigurator::getComputeNodeIP(cModule* computeNode)
     IPvXAddress* serverIP = 0;
 
     // Retrieve the INET host
-    cModule* hca = computeNode->submodule("hca");
+    cModule* hca = computeNode->getSubmodule("hca");
     assert(0 != hca);
-    InterfaceTable* ifTable = dynamic_cast<InterfaceTable*>(
-        hca->submodule("interfaceTable"));
+    IInterfaceTable* ifTable = dynamic_cast<IInterfaceTable*>(
+        hca->getSubmodule("interfaceTable"));
     assert(0 != ifTable);
 
     // Find eth0's IP address
     InterfaceEntry* ie = 0;
-    for (int j = 0; j < ifTable->numInterfaces(); j++)
+    for (int j = 0; j < ifTable->getNumInterfaces(); j++)
     {
-        ie = ifTable->interfaceAt(j);
-        if (0 == strcmp("eth0", ie->name()))
+        ie = ifTable->getInterface(j);
+        if (0 == strcmp("eth0", ie->getName()))
         {
-            assert(0 != ie->ipv4());
-            serverIP = new IPvXAddress(ie->ipv4()->inetAddress());
+            assert(0 != ie->ipv4Data());
+            serverIP = new IPvXAddress(ie->ipv4Data()->getIPAddress());
             break;
         }
     }
@@ -263,15 +263,15 @@ size_t MPIConfigurator::getMPIServerListenPort(cModule* computeNode,
     assert(0 != computeNode);
 
     // Retrieve the host
-    cModule* hca = computeNode->submodule("hca");
+    cModule* hca = computeNode->getSubmodule("hca");
     assert(0 != hca);
 
     // Retrieve the TCP object
-    cModule* tcp = hca->submodule("tcp");
+    cModule* tcp = hca->getSubmodule("tcp");
     assert(0 != tcp);
 
     // Retrieve the MPITcpServer
-    cModule* mpiServer = hca->submodule("mpiTcpApp", processIdx);
+    cModule* mpiServer = hca->getSubmodule("mpiTcpApp", processIdx);
     assert(0 != mpiServer);
 
     return mpiServer->par("listenPort").longValue();
@@ -286,15 +286,15 @@ void MPIConfigurator::setMPIServerListenPort(cModule* computeNode,
     assert(listenPort <= maxListenPort_);
 
     // Retrieve the host
-    cModule* hca = computeNode->submodule("hca");
+    cModule* hca = computeNode->getSubmodule("hca");
     assert(0 != hca);
 
     // Retrieve the TCP object
-    cModule* tcp = hca->submodule("tcp");
+    cModule* tcp = hca->getSubmodule("tcp");
     assert(0 != tcp);
 
     // Retrieve the MPITcpServer
-    cModule* mpiServer = hca->submodule("mpiTcpApp", processIdx);
+    cModule* mpiServer = hca->getSubmodule("mpiTcpApp", processIdx);
     assert(0 != mpiServer);
 
     // Set the MPITcpServer's listen port

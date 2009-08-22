@@ -89,7 +89,7 @@ enum spfsMessageKind
 };
 
 // File request abstract base class
-message spfsRequest
+packet spfsRequest
 {
     fields:
         int fsId;
@@ -102,40 +102,41 @@ message spfsRequest
 };
 
 // File system response abstract base class
-message spfsResponse
+packet spfsResponse
 {
     fields:
         bool requestSucceeded;
+        long byteLength;
 };
 
 // Create a file system object
-message spfsCreateRequest extends spfsRequest
+packet spfsCreateRequest extends spfsRequest
 {
     fields:
         FSObjectType objectType;
 };
 
 // Create a file system object
-message spfsCreateResponse extends spfsResponse
+packet spfsCreateResponse extends spfsResponse
 {
     fields:
         FSHandle handle;
 };
 
 // Remove a file system object
-message spfsRemoveRequest extends spfsRequest
+packet spfsRemoveRequest extends spfsRequest
 {
     fields:
         FSObjectType objectType;
 };
 
 // Remove a file system object
-message spfsRemoveResponse extends spfsResponse
+packet spfsRemoveResponse extends spfsResponse
 {
 };
 
 // Read object data
-message spfsReadRequest extends spfsRequest
+packet spfsReadRequest extends spfsRequest
 {
     fields:
     	FSHandle metaHandle;
@@ -150,13 +151,13 @@ message spfsReadRequest extends spfsRequest
 };
 
 // Read file data
-message spfsReadResponse extends spfsResponse
+packet spfsReadResponse extends spfsResponse
 {
     fields:
 };
 
 // Write object data
-message spfsWriteRequest extends spfsRequest
+packet spfsWriteRequest extends spfsRequest
 {
     fields:
     	FSHandle metaHandle;
@@ -169,20 +170,20 @@ message spfsWriteRequest extends spfsRequest
 };
 
 // Write file data
-message spfsWriteResponse extends spfsResponse
+packet spfsWriteResponse extends spfsResponse
 {
     fields:
 };
 
 // Write completion
-message spfsWriteCompletionResponse extends spfsResponse
+packet spfsWriteCompletionResponse extends spfsResponse
 {
     fields:
         FSSize bytesWritten;
 };
 
 // Get file attributes
-message spfsGetAttrRequest extends spfsRequest
+packet spfsGetAttrRequest extends spfsRequest
 {
     fields:
         FSObjectType objectType;
@@ -190,14 +191,14 @@ message spfsGetAttrRequest extends spfsRequest
 };
 
 // Get attributes
-message spfsGetAttrResponse extends spfsResponse
+packet spfsGetAttrResponse extends spfsResponse
 {
     fields:
         FSMetaData meta;
 };
 
 // Set file attributes
-message spfsSetAttrRequest extends spfsRequest
+packet spfsSetAttrRequest extends spfsRequest
 {
     fields:
         FSObjectType objectType;
@@ -205,14 +206,14 @@ message spfsSetAttrRequest extends spfsRequest
 };
 
 // Set attributes
-message spfsSetAttrResponse extends spfsResponse
+packet spfsSetAttrResponse extends spfsResponse
 {
     fields:
         string attr[]; // remove this ???
 };
 
 // Resolve a filesystem path
-message spfsLookupPathRequest extends spfsRequest
+packet spfsLookupPathRequest extends spfsRequest
 {
     fields:
         string filename;
@@ -222,7 +223,7 @@ message spfsLookupPathRequest extends spfsRequest
 };
 
 // Lookup a path
-message spfsLookupPathResponse extends spfsResponse
+packet spfsLookupPathResponse extends spfsResponse
 {
     fields:
         FSLookupStatus status;
@@ -230,7 +231,7 @@ message spfsLookupPathResponse extends spfsResponse
 };
 
 // Create a directory entry
-message spfsCreateDirEntRequest extends spfsRequest
+packet spfsCreateDirEntRequest extends spfsRequest
 {
     fields:
         FSHandle newEntryHandle;
@@ -238,26 +239,26 @@ message spfsCreateDirEntRequest extends spfsRequest
 };
 
 // Create a directory entry
-message spfsCreateDirEntResponse extends spfsResponse
+packet spfsCreateDirEntResponse extends spfsResponse
 {
 };
 
 // Remove a directory entry
-message spfsRemoveDirEntRequest extends spfsRequest
+packet spfsRemoveDirEntRequest extends spfsRequest
 {
     fields:
         string entry;
 };
 
 // Remove a directory entry
-message spfsRemoveDirEntResponse extends spfsResponse
+packet spfsRemoveDirEntResponse extends spfsResponse
 {
     fields:
         FSHandle removedHandle;
 };
 
 // Resolve a filesystem path
-message spfsChangeDirEntRequest extends spfsRequest
+packet spfsChangeDirEntRequest extends spfsRequest
 {
     fields:
         FSHandle parentHandle;
@@ -266,14 +267,14 @@ message spfsChangeDirEntRequest extends spfsRequest
 };
 
 // Change a directory entry
-message spfsChangeDirEntResponse extends spfsResponse
+packet spfsChangeDirEntResponse extends spfsResponse
 {
     fields:
         FSHandle oldDirEntHandle;
 };
 
 // Resolve a filesystem path
-message spfsTruncateRequest extends spfsRequest
+packet spfsTruncateRequest extends spfsRequest
 {
     fields:
         FSSize newSize;
@@ -281,25 +282,25 @@ message spfsTruncateRequest extends spfsRequest
 };
 
 // Truncate a data object
-message spfsTruncateResponse extends spfsResponse
+packet spfsTruncateResponse extends spfsResponse
 {
 };
 
 // Resolve a filesystem path
-message spfsMakeDirRequest extends spfsRequest
+packet spfsMakeDirRequest extends spfsRequest
 {
     fields:
         FSSize handleExtents[];
 };
 
 // Create a directory
-message spfsMakeDirResponse extends spfsResponse
+packet spfsMakeDirResponse extends spfsResponse
 {
     fields:
 };
 
 // Resolve a filesystem path
-message spfsReadDirRequest extends spfsRequest
+packet spfsReadDirRequest extends spfsRequest
 {
     fields:
         FSOffset dirOffset;
@@ -307,7 +308,7 @@ message spfsReadDirRequest extends spfsRequest
 };
 
 // Read a directory
-message spfsReadDirResponse extends spfsResponse
+packet spfsReadDirResponse extends spfsResponse
 {
     fields:
         FSOffset dirOffset;
@@ -317,33 +318,33 @@ message spfsReadDirResponse extends spfsResponse
 };
 
 // Resolve a filesystem path
-message spfsFlushRequest extends spfsRequest
+packet spfsFlushRequest extends spfsRequest
 {
     fields:
         string path;
 };
 
 // Flush a data object
-message spfsFlushResponse extends spfsResponse
+packet spfsFlushResponse extends spfsResponse
 {
 };
 
 // Resolve a parallel filesystem path
-message spfsStatRequest extends spfsRequest
+packet spfsStatRequest extends spfsRequest
 {
     fields:
         int flags;
 };
 
 // Stat parallel filesystem
-message spfsStatResponse extends spfsResponse
+packet spfsStatResponse extends spfsResponse
 {
     fields:
         string stat;
 };
 
 // Resolve a parallel filesystem path
-message spfsListAttrRequest extends spfsRequest
+packet spfsListAttrRequest extends spfsRequest
 {
     fields:
         FSHandle handles[];
@@ -352,14 +353,14 @@ message spfsListAttrRequest extends spfsRequest
 };
 
 // List data object attributes
-message spfsListAttrResponse extends spfsResponse
+packet spfsListAttrResponse extends spfsResponse
 {
     fields:
         unsigned long numHandles;
 };
 
 // Begin the data flow
-message spfsDataFlowStart extends spfsRequest
+packet spfsDataFlowStart extends spfsRequest
 {
     fields:
 		// File information
@@ -377,7 +378,7 @@ message spfsDataFlowStart extends spfsRequest
         int outboundBmiTag;
 };
 
-message spfsClientDataFlowStart extends spfsDataFlowStart
+packet spfsClientDataFlowStart extends spfsDataFlowStart
 {
 	fields:
         FSOffset offset;
@@ -390,7 +391,7 @@ message spfsClientDataFlowStart extends spfsDataFlowStart
         VoidPtr clientContextPointer;
 }
 
-message spfsServerDataFlowStart extends spfsDataFlowStart
+packet spfsServerDataFlowStart extends spfsDataFlowStart
 {
 	fields:
 		FSHandle metaHandle;
@@ -401,7 +402,7 @@ message spfsServerDataFlowStart extends spfsDataFlowStart
 }
 
 // Indicate the data flow has finished
-message spfsDataFlowFinish extends spfsResponse
+packet spfsDataFlowFinish extends spfsResponse
 {
     fields:
         int flowId;
@@ -409,7 +410,7 @@ message spfsDataFlowFinish extends spfsResponse
 };
 
 // Create a file system object
-message spfsCollectiveCreateRequest extends spfsRequest
+packet spfsCollectiveCreateRequest extends spfsRequest
 {
     fields:
         FSObjectType objectType;
@@ -419,14 +420,14 @@ message spfsCollectiveCreateRequest extends spfsRequest
 };
 
 // Create a file system object
-message spfsCollectiveCreateResponse extends spfsResponse
+packet spfsCollectiveCreateResponse extends spfsResponse
 {
     fields:
         FSHandle handle;
 };
 
 // Get attributes a file system object
-message spfsCollectiveGetAttrRequest extends spfsRequest
+packet spfsCollectiveGetAttrRequest extends spfsRequest
 {
     fields:
         FSObjectType objectType;
@@ -435,12 +436,12 @@ message spfsCollectiveGetAttrRequest extends spfsRequest
 };
 
 // Get attributes response a file system object
-message spfsCollectiveGetAttrResponse extends spfsResponse
+packet spfsCollectiveGetAttrResponse extends spfsResponse
 {
 };
 
 // Remove a file system object
-message spfsCollectiveRemoveRequest extends spfsRequest
+packet spfsCollectiveRemoveRequest extends spfsRequest
 {
     fields:
         FSObjectType objectType;
@@ -450,12 +451,12 @@ message spfsCollectiveRemoveRequest extends spfsRequest
 };
 
 // Remove a file system object
-message spfsCollectiveRemoveResponse extends spfsResponse
+packet spfsCollectiveRemoveResponse extends spfsResponse
 {
 };
 
 // Flow pages
-message spfsCacheDataFlowStart extends spfsDataFlowStart
+packet spfsCacheDataFlowStart extends spfsDataFlowStart
 {
 	fields:
 		unsigned long numPages;
@@ -466,7 +467,7 @@ message spfsCacheDataFlowStart extends spfsDataFlowStart
 }
 
 // Read object data
-message spfsInvalidatePagesRequest extends spfsRequest
+packet spfsInvalidatePagesRequest extends spfsRequest
 {
     fields:
     	bool isExclusive;
@@ -479,13 +480,13 @@ message spfsInvalidatePagesRequest extends spfsRequest
 };
 
 // Read file data
-message spfsInvalidatePagesWrapperRequest extends spfsResponse
+packet spfsInvalidatePagesWrapperRequest extends spfsResponse
 {
     fields:
 };
 
 // Read object data
-message spfsReadPagesRequest extends spfsReadRequest
+packet spfsReadPagesRequest extends spfsReadRequest
 {
     fields:
     	bool isExclusive;
@@ -495,7 +496,7 @@ message spfsReadPagesRequest extends spfsReadRequest
 };
 
 // Read file data
-message spfsReadPagesResponse extends spfsReadResponse
+packet spfsReadPagesResponse extends spfsReadResponse
 {
     fields:
     	FSSize pageSize;

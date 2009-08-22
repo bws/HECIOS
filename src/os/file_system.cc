@@ -61,15 +61,15 @@ void FileSystem::handleMessage(cMessage *msg)
     // If the message is a new client request, process it directly
     // Otherwise its a response, extract the originating request
     // and then process the response
-    if (msg->arrivalGateId() == inGateId_)
+    if (msg->getArrivalGateId() == inGateId_)
     {
         processMessage(dynamic_cast<spfsOSFileRequest*>(msg), msg);
     }
     else
     {
-        cMessage* parentReq = static_cast<cMessage*>(msg->contextPointer());
+        cMessage* parentReq = static_cast<cMessage*>(msg->getContextPointer());
         spfsOSFileRequest* origRequest =
-            static_cast<spfsOSFileRequest*>(parentReq->contextPointer());
+            static_cast<spfsOSFileRequest*>(parentReq->getContextPointer());
         processMessage(origRequest, msg);
         delete parentReq;
         delete msg;

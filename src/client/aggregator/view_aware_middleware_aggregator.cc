@@ -62,8 +62,8 @@ ViewAwareMiddlewareAggregator::ViewAwareMiddlewareAggregator()
 // Perform simple pass through on all messages
 void ViewAwareMiddlewareAggregator::handleApplicationMessage(cMessage* msg)
 {
-    if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind() ||
-        SPFS_MPI_FILE_WRITE_AT_REQUEST == msg->kind())
+    if (SPFS_MPI_FILE_READ_AT_REQUEST == msg->getKind() ||
+        SPFS_MPI_FILE_WRITE_AT_REQUEST == msg->getKind())
     {
         // Check if the op is collective
         spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(msg);
@@ -84,8 +84,8 @@ void ViewAwareMiddlewareAggregator::handleApplicationMessage(cMessage* msg)
 
 void ViewAwareMiddlewareAggregator::handleFileSystemMessage(cMessage* msg)
 {
-    if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind() ||
-        SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->kind())
+    if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->getKind() ||
+        SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->getKind())
     {
         // Check if the op was collective
         if (0 != currentCollective_->size())
@@ -133,7 +133,7 @@ void ViewAwareMiddlewareAggregator::handleCollectiveIOResponse(cMessage* msg)
     while (first != last)
     {
         spfsMPIFileRequest* appRequest = (first++)->getRequest();
-        if (msg->kind() ==SPFS_MPI_FILE_READ_AT_RESPONSE)
+        if (msg->getKind() ==SPFS_MPI_FILE_READ_AT_RESPONSE)
         {
             spfsMPIFileReadAtResponse* appResponse =
                 new spfsMPIFileReadAtResponse("ViewAwareResp", SPFS_MPI_FILE_READ_AT_RESPONSE);
@@ -150,7 +150,7 @@ void ViewAwareMiddlewareAggregator::handleCollectiveIOResponse(cMessage* msg)
     }
 
     // Cleanup the data sieving request's data
-    cMessage* request = static_cast<cMessage*>(msg->contextPointer());
+    cMessage* request = static_cast<cMessage*>(msg->getContextPointer());
     spfsMPIFileRequest* fileRequest = dynamic_cast<spfsMPIFileRequest*>(request);
     FileDescriptor* fd = fileRequest->getFileDes();
     delete fd;

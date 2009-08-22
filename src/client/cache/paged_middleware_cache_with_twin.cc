@@ -128,17 +128,18 @@ void PagedMiddlewareCacheWithTwin::performFakeOpen(const Filename& openName)
 
 void PagedMiddlewareCacheWithTwin::handleApplicationMessage(cMessage* msg)
 {
-    if (SPFS_MPI_FILE_OPEN_REQUEST == msg->kind() ||
-        SPFS_MPI_FILE_CLOSE_REQUEST == msg->kind() ||
-        SPFS_MPI_FILE_READ_AT_REQUEST == msg->kind() ||
-        SPFS_MPI_FILE_WRITE_AT_REQUEST == msg->kind())
+    int requestKind = msg->getKind();
+    if (SPFS_MPI_FILE_OPEN_REQUEST == requestKind ||
+        SPFS_MPI_FILE_CLOSE_REQUEST == requestKind ||
+        SPFS_MPI_FILE_READ_AT_REQUEST == requestKind ||
+        SPFS_MPI_FILE_WRITE_AT_REQUEST == requestKind)
     {
         processRequest(msg, msg);
     }
     else
     {
-        assert(SPFS_MPI_FILE_READ_REQUEST != msg->kind());
-        assert(SPFS_MPI_FILE_WRITE_REQUEST != msg->kind());
+        assert(SPFS_MPI_FILE_READ_REQUEST != requestKind);
+        assert(SPFS_MPI_FILE_WRITE_REQUEST != requestKind);
 
         // Forward messages not handled by the cache
         send(msg, fsOutGateId());
@@ -147,11 +148,12 @@ void PagedMiddlewareCacheWithTwin::handleApplicationMessage(cMessage* msg)
 
 void PagedMiddlewareCacheWithTwin::handleFileSystemMessage(cMessage* msg)
 {
-    if (SPFS_MPI_FILE_READ_AT_RESPONSE == msg->kind() ||
-        SPFS_MPI_FILE_WRITE_AT_RESPONSE == msg->kind())
+    int responseKind = msg->getKind();
+    if (SPFS_MPI_FILE_READ_AT_RESPONSE == responseKind ||
+        SPFS_MPI_FILE_WRITE_AT_RESPONSE == responseKind)
     {
-        cMessage* cacheRequest = static_cast<cMessage*>(msg->contextPointer());
-        cMessage* appRequest = static_cast<cMessage*>(cacheRequest->contextPointer());
+        cMessage* cacheRequest = static_cast<cMessage*>(msg->getContextPointer());
+        cMessage* appRequest = static_cast<cMessage*>(cacheRequest->getContextPointer());
         processRequest(appRequest, msg);
 
         // Don't delete bypass writes
@@ -167,8 +169,8 @@ void PagedMiddlewareCacheWithTwin::handleFileSystemMessage(cMessage* msg)
     }
     else
     {
-        assert(SPFS_MPI_FILE_READ_RESPONSE != msg->kind());
-        assert(SPFS_MPI_FILE_WRITE_RESPONSE != msg->kind());
+        assert(SPFS_MPI_FILE_READ_RESPONSE != responseKind);
+        assert(SPFS_MPI_FILE_WRITE_RESPONSE != responseKind);
 
         // Forward messages not handled by the cache
         send(msg, appOutGateId());
@@ -178,24 +180,25 @@ void PagedMiddlewareCacheWithTwin::handleFileSystemMessage(cMessage* msg)
 void PagedMiddlewareCacheWithTwin::processRequest(cMessage* request, cMessage* msg)
 {
     assert(0 != request);
-    if (SPFS_MPI_FILE_OPEN_REQUEST == request->kind())
+    int requestKind = request->getKind();
+    if (SPFS_MPI_FILE_OPEN_REQUEST == requestKind)
     {
         spfsMPIFileOpenRequest* open = static_cast<spfsMPIFileOpenRequest*>(request);
         processFileOpen(open, msg);
     }
-    else if (SPFS_MPI_FILE_CLOSE_REQUEST == request->kind())
+    else if (SPFS_MPI_FILE_CLOSE_REQUEST == requestKind)
     {
         spfsMPIFileCloseRequest* close = static_cast<spfsMPIFileCloseRequest*>(request);
         processFileClose(close, msg);
     }
-    else if (SPFS_MPI_FILE_READ_AT_REQUEST == request->kind())
+    else if (SPFS_MPI_FILE_READ_AT_REQUEST == requestKind)
     {
         spfsMPIFileReadAtRequest* readAt =
             static_cast<spfsMPIFileReadAtRequest*>(request);
-        spfsMPIFileRequest* parent = static_cast<spfsMPIFileRequest*>(msg->contextPointer());
+        spfsMPIFileRequest* parent = static_cast<spfsMPIFileRequest*>(msg->getContextPointer());
         if (0 != dynamic_cast<spfsMPIFileWriteAtResponse*>(msg) &&
-            (PARTIAL_PAGE_WRITEBACK_NAME == parent->name() ||
-             PAGE_WRITEBACK_NAME == parent->name()))
+            (PARTIAL_PAGE_WRITEBACK_NAME == parent->getName() ||
+             PAGE_WRITEBACK_NAME == parent->getName()))
         {
             processWriteback(readAt, msg);
         }
@@ -204,14 +207,14 @@ void PagedMiddlewareCacheWithTwin::processRequest(cMessage* request, cMessage* m
             processFileRead(readAt, msg);
         }
     }
-    else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == request->kind())
+    else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == requestKind)
     {
         spfsMPIFileWriteAtRequest* writeAt =
             static_cast<spfsMPIFileWriteAtRequest*>(request);
-        spfsMPIFileRequest* parent = static_cast<spfsMPIFileRequest*>(msg->contextPointer());
+        spfsMPIFileRequest* parent = static_cast<spfsMPIFileRequest*>(msg->getContextPointer());
         if (0 != dynamic_cast<spfsMPIFileWriteAtResponse*>(msg) &&
-            (PARTIAL_PAGE_WRITEBACK_NAME == parent->name() ||
-             PAGE_WRITEBACK_NAME == parent->name()))
+            (PARTIAL_PAGE_WRITEBACK_NAME == parent->getName() ||
+             PAGE_WRITEBACK_NAME == parent->getName()))
         {
             processWriteback(writeAt, msg);
         }
@@ -223,7 +226,7 @@ void PagedMiddlewareCacheWithTwin::processRequest(cMessage* request, cMessage* m
     else
     {
         cerr << __FILE__ << ":" << __LINE__ << ":"
-             << "ERROR: Unknown request type: " << request->kind()
+             << "ERROR: Unknown request type: " << request->getKind()
              << " Message: " << msg->info() << endl;
         assert(0);
     }
@@ -240,11 +243,11 @@ void PagedMiddlewareCacheWithTwin::processWriteback(spfsMPIFileRequest* request,
 
     // Extract the writeback pages and resolve the associated pages
     spfsMPIFileWriteAtRequest* writeback =
-        static_cast<spfsMPIFileWriteAtRequest*>(msg->contextPointer());
+        static_cast<spfsMPIFileWriteAtRequest*>(msg->getContextPointer());
 
     // If this is a partial page writeback, resolve it that way
     // Otherwise, resolve the pages normally
-    if (PARTIAL_PAGE_WRITEBACK_NAME == writeback->name())
+    if (PARTIAL_PAGE_WRITEBACK_NAME == writeback->getName())
     {
         resolvePendingPartialWrite(request);
     }
@@ -313,11 +316,11 @@ void PagedMiddlewareCacheWithTwin::processFileClose(spfsMPIFileCloseRequest* clo
     {
         assert(0 != dynamic_cast<spfsMPIFileWriteAtResponse*>(msg));
         spfsMPIFileWriteAtRequest* flushReq =
-            static_cast<spfsMPIFileWriteAtRequest*>(msg->contextPointer());
+            static_cast<spfsMPIFileWriteAtRequest*>(msg->getContextPointer());
 
         // If this is a partial page writeback, resolve it that way
         // Otherwise, resolve the pages normally
-        if (PARTIAL_PAGE_WRITEBACK_NAME == flushReq->name())
+        if (PARTIAL_PAGE_WRITEBACK_NAME == flushReq->getName())
         {
             resolvePendingPartialWrite(close);
         }
@@ -357,7 +360,7 @@ void PagedMiddlewareCacheWithTwin::processFileRead(spfsMPIFileReadAtRequest* rea
 
         // Determine the set of read pages
         spfsMPIFileReadAtRequest* cacheRead =
-            static_cast<spfsMPIFileReadAtRequest*>(msg->contextPointer());
+            static_cast<spfsMPIFileReadAtRequest*>(msg->getContextPointer());
 
         // Determine the cache pages read
         set<PagedCache::Key> requestPages;
@@ -524,7 +527,7 @@ void PagedMiddlewareCacheWithTwin::processFileWrite(spfsMPIFileWriteAtRequest* w
             if (0 != dynamic_cast<spfsMPIFileReadAtResponse*>(msg))
             {
                 spfsMPIFileReadAtRequest* read =
-                    static_cast<spfsMPIFileReadAtRequest*>(msg->contextPointer());
+                    static_cast<spfsMPIFileReadAtRequest*>(msg->getContextPointer());
                 set<PagedCache::Key> readPages;
                 getRequestCachePages(read, readPages);
                 updateCacheWithReadPages(readPages, writebackPages);
@@ -971,13 +974,13 @@ void PagedMiddlewareCacheWithTwin::completeRequests()
         spfsMPIResponse* resp = 0;
         spfsMPIFileRequest* req = completedRequests[i];
         double delay = 0.0;
-        if (SPFS_MPI_FILE_READ_AT_REQUEST == req->kind())
+        if (SPFS_MPI_FILE_READ_AT_REQUEST == req->getKind())
         {
             resp =
                 new spfsMPIFileReadAtResponse(0, SPFS_MPI_FILE_READ_AT_RESPONSE);
             resp->setContextPointer(req);
         }
-        else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == req->kind())
+        else if (SPFS_MPI_FILE_WRITE_AT_REQUEST == req->getKind())
         {
             delay = req->par("Delay").doubleValue();
             resp =
@@ -986,7 +989,7 @@ void PagedMiddlewareCacheWithTwin::completeRequests()
         }
         else
         {
-            assert(SPFS_MPI_FILE_CLOSE_REQUEST == req->kind());
+            assert(SPFS_MPI_FILE_CLOSE_REQUEST == req->getKind());
             resp = new spfsMPIFileCloseResponse(0, SPFS_MPI_FILE_CLOSE_RESPONSE);
             resp->setContextPointer(req);
         }

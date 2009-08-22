@@ -10,193 +10,262 @@
 //
 // Template for middleware MPI-IO process caching
 //
-simple MiddlewareCache
-	parameters:
-		byteCopyTime: const;
-		
+moduleinterface MiddlewareCache
+{
+    parameters:
+        double byteCopyTime;
+
     gates:
-        in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Passthrough/No-op middleware cache
 //
-simple NoMiddlewareCache
-	parameters:
-		byteCopyTime: const;
-		
+simple NoMiddlewareCache like MiddlewareCache
+{
+    parameters:
+		@class(NoMiddlewareCache);
+        double byteCopyTime;
+
     gates:
-        in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+
+}
 
 //
 // Middleware cache using pages of direct cache
 //
-simple DirectPagedMiddlewareCache
+simple DirectPagedMiddlewareCache like MiddlewareCache
+{
     parameters:
-    	byteCopyTime: const,
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+		@class(DirectPagedMiddlewareCache);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
+
+    gates:
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Middleware cache using pages of direct cache
 //
-simple SharedDirectPagedMiddlewareCache
+simple SharedDirectPagedMiddlewareCache like MiddlewareCache
+{
     parameters:
-    	byteCopyTime: const,
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+		@class(SharedDirectPagedMiddlewareCache);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
+
+    gates:
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Middleware cache using pages of fully associative cache
 //
-simple FullyPagedMiddlewareCache
+simple FullyPagedMiddlewareCache like MiddlewareCache
+{
     parameters:
-        pageSize: const,
-        pageCapacity: const;
-        
+		@class(FullyPagedMiddlewareCache);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
+
     gates:
-        in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Middleware cache using pages with Treadmarks twin diffing false sharing
 // avoidance
 //
-simple PagedMiddlewareCacheWithTwinNoBlockIndexed
+simple PagedMiddlewareCacheWithTwinNoBlockIndexed like MiddlewareCache
+{
     parameters:
-    	byteCopyTime: const,
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+		@class(PagedMiddlewareCacheWithTwinNoBlockIndexed);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
+
+    gates:
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Middleware cache using pages with Treadmarks twin diffing false sharing
 // avoidance
 //
-simple PagedMiddlewareCacheWithTwin
+simple PagedMiddlewareCacheWithTwin like MiddlewareCache
+{
     parameters:
-    	byteCopyTime: const,
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+		@class(PagedMiddlewareCacheWithTwin);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
+
+    gates:
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Middleware cache using pages with Treadmarks twin diffing false sharing
 // avoidance
 //
-simple SharedPagedMiddlewareCacheWithTwin
+simple SharedPagedMiddlewareCacheWithTwin like MiddlewareCache
+{
     parameters:
-    	byteCopyTime: const,
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+		@class(SharedPagedMiddlewareCacheWithTwin);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
+
+    gates:
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Middleware cache using pages with Treadmarks twin diffing false sharing
 // avoidance
 //
-simple SharedPagedMiddlewareCacheWithTwinNoBlockIndexed
+simple SharedPagedMiddlewareCacheWithTwinNoBlockIndexed like MiddlewareCache
+{
     parameters:
-    	byteCopyTime: const,
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+		@class(SharedPagedMiddlewareCacheWithTwinNoBlockIndexed);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
+
+    gates:
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Middleware cache using pages with Treadmarks twin diffing false sharing
 // avoidance
 //
-simple PagedMiddlewareCacheMesi
+simple PagedMiddlewareCacheMesi like MiddlewareCache
+{
     parameters:
-    	byteCopyTime: const,
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+		@class(PagedMiddlewareCacheMesi);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
+
+    gates:
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Middleware cache using pages with Treadmarks twin diffing false sharing
 // avoidance
 //
-simple SharedPagedMiddlewareCacheMesi
+simple SharedPagedMiddlewareCacheMesi like MiddlewareCache
+{
     parameters:
-    	byteCopyTime: const,
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+		@class(SharedPagedMiddlewareCacheMesi);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
+
+    gates:
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Middleware cache using pages of progressive paged cache
 //
-simple ProgressivePagedMiddlewareCache
+simple ProgressivePagedMiddlewareCache like MiddlewareCache
+{
     parameters:
-    	byteCopyTime: const,
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+	 	@class(ProgressivePagedMiddlewareCache);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
+
+    gates:
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
 //
 // Middleware cache using shared pages of progressive paged cache
 //
-simple SharedProgressivePagedMiddlewareCache
+simple SharedProgressivePagedMiddlewareCache like MiddlewareCache
+{
     parameters:
-    	byteCopyTime: const,
-    	pageSize: const,
-    	pageCapacity: const;
-    	
-	gates:
-		in: appIn, fsIn, mpiIn;
-        out: appOut, fsOut, mpiOut;
-endsimple
+		@class(SharedProgressivePagedMiddlewareCache);
+        double byteCopyTime;
+        double pageSize;
+        double pageCapacity;
 
+    gates:
+        input appIn;
+        input fsIn;
+        input mpiIn;
+        output appOut;
+        output fsOut;
+        output mpiOut;
+}
 
-//
-// Local variables:
-//  indent-tabs-mode: nil
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//

@@ -25,14 +25,14 @@ public:
     static const unsigned int DIRECT_OVERHEAD_BYTES = 0;
 
     /** @return a BMIExpected message encapsulating msg */
-    virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg);
+    virtual spfsBMIExpectedMessage* createExpectedMessage(cPacket* msg);
 
     /** @return a BMIUnexpected message encapsulating msg */
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
         spfsRequest* request);
 
 protected:
-    /** Initialize this enpoint type */
+    /** Initialize this endpoint type */
     virtual void initializeEndpoint();
 
     /** Finalize this endpoint type */
@@ -78,7 +78,7 @@ spfsBMIUnexpectedMessage* BMIDirectEndpoint::createUnexpectedMessage(
 }
 
 spfsBMIExpectedMessage* BMIDirectEndpoint::createExpectedMessage(
-    cMessage* msg)
+    cPacket* msg)
 {
     assert(0 != msg);
 

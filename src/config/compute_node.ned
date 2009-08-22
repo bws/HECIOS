@@ -11,46 +11,41 @@
 // Ethernet based compute node
 //
 module ComputeNode
+{
     parameters:
-        numProcs: numeric const;
+        double numProcs;
 
     gates:
-        in: ethIn;
-        out: ethOut;
+        input ethIn;
+        output ethOut;
 
     submodules:
-        process: JobProcess[numProcs];
-            display: "p=100,180,m,4;i=block/process,blue";
+        process[numProcs]: JobProcess {
+            parameters:
+                @display("p=100,180,m,4;i=block/process,blue");
 
-        hca: EnhancedHost;
-        parameters:
-            numBMIApps = numProcs,
-            numMPIApps = numProcs,
-            bmiAppType = "BMITcpClient",
-            mpiAppType = "MPITcpServer";
-        display: "p=100,80;i=block/rxtx,medium purple";
+        }
+        hca: EnhancedHost {
+            parameters:
+                numBmiApps = numProcs;
+                numMpiApps = numProcs;
+                bmiAppType = "BMITcpClient";
+                mpiAppType = "MPITcpServer";
+                @display("p=100,80;i=block/rxtx,medium purple");
 
+        }
     connections:
         // Connect processes to BMI network transport
-        for i=0..numProcs-1 do
-            process[i].bmiOut --> hca.bmiIn++;
-            process[i].bmiIn <-- hca.bmiOut++;
-            process[i].mpiOut --> hca.mpiIn++;
-            process[i].mpiIn <-- hca.mpiOut++;
-        endfor
+        for i=0..numProcs-1 {
+            process[i].bmiOut --> hca.bmig$i++;
+            process[i].bmiIn <-- hca.bmig$o++;
+            process[i].mpiOut --> hca.mpig$i++;
+            process[i].mpiIn <-- hca.mpig$o++;
+        }
 
         // Connect forwarding gates
-        ethIn --> hca.ethIn++;
-        ethOut <-- hca.ethOut++;
+        ethIn --> hca.ethg$i++;
+        ethOut <-- hca.ethg$o++;
 
-endmodule
+}
 
-//
-// Local variables:
-//  indent-tabs-mode: nil
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//

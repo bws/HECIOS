@@ -11,39 +11,41 @@
 //
 // Template for OS Block device buffer caches
 //
-simple BufferCache
+moduleinterface BufferCache
+{
     gates:
-        in: in, response;
-        out: out, request;
-endsimple
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
 //
 // Passthrough/No-op buffer cache
 //
-simple NoBufferCache
+simple NoBufferCache like BufferCache
+{
+	@class(NoBufferCache);
     gates:
-        in: in, response;
-        out: out, request;
-endsimple
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
 //
 // BufferCache using an LRU replacement policy
 //
-simple LRUBufferCache
-    parameters:
-        numEntries : const,
-        dirtyThreshold: const;
+simple LRUBufferCache like BufferCache
+{
+	@class(LRUBufferCache);
+	double numEntries;
+    double dirtyThreshold;
 
     gates:
-        in: in, response;
-        out: out, request;
-endsimple
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
-//
-// Local variables:
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//

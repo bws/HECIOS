@@ -36,7 +36,7 @@ public:
     void setHandleRange(const HandleRange& handleRange);
 
     /** @return a BMIExpected message encapsulating msg */
-    virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg) = 0;
+    virtual spfsBMIExpectedMessage* createExpectedMessage(cPacket* msg) = 0;
 
     /** @return a BMIUnexpected message encapsulating msg */
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(

@@ -166,11 +166,11 @@ SharedPagedMiddlewareCacheWithTwinNoBlockIndexed::createSharedResource(map<cModu
 cModule* SharedPagedMiddlewareCacheWithTwinNoBlockIndexed::findParentComputeNode() const
 {
     // Extract the compute node model
-    cModule* mpiProcess = parentModule();
+    cModule* mpiProcess = getParentModule();
     assert(0 != mpiProcess);
-    cModule* jobProcess = mpiProcess->parentModule();
+    cModule* jobProcess = mpiProcess->getParentModule();
     assert(0 != jobProcess);
-    cModule* cpun = jobProcess->parentModule();
+    cModule* cpun = jobProcess->getParentModule();
     assert(0 != cpun);
     return cpun;
 }

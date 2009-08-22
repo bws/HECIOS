@@ -88,7 +88,7 @@ void BMIMemoryDataFlow::processDataFlowMessage(cMessage* msg)
             new spfsDataFlowFinish(0, SPFS_DATA_FLOW_FINISH);
         flowFinish->setContextPointer(getOriginatingMessage());
         flowFinish->setFlowId(getUniqueId());
-        module_->scheduleAt(module_->simTime(), flowFinish);
+        module_->scheduleAt(simulation.getSimTime(), flowFinish);
         //cerr << "Finishing BMI-Memory flow\n";
     }
 
@@ -150,7 +150,7 @@ void BMIMemoryDataFlow::sendPushAck(spfsBMIPushDataRequest* request)
     assert(0 != partnerModule);
 
     // Send the acknowledgment directly to module
-    parentModule()->sendDirect(pushResponse, 0.0, partnerModule, "directIn");
+    parentModule()->sendDirect(pushResponse, 0.0, 0.0, partnerModule, "directIn");
 }
 
 /*

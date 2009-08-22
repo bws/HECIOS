@@ -119,20 +119,20 @@ void FSServerConfigurator::initialize(int stage)
              << handlesPerServer_ << endl;
 
         // Retrieve the interface table for this module
-        cModule* cluster = parentModule();
+        cModule* cluster = getParentModule();
         assert(0 != cluster);
 
         // Register the handles and IP for each IONode
         long numIONodes = cluster->par("numIONodes");
         for (int i = 0; i < numIONodes; i++)
         {
-            cModule* ion = cluster->submodule("ion", i);
+            cModule* ion = cluster->getSubmodule("ion", i);
 
             // Retrieve the FS server
-            cModule* daemon = ion->submodule("daemon");
+            cModule* daemon = ion->getSubmodule("daemon");
             assert(0 != daemon);
             FSServer* server =
-                dynamic_cast<FSServer*>(daemon->submodule("pfsServer"));
+                dynamic_cast<FSServer*>(daemon->getSubmodule("pfsServer"));
             assert(0 != server);
 
             // Set the server's handle range
@@ -177,21 +177,21 @@ IPvXAddress* FSServerConfigurator::getServerIP(cModule* ioNode)
     IPvXAddress* serverIP = 0;
 
     // Retrieve the INET host
-    cModule* hca = ioNode->submodule("hca");
+    cModule* hca = ioNode->getSubmodule("hca");
     assert(0 != hca);
-    InterfaceTable* ifTable = dynamic_cast<InterfaceTable*>(
-        hca->submodule("interfaceTable"));
+    IInterfaceTable* ifTable = dynamic_cast<IInterfaceTable*>(
+        hca->getSubmodule("interfaceTable"));
     assert(0 != ifTable);
 
     // Find eth0's IP address
     InterfaceEntry* ie = 0;
-    for (int j = 0; j < ifTable->numInterfaces(); j++)
+    for (int j = 0; j < ifTable->getNumInterfaces(); j++)
     {
-        ie = ifTable->interfaceAt(j);
-        if (0 == strcmp("eth0", ie->name()))
+        ie = ifTable->getInterface(j);
+        if (0 == strcmp("eth0", ie->getName()))
         {
-            assert(0 != ie->ipv4());
-            serverIP = new IPvXAddress(ie->ipv4()->inetAddress());
+            assert(0 != ie->ipv4Data());
+            serverIP = new IPvXAddress(ie->ipv4Data()->getIPAddress());
             break;
         }
     }

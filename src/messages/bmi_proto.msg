@@ -18,28 +18,28 @@ cplusplus {{
 class noncobject ConnectionId;
 
 // The abstract base class for all BMI Messages
-message spfsBMIMessage
+packet spfsBMIMessage
 {
     fields:
         int tag;
 };
 
 // Message sent over an established BMI connection 
-message spfsBMIExpectedMessage extends spfsBMIMessage
+packet spfsBMIExpectedMessage extends spfsBMIMessage
 {
     fields:
         ConnectionId connectionId;
 };
 
 // Message sent that establishes a BMI connection
-message spfsBMIUnexpectedMessage extends spfsBMIMessage
+packet spfsBMIUnexpectedMessage extends spfsBMIMessage
 {
     fields:
         unsigned long handle;
 };
 
 // Message sent as part of a data flow
-message spfsBMIFlowMessage extends spfsBMIExpectedMessage
+packet spfsBMIFlowMessage extends spfsBMIExpectedMessage
 {
     fields:
         int flowId;
@@ -47,7 +47,7 @@ message spfsBMIFlowMessage extends spfsBMIExpectedMessage
 };
 
 // Message that sends data over a BMI connection
-message spfsBMIPushDataRequest extends spfsBMIFlowMessage
+packet spfsBMIPushDataRequest extends spfsBMIFlowMessage
 {
     fields:
         int handle;
@@ -55,7 +55,7 @@ message spfsBMIPushDataRequest extends spfsBMIFlowMessage
 };
 
 // Message that acknowledges data sent over a BMI connection
-message spfsBMIPushDataResponse extends spfsBMIFlowMessage
+packet spfsBMIPushDataResponse extends spfsBMIFlowMessage
 {
     fields:
         unsigned long receivedSize;

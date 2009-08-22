@@ -17,14 +17,14 @@ SystemCallInterface::SystemCallInterface()
 
 void SystemCallInterface::initialize()
 {
-    inGateId_ = gate("in")->id();
-    requestGateId_ = gate("request")->id();
-    outGateId_ = gate("out")->id();
+    inGateId_ = findGate("in");
+    requestGateId_ = findGate("request");
+    outGateId_ = findGate("out");
 }
 
 void SystemCallInterface::handleMessage(cMessage *msg)
 {
-    if (msg->arrivalGateId() == inGateId_)
+    if (msg->getArrivalGateId() == inGateId_)
     {
         send(msg, requestGateId_);
     }
@@ -35,7 +35,7 @@ void SystemCallInterface::handleMessage(cMessage *msg)
 }
 
 //------------------------------------------------
-Define_Module_Like( PassThroughSystemCallInterface, SystemCallInterface );
+Define_Module(PassThroughSystemCallInterface);
 
 PassThroughSystemCallInterface::PassThroughSystemCallInterface()
     : SystemCallInterface()
@@ -43,7 +43,7 @@ PassThroughSystemCallInterface::PassThroughSystemCallInterface()
 }
 
 //------------------------------------------------
-Define_Module_Like(SequentialSystemCallInterface, SystemCallInterface);
+Define_Module(SequentialSystemCallInterface);
 
 SequentialSystemCallInterface::SequentialSystemCallInterface()
     : SystemCallInterface(),
@@ -67,11 +67,11 @@ void SequentialSystemCallInterface::initialize()
 
 void SequentialSystemCallInterface::handleMessage(cMessage* msg)
 {
-    if (msg->arrivalGateId() == inGateId_)
+    if (msg->getArrivalGateId() == inGateId_)
     {
         // Sequence the message and add system call delay
         double overhead = overheadSecs_;
-        if (SPFS_OS_FILE_READ_REQUEST == msg->kind())
+        if (SPFS_OS_FILE_READ_REQUEST == msg->getKind())
         {
             overhead += addReadOverheadSecs_;
         }

@@ -87,7 +87,7 @@ SinglePageAccessMixin::createCacheReadExclusiveRequests(
             new spfsCacheReadExclusiveRequest("Single Page Cache Read Excl",
                                               SPFS_CACHE_READ_EXCLUSIVE_REQUEST);
         readPage->setContextPointer(parentRequest);
-        readPage->setDescriptor(fd);
+        readPage->setFileDescriptor(fd);
         readPage->setDataType(byteType);
         readPage->setOffset(page * getPageSize());
         readPage->setCount(getPageSize());
@@ -128,7 +128,7 @@ SinglePageAccessMixin::createCacheReadSharedRequests(
             new spfsCacheReadSharedRequest("Single Page Cache Read Shared",
                                            SPFS_CACHE_READ_SHARED_REQUEST);
         readPage->setContextPointer(parentRequest);
-        readPage->setDescriptor(fd);
+        readPage->setFileDescriptor(fd);
         readPage->setDataType(byteType);
         readPage->setOffset(page * getPageSize());
         readPage->setCount(getPageSize());
@@ -273,7 +273,7 @@ BlockIndexedPageAccessMixin::createCacheReadExclusiveRequests(
             new spfsCacheReadExclusiveRequest("Cache Read Excl Request",
                                               SPFS_CACHE_READ_EXCLUSIVE_REQUEST);
         readRequest->setContextPointer(parentRequest);
-        readRequest->setDescriptor(fd);
+        readRequest->setFileDescriptor(fd);
         readRequest->setDataType(byteType);
         readRequest->setCount(iter->second.size() * getPageSize());
         readRequest->setOffset(0);
@@ -328,7 +328,7 @@ BlockIndexedPageAccessMixin::createCacheReadSharedRequests(
             new spfsCacheReadSharedRequest("Cache Read Shared Request",
                                            SPFS_CACHE_READ_SHARED_REQUEST);
         readRequest->setContextPointer(parentRequest);
-        readRequest->setDescriptor(fd);
+        readRequest->setFileDescriptor(fd);
         readRequest->setDataType(byteType);
         readRequest->setCount(iter->second.size() * getPageSize());
         readRequest->setOffset(0);

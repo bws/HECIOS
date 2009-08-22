@@ -12,17 +12,20 @@
 //
 simple JobManager
 
+{
     parameters:
-        bufferSizeInBytes : const,
-        numBuffers : const;
+        double bufferSizeInBytes;
+        double numBuffers;
 
     gates:
-        in: netIn, directIn;
-        out: netOut;
+        input netIn;
+        input directIn;
+        output netOut;
 
-        in: storageIn;
-        out: storageOut;
+        input storageIn;
+        output storageOut;
 
-        in: pfsIn;
-        out: pfsOut;
-endsimple
+        input pfsIn;
+        output pfsOut;
+}
+

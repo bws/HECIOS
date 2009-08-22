@@ -10,45 +10,59 @@
 //
 // Template for middleware MPI-IO process aggregator
 //
-simple MiddlewareAggregator
+moduleinterface MiddlewareAggregator
+{
     gates:
-        in: appIn, ioIn, mpiIn;
-        out: appOut, ioOut, mpiOut;
-endsimple
+        input appIn;
+        input ioIn;
+        input mpiIn;
+        output appOut;
+        output ioOut;
+        output mpiOut;
+}
 
 //
-// Passthrough/No-op middleware cache
+// Passthrough/No-op middleware aggregator
 //
-simple NoMiddlewareAggregator
+simple NoMiddlewareAggregator like MiddlewareAggregator
+{
+	@class(NoMiddlewareAggregator);
     gates:
-        in: appIn, ioIn, mpiIn;
-        out: appOut, ioOut, mpiOut;
-endsimple
+        input appIn;
+        input ioIn;
+        input mpiIn;
+        output appOut;
+        output ioOut;
+        output mpiOut;
+}
 
 //
-// Middleware cache using pages of direct cache
+// Middleware aggregator providing data sieving
 //
-simple DataSievingMiddlewareAggregator
-	gates:
-		in: appIn, ioIn, mpiIn;
-        out: appOut, ioOut, mpiOut;
-endsimple
+simple DataSievingMiddlewareAggregator like MiddlewareAggregator
+{
+	@class(DataSievingMiddlewareAggregator);
+    gates:
+        input appIn;
+        input ioIn;
+        input mpiIn;
+        output appOut;
+        output ioOut;
+        output mpiOut;
+}
 
 //
-// Middleware cache using pages of direct cache
+// Middleware aggregator with view awareness
 //
-simple ViewAwareMiddlewareAggregator
-	gates:
-		in: appIn, ioIn, mpiIn;
-        out: appOut, ioOut, mpiOut;
-endsimple
+simple ViewAwareMiddlewareAggregator like MiddlewareAggregator
+{
+    @class(ViewAwareMiddlewareAggregator);
+    gates:
+        input appIn;
+        input ioIn;
+        input mpiIn;
+        output appOut;
+        output ioOut;
+        output mpiOut;
+}
 
-//
-// Local variables:
-//  indent-tabs-mode: nil
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//

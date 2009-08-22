@@ -50,7 +50,7 @@ FSCacheReadOperation::~FSCacheReadOperation()
 void FSCacheReadOperation::registerStateMachines()
 {
     spfsMPIFileRequest* mpiRequest =
-        static_cast<spfsMPIFileRequest*>(readRequest_->contextPointer());
+        static_cast<spfsMPIFileRequest*>(readRequest_->getContextPointer());
 
     // Retrieve the file attributes
     Filename file = mpiRequest->getFileDes()->getFilename();
@@ -82,7 +82,7 @@ void FSCacheReadOperation::sendFinalResponse()
     readResponse->setContextPointer(readRequest_);
 
     // Set the response's filename
-    FileDescriptor* fd = readRequest_->getDescriptor();
+    FileDescriptor* fd = readRequest_->getFileDescriptor();
     readResponse->setFilename(fd->getFilename().c_str());
 
     // Set the page ids

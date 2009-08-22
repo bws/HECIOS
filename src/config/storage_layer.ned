@@ -9,33 +9,29 @@
 
 module StorageLayer
 
+{
     parameters:
-        ioLibraryType : string;
+        string ioLibraryType;
 
     gates:
-        in: in, fromOS;
-        out: out, toOS;
+        input in;
+        input fromOS;
+        output out;
+        output toOS;
 
     submodules:
 
-        ioLibrary: ioLibraryType like IOLibrary;
-            display: "p=80,80;i=block/layer,white";
+        ioLibrary: <ioLibraryType> like IOLibrary {
+            parameters:
+                @display("p=80,80;i=block/layer,white");
 
+        }
     connections:
 
-    in --> ioLibrary.in;
-    out <-- ioLibrary.out;
+        in --> ioLibrary.in;
+        out <-- ioLibrary.out;
 
-    ioLibrary.request --> toOS;
-    ioLibrary.response <-- fromOS;
-endmodule
+        ioLibrary.request --> toOS;
+        ioLibrary.response <-- fromOS;
+}
 
-//
-// Local variables:
-//  indent-tabs-mode: nil
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//

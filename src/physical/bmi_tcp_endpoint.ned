@@ -12,18 +12,19 @@
 //
 simple BMITcpEndpoint
 
+{
     parameters:
         // Port endpoint should bind to listen on (set to 0 to disable listen)
-        listenPort: numeric const,
+        double listenPort;
 
         // Port to contact other servers on
-        connectPort: numeric const;
+        double connectPort;
 
     gates:
-        in: appIn;
-        out: appOut;
+        input appIn;
+        output appOut;
 
-        in: tcpIn;
-        out: tcpOut;
+        input tcpIn;
+        output tcpOut;
 
-endsimple
+}

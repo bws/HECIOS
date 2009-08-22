@@ -41,7 +41,7 @@ protected:
     virtual void handleApplicationMessage(cMessage* msg);
 
     /** Implementation of TCPSocket::CallbackInterface::socketDataArrived */
-    virtual void socketDataArrived(int connId, void* ptr, cMessage* msg,
+    virtual void socketDataArrived(int connId, void* ptr, cPacket* msg,
                                    bool urgent);
 
     /** Handle the arrival of a socket failure message */
@@ -49,10 +49,10 @@ protected:
 
 private:
     /** Send a message over an already established connection */
-    void sendExpectedMessage(const ConnectionId& connId, cMessage* payload);
+    void sendExpectedMessage(const ConnectionId& connId, cPacket* payload);
 
     /** Send a message over an unestablished connection */
-    void sendUnexpectedMessage(int rank, cMessage* payload);
+    void sendUnexpectedMessage(int rank, cPacket* payload);
 
     /** @return a socket with an open connection to a remote server */
     TCPSocket* getConnectedSocket(int rank);
@@ -97,10 +97,10 @@ void MPITcpServer::initialize(int stage)
         listenSocket_.setCallbackObject(this, 0);
 
         // Extract the gate ids
-        appInGateId_ = gate("appIn")->id();
-        appOutGateId_ = gate("appOut")->id();
-        netInGateId_ = gate("tcpIn")->id();
-        netOutGateId_ = gate("tcpOut")->id();
+        appInGateId_ = findGate("appIn");
+        appOutGateId_ = findGate("appOut");
+        netInGateId_ = findGate("tcpIn");
+        netOutGateId_ = findGate("tcpOut");
     }
     else if (4 == stage)
     {
@@ -134,11 +134,11 @@ void MPITcpServer::handleMessage(cMessage* msg)
         }
         inSock->processMessage(msg);
     }
-    else if (msg->arrivalGateId() == appInGateId_)
+    else if (msg->getArrivalGateId() == appInGateId_)
     {
         handleApplicationMessage(msg);
      }
-    else if (msg->arrivalGateId() == netInGateId_)
+    else if (msg->getArrivalGateId() == netInGateId_)
     {
         send(msg, appOutGateId_);
     }
@@ -146,8 +146,8 @@ void MPITcpServer::handleMessage(cMessage* msg)
     {
         cerr << __FILE__ << ":" << __LINE__ << ":"
              << "MPI TCP Server does not support message type "
-             << " name: " << msg->name()
-             << " kind: " << msg->kind()
+             << " name: " << msg->getName()
+             << " kind: " << msg->getKind()
              << " info: " << msg->info() << endl;
         assert(false);
     }
@@ -165,21 +165,21 @@ void MPITcpServer::handleApplicationMessage(cMessage* msg)
     else if (spfsCacheRequest* req = dynamic_cast<spfsCacheRequest*>(msg))
     {
         int destRank = req->getDestinationRank();
-        sendUnexpectedMessage(destRank, msg);
+        sendUnexpectedMessage(destRank, req);
     }
     else if (spfsMPIResponse* req = dynamic_cast<spfsMPIResponse*>(msg))
     {
         spfsMPIRequest* origReq =
-                static_cast<spfsMPIRequest*>(req->contextPointer());
+                static_cast<spfsMPIRequest*>(req->getContextPointer());
         ConnectionId connId = origReq->getConnectionId();
-        sendExpectedMessage(connId, msg);
+        sendExpectedMessage(connId, req);
     }
-    else if (spfsCacheResponse* req = dynamic_cast<spfsCacheResponse*>(msg))
+    else if (spfsCacheResponse* resp = dynamic_cast<spfsCacheResponse*>(msg))
     {
         spfsCacheRequest* origReq =
-                static_cast<spfsCacheRequest*>(req->contextPointer());
+                static_cast<spfsCacheRequest*>(resp->getContextPointer());
         ConnectionId connId = origReq->getMpiConnectionId();
-        sendExpectedMessage(connId, msg);
+        sendExpectedMessage(connId, resp);
     }
     else
     {
@@ -190,7 +190,7 @@ void MPITcpServer::handleApplicationMessage(cMessage* msg)
 }
 
 void MPITcpServer::sendExpectedMessage(const ConnectionId& connId,
-                                       cMessage* payload)
+                                       cPacket* payload)
 {
     map<ConnectionId, TCPSocket*>::iterator pos = requestToSocketMap_.find(connId);
     assert(requestToSocketMap_.end() != pos);
@@ -208,7 +208,7 @@ void MPITcpServer::sendExpectedMessage(const ConnectionId& connId,
     requestToSocketMap_.erase(connId);
 }
 
-void MPITcpServer::sendUnexpectedMessage(int rank, cMessage* payload)
+void MPITcpServer::sendUnexpectedMessage(int rank, cPacket* payload)
 {
     TCPSocket* socket = getConnectedSocket(rank);
 
@@ -254,7 +254,7 @@ TCPSocket* MPITcpServer::getConnectedSocket(int rank)
 // and tcp.receiveQueueClass="TCPMsgBasedRcvQueue" ensuring that only
 // whole messages are received rather than message fragments
 //
-void MPITcpServer::socketDataArrived(int, void *, cMessage *msg, bool)
+void MPITcpServer::socketDataArrived(int, void *, cPacket* msg, bool)
 {
     // Find the socket for this message
     TCPSocket* responseSocket = socketMap_.findSocketFor(msg);

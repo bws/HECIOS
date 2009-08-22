@@ -14,13 +14,13 @@ using namespace std;
 
 AggregationIO AggregationIO::createAggregationIO(spfsMPIFileRequest* req)
 {
-    if (SPFS_MPI_FILE_READ_AT_REQUEST == req->kind())
+    if (SPFS_MPI_FILE_READ_AT_REQUEST == req->getKind())
     {
         return AggregationIO(dynamic_cast<spfsMPIFileReadAtRequest*>(req));
     }
     else
     {
-        assert(SPFS_MPI_FILE_WRITE_AT_REQUEST == req->kind());
+        assert(SPFS_MPI_FILE_WRITE_AT_REQUEST == req->getKind());
         return AggregationIO(dynamic_cast<spfsMPIFileWriteAtRequest*>(req));
     }
 }

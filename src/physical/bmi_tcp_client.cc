@@ -32,7 +32,7 @@ public:
     BMITcpClient() : BMIEndpoint() {};
 
     /** @return a BMIExpected message encapsulating msg */
-    virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg);
+    virtual spfsBMIExpectedMessage* createExpectedMessage(cPacket* msg);
 
     /** @return a BMIUnexpected message encapsulating msg */
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
@@ -55,7 +55,7 @@ protected:
     virtual void sendOverNetwork(spfsBMIUnexpectedMessage* unexpectedMsg);
 
     /** Extract the payload from a completed socket message */
-    virtual void socketDataArrived(int, void *, cMessage *msg, bool);
+    virtual void socketDataArrived(int, void *, cPacket *msg, bool);
 
     /** Handle the arrival of a socket failure message */
     virtual void socketFailure(int connId, void *yourPtr, int code);
@@ -84,7 +84,7 @@ private:
     TCPSocketMap socketMap_;
 };
 
-// OMNet Registriation Method
+// OMNet Registration Method
 Define_Module(BMITcpClient);
 
 void BMITcpClient::initializeEndpoint()
@@ -140,18 +140,18 @@ spfsBMIUnexpectedMessage* BMITcpClient::createUnexpectedMessage(
     return pkt;
 }
 
-spfsBMIExpectedMessage* BMITcpClient::createExpectedMessage(cMessage* msg)
+spfsBMIExpectedMessage* BMITcpClient::createExpectedMessage(cPacket* msg)
 {
     assert(0 != msg);
     cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "TCPClient is unable to create expected messages" << endl;
+         << "BMITCPClient is unable to create expected messages" << endl;
     return 0;
 }
 
 void BMITcpClient::sendOverNetwork(spfsBMIExpectedMessage* msg)
 {
     assert(0 != msg);
-    assert(0 < msg->byteLength());
+    assert(0 < msg->getByteLength());
 
     // Retrieve the socket for this handle
     TCPSocket* sock = getConnectedSocket(msg->getConnectionId());
@@ -161,7 +161,7 @@ void BMITcpClient::sendOverNetwork(spfsBMIExpectedMessage* msg)
 void BMITcpClient::sendOverNetwork(spfsBMIUnexpectedMessage* msg)
 {
     assert(0 != msg);
-    assert(0 < msg->byteLength());
+    assert(0 < msg->getByteLength());
 
     // Retrieve the socket for this handle
     TCPSocket* sock = getConnectedSocket(msg->getHandle());
@@ -197,7 +197,7 @@ TCPSocket* BMITcpClient::getConnectedSocket(const FSHandle& handle)
 // and tcp.receiveQueueClass="TCPMsgBasedRcvQueue" ensuring that only
 // whole messages are received rather than message fragments
 //
-void BMITcpClient::socketDataArrived(int, void *, cMessage *msg, bool)
+void BMITcpClient::socketDataArrived(int, void *, cPacket *msg, bool)
 {
     BMIEndpoint::handleMessage(msg);
 }
@@ -214,10 +214,10 @@ void BMITcpClient::socketStatusArrived(int connId,
                                        TCPStatusInfo* status)
 {
     cerr << __FILE__ << ":" << __LINE__ << ":"
-         << "Socket status arrived: State: " << status->state()
-         << " Name: " << status->stateName()
-         << " MSS: " << status->snd_mss()
-         << " Final Ack: " << status->fin_ack_rcvd() << endl;
+         << "Socket status arrived: State: " << status->getState()
+         << " Name: " << status->getStateName()
+         << " MSS: " << status->getSnd_mss()
+         << " Final Ack: " << status->getFin_ack_rcvd() << endl;
     delete status;
 }
 

@@ -6,22 +6,25 @@
 // This file is distributed WITHOUT ANY WARRANTY. See the file 'License.txt'
 // for details on this and other legal matters.
 //
+import inet.applications.tcpapp.TCPApp;
 
 //
 // Implements the BMIEndpoint and TCPApp interfaces (gates)
 //
-simple BMITcpServer
+simple BMITcpServer like TCPApp
 
+{
     parameters:
-        listenPort: numeric const, // port to listen on
-        fixedOverheadSecs: numeric const,
-        scaledOverheadSecs : numeric const;
+    	@class(BMITcpServer);
+        double listenPort; // port to listen on
+        double fixedOverheadSecs;
+        double scaledOverheadSecs;
 
     gates:
-        in: appIn;
-        out: appOut;
+        input appIn;
+        output appOut;
 
-        in: tcpIn;
-        out: tcpOut;
+        input tcpIn;
+        output tcpOut;
 
-endsimple
+}

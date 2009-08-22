@@ -11,33 +11,28 @@
 //
 // Template for File Systems
 //
-simple FileSystem
-    parameters:
-        noATime : bool;
-
+moduleinterface FileSystem
+{
     gates:
-        in: in, response;
-        out: out, request;
-endsimple
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
 //
 // A UNIX/Linux file system model
 //
-simple NativeFileSystem
-    parameters:
-        blockSizeBytes : const,
-        noATime: bool;
+simple NativeFileSystem like FileSystem
+{
+	@class(NativeFileSystem);
+    double blockSizeBytes;
+    bool noATime;
 
     gates:
-        in: in, response;
-        out: out, request;
-endsimple
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
-//
-// Local variables:
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//

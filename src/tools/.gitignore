@@ -1,0 +1,3 @@
+*.d
+*.o
+lanl_trace_scanner.c

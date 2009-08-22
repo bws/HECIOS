@@ -11,11 +11,34 @@
 // Module responsible for translating file system blocks to physical hardware
 // addresses
 //
-simple BlockTranslator
-  gates:
-    in: in, response;
-    out: out, request;
-endsimple
+moduleinterface BlockTranslator
+{
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
+
+simple NoTranslation like BlockTranslator
+{
+	@class(NoTranslation);
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
+
+simple BasicTranslator like BlockTranslator
+{
+	@class(BasicTranslator);
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
 
 

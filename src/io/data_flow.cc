@@ -194,11 +194,11 @@ void DataFlow::initServerFlow()
 simtime_t DataFlow::getRoundTripDelay(cMessage* response) const
 {
     // Get the originating request
-    cMessage* request = static_cast<cMessage*>(response->contextPointer());
+    cMessage* request = static_cast<cMessage*>(response->getContextPointer());
 
     // Determine the request response roundtrip time
-    simtime_t reqSendTime = request->creationTime();
-    simtime_t respArriveTime = parentModule_->simTime();
+    simtime_t reqSendTime = request->getCreationTime();
+    simtime_t respArriveTime = simulation.getSimTime();
     return (respArriveTime - reqSendTime);
 }
 

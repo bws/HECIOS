@@ -22,7 +22,7 @@ BlockTranslator::BlockTranslator()
 
 void BlockTranslator::initialize()
 {
-    inGateId_ = gate("in")->id();
+    inGateId_ = gate("in")->getId();
 
     // Initialize derived translators
     initializeTranslator();
@@ -30,7 +30,7 @@ void BlockTranslator::initialize()
 
 void BlockTranslator::handleMessage(cMessage *msg)
 {
-    if (msg->arrivalGateId() == inGateId_)
+    if (msg->getArrivalGateId() == inGateId_)
     {
         spfsOSBlockIORequest* blockIO = 0;
         spfsOSReadBlocksRequest* blockRead = 0;
@@ -86,15 +86,15 @@ void BlockTranslator::handleMessage(cMessage *msg)
     else
     {
         // Extract the originating device request
-        cMessage* devRequest = (cMessage*)msg->contextPointer();
+        cMessage* devRequest = (cMessage*)msg->getContextPointer();
 
         // Extract the parent block io request
-        cMessage* parentRequest = (cMessage*)devRequest->contextPointer();
+        cMessage* parentRequest = (cMessage*)devRequest->getContextPointer();
         spfsOSBlockIORequest* ioRequest =
             dynamic_cast<spfsOSBlockIORequest*>(parentRequest);
         assert(0 != ioRequest);
 
-        // If this is the last response for this request, send a respnse
+        // If this is the last response for this request, send a response
         // otherwise, decrement the number of remaining responses
         int numRemainingResponses = ioRequest->getNumRemainingResponses();
         if (1 == numRemainingResponses)
@@ -117,10 +117,10 @@ void BlockTranslator::handleMessage(cMessage *msg)
 
 //=============================================================================
 //
-// NoTranslation implementation (bastract class)
+// NoTranslation implementation (abstract class)
 //
 //=============================================================================
-Define_Module_Like(NoTranslation, BlockTranslator);
+Define_Module(NoTranslation);
 
 NoTranslation::NoTranslation()
 {
@@ -138,7 +138,7 @@ vector<LogicalBlockAddress> NoTranslation::getAddresses(FSBlock block) const
 // BasicTranslator implementation (bastract class)
 //
 //=============================================================================
-Define_Module_Like(BasicTranslator, BlockTranslator);
+Define_Module(BasicTranslator);
 
 BasicTranslator::BasicTranslator()
     : addrsPerBlock_(0)

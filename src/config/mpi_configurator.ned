@@ -11,18 +11,10 @@
 // MPI process configuration
 //
 simple MPIConfigurator
+{
     parameters:
-        listenPortMin: numeric const,
-        listenPortMax: numeric const,
-        randomizeRanks: bool;
-endsimple
+        double listenPortMin;
+        double listenPortMax;
+        bool randomizeRanks;
+}
 
-//
-// Local variables:
-//  indent-tabs-mode: nil
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//

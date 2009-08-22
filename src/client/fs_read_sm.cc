@@ -68,13 +68,13 @@ bool FSReadSM::updateState(cFSM& currentState, cMessage* msg)
         }
         case FSM_Exit(COUNT):
         {
-            if (SPFS_READ_RESPONSE == msg->kind())
+            if (SPFS_READ_RESPONSE == msg->getKind())
             {
                 FSM_Goto(currentState, COUNT_SERVER_RESPONSE);
             }
             else
             {
-                assert(SPFS_DATA_FLOW_FINISH == msg->kind());
+                assert(SPFS_DATA_FLOW_FINISH == msg->getKind());
                 FSM_Goto(currentState, COUNT_FLOW_FINISH);
             }
             break;

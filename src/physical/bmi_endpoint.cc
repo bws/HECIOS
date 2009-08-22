@@ -62,11 +62,12 @@ void BMIEndpoint::handleMessage(cMessage* msg)
     //     send it over the network
     // else
     //     its from the network, send it to the application/server
-    if (msg->arrivalGateId() == appInGateId_)
+    if (msg->getArrivalGateId() == appInGateId_)
     {
         // Perform the network queueing costs
+        //TODO: This used to use the message size
         simtime_t scheduleTime =
-            getNextMessageOutScheduleTime(msg->byteLength());
+            getNextMessageOutScheduleTime(0);
         scheduleAt(scheduleTime, msg);
     }
     else if (msg->isSelfMessage())
@@ -105,8 +106,9 @@ void BMIEndpoint::handleMessageFromNetwork(cMessage* msg)
     assert(0 != msg);
 
     // Calculate the network queueing costs
-    simtime_t delay =
-        getNextMessageInScheduleTime(msg->byteLength()) - simTime();
+    simtime_t currentTime = simulation.getSimTime();
+    //TODO: This used to use the actual message size
+    simtime_t delay = getNextMessageInScheduleTime(0) - currentTime;
 
     // If the message is a flow message, send it directly
     // Otherwise extract the payload and send it on

@@ -28,7 +28,7 @@ class BMITcpServer : public BMIEndpoint, public TCPSocket::CallbackInterface
 {
 public:
     /** @return a BMIExpected message encapsulating msg */
-    virtual spfsBMIExpectedMessage* createExpectedMessage(cMessage* msg);
+    virtual spfsBMIExpectedMessage* createExpectedMessage(cPacket* msg);
 
     /** @return a BMIUnexpected message encapsulating msg */
     virtual spfsBMIUnexpectedMessage* createUnexpectedMessage(
@@ -54,7 +54,7 @@ protected:
     virtual cMessage* extractBMIPayload(spfsBMIMessage* bmiMsg);
 
     /** Implementation of TCPSocket::CallbackInterface::socketDataArrived */
-    virtual void socketDataArrived(int connId, void* ptr, cMessage* msg,
+    virtual void socketDataArrived(int connId, void* ptr, cPacket* msg,
                                    bool urgent);
 
     /** Handle the arrival of a socket failure message */
@@ -92,8 +92,8 @@ Define_Module(BMITcpServer);
 void BMITcpServer::initializeEndpoint()
 {
     // Extract the gate ids
-    tcpInGateId_ = gate("tcpIn")->id();
-    tcpOutGateId_ = gate("tcpOut")->id();
+    tcpInGateId_ = findGate("tcpIn");
+    tcpOutGateId_ = findGate("tcpOut");
 
     // Extract the port information
     listenPort_ = par("listenPort").longValue();
@@ -153,12 +153,12 @@ spfsBMIUnexpectedMessage* BMITcpServer::createUnexpectedMessage(
 }
 
 spfsBMIExpectedMessage* BMITcpServer::createExpectedMessage(
-    cMessage* msg)
+    cPacket* msg)
 {
     assert(0 != msg);
 
     // Retrieve the connection id used for the originating request
-    spfsRequest* req = static_cast<spfsRequest*>(msg->contextPointer());
+    spfsRequest* req = static_cast<spfsRequest*>(msg->getContextPointer());
 
     spfsBMIExpectedMessage* pkt = new spfsBMIExpectedMessage();
     pkt->setConnectionId(req->getBmiConnectionId());
@@ -172,7 +172,7 @@ spfsBMIExpectedMessage* BMITcpServer::createExpectedMessage(
 void BMITcpServer::sendOverNetwork(spfsBMIExpectedMessage* msg)
 {
     assert(0 != msg);
-    assert(0 < msg->byteLength());
+    assert(0 < msg->getByteLength());
 
     // Find the already open socket
     map<ConnectionId,TCPSocket*>::iterator pos =
@@ -191,7 +191,7 @@ void BMITcpServer::sendOverNetwork(spfsBMIExpectedMessage* msg)
 void BMITcpServer::sendOverNetwork(spfsBMIUnexpectedMessage* msg)
 {
     assert(0 != msg);
-    assert(0 < msg->byteLength());
+    assert(0 < msg->getByteLength());
     //cerr << __FILE__ << ":" << __LINE__ << ":"
     //     << "Server sending unexpected messages" << endl;
 
@@ -252,7 +252,7 @@ TCPSocket* BMITcpServer::getConnectedSocket(const FSHandle& handle)
 // and tcp.receiveQueueClass="TCPMsgBasedRcvQueue" ensuring that only
 // whole messages are received rather than message fragments
 //
-void BMITcpServer::socketDataArrived(int, void *, cMessage *msg, bool)
+void BMITcpServer::socketDataArrived(int, void *, cPacket *msg, bool)
 {
     BMIEndpoint::handleMessage(msg);
 }

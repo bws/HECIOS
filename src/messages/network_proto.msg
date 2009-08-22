@@ -18,28 +18,29 @@ enum spfsNetworkMessageKinds
 };
 
 // The abstract base class for all Network Messages
-message spfsNetworkMessage
+packet spfsNetworkMessage
 {
     fields:
 };
 
 // Message sent over the network from a client 
-message spfsNetworkClientSendMessage extends spfsNetworkMessage
+packet spfsNetworkClientSendMessage extends spfsNetworkMessage
 {
     fields:
 };
 
 // Message sent over the network from a server 
-message spfsNetworkServerSendMessage extends spfsNetworkMessage
+packet spfsNetworkServerSendMessage extends spfsNetworkMessage
 {
     fields:
 };
 
 //
 // Local variables:
+//  indent-tabs-mode: nil
 //  c-indent-level: 4
 //  c-basic-offset: 4
 // End:
 //
-// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+// vim: ts=4 sts=4 sw=4 expandtab
 //

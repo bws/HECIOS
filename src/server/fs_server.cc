@@ -35,19 +35,19 @@ using namespace std;
 Define_Module(FSServer);
 
 size_t FSServer::defaultAttrSize_ = 0;
-simtime_t FSServer::changeDirEntProcessingDelay_ = 0.0;
-simtime_t FSServer::createDFileProcessingDelay_ = 0.0;
-simtime_t FSServer::createDirectoryProcessingDelay_ = 0.0;
-simtime_t FSServer::createMetadataProcessingDelay_ = 0.0;
-simtime_t FSServer::createDirEntProcessingDelay_ = 0.0;
-simtime_t FSServer::getAttrProcessingDelay_ = 0.0;
-simtime_t FSServer::lookupPathProcessingDelay_ = 0.0;
-simtime_t FSServer::readDirProcessingDelay_ = 0.0;
-simtime_t FSServer::removeDirEntProcessingDelay_ = 0.0;
-simtime_t FSServer::removeMetaProcessingDelay_ = 0.0;
-simtime_t FSServer::removeObjectProcessingDelay_ = 0.0;
-simtime_t FSServer::setAttrProcessingDelay_ = 0.0;
-simtime_t FSServer::serverOverheadDelay_ = 0.0;
+double FSServer::changeDirEntProcessingDelay_ = 0.0;
+double FSServer::createDFileProcessingDelay_ = 0.0;
+double FSServer::createDirectoryProcessingDelay_ = 0.0;
+double FSServer::createMetadataProcessingDelay_ = 0.0;
+double FSServer::createDirEntProcessingDelay_ = 0.0;
+double FSServer::getAttrProcessingDelay_ = 0.0;
+double FSServer::lookupPathProcessingDelay_ = 0.0;
+double FSServer::readDirProcessingDelay_ = 0.0;
+double FSServer::removeDirEntProcessingDelay_ = 0.0;
+double FSServer::removeMetaProcessingDelay_ = 0.0;
+double FSServer::removeObjectProcessingDelay_ = 0.0;
+double FSServer::setAttrProcessingDelay_ = 0.0;
+double FSServer::serverOverheadDelay_ = 0.0;
 bool FSServer::collectDiskData_ = false;
 
 size_t FSServer::getDefaultAttrSize()
@@ -62,127 +62,127 @@ size_t FSServer::getDirectoryEntrySize()
 
 void FSServer::setChangeDirEntProcessingDelay(simtime_t changeDirEntDelay)
 {
-    changeDirEntProcessingDelay_ = changeDirEntDelay;
+    changeDirEntProcessingDelay_ = changeDirEntDelay.dbl();
 }
 
-simtime_t FSServer::changeDirEntProcessingDelay()
+double FSServer::changeDirEntProcessingDelay()
 {
     return changeDirEntProcessingDelay_;
 }
 
 void FSServer::setCreateDFileProcessingDelay(simtime_t createDFileDelay)
 {
-    createDFileProcessingDelay_ = createDFileDelay;
+    createDFileProcessingDelay_ = createDFileDelay.dbl();
 }
 
-simtime_t FSServer::createDFileProcessingDelay()
+double FSServer::createDFileProcessingDelay()
 {
     return createDFileProcessingDelay_;
 }
 
 void FSServer::setCreateDirectoryProcessingDelay(simtime_t createDirDelay)
 {
-    createDirectoryProcessingDelay_ = createDirDelay;
+    createDirectoryProcessingDelay_ = createDirDelay.dbl();
 }
 
-simtime_t FSServer::createDirectoryProcessingDelay()
+double FSServer::createDirectoryProcessingDelay()
 {
     return createDirectoryProcessingDelay_;
 }
 
 void FSServer::setCreateMetadataProcessingDelay(simtime_t createMetaDelay)
 {
-    createMetadataProcessingDelay_ = createMetaDelay;
+    createMetadataProcessingDelay_ = createMetaDelay.dbl();
 }
 
-simtime_t FSServer::createMetadataProcessingDelay()
+double FSServer::createMetadataProcessingDelay()
 {
     return createMetadataProcessingDelay_;
 }
 
 void FSServer::setCreateDirEntProcessingDelay(simtime_t createDirEntDelay)
 {
-    createDirEntProcessingDelay_ = createDirEntDelay;
+    createDirEntProcessingDelay_ = createDirEntDelay.dbl();
 }
 
-simtime_t FSServer::createDirEntProcessingDelay()
+double FSServer::createDirEntProcessingDelay()
 {
     return createDirEntProcessingDelay_;
 }
 
 void FSServer::setGetAttrProcessingDelay(simtime_t getAttrDelay)
 {
-    getAttrProcessingDelay_ = getAttrDelay;
+    getAttrProcessingDelay_ = getAttrDelay.dbl();
 }
 
-simtime_t FSServer::getAttrProcessingDelay()
+double FSServer::getAttrProcessingDelay()
 {
     return getAttrProcessingDelay_;
 }
 
 void FSServer::setLookupPathProcessingDelay(simtime_t lookupPathDelay)
 {
-    lookupPathProcessingDelay_ = lookupPathDelay;
+    lookupPathProcessingDelay_ = lookupPathDelay.dbl();
 }
 
-simtime_t FSServer::lookupPathProcessingDelay()
+double FSServer::lookupPathProcessingDelay()
 {
     return lookupPathProcessingDelay_;
 }
 
 void FSServer::setReadDirProcessingDelay(simtime_t readDirDelay)
 {
-    readDirProcessingDelay_ = readDirDelay;
+    readDirProcessingDelay_ = readDirDelay.dbl();
 }
 
-simtime_t FSServer::readDirProcessingDelay()
+double FSServer::readDirProcessingDelay()
 {
     return readDirProcessingDelay_;
 }
 
 void FSServer::setRemoveDirEntProcessingDelay(simtime_t removeDirEntDelay)
 {
-    removeDirEntProcessingDelay_ = removeDirEntDelay;
+    removeDirEntProcessingDelay_ = removeDirEntDelay.dbl();
 }
 
-simtime_t FSServer::removeDirEntProcessingDelay()
+double FSServer::removeDirEntProcessingDelay()
 {
     return removeDirEntProcessingDelay_;
 }
 
 void FSServer::setRemoveMetaProcessingDelay(simtime_t removeMetaDelay)
 {
-    removeMetaProcessingDelay_ = removeMetaDelay;
+    removeMetaProcessingDelay_ = removeMetaDelay.dbl();
 }
 
-simtime_t FSServer::removeMetaProcessingDelay()
+double FSServer::removeMetaProcessingDelay()
 {
     return removeMetaProcessingDelay_;
 }
 
 void FSServer::setRemoveObjectProcessingDelay(simtime_t removeObjectDelay)
 {
-    removeObjectProcessingDelay_ = removeObjectDelay;
+    removeObjectProcessingDelay_ = removeObjectDelay.dbl();
 }
 
-simtime_t FSServer::removeObjectProcessingDelay()
+double FSServer::removeObjectProcessingDelay()
 {
     return removeObjectProcessingDelay_;
 }
 
 void FSServer::setSetAttrProcessingDelay(simtime_t setAttrDelay)
 {
-    setAttrProcessingDelay_ = setAttrDelay;
+    setAttrProcessingDelay_ = setAttrDelay.dbl();
 }
 
-simtime_t FSServer::setAttrProcessingDelay()
+double FSServer::setAttrProcessingDelay()
 {
     return setAttrProcessingDelay_;
 }
 
 void FSServer::setServerOverheadDelay(simtime_t serverOverheadDelay)
 {
-    serverOverheadDelay_ = serverOverheadDelay;
+    serverOverheadDelay_ = serverOverheadDelay.dbl();
 }
 
 void FSServer::setCollectDiskData(bool collectFlag)
@@ -229,8 +229,8 @@ void FSServer::initialize()
     range_.last = UINT_MAX - 1;
 
     // Retrieve the gate ids
-    inGateId_ = gate("in")->id();
-    outGateId_ = gate("out")->id();
+    inGateId_ = findGate("in");
+    outGateId_ = findGate("out");
 
     // Initialize scalar data
     numCollectiveCreates_ = 0;
@@ -299,9 +299,9 @@ void FSServer::handleMessage(cMessage* msg)
     }
     else
     {
-        cMessage* parentReq = static_cast<cMessage*>(msg->contextPointer());
+        cMessage* parentReq = static_cast<cMessage*>(msg->getContextPointer());
         spfsRequest* origRequest =
-            static_cast<spfsRequest*>(parentReq->contextPointer());
+            static_cast<spfsRequest*>(parentReq->getContextPointer());
         processRequest(origRequest, msg);
         delete parentReq;
         delete msg;
@@ -311,7 +311,7 @@ void FSServer::handleMessage(cMessage* msg)
 void FSServer::processRequest(spfsRequest* request, cMessage* msg)
 {
     assert(0 != request);
-    switch(request->kind())
+    switch(request->getKind())
     {
         case SPFS_CHANGE_DIR_ENT_REQUEST:
         {
@@ -412,7 +412,7 @@ void FSServer::processRequest(spfsRequest* request, cMessage* msg)
         default:
         {
             cerr << __FILE__ << ":" << __LINE__ << ":"
-                 << "FSServer Error: Unknown message kind:" << request->kind()
+                 << "FSServer Error: Unknown message kind:" << request->getKind()
                  << endl
                  << "!!!!!!!!! ------------------------ !!!!!!!!!!!!!" << endl
                  << "ERROR: Server unable to construct response" << endl
@@ -597,10 +597,10 @@ void FSServer::recordSetAttrDiskDelay(cMessage* fileWriteResponse)
 simtime_t FSServer::getRoundTripDelay(cMessage* response) const
 {
     // Get the originating request
-    cMessage* request = static_cast<cMessage*>(response->contextPointer());
+    cMessage* request = static_cast<cMessage*>(response->getContextPointer());
 
     // Determine the request response roundtrip time
-    simtime_t reqSendTime = request->creationTime();
+    simtime_t reqSendTime = request->getCreationTime();
     simtime_t respArriveTime = simTime();
     return (respArriveTime - reqSendTime);
 }

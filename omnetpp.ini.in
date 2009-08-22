@@ -6,12 +6,11 @@
 # ALL RIGHTS RESERVED.
 #
 
-# This file is shared by all PFS simulations
 #
 # General Settings
 #
 [General]
-preload-ned-files = @@INSTALL_DIR@/lib/ned/hecios_ned.lst
+ned-path = @INSTALL_DIR@/lib/ned
 sim-time-limit = 10000s
 
 #
@@ -28,17 +27,13 @@ include @INSTALL_DIR@/ini/global_env.ini
 #
 # Output settings
 #
-include @INSTALL_DIR@/ini/global_out_vectors.ini
+#include @INSTALL_DIR@/ini/global_out_vectors.ini
 
 #
 # Run definitions
 #
-include @INSTALL_DIR@/ini/global_run_configs.ini
+#include @INSTALL_DIR@/ini/global_run_configs.ini
 
-#
-# Simulation parameters
-#
-[Parameters]
 
 #
 # Enable to time ping data
@@ -49,8 +44,8 @@ include @INSTALL_DIR@/ini/global_run_configs.ini
 # Include parameters
 #
 include @INSTALL_DIR@/ini/palmetto_static_params.ini
-#include @INSTALL_DIR@/ini/palmetto_gige.ini
-include @INSTALL_DIR@/ini/palmetto_myri10g.ini
+include @INSTALL_DIR@/ini/palmetto_gige.ini
+#include @INSTALL_DIR@/ini/palmetto_myri10g.ini
 #include @INSTALL_DIR@/ini/palmetto_gige_doubled.ini
 #include @INSTALL_DIR@/ini/palmetto_myri10g_uncapped.ini
 

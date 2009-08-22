@@ -7,31 +7,40 @@
 // for details on this and other legal matters.
 //
 
-import
-    "bmi_transport",
-    "mpi_process";
+import bmi_transport;
+import mpi_process;
 
 //
 // A UNIX process that requires 10us interrupts to access the network
 //
 module JobProcess
+{
     parameters:
 
+        @display("bgb=,,white,,");
     gates:
-        in: bmiIn, mpiIn;
-        out: bmiOut, mpiOut;
+        input bmiIn;
+        input mpiIn;
+        output bmiOut;
+        output mpiOut;
 
     submodules:
-        mpi: MPIProcess;
-            display: "p=120,80;i=block/process,white";
-           
-        clientJobManager: JobManager;
-            display: "p=60, 280;i=block/classifier,yellow";
+        mpi: MPIProcess {
+            parameters:
+                @display("p=120,80;i=block/process,white");
 
-        fsClient: FSClient;
-            display: "p=160,280;i=block/process,red";
+        }
+        clientJobManager: JobManager {
+            parameters:
+                @display("p=60, 280;i=block/classifier,yellow");
 
-    connections nocheck:
+        }
+        fsClient: FSClient {
+            parameters:
+                @display("p=160,280;i=block/process,red");
+
+        }
+    connections allowunconnected:
         // Connect the MPI process I/O handling to the cache
         mpi.ioOut --> fsClient.appIn;
         mpi.ioIn <-- fsClient.appOut;
@@ -43,10 +52,9 @@ module JobProcess
         // Connect the client job manager's network ports to the network
         clientJobManager.netOut --> bmiOut;
         clientJobManager.netIn <-- bmiIn;
-        
+
         // Connect the MPI process's network ports to the network
         mpi.netOut --> mpiOut;
         mpi.netIn <-- mpiIn;
 
-    display: "o=white";
-endmodule
+}

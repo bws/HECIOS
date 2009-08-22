@@ -59,11 +59,11 @@ void MiddlewareAggregator::handleMessage(cMessage* msg)
     {
         handleFileSystemMessage(msg);
     }
-    else if (msg->arrivalGateId() == appInGateId())
+    else if (msg->getArrivalGateId() == appInGateId())
     {
         handleApplicationMessage(msg);
     }
-    else if (msg->arrivalGateId() == ioInGateId())
+    else if (msg->getArrivalGateId() == ioInGateId())
     {
         handleFileSystemMessage(msg);
     }
@@ -78,11 +78,11 @@ void MiddlewareAggregator::handleMessage(cMessage* msg)
 void MiddlewareAggregator::sendApplicationResponse(double delay, cMessage* response)
 {
     // Determine the original sender
-    cMessage* origRequest = static_cast<cMessage*>(response->contextPointer());
-    cModule* originator = origRequest->senderModule();
+    cMessage* origRequest = static_cast<cMessage*>(response->getContextPointer());
+    cModule* originator = origRequest->getSenderModule();
 
     // Add the delay to the message
-    cPar* delayParameter = new cPar("Delay");
+    cMsgPar* delayParameter = new cMsgPar("Delay");
     *delayParameter = delay;
     response->addPar(delayParameter);
 
@@ -138,11 +138,11 @@ MiddlewareAggregator::createSharedResource(map<cModule*, SharedResource*>& share
 cModule* MiddlewareAggregator::findParentComputeNode() const
 {
     // Extract the compute node model
-    cModule* mpiProcess = parentModule();
+    cModule* mpiProcess = getParentModule();
     assert(0 != mpiProcess);
-    cModule* jobProcess = mpiProcess->parentModule();
+    cModule* jobProcess = mpiProcess->getParentModule();
     assert(0 != jobProcess);
-    cModule* cpun = jobProcess->parentModule();
+    cModule* cpun = jobProcess->getParentModule();
     assert(0 != cpun);
     return cpun;
 }

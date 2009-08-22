@@ -261,7 +261,7 @@ void ReadPages::startDataFlow(const set<FilePageId>& localPages)
     dataFlowStart->setBstreamSize(readReq_->getBstreamSize());
 
     module_->send(dataFlowStart);
-    cerr << __FILE__ << ": Starting server page read flow on: " << module_->fullName()
+    cerr << __FILE__ << ": Starting server page read flow on: " << module_->getFullName()
          << " client tag: " << readReq_->getClientFlowBmiTag() << endl;
 }
 

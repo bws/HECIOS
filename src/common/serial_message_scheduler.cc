@@ -21,14 +21,14 @@ SerialMessageScheduler::~SerialMessageScheduler()
 simtime_t SerialMessageScheduler::getNextMessageScheduleDelay(
     simtime_t additionalDelay)
 {
-    return getNextMessageScheduleTime(additionalDelay) - module_->simTime();
+    return getNextMessageScheduleTime(additionalDelay) - simulation.getSimTime();
 }
 
 simtime_t SerialMessageScheduler::getNextMessageScheduleTime(
     simtime_t additionalDelay)
 {
     // Update the schedule to the current time if necessary
-    simtime_t currentTime = module_->simTime();
+    simtime_t currentTime = simulation.getSimTime();
     if (nextMessageScheduleTime_ < currentTime)
     {
         nextMessageScheduleTime_ = currentTime;

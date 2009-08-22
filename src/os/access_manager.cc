@@ -20,8 +20,8 @@ AccessManager::~AccessManager()
 
 void AccessManager::initialize()
 {
-    getBlockGateId_ = gate("get_block")->id();
-    nextRequestGateId_ = gate("next_request")->id();
+    getBlockGateId_ = gate("get_block")->getId();
+    nextRequestGateId_ = gate("next_request")->getId();
 }
 
 void AccessManager::finish()
@@ -34,7 +34,7 @@ void AccessManager::handleMessage(cMessage *msg)
 
 //------------------------------------------------
 
-Define_Module_Like( SimpleAccessManager, AccessManager )
+Define_Module(SimpleAccessManager);
 
 SimpleAccessManager::SimpleAccessManager()
 {
@@ -42,7 +42,7 @@ SimpleAccessManager::SimpleAccessManager()
 
 //------------------------------------------------
 
-Define_Module_Like( MutexAccessManager, AccessManager )
+Define_Module(MutexAccessManager);
 
 MutexAccessManager::MutexAccessManager()
 {
@@ -62,7 +62,7 @@ void MutexAccessManager::finish()
 
 void MutexAccessManager::handleMessage(cMessage *msg)
 {
-    if ( msg->arrivalGateId() == fromSchedulerId ) {
+    if ( msg->getArrivalGateId() == fromSchedulerId ) {
 
         if (pendingMessageQueue_.empty() && hasIdleDisk_)
         {
@@ -74,7 +74,7 @@ void MutexAccessManager::handleMessage(cMessage *msg)
             pendingMessageQueue_.insert(msg);
         }
     }
-    else if (msg->arrivalGateId() == fromDiskId)
+    else if (msg->getArrivalGateId() == fromDiskId)
     {
         if (!pendingMessageQueue_.empty())
         {

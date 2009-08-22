@@ -119,7 +119,7 @@ void LRUTimeoutCache<KeyType,ValueType>::insert(const KeyType& key,
     {
         // Entry already exists, update it
         pos->second->data = value;
-        pos->second->timeStamp = simulation.simTime();
+        pos->second->timeStamp = simulation.getSimTime().dbl();
 
         // Update the LRU data
         lruList_.erase(pos->second->lruRef);
@@ -138,7 +138,7 @@ void LRUTimeoutCache<KeyType,ValueType>::insert(const KeyType& key,
         // Fill out the Cache entry data
         EntryType* entry = new EntryType();
         entry->data = value;
-        entry->timeStamp = simulation.simTime();
+        entry->timeStamp = simulation.getSimTime().dbl();
 
         // Add to the LRU list
         lruList_.push_front(key);

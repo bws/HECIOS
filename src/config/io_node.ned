@@ -7,41 +7,51 @@
 // for details on this and other legal matters.
 //
 
-import
-    "bmi_enhanced_host",
-    "daemon_process", 
-    "Storagelayer";
+import bmi_enhanced_host;
+import daemon_process;
+import Storagelayer;
 
 //
 // Ethernet based compute node
 //
 module IONode
 
+{
+    parameters:
+        @display("bgb=,,white,,");
+
     gates:
-        in: ethIn;
-        out: ethOut;
+        input ethIn;
+        output ethOut;
 
     submodules:
-        hca: BMIEnhancedHost;
+        hca: EnhancedHost {
             parameters:
-                numTcpApps = 1,
-                tcpAppType = "BMITcpServer";
-            display: "p=100,80;i=block/rxtx,medium purple";
+                numBmiApps = 1;
+                bmiAppType = "BMITcpServer";
+                @display("p=100,80;i=block/rxtx,medium purple");
 
-        daemon: DaemonProcess;
-            display: "p=100,180;i=block/process,blue";
+        }
+        daemon: DaemonProcess {
+            parameters:
+                @display("p=100,180;i=block/process,blue");
 
-        os: OperatingSystem;
-            display: "p=100,280;i=block/process,blue";
+        }
+        os: OperatingSystem {
+            parameters:
+                @display("p=100,280;i=block/process,blue");
 
-        hardDisk: BasicModelDisk;
-            display: "p=100,380;i=abstract/db,sienna";
+        }
+        hardDisk: BasicModelDisk {
+            parameters:
+                @display("p=100,380;i=abstract/db,sienna");
 
+        }
     connections:
 
         // Connect process to bmi transport
-        daemon.out --> hca.bmiIn++;
-        daemon.in <-- hca.bmiOut++;
+        daemon.out --> hca.bmig$i++;
+        daemon.in <-- hca.bmig$o++;
 
         // Connect operating system gates
         daemon.toOS --> os.in;
@@ -52,19 +62,8 @@ module IONode
         os.fromDisk <-- hardDisk.out;
 
         // Connect networking gates
-        ethIn --> hca.ethIn++;
-        ethOut <-- hca.ethOut++;
+        ethIn --> hca.ethg$i++;
+        ethOut <-- hca.ethg$o++;
 
-    display: "o=white";
-        
-endmodule
+}
 
-//
-// Local variables:
-//  indent-tabs-mode: nil
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//

@@ -12,11 +12,12 @@
 //
 simple RequestScheduler
 
+{
     gates:
-        in: requestIn;
-        out: requestOut;
+        input requestIn;
+        output requestOut;
 
-        in: serverIn;
-        out: serverOut;
+        input serverIn;
+        output serverOut;
 
-endsimple
+}

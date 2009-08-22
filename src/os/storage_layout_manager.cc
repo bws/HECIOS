@@ -50,30 +50,30 @@ FileSystem* StorageLayoutManager::getLocalFileSystem(size_t serverNumber) const
     FileSystem* fs = 0;
 
     // Traverse the simulation module tree to find the server's file system
-    cModule* clusterMod = simulation.systemModule();
+    cModule* clusterMod = simulation.getSystemModule();
     assert(0 != clusterMod);
 
     // Loop thru I/O Nodes
     int numIONodes = clusterMod->par("numIONodes");
     for (int i = 0; i < numIONodes; i++)
     {
-        cModule* ionMod = clusterMod->submodule("ion", i);
+        cModule* ionMod = clusterMod->getSubmodule("ion", i);
         assert(0 != ionMod);
 
-        cModule* daemonMod = ionMod->submodule("daemon");
+        cModule* daemonMod = ionMod->getSubmodule("daemon");
         assert(0 != daemonMod);
 
-        cModule* serverMod = daemonMod->submodule("pfsServer");
+        cModule* serverMod = daemonMod->getSubmodule("pfsServer");
         assert(0 != serverMod);
         FSServer* fsServer = dynamic_cast<FSServer*>(serverMod);
 
         // If server numbers match, find the local file system
-        if (serverNumber == fsServer->getNumber())
+        if (serverNumber == fsServer->getServerNumber())
         {
-            cModule* osMod = ionMod->submodule("os");
+            cModule* osMod = ionMod->getSubmodule("os");
             assert(0 != osMod);
 
-            cModule* fileSystemMod = osMod->submodule("fileSystem");
+            cModule* fileSystemMod = osMod->getSubmodule("fileSystem");
             fs = dynamic_cast<FileSystem*>(fileSystemMod);
             break;
         }

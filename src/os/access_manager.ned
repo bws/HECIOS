@@ -16,16 +16,22 @@
 // -  MutexAccessManager: only one outstanding request at a time
 //
 simple AccessManager
-  gates:
-    in: next_request, block;
-    out: get_next_request, get_block, out;
-endsimple
+{
+    gates:
+        input next_request;
+        input block;
+        output get_next_request;
+        output get_block;
+        output out;
+}
 
-//
-// Local variables:
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
-//
+simple SimpleAccessManager extends AccessManager
+{
+    @class(SimpleAccessManager);
+}
+
+simple MutexAccessManager extends AccessManager
+{
+    @class(MutexAccessManager);
+}
+

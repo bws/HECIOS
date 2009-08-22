@@ -17,14 +17,14 @@ using namespace std;
 void IOLibrary::initialize()
 {
     // Store gate ids
-    inGateId_ = gate("in")->id();
-    requestGateId_ = gate("request")->id();
-    outGateId_ = gate("out")->id();
+    inGateId_ = findGate("in");
+    requestGateId_ = findGate("request");
+    outGateId_ = findGate("out");
 }
 
 void IOLibrary::handleMessage( cMessage *msg )
 {
-    if (msg->arrivalGateId() == inGateId_)
+    if (msg->getArrivalGateId() == inGateId_)
     {
         send(msg, requestGateId_);
     }

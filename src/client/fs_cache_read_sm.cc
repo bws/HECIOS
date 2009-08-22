@@ -70,13 +70,13 @@ bool FSCacheReadSM::updateState(cFSM& currentState, cMessage* msg)
         }
         case FSM_Exit(COUNT):
         {
-            if (SPFS_READ_PAGES_RESPONSE == msg->kind())
+            if (SPFS_READ_PAGES_RESPONSE == msg->getKind())
             {
                 FSM_Goto(currentState, COUNT_SERVER_RESPONSE);
             }
             else
             {
-                assert(SPFS_DATA_FLOW_FINISH == msg->kind());
+                assert(SPFS_DATA_FLOW_FINISH == msg->getKind());
                 FSM_Goto(currentState, COUNT_FLOW_FINISH);
             }
             break;
@@ -88,7 +88,7 @@ bool FSCacheReadSM::updateState(cFSM& currentState, cMessage* msg)
             // Need a quick workaround in case there isn't a need for a
             // flow here
             spfsReadRequest* readRequest =
-                static_cast<spfsReadRequest*>(msg->contextPointer());
+                static_cast<spfsReadRequest*>(msg->getContextPointer());
             if (0 != readRequest->getLocalSize())
             {
                 startFlow(dynamic_cast<spfsReadPagesResponse*>(msg));
@@ -136,7 +136,7 @@ bool FSCacheReadSM::updateState(cFSM& currentState, cMessage* msg)
 
 void FSCacheReadSM::enterRead()
 {
-    FileDescriptor* fd = readRequest_->getDescriptor();
+    FileDescriptor* fd = readRequest_->getFileDescriptor();
     assert(0 != fd);
     const FSMetaData* metaData = fd->getMetaData();
 
@@ -224,7 +224,7 @@ bool FSCacheReadSM::fileHasReadData(size_t reqBytes)
 {
     // TODO: This is not a correct implementation, but it works for now
     // Extract the file descriptor
-    FileDescriptor* fd = readRequest_->getDescriptor();
+    FileDescriptor* fd = readRequest_->getFileDescriptor();
     assert(0 != fd);
     FSSize fileSize = fd->getMetaData()->size;
     return (reqBytes <= fileSize);
@@ -238,12 +238,12 @@ void FSCacheReadSM::startFlow(spfsReadPagesResponse* readResponse)
     assert(0 < pageSize);
 
     // Extract the file descriptor
-    FileDescriptor* fd = readRequest_->getDescriptor();
+    FileDescriptor* fd = readRequest_->getFileDescriptor();
     assert(0 != fd);
 
     // Extract the server request
     spfsReadPagesRequest* serverRequest =
-        static_cast<spfsReadPagesRequest*>(readResponse->contextPointer());
+        static_cast<spfsReadPagesRequest*>(readResponse->getContextPointer());
 
     // Create the flow start message
     spfsCacheDataFlowStart* flowStart = new spfsCacheDataFlowStart(0,

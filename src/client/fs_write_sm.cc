@@ -178,7 +178,7 @@ void FSWriteSM::startFlow(spfsWriteResponse* writeResponse)
 {
     // Extract the server request
     spfsWriteRequest* serverRequest =
-        static_cast<spfsWriteRequest*>(writeResponse->contextPointer());
+        static_cast<spfsWriteRequest*>(writeResponse->getContextPointer());
 
     // Create the flow start message
     spfsClientDataFlowStart* flowStart =
@@ -227,7 +227,7 @@ void FSWriteSM::countCompletion(spfsWriteCompletionResponse* completionResponse)
 
     // Cleanup the PFS request
     spfsWriteRequest* pfsReq =
-        (spfsWriteRequest*)completionResponse->contextPointer();
+        (spfsWriteRequest*)completionResponse->getContextPointer();
     pfsReq->setAutoCleanup(true);
     delete pfsReq->getDist();
     delete pfsReq->getView();

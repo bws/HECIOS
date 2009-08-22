@@ -51,73 +51,73 @@ public:
     static void setChangeDirEntProcessingDelay(simtime_t changeDirEntDelay);
 
     /** @return the server processing delay for changing a directory entry */
-    static simtime_t changeDirEntProcessingDelay();
+    static double changeDirEntProcessingDelay();
 
     /** Set the create data file processing delay */
     static void setCreateDFileProcessingDelay(simtime_t createDFileDelay);
 
     /** @return the server processing delay for creating a data object */
-    static simtime_t createDFileProcessingDelay();
+    static double createDFileProcessingDelay();
 
     /** Set the create directory processing delay */
     static void setCreateDirectoryProcessingDelay(simtime_t createDirDelay);
 
     /** @return the server processing delay for creating a directory */
-    static simtime_t createDirectoryProcessingDelay();
+    static double createDirectoryProcessingDelay();
 
     /** Set the create metadata processing delay */
     static void setCreateMetadataProcessingDelay(simtime_t createMetadataDelay);
 
     /** @return the server processing delay for creating a metadata object */
-    static simtime_t createMetadataProcessingDelay();
+    static double createMetadataProcessingDelay();
 
     /** Set the create directory entry processing delay */
     static void setCreateDirEntProcessingDelay(simtime_t createDirEntDelay);
 
     /** @return the server processing delay for creating a directory entry */
-    static simtime_t createDirEntProcessingDelay();
+    static double createDirEntProcessingDelay();
 
     /** Set the attribute retrieval processing delay */
     static void setGetAttrProcessingDelay(simtime_t getAttrDelay);
 
     /** @return the server processing delay for getting object attributes */
-    static simtime_t getAttrProcessingDelay();
+    static double getAttrProcessingDelay();
 
     /** Set the Path resolution processing delay */
     static void setLookupPathProcessingDelay(simtime_t lookupPathDelay);
 
     /** @return the server processing delay for resolving a path */
-    static simtime_t lookupPathProcessingDelay();
+    static double lookupPathProcessingDelay();
 
     /** Set the read directory processing delay */
     static void setReadDirProcessingDelay(simtime_t readDirDelay);
 
     /** @return the server processing delay for reading directory entries */
-    static simtime_t readDirProcessingDelay();
+    static double readDirProcessingDelay();
 
     /** Set the remove directory entry processing delay */
     static void setRemoveDirEntProcessingDelay(simtime_t removeDirEntDelay);
 
     /** @return the server processing delay for removing a directory entry */
-    static simtime_t removeDirEntProcessingDelay();
+    static double removeDirEntProcessingDelay();
 
     /** Set the remove metadata processing delay */
     static void setRemoveMetaProcessingDelay(simtime_t removeMetaDelay);
 
     /** @return the server processing delay for removing metadata */
-    static simtime_t removeMetaProcessingDelay();
+    static double removeMetaProcessingDelay();
 
     /** Set the remove object processing delay */
     static void setRemoveObjectProcessingDelay(simtime_t removeObjectDelay);
 
     /** @return the server processing delay for removing an object */
-    static simtime_t removeObjectProcessingDelay();
+    static double removeObjectProcessingDelay();
 
     /** Set the attributes set processing delay */
     static void setSetAttrProcessingDelay(simtime_t setAttrDelay);
 
     /** @return the server processing delay for setting object attributes */
-    static simtime_t setAttrProcessingDelay();
+    static double setAttrProcessingDelay();
 
     /** Set the server overhead delay */
     static void setServerOverheadDelay(simtime_t serverOverheadDelay);
@@ -129,10 +129,10 @@ public:
     FSServer();
 
     /** @return the server's unique name */
-    std::string getName() const { return serverName_; };
+    std::string getServerName() const { return serverName_; };
 
     /** @return the server's unique number */
-    std::size_t getNumber() const { return serverNumber_; };
+    std::size_t getServerNumber() const { return serverNumber_; };
 
     /** @return the range of handles assigned to this server */
     HandleRange getHandleRange() const { return range_; };
@@ -255,43 +255,43 @@ private:
     static std::size_t defaultAttrSize_;
 
     /** Change Directory Entry server processing delay */
-    static simtime_t changeDirEntProcessingDelay_;
+    static double changeDirEntProcessingDelay_;
 
     /** Create DFile server processing delay*/
-    static simtime_t createDFileProcessingDelay_;
+    static double createDFileProcessingDelay_;
 
     /** Create directory server processing delay*/
-    static simtime_t createDirectoryProcessingDelay_;
+    static double createDirectoryProcessingDelay_;
 
     /** Create metadata server processing delay*/
-    static simtime_t createMetadataProcessingDelay_;
+    static double createMetadataProcessingDelay_;
 
     /** Create Directory Entry server processing delay */
-    static simtime_t createDirEntProcessingDelay_;
+    static double createDirEntProcessingDelay_;
 
     /** Get Attributes server processing delay */
-    static simtime_t getAttrProcessingDelay_;
+    static double getAttrProcessingDelay_;
 
     /** Lookup Path server processing delay */
-    static simtime_t lookupPathProcessingDelay_;
+    static double lookupPathProcessingDelay_;
 
     /** Read Directory server processing delay */
-    static simtime_t readDirProcessingDelay_;
+    static double readDirProcessingDelay_;
 
     /** Remove Directory Entry server processing delay */
-    static simtime_t removeDirEntProcessingDelay_;
+    static double removeDirEntProcessingDelay_;
 
     /** Remove Object server processing delay */
-    static simtime_t removeObjectProcessingDelay_;
+    static double removeObjectProcessingDelay_;
 
     /** Remove metadata server processing delay */
-    static simtime_t removeMetaProcessingDelay_;
+    static double removeMetaProcessingDelay_;
 
     /** Set Attributes server processing delay */
-    static simtime_t setAttrProcessingDelay_;
+    static double setAttrProcessingDelay_;
 
     /** Server overhead delay */
-    static simtime_t serverOverheadDelay_;
+    static double serverOverheadDelay_;
 
     /** Data collection flag */
     static bool collectDiskData_;

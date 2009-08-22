@@ -1,26 +1,22 @@
 #ifndef ENHANCED_MAC_RELAY_UNIT_PP_H
 #define ENHANCED_MAC_RELAY_UNIT_PP_H
 /*
- * Copyright (C) 2003 CTIE, Monash University
- * Copyright (C) 2009 Brad Settlemyer
+ * Copyright (C) 2003 Andras Varga; CTIE, Monash University, Australia
+ * Copyright (C) 2009 Bradley W. Settlemyer
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
-
-
-#include <cstddef>
 #include "MACRelayUnitBase.h"
 
 class EtherFrame;
@@ -47,7 +43,7 @@ class INET_API EnhancedMACRelayUnitPP : public MACRelayUnitBase
 
     // Parameters controlling how the switch operates
     simtime_t processingTime;   // Time taken to switch and process a frame
-    std::size_t bufferSize;             // Max size of the buffer
+    int bufferSize;             // Max size of the buffer
     long highWatermark;         // if buffer goes above this level, send PAUSE frames
     int pauseUnits;             // "units" field in PAUSE frames
     simtime_t pauseInterval;    // min time between sending PAUSE frames
@@ -63,12 +59,9 @@ class INET_API EnhancedMACRelayUnitPP : public MACRelayUnitBase
     cOutVector bufferLevel;
 
   protected:
-      /** Must have more stages than it takes to assign IPs */
-      virtual int numInitStages() const;
-
-      /** @name Redefined cSimpleModule member functions. */
-      //@{
-      virtual void initialize(int stage);
+    /** @name Redefined cSimpleModule member functions. */
+    //@{
+    virtual void initialize();
 
     /**
      * Calls handleIncomingFrame() for frames arrived from outside,
@@ -86,17 +79,13 @@ class INET_API EnhancedMACRelayUnitPP : public MACRelayUnitBase
      * Handle incoming Ethernet frame: if buffer full discard it, otherwise, insert
      * it into buffer and start processing if processor is free.
      */
-    void handleIncomingFrame(EtherFrame *msg);
+    virtual void handleIncomingFrame(EtherFrame *msg);
 
     /**
      * Triggered when a frame has completed processing, it routes the frame
      * to the appropriate port, and starts processing the next frame.
      */
-    void processFrame(cMessage *msg);
-
-  private:
-      /** @return the number of active switch ports */
-      std::size_t getNumActivePorts();
+    virtual void processFrame(cMessage *msg);
 };
 
 #endif

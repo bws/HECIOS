@@ -12,10 +12,11 @@
 //
 simple FSServer
 
+{
     parameters:
         //name: string const;
 
     gates:
-        in: in;
-        out: out;
-endsimple
+        input in;
+        output out;
+}

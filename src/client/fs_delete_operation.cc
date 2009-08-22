@@ -91,14 +91,14 @@ void FSDeleteOperation::registerStateMachines()
 void FSDeleteOperation::sendFinalResponse()
 {
     cMessage* finalResponse = 0;
-    if (SPFS_MPI_FILE_DELETE_REQUEST == deleteReq_->kind())
+    if (SPFS_MPI_FILE_DELETE_REQUEST == deleteReq_->getKind())
     {
         finalResponse = new spfsMPIFileDeleteResponse(
             0, SPFS_MPI_FILE_DELETE_RESPONSE);
     }
     else
     {
-        assert(SPFS_MPI_DIRECTORY_REMOVE_REQUEST == deleteReq_->kind());
+        assert(SPFS_MPI_DIRECTORY_REMOVE_REQUEST == deleteReq_->getKind());
         finalResponse = new spfsMPIDirectoryRemoveResponse(
             0, SPFS_MPI_DIRECTORY_REMOVE_RESPONSE);
     }

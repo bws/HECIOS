@@ -1,35 +1,24 @@
 /*
- * Copyright (C) 2009 Brad Settlemyer
- * Copyright (C) 2003 CTIE, Monash University
+ * Copyright (C) 2003 Andras Varga; CTIE, Monash University, Australia
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
-
-
 #include "enhanced_mac_relay_unit_pp.h"
-#include <cassert>
-#include <iostream>
 #include "EtherFrame_m.h"
-#include "utils.h"
 #include "Ethernet.h"
 #include "MACAddress.h"
-using namespace std;
 
 
 Define_Module(EnhancedMACRelayUnitPP);
@@ -38,7 +27,7 @@ Define_Module(EnhancedMACRelayUnitPP);
 /* unused for now
 static std::ostream& operator<< (std::ostream& os, cMessage *msg)
 {
-    os << "(" << msg->className() << ")" << msg->fullName();
+    os << "(" << msg->getClassName() << ")" << msg->getFullName();
     return os;
 }
 */
@@ -53,84 +42,51 @@ EnhancedMACRelayUnitPP::~EnhancedMACRelayUnitPP()
     delete [] buffer;
 }
 
-int EnhancedMACRelayUnitPP::numInitStages() const
+void EnhancedMACRelayUnitPP::initialize()
 {
-    return 2;
-}
+    MACRelayUnitBase::initialize();
 
-void EnhancedMACRelayUnitPP::initialize(int stage)
-{
-    if (1 == stage)
+    bufferLevel.setName("buffer level");
+
+    numProcessedFrames = numDroppedFrames = 0;
+    WATCH(numProcessedFrames);
+    WATCH(numDroppedFrames);
+
+    processingTime = par("processingTime");
+    bufferSize = par("bufferSize");
+    highWatermark = par("highWatermark");
+    pauseUnits = par("pauseUnits");
+
+    // 1 pause unit is 512 bit times; we assume 100Mb MACs here.
+    // We send a pause again when previous one is about to expire.
+    pauseInterval = pauseUnits*512.0/100000.0;
+
+    pauseLastSent = 0;
+    WATCH(pauseLastSent);
+
+    bufferUsed = 0;
+    WATCH(bufferUsed);
+
+    buffer = new PortBuffer[numPorts];
+    for (int i = 0; i < numPorts; ++i)
     {
-        MACRelayUnitBase::initialize();
+        buffer[i].port = i;
+        buffer[i].cpuBusy = false;
 
-        // Determine the number of switch ports in use
-        size_t numPorts = getNumActivePorts();
-        size_t bufferPerPort = par("bufferSizePerPort");
-        size_t minBufferSize = par("minBufferSize");
-        size_t maxBufferSize = par("maxBufferSize");
-        assert (0 == maxBufferSize || minBufferSize <= maxBufferSize);
-
-        bufferSize = numPorts * bufferPerPort;
-        if (minBufferSize > 0 && bufferSize < minBufferSize)
-        {
-            bufferSize = minBufferSize;
-        }
-        else if (maxBufferSize > 0 && bufferSize > maxBufferSize)
-        {
-            bufferSize = maxBufferSize;
-        }
-
-        // Configure the watermark settings
-        //size_t watermarkPerPort = par("watermarkSizePerPort");
-        //size_t minWatermarkSize = par("minWatermarkSize");
-        highWatermark = par("highWatermark");
-
-
-        bufferLevel.setName("buffer level");
-
-        numProcessedFrames = numDroppedFrames = 0;
-        WATCH(numProcessedFrames);
-        WATCH(numDroppedFrames);
-
-        processingTime = par("processingTime");
-        highWatermark = par("highWatermark");
-        pauseUnits = par("pauseUnits");
-
-        // 1 pause unit is 512 bit times; we assume 100Mb MACs here.
-        // We send a pause again when previous one is about to expire.
-        pauseInterval = pauseUnits*512.0/100000.0;
-
-        pauseLastSent = 0;
-        WATCH(pauseLastSent);
-
-        bufferUsed = 0;
-        WATCH(bufferUsed);
-
-        buffer = new PortBuffer[numPorts];
-        for (size_t i = 0; i < numPorts; ++i)
-        {
-            buffer[i].port = i;
-            buffer[i].cpuBusy = false;
-
-            char qname[20];
-            sprintf(qname,"portQueue%lu",i);
-            buffer[i].queue.setName(qname);
-        }
-
-        EV << "Parameters of (" << className() << ") " << fullPath() << "\n";
-        EV << "processing time: " << processingTime << "\n";
-        EV << "ports: " << numPorts << "\n";
-        EV << "buffer size: " << bufferSize << "\n";
-        EV << "address table size: " << addressTableSize << "\n";
-        EV << "aging time: " << agingTime << "\n";
-        EV << "high watermark: " << highWatermark << "\n";
-        EV << "pause time: " << pauseUnits << "\n";
-        EV << "\n";
-
-        cerr << __FILE__ << ":" << __LINE__ << ":"
-             << "DIAGNOSTIC: Switch buffer size set to: " << bufferSize << endl;
+        char qname[20];
+        sprintf(qname,"portQueue%d",i);
+        buffer[i].queue.setName(qname);
     }
+
+    EV << "Parameters of (" << getClassName() << ") " << getFullPath() << "\n";
+    EV << "processing time: " << processingTime << "\n";
+    EV << "ports: " << numPorts << "\n";
+    EV << "buffer size: " << bufferSize << "\n";
+    EV << "address table size: " << addressTableSize << "\n";
+    EV << "aging time: " << agingTime << "\n";
+    EV << "high watermark: " << highWatermark << "\n";
+    EV << "pause time: " << pauseUnits << "\n";
+    EV << "\n";
 }
 
 void EnhancedMACRelayUnitPP::handleMessage(cMessage *msg)
@@ -150,10 +106,11 @@ void EnhancedMACRelayUnitPP::handleMessage(cMessage *msg)
 void EnhancedMACRelayUnitPP::handleIncomingFrame(EtherFrame *frame)
 {
     // If buffer not full, insert payload frame into buffer and process the frame in parallel.
-    size_t length = frame->byteLength();
+
+    long length = frame->getByteLength();
     if (length + bufferUsed < bufferSize)
     {
-        int inputport = frame->arrivalGate()->index();
+        int inputport = frame->getArrivalGate()->getIndex();
         buffer[inputport].queue.insert(frame);
         buffer[inputport].port = inputport;
         bufferUsed += length;
@@ -195,15 +152,15 @@ void EnhancedMACRelayUnitPP::handleIncomingFrame(EtherFrame *frame)
 void EnhancedMACRelayUnitPP::processFrame(cMessage *msg)
 {
     // Extract frame from the appropriate buffer;
-    PortBuffer *pBuff = (PortBuffer*)msg->contextPointer();
+    PortBuffer *pBuff = (PortBuffer*)msg->getContextPointer();
     EtherFrame *frame = (EtherFrame*)pBuff->queue.pop();
-    long length = frame->byteLength();
+    long length = frame->getByteLength();
     int inputport = pBuff->port;
 
     EV << "Port CPU " << inputport << " completed processing of frame " << frame << endl;
 
     handleAndDispatchFrame(frame, inputport);
-    //printAddressTable();
+    printAddressTable();
 
     bufferUsed -= length;
     bufferLevel.record(bufferUsed);
@@ -226,20 +183,7 @@ void EnhancedMACRelayUnitPP::processFrame(cMessage *msg)
 
 void EnhancedMACRelayUnitPP::finish()
 {
-    if (par("writeScalars").boolValue())
-    {
-        recordScalar("processed frames", numProcessedFrames);
-        recordScalar("dropped frames", numDroppedFrames);
-    }
+    recordScalar("processed frames", numProcessedFrames);
+    recordScalar("dropped frames", numDroppedFrames);
 }
 
-size_t EnhancedMACRelayUnitPP::getNumActivePorts()
-{
-    cModule* etherSwitch = parentModule();
-    assert(0 != etherSwitch);
-    cModule* cluster = etherSwitch->parentModule();
-    assert(0 != cluster);
-    int numCPUNodes = cluster->par("numCPUNodes");
-    int numIONodes = cluster->par("numIONodes");
-    return numCPUNodes + numIONodes;
-}

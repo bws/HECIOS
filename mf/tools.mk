@@ -12,6 +12,7 @@
 #
 AR = ar
 CP = cp
+FIND = find
 INSTALL = install
 MKDIR = mkdir -p
 RM = rm -f
@@ -19,6 +20,7 @@ CXX = g++
 LD = g++
 LEX = flex
 PRELINK = ld -Ur --eh-frame-hdr 
+RSYNC = rsync
 
 #
 # OmNet++ tools

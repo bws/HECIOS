@@ -97,9 +97,11 @@ enum mpiMessageKind
 };
 
 // The abstract base class for all MPI message requests
-message spfsMPIRequest
+packet spfsMPIRequest
 {
     fields:
+    	long byteLength;
+    	
         // internal fields
         cFSM cacheState;
         FSOperationState opState;
@@ -110,7 +112,7 @@ message spfsMPIRequest
 
 // The abstract base class for collective messages -- not used purely correctly
 // because multiple inheritance is not supported
-message spfsMPICollectiveRequest extends spfsMPIRequest
+packet spfsMPICollectiveRequest extends spfsMPIRequest
 {
     fields:
         bool isCollective = false;
@@ -119,21 +121,21 @@ message spfsMPICollectiveRequest extends spfsMPIRequest
 }
 
 // The abstract base class for all MPI message requests requiring a descriptor
-message spfsMPIFileRequest extends spfsMPICollectiveRequest
+packet spfsMPIFileRequest extends spfsMPICollectiveRequest
 {
     fields:
         FileDescriptorPtr fileDes = 0;
 };
 
 // The abstract base class for all MPI message responses
-message spfsMPIResponse
+packet spfsMPIResponse
 {
     fields:
         bool isSuccessful;
 };
 
 // Request to open a file 
-message spfsMPIFileOpenRequest extends spfsMPIFileRequest
+packet spfsMPIFileOpenRequest extends spfsMPIFileRequest
 {
     fields:
         string fileName;
@@ -141,113 +143,113 @@ message spfsMPIFileOpenRequest extends spfsMPIFileRequest
 };
 
 // Open file response
-message spfsMPIFileOpenResponse extends spfsMPIResponse
+packet spfsMPIFileOpenResponse extends spfsMPIResponse
 {
     fields:
         FileDescriptorPtr fileDes;
 };
 
 // Request to close a file
-message spfsMPIFileCloseRequest extends spfsMPIFileRequest
+packet spfsMPIFileCloseRequest extends spfsMPIFileRequest
 {
     fields:
 };
 
 // Close file response
-message spfsMPIFileCloseResponse extends spfsMPIResponse
+packet spfsMPIFileCloseResponse extends spfsMPIResponse
 {
     fields:
 };
 
 // Request to delete a file
-message spfsMPIFileDeleteRequest extends spfsMPIRequest
+packet spfsMPIFileDeleteRequest extends spfsMPIRequest
 {
     fields:
         string fileName;
 };
 
 // Delete file response
-message spfsMPIFileDeleteResponse extends spfsMPIResponse
+packet spfsMPIFileDeleteResponse extends spfsMPIResponse
 {
 };
 
 // Request to resize a file
-message spfsMPIFileSetSizeRequest extends spfsMPIFileRequest
+packet spfsMPIFileSetSizeRequest extends spfsMPIFileRequest
 {
     fields:
         int fileSize;
 };
 
 // Resize file response
-message spfsMPIFileSetSizeResponse extends spfsMPIResponse
+packet spfsMPIFileSetSizeResponse extends spfsMPIResponse
 {
 };
 
 // Request to preallocate file space
-message spfsMPIFilePreallocateRequest extends spfsMPIFileRequest
+packet spfsMPIFilePreallocateRequest extends spfsMPIFileRequest
 {
     fields:
         int fileSize;
 };
 
 // Preallocate file response
-message spfsMPIFilePreallocateResponse extends spfsMPIResponse
+packet spfsMPIFilePreallocateResponse extends spfsMPIResponse
 {
 };
 
 // Request to get the access mode of a file
-message spfsMPIFileGetAModeRequest extends spfsMPIFileRequest
+packet spfsMPIFileGetAModeRequest extends spfsMPIFileRequest
 {
     fields:
 };
 
 // Get file access mode response
-message spfsMPIFileGetAModeResponse extends spfsMPIResponse
+packet spfsMPIFileGetAModeResponse extends spfsMPIResponse
 {
     fields:
         int accessMode;
 };
 
 // Request to get the size of a file
-message spfsMPIFileGetSizeRequest extends spfsMPIFileRequest
+packet spfsMPIFileGetSizeRequest extends spfsMPIFileRequest
 {
     fields:
 };
 
 // Get file size response
-message spfsMPIFileGetSizeResponse extends spfsMPIResponse
+packet spfsMPIFileGetSizeResponse extends spfsMPIResponse
 {
     fields:
         int fileSize;
 };
 
 // Request to get the file info object
-message spfsMPIFileGetInfoRequest extends spfsMPIFileRequest
+packet spfsMPIFileGetInfoRequest extends spfsMPIFileRequest
 {
     fields:
 };
 
 // Get file info response
-message spfsMPIFileGetInfoResponse extends spfsMPIResponse
+packet spfsMPIFileGetInfoResponse extends spfsMPIResponse
 {
     fields:
         string info[];
 };
 
 // Request to set the file info object
-message spfsMPIFileSetInfoRequest extends spfsMPIFileRequest
+packet spfsMPIFileSetInfoRequest extends spfsMPIFileRequest
 {
     fields:
         string info[];
 };
 
 // Set file info response
-message spfsMPIFileSetInfoResponse extends spfsMPIResponse
+packet spfsMPIFileSetInfoResponse extends spfsMPIResponse
 {
 };
 
 // Request to read from a file
-message spfsMPIFileReadRequest extends spfsMPIFileRequest
+packet spfsMPIFileReadRequest extends spfsMPIFileRequest
 {
     fields:
 		int count;
@@ -258,14 +260,14 @@ message spfsMPIFileReadRequest extends spfsMPIFileRequest
 };
 
 // File read response
-message spfsMPIFileReadResponse extends spfsMPIResponse
+packet spfsMPIFileReadResponse extends spfsMPIResponse
 {
     fields:
         unsigned long bytesRead;
 };
 
 // Request to read at a file offset
-message spfsMPIFileReadAtRequest extends spfsMPIFileReadRequest
+packet spfsMPIFileReadAtRequest extends spfsMPIFileReadRequest
 {
     fields:
         long offset;
@@ -273,12 +275,12 @@ message spfsMPIFileReadAtRequest extends spfsMPIFileReadRequest
 };
 
 // File readAt response
-message spfsMPIFileReadAtResponse extends spfsMPIFileReadResponse
+packet spfsMPIFileReadAtResponse extends spfsMPIFileReadResponse
 {
 };
 
 // Request to write to a file
-message spfsMPIFileWriteRequest extends spfsMPIFileRequest
+packet spfsMPIFileWriteRequest extends spfsMPIFileRequest
 {
     fields:
         int count;
@@ -290,14 +292,14 @@ message spfsMPIFileWriteRequest extends spfsMPIFileRequest
 };
 
 // File write response
-message spfsMPIFileWriteResponse extends spfsMPIResponse
+packet spfsMPIFileWriteResponse extends spfsMPIResponse
 {
     fields:
         unsigned long bytesWritten;
 };
 
 // Request to write at a file offset
-message spfsMPIFileWriteAtRequest extends spfsMPIFileWriteRequest
+packet spfsMPIFileWriteAtRequest extends spfsMPIFileWriteRequest
 {
     fields:
         long offset;
@@ -305,12 +307,12 @@ message spfsMPIFileWriteAtRequest extends spfsMPIFileWriteRequest
 };
 
 // File writeAt response
-message spfsMPIFileWriteAtResponse extends spfsMPIFileWriteResponse
+packet spfsMPIFileWriteAtResponse extends spfsMPIFileWriteResponse
 {
 };
 
 // Request to create a directory
-message spfsMPIDirectoryCreateRequest extends spfsMPIRequest
+packet spfsMPIDirectoryCreateRequest extends spfsMPIRequest
 {
     fields:
         string dirName;
@@ -320,36 +322,36 @@ message spfsMPIDirectoryCreateRequest extends spfsMPIRequest
 };
 
 // Directory creation response
-message spfsMPIDirectoryCreateResponse extends spfsMPIResponse
+packet spfsMPIDirectoryCreateResponse extends spfsMPIResponse
 {
 };
 
 // Request to read a directory
-message spfsMPIDirectoryReadRequest extends spfsMPIFileRequest
+packet spfsMPIDirectoryReadRequest extends spfsMPIFileRequest
 {
     fields:
         unsigned long count;
 };
 
 // Directory remove response
-message spfsMPIDirectoryReadResponse extends spfsMPIResponse
+packet spfsMPIDirectoryReadResponse extends spfsMPIResponse
 {
 };
 
 // Request to remove a directory
-message spfsMPIDirectoryRemoveRequest extends spfsMPIRequest
+packet spfsMPIDirectoryRemoveRequest extends spfsMPIRequest
 {
     fields:
         string dirName;
 };
 
 // Directory remove response
-message spfsMPIDirectoryRemoveResponse extends spfsMPIResponse
+packet spfsMPIDirectoryRemoveResponse extends spfsMPIResponse
 {
 };
 
 // Request to stat a file
-message spfsMPIFileStatRequest extends spfsMPIRequest
+packet spfsMPIFileStatRequest extends spfsMPIRequest
 {
     fields:
         string fileName;
@@ -357,56 +359,56 @@ message spfsMPIFileStatRequest extends spfsMPIRequest
 };
 
 // Response to file stat
-message spfsMPIFileStatResponse extends spfsMPIResponse
+packet spfsMPIFileStatResponse extends spfsMPIResponse
 {
     fields:
         unsigned long fileSize;
 };
 
 // Request to update a file's atime
-message spfsMPIFileUpdateTimeRequest extends spfsMPIRequest
+packet spfsMPIFileUpdateTimeRequest extends spfsMPIRequest
 {
     fields:
         string fileName;
 };
 
 // Response to atime update
-message spfsMPIFileUpdateTimeResponse extends spfsMPIResponse
+packet spfsMPIFileUpdateTimeResponse extends spfsMPIResponse
 {
 };
 
 // Simple MPI Send request
-message spfsMPISendRequest extends spfsMPICollectiveRequest
+packet spfsMPISendRequest extends spfsMPICollectiveRequest
 {
 };
 
 // Simple MPI Send response
-message spfsMPISendResponse extends spfsMPIResponse
+packet spfsMPISendResponse extends spfsMPIResponse
 {
 };
 
 // Barrier request
-message spfsMPIBarrierRequest extends spfsMPICollectiveRequest
+packet spfsMPIBarrierRequest extends spfsMPICollectiveRequest
 {
     fields:	
         int root;
 };
 
 // Broadcast response
-message spfsMPIBarrierResponse extends spfsMPIResponse
+packet spfsMPIBarrierResponse extends spfsMPIResponse
 {
 };
 
 
 // Broadcast request
-message spfsMPIBcastRequest extends spfsMPICollectiveRequest
+packet spfsMPIBcastRequest extends spfsMPICollectiveRequest
 {
     fields:	
         int root;
 };
 
 // Broadcast response
-message spfsMPIBcastResponse extends spfsMPIResponse
+packet spfsMPIBcastResponse extends spfsMPIResponse
 {
 };
 
@@ -417,5 +419,5 @@ message spfsMPIBcastResponse extends spfsMPIResponse
 //  c-basic-offset: 4
 // End:
 //
-// vim: ts=4 sts=4 sw=4 expandtab foldmethod=marker
+// vim: ts=4 sts=4 sw=4 expandtab
 //

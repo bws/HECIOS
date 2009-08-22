@@ -1,22 +1,24 @@
 //
-// Copyright (C) 2003 CTIE, Monash University
+// Copyright (C) 2003 Andras Varga; CTIE, Monash University, Australia
 //
 // This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
+// modify it under the terms of the GNU Lesser General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
 
+
+//package inet.linklayer.etherswitch;
+import inet.linklayer.MACRelayUnit;
 
 //
 // A MACRelayUnit implementation which models one CPU assigned to each
@@ -32,21 +34,18 @@
 // The watermark and the pause time is configurable; use zero
 // values to disable the PAUSE feature.
 //
-simple EnhancedMACRelayUnitPP
+simple EnhancedMACRelayUnitPP like inet.linklayer.etherswitch.MACRelayUnit
+{
     parameters:
-        addressTableFile : string,  	// see MACRelayUnit
-        addressTableSize : numeric, 	// see MACRelayUnit
-        agingTime : numeric,        	// see MACRelayUnit
-        processingTime : numeric,   	// processing time of one frame
-        bufferSizePerPort : numeric,    // memory per port (bytes)
-        minBufferSize : numeric,		// minimum buffer size
-        maxBufferSize : numeric,		// maximum buffer size
-        highWatermark : numeric,    	// buffer usage threshold to send PAUSE frame (bytes)
-        pauseUnits : numeric,       	// time to put in PAUSE frames (in units of 512 bit times)
-        writeScalars: bool;         	// enable/disable recording statistics in omnetpp.sca
-
+        string addressTableFile = default("");  // see MACRelayUnit
+        int addressTableSize = default(100); // see MACRelayUnit
+        double agingTime @unit("s") = default(120s); // see MACRelayUnit
+        double processingTime @unit("s") = default(0s);   // processing time of one frame
+        int bufferSize @unit("B") = default(1MB);   // memory
+        int highWatermark @unit("B") = default(512KB); // buffer usage threshold to send PAUSE frame
+        int pauseUnits = default(300);       // time to put in PAUSE frames (in units of 512 bit times)
     gates:
-        in:  lowerLayerIn[];       // see MACRelayUnit
-        out: lowerLayerOut[];      // see MACRelayUnit
-endsimple
+        input lowerLayerIn[];    // see MACRelayUnit
+        output lowerLayerOut[];  // see MACRelayUnit
+}
 

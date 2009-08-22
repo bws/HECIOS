@@ -12,12 +12,13 @@
 //
 simple BMIEndpoint
 
+{
     parameters:
-        fixedOverheadSecs: numeric,
-        scaledOverheadSecs : numeric;
+        volatile double fixedOverheadSecs;
+        volatile double scaledOverheadSecs;
 
     gates:
-        in: appIn;
-        out: appOut;
+        input appIn;
+        output appOut;
 
-endsimple
+}

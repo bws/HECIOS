@@ -44,7 +44,7 @@ void MpiMiddleware::completeCommunicationCB(spfsMPIRequest* request)
     spfsMPIResponse* response = 0;
 
     // Create the response based on the message kind
-    switch(request->kind())
+    switch(request->getKind())
     {
         case SPFS_MPI_BARRIER_REQUEST:
         {
@@ -61,7 +61,7 @@ void MpiMiddleware::completeCommunicationCB(spfsMPIRequest* request)
         default:
         {
             cerr << __FILE__ << ":" << __LINE__ << ":ERROR "
-                 << "Invalid MPI message kind: " << request->kind() << endl;
+                 << "Invalid MPI message kind: " << request->getKind() << endl;
         }
     }
     double delay = uniform(0.0, randomDelayMean_ * 2);
@@ -90,7 +90,7 @@ void MpiMiddleware::finish()
 
 void MpiMiddleware::handleMessage(cMessage* msg)
 {
-    if (msg->arrivalGateId() == appInGate_)
+    if (msg->getArrivalGateId() == appInGate_)
     {
         if (spfsMPICollectiveRequest* coll =
             dynamic_cast<spfsMPICollectiveRequest*>(msg))
@@ -110,11 +110,11 @@ void MpiMiddleware::handleMessage(cMessage* msg)
             assert(false);
         }
     }
-    else if (msg->arrivalGateId() == cacheInGate_)
+    else if (msg->getArrivalGateId() == cacheInGate_)
     {
         send(msg, netOutGate_);
     }
-    else if (msg->arrivalGateId() == netInGate_)
+    else if (msg->getArrivalGateId() == netInGate_)
     {
         cerr << __FILE__ << ":" << __LINE__ << ":"
              << "MPI Message arrived over network: " << msg->info() << endl;

@@ -32,7 +32,10 @@ public:
 
     /** Initialize the module */
     void callInitialize();
-    
+
+    /** Note the arrival of a message */
+    void arrived(cMessage* msg, cGate* arrivalGate, simtime_t arrivalTime);
+
     /** Deliver a message to the module */
     void deliverMessage(cMessage* msg, const char* inGateName);
 
@@ -41,12 +44,12 @@ public:
 
     /** @return the module being tested */
     cSimpleModule* getModule() const { return module_; };
-    
+
     /**
      * @return the number of output messages sent by the module
      */
     std::size_t getNumOutputMessages() const;
-    
+
     /**
      * @return the most recently sent message by the module
      */
@@ -56,7 +59,7 @@ public:
      * @return the (idx + 1)th message sent by the module
      */
     cMessage* getOutputMessage(std::size_t idx) const;
-    
+
     /**
      * @return the most recently sent message by the module and removes it
      * from the list of output messages
@@ -75,10 +78,10 @@ private:
 
     /** Load a ned file if it hasn't been previously loaded */
     static void loadNedFile(const char* nedFile);
-    
+
     /** List of nedfiles that have been loaded */
     static std::vector<std::string> loadedNedFiles_;
-    
+
     /** The module to send the test message to */
     cSimpleModule* module_;
 

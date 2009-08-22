@@ -11,18 +11,41 @@
 //
 // Abstract interface for System Call Interfaces
 //
-// Implemented System Call Interfaces:
-// -  PassThroughSystemCallInterface
-//
-simple SystemCallInterface
-  parameters:
-      addReadOverheadSecs: const,
-      addWriteOverheadSecs: const,
-      overheadSecs: const;
+moduleinterface SystemCallInterface
+{
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
-  gates:
-    in: in, response;
-    out: out, request;
-endsimple
+simple PassThroughSystemCallInterface like SystemCallInterface
+{
+	@class(PassThroughSystemCallInterface);
+    double addReadOverheadSecs;
+    double addWriteOverheadSecs;
+    double overheadSecs;
+
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
+
+simple SequentialSystemCallInterface like SystemCallInterface
+{
+	@class(SequentialSystemCallInterface);
+    double addReadOverheadSecs;
+    double addWriteOverheadSecs;
+    double overheadSecs;
+
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
 

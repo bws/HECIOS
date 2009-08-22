@@ -9,23 +9,26 @@
 
 // Description of the interface for all FSClients
 simple FSClient
+{
     parameters:
-        useCollectiveCreate: bool,
-        useCollectiveGetAttr: bool,
-        useCollectiveRemove: bool,
-        clientOverheadDelaySecs: numeric const,
-        directoryCreateProcessingDelaySecs: numeric const,
-        directoryReadProcessingDelaySecs: numeric const,
-        directoryRemoveProcessingDelaySecs: numeric const,
-        fileCloseProcessingDelaySecs: numeric const,
-        fileDeleteProcessingDelaySecs: numeric const,
-        fileOpenProcessingDelaySecs: numeric const,
-        fileReadProcessingDelaySecs: numeric const,
-        fileStatProcessingDelaySecs: numeric const,
-        fileUpdateTimeProcessingDelaySecs: numeric const,
-        fileWriteProcessingDelaySecs: numeric const;
+        bool useCollectiveCreate;
+        bool useCollectiveGetAttr;
+        bool useCollectiveRemove;
+        double clientOverheadDelaySecs;
+        double directoryCreateProcessingDelaySecs;
+        double directoryReadProcessingDelaySecs;
+        double directoryRemoveProcessingDelaySecs;
+        double fileCloseProcessingDelaySecs;
+        double fileDeleteProcessingDelaySecs;
+        double fileOpenProcessingDelaySecs;
+        double fileReadProcessingDelaySecs;
+        double fileStatProcessingDelaySecs;
+        double fileUpdateTimeProcessingDelaySecs;
+        double fileWriteProcessingDelaySecs;
 
     gates:
-        in: appIn, netIn;
-        out: appOut, netOut;
-endsimple
+        input appIn;
+        input netIn;
+        output appOut;
+        output netOut;
+}

@@ -1,23 +1,21 @@
 #ifndef ENHANCED_ETHER_MAC_BASE_H
 #define ENHANCED_ETHER_MAC_BASE_H
 //
-// Copyright (C) 2009 Brad Settlemyer
 // Copyright (C) 2006 Levente Meszaros
 // Copyright (C) 2004 Andras Varga
 //
 // This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
+// modify it under the terms of the GNU Lesser General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 #include <omnetpp.h>
 #include "INETDefs.h"
@@ -26,6 +24,9 @@
 #include "InterfaceEntry.h"
 #include "TxNotifDetails.h"
 #include "NotificationBoard.h"
+
+
+//FIXME change into inner enums!!!
 
 // Self-message kind values
 #define ENDIFG             100
@@ -54,17 +55,14 @@ class IPassiveQueue;
 /**
  * Base class for ethernet MAC implementations.
  */
-class INET_API EnhancedEtherMACBase : public cSimpleModule
+class INET_API EnhancedEtherMACBase : public cSimpleModule, public INotifiable
 {
-    static const int MAX_ETHERNET_FRAME_SIZE = 9192;
-
   protected:
     bool connected;                 // true if connected to a network, set automatically by exploring the network configuration
     bool disabled;                  // true if the MAC is disabled, defined by the user
     bool promiscuous;               // if true, passes up all received frames
     MACAddress address;             // own MAC address
     int txQueueLimit;               // max queue length
-    int mtuSize;                    // Ethernet MTU
 
     // MAC operation modes and parameters
     bool duplexMode;                // channel connecting to MAC is full duplex, i.e. like a switch with 2 half-duplex lines
@@ -73,24 +71,27 @@ class INET_API EnhancedEtherMACBase : public cSimpleModule
 
     // MAC transmission characteristics
     double txrate;                  // transmission rate of MAC, bit/s
-    double bitTime;                 // precalculated as 1/txrate
-    double slotTime;                // slot time
-    double interFrameGap;           // IFG
-    double jamDuration;             // precalculated as 8*JAM_SIGNAL_BYTES*bitTime
-    double shortestFrameDuration;   // precalculated from MIN_ETHERNET_FRAME or GIGABIT_MIN_FRAME_WITH_EXT
+    simtime_t bitTime;              // precalculated as 1/txrate
+    simtime_t slotTime;             // slot time
+    simtime_t interFrameGap;        // IFG
+    simtime_t jamDuration;          // precalculated as 8*JAM_SIGNAL_BYTES*bitTime
+    simtime_t shortestFrameDuration;// precalculated from MIN_ETHERNET_FRAME or GIGABIT_MIN_FRAME_WITH_EXT
 
     // states
-    int  transmitState;             // State of the MAC unit transmitting
-    int  receiveState;              // State of the MAC unit receiving
-    int  pauseUnitsRequested;       // requested pause duration, or zero -- examined at endTx
+    int transmitState;              // State of the MAC unit transmitting
+    int receiveState;               // State of the MAC unit receiving
+    int pauseUnitsRequested;        // requested pause duration, or zero -- examined at endTx
 
     cQueue txQueue;                 // output queue
     IPassiveQueue *queueModule;     // optional module to receive messages from
 
+    cGate *physOutGate;             // pointer to the "phys$o" gate
+
     // notification stuff
-    InterfaceEntry *interfaceEntry;  // points into InterfaceTable
+    InterfaceEntry *interfaceEntry;  // points into IInterfaceTable
     NotificationBoard *nb;
     TxNotifDetails notifDetails;
+    bool hasSubscribers; // only notify if somebody is listening
 
     // self messages
     cMessage *endTxMsg, *endIFGMsg, *endPauseMsg;
@@ -120,61 +121,60 @@ class INET_API EnhancedEtherMACBase : public cSimpleModule
     cOutVector numPauseFramesRcvdVector;
     cOutVector numPauseFramesSentVector;
 
-    // Gate ids
-    int physInGateId;
-    int physOutGateId;
-    int upperLayerInGateId;
-    int upperLayerOutGateId;
-
   public:
     EnhancedEtherMACBase();
     virtual ~EnhancedEtherMACBase();
 
-    long queueLength() {return txQueue.length();}
-    MACAddress getMACAddress() {return address;}
+    virtual long getQueueLength() {return txQueue.length();}
+    virtual MACAddress getMACAddress() {return address;}
 
   protected:
     //  initialization
     virtual void initialize();
     virtual void initializeTxrate() = 0;
-    void initializeFlags();
-    void initializeMACAddress();
-    void initializeQueueModule();
-    void initializeNotificationBoard();
-    void initializeStatistics();
-    void registerInterface(double txrate);
+    virtual void initializeFlags();
+    virtual void initializeMACAddress();
+    virtual void initializeQueueModule();
+    virtual void initializeNotificationBoard();
+    virtual void initializeStatistics();
+    virtual void registerInterface(double txrate);
 
     // helpers
-    bool checkDestinationAddress(EtherFrame *frame);
-    void calculateParameters();
-    void printParameters();
+    virtual bool checkDestinationAddress(EtherFrame *frame);
+    virtual void calculateParameters();
+    virtual void printParameters();
 
     // finish
     virtual void finish();
 
     // event handlers
     virtual void processFrameFromUpperLayer(EtherFrame *msg);
-    virtual void processMsgFromNetwork(cMessage *msg);
+    virtual void processMsgFromNetwork(cPacket *msg);
     virtual void processMessageWhenNotConnected(cMessage *msg);
     virtual void processMessageWhenDisabled(cMessage *msg);
     virtual void handleEndIFGPeriod();
     virtual void handleEndTxPeriod();
     virtual void handleEndPausePeriod();
-    void scheduleEndIFGPeriod();
-    void scheduleEndTxPeriod(cMessage*);
-    void scheduleEndPausePeriod(int pauseUnits);
+    virtual void scheduleEndIFGPeriod();
+    virtual void scheduleEndTxPeriod(cPacket *);
+    virtual void scheduleEndPausePeriod(int pauseUnits);
 
     // helpers
-    bool checkAndScheduleEndPausePeriod();
-    void fireChangeNotification(int type, cMessage *msg);
-    void beginSendFrames();
-    void frameReceptionComplete(EtherFrame *frame);
-    void processReceivedDataFrame(EtherFrame *frame);
-    void processPauseCommand(int pauseUnits);
+    virtual bool checkAndScheduleEndPausePeriod();
+    virtual void fireChangeNotification(int type, cPacket *msg);
+    virtual void beginSendFrames();
+    virtual void frameReceptionComplete(EtherFrame *frame);
+    virtual void processReceivedDataFrame(EtherFrame *frame);
+    virtual void processPauseCommand(int pauseUnits);
 
     // display
-    void updateDisplayString();
-    void updateConnectionColor(int txState);
+    virtual void updateDisplayString();
+    virtual void updateConnectionColor(int txState);
+
+    // notifications
+    virtual void updateHasSubcribers() = 0;
+    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+
 };
 
 #endif

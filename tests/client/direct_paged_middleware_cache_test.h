@@ -184,7 +184,7 @@ void DirectPagedMiddlewareCacheTest::testApplicationReadContig()
     spfsMPIFileReadAtResponse* appReadResponse =
         dynamic_cast<spfsMPIFileReadAtResponse*>(outputMsg);
     CPPUNIT_ASSERT(0 != appReadResponse);
-    CPPUNIT_ASSERT(appReadResponse->contextPointer() == appRead);
+    CPPUNIT_ASSERT(appReadResponse->getContextPointer() == appRead);
 
      // Clean up test 1 and 2 requests
     delete appRead;
@@ -208,7 +208,7 @@ void DirectPagedMiddlewareCacheTest::testApplicationReadContig()
     CPPUNIT_ASSERT(0 != outputMsg);
     appReadResponse = dynamic_cast<spfsMPIFileReadAtResponse*>(outputMsg);
     CPPUNIT_ASSERT(0 != appReadResponse);
-    CPPUNIT_ASSERT(appReadResponse->contextPointer() == appRead);
+    CPPUNIT_ASSERT(appReadResponse->getContextPointer() == appRead);
 
     // Clean up test
     delete appRead;
@@ -282,7 +282,7 @@ void DirectPagedMiddlewareCacheTest::testApplicationReadContigPartialHit()
     spfsMPIFileReadAtResponse* appReadResponse =
         dynamic_cast<spfsMPIFileReadAtResponse*>(outputMsg);
     CPPUNIT_ASSERT(0 != appReadResponse);
-    CPPUNIT_ASSERT(appReadResponse->contextPointer() == appRead);
+    CPPUNIT_ASSERT(appReadResponse->getContextPointer() == appRead);
 
      // Clean up test 1 and 2 requests
     delete appRead;
@@ -346,7 +346,7 @@ void DirectPagedMiddlewareCacheTest::testApplicationReadContigPartialHit()
     CPPUNIT_ASSERT(0 != outputMsg);
     appReadResponse = dynamic_cast<spfsMPIFileReadAtResponse*>(outputMsg);
     CPPUNIT_ASSERT(0 != appReadResponse);
-    CPPUNIT_ASSERT(appReadResponse->contextPointer() == appRead);
+    CPPUNIT_ASSERT(appReadResponse->getContextPointer() == appRead);
 
      // Clean up test 1 and 2 requests
     delete appRead;
@@ -384,7 +384,7 @@ void DirectPagedMiddlewareCacheTest::testApplicationWriteContigAligned()
     spfsMPIFileWriteAtResponse* appWriteResponse =
         dynamic_cast<spfsMPIFileWriteAtResponse*>(outputMsg);
     CPPUNIT_ASSERT(0 != appWriteResponse);
-    CPPUNIT_ASSERT(appWriteResponse->contextPointer() == appWrite);
+    CPPUNIT_ASSERT(appWriteResponse->getContextPointer() == appWrite);
 
     // Extract the file system write request
     outputMsg = moduleTester_->popOutputMessage();

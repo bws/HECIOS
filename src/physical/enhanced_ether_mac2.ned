@@ -2,20 +2,21 @@
 // Copyright (C) 2006 Levente Meszaros
 //
 // This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
+// modify it under the terms of the GNU Lesser General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+
+//package inet.linklayer.ethernet;
 
 //
 // Ethernet MAC which supports full duplex operation ONLY.
@@ -38,6 +39,7 @@
 // for that.
 //
 // Supported variations:
+// - 10Mb Ethernet (full duplex mode)
 // - 100Mb Ethernet (full duplex mode)
 // - 1Gb Ethernet (full duplex mode)
 //
@@ -46,7 +48,7 @@
 // RAW mode (only used by the IPX protocol) is not supported.
 //
 // Expected environment:
-// - physIn and physOut should be connected to the "network"
+// - phys$i and phys$o should be connected to the "network"
 // - upperLayerIn and upperLayerOut are usually connected to EtherLLC (in hosts)
 //   or MACRelayUnitPP (in a switch)
 //
@@ -70,14 +72,14 @@
 // The module does not perform encapsulation or decapsulation of frames --
 // this is done by higher layers (EtherLLC or EtherEncap).
 //
-// When a frame is received from the higher layers, it must be an EtherFrame
-// with message kind set to ETH_FRAME, and with all protocol fields filled out
+// When a frame is received from the higher layers, it must be an EtherFrame,
+// and with all protocol fields filled out
 // (including the destination MAC address). The source address, if left empty,
 // will be filled in. Then frame is queued and transmitted according
 // to the CSMA/CD protocol.
 //
-// Data frames received from the network are EtherFrames, with message kind set
-// to ETH_FRAME. They are passed to the higher layers without modification.
+// Data frames received from the network are EtherFrames. They are passed to
+// the higher layers without modification.
 // Also, the module properly responds to PAUSE frames, but never sends them
 // by itself -- however, it transmits PAUSE frames received from upper layers.
 // See <a href="ether-pause.html">PAUSE handling</a> for more info.
@@ -140,21 +142,21 @@
 // @see EtherFrame, EthernetIIFrame, EtherFrameWithLLC, Ieee802Ctrl
 //
 simple EnhancedEtherMAC2
+{
     parameters:
-        promiscuous : bool,     // if true, all packets are received, otherwise only the
+        bool promiscuous = default(false);     // if true, all packets are received, otherwise only the
                                 // ones with matching destination MAC address
-        address : string,       // MAC address as hex string (12 hex digits), or
+        string address = default("auto");       // MAC address as hex string (12 hex digits), or
                                 // "auto". "auto" values will be replaced by
                                 // a generated MAC address in init stage 0.
-        txQueueLimit : numeric, // maximum number of frames queued up for transmission;
+        int txQueueLimit = default(1000); // maximum number of frames queued up for transmission;
                                 // additional frames are dropped. Only used if queueModule==""
-        queueModule: string,    // name of optional external queue module
-        mtu: numeric,			// Ethernet MTU size (max 9000)
-        writeScalars: bool;     // enable/disable recording statistics in omnetpp.sca
+        string queueModule = default("");    // name of optional external queue module
+        int mtu = default(1500);
+        @display("i=block/queue");
     gates:
-        in: physIn;      // to physical layer or the network
-        out: physOut;    // to physical layer or the network
-        in: upperLayerIn;    // to EtherLLC or MACRelayUnitPP
-        out: upperLayerOut;  // to EtherLLC or MACRelayUnitPP
-endsimple
+        input upperLayerIn;    // to EtherLLC or MACRelayUnitPP
+        output upperLayerOut;  // to EtherLLC or MACRelayUnitPP
+        inout phys;            // to physical layer or the network
+}
 

@@ -1,31 +1,31 @@
 //
-// Copyright (C) 2009 Brad Settlemyer
+// Copyright (C) 2009 Bradley W. Settlemyer
 // Copyright (C) 2006 Levente Meszaros
 // Copyright (C) 2004 Andras Varga
 //
 // This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
+// modify it under the terms of the GNU Lesser General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
-#include <cassert>
+
 #include <stdio.h>
 #include <string.h>
 #include <omnetpp.h>
 #include "enhanced_ether_mac_base.h"
 #include "IPassiveQueue.h"
-#include "InterfaceTable.h"
+#include "IInterfaceTable.h"
 #include "InterfaceTableAccess.h"
-using namespace std;
+
+static const double SPEED_OF_LIGHT = 200000000.0;
 
 EnhancedEtherMACBase::EnhancedEtherMACBase()
 {
@@ -44,6 +44,8 @@ EnhancedEtherMACBase::~EnhancedEtherMACBase()
 
 void EnhancedEtherMACBase::initialize()
 {
+    physOutGate = gate("phys$o");
+
     initializeFlags();
 
     initializeTxrate();
@@ -53,9 +55,6 @@ void EnhancedEtherMACBase::initialize()
     initializeQueueModule();
     initializeNotificationBoard();
     initializeStatistics();
-
-    // Retrieve the MTU
-    mtuSize = par("mtu");
 
     registerInterface(txrate); // needs MAC address
 
@@ -80,19 +79,13 @@ void EnhancedEtherMACBase::initialize()
     // initialize queue limit
     txQueueLimit = par("txQueueLimit");
     WATCH(txQueueLimit);
-
-    // Cache the gate ids
-    physInGateId = findGate("physIn");
-    physOutGateId = findGate("physOut");
-    upperLayerInGateId = findGate("upperLayerIn");
-    upperLayerOutGateId = findGate("upperLayerOut");
 }
 
 void EnhancedEtherMACBase::initializeQueueModule()
 {
     if (par("queueModule").stringValue()[0])
     {
-        cModule *module = parentModule()->submodule(par("queueModule").stringValue());
+        cModule *module = getParentModule()->getSubmodule(par("queueModule").stringValue());
         queueModule = check_and_cast<IPassiveQueue *>(module);
         EV << "Requesting first frame from queue module\n";
         queueModule->requestPacket();
@@ -119,17 +112,21 @@ void EnhancedEtherMACBase::initializeMACAddress()
 
 void EnhancedEtherMACBase::initializeNotificationBoard()
 {
+    hasSubscribers = false;
     if (interfaceEntry) {
         nb = NotificationBoardAccess().getIfExists();
         notifDetails.setInterfaceEntry(interfaceEntry);
+        nb->subscribe(this, NF_SUBSCRIBERLIST_CHANGED);
+        updateHasSubcribers();
     }
 }
 
 void EnhancedEtherMACBase::initializeFlags()
 {
     // initialize connected flag
-    connected = gate("physOut")->destinationGate()->isConnected();
-    if (!connected) EV << "MAC not connected to a network.\n";
+    connected = physOutGate->getPathEndGate()->isConnected();
+    if (!connected)
+        EV << "MAC not connected to a network.\n";
     WATCH(connected);
 
     // TODO: this should be settable from the gui
@@ -183,16 +180,16 @@ void EnhancedEtherMACBase::initializeStatistics()
 
 void EnhancedEtherMACBase::registerInterface(double txrate)
 {
-    InterfaceTable *ift = InterfaceTableAccess().getIfExists();
+    IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
     if (!ift)
         return;
 
     interfaceEntry = new InterfaceEntry();
 
     // interface name: our module name without special characters ([])
-    char *interfaceName = new char[strlen(parentModule()->fullName())+1];
+    char *interfaceName = new char[strlen(getParentModule()->getFullName())+1];
     char *d=interfaceName;
-    for (const char *s=parentModule()->fullName(); *s; s++)
+    for (const char *s=getParentModule()->getFullName(); *s; s++)
         if (isalnum(*s))
             *d++ = *s;
     *d = '\0';
@@ -211,7 +208,7 @@ void EnhancedEtherMACBase::registerInterface(double txrate)
 
     // MTU: typical values are 576 (Internet de facto), 1500 (Ethernet-friendly),
     // 4000 (on some point-to-point links), 4470 (Cisco routers default, FDDI compatible)
-    interfaceEntry->setMtu(mtuSize);
+    interfaceEntry->setMtu(par("mtu"));
 
     // capabilities
     interfaceEntry->setMulticast(true);
@@ -228,7 +225,7 @@ bool EnhancedEtherMACBase::checkDestinationAddress(EtherFrame *frame)
     // matching port's MAC address, also checks if broadcast bit is set
     if (!promiscuous && !frame->getDest().isBroadcast() && !frame->getDest().equals(address))
     {
-        EV << "Frame `" << frame->name() <<"' not destined to us, discarding\n";
+        EV << "Frame `" << frame->getName() <<"' not destined to us, discarding\n";
         numDroppedNotForUs++;
         numDroppedNotForUsVector.record(numDroppedNotForUs);
         delete frame;
@@ -241,8 +238,6 @@ bool EnhancedEtherMACBase::checkDestinationAddress(EtherFrame *frame)
 
 void EnhancedEtherMACBase::calculateParameters()
 {
-    assert(true == duplexMode);
-
     if (disabled || !connected)
     {
         bitTime = slotTime = interFrameGap = jamDuration = shortestFrameDuration = 0;
@@ -250,75 +245,60 @@ void EnhancedEtherMACBase::calculateParameters()
         return;
     }
 
-    // BWS
-    // Modifications made to allow channel rates other than just ethernet
-    // conforming channel rates
-    // BWS
     if (txrate != ETHERNET_TXRATE && txrate != FAST_ETHERNET_TXRATE &&
         txrate != GIGABIT_ETHERNET_TXRATE && txrate != FAST_GIGABIT_ETHERNET_TXRATE)
     {
-        EV << "Using non-standard ethernet transmission rate: "
-           << txrate << "bit/sec\n";
+        error("nonstandard transmission rate %g, must be %g, %g, %g or %g bit/sec",
+            txrate, ETHERNET_TXRATE, FAST_ETHERNET_TXRATE, GIGABIT_ETHERNET_TXRATE, FAST_GIGABIT_ETHERNET_TXRATE);
     }
 
     bitTime = 1/(double)txrate;
 
     // set slot time
-    if (txrate <= FAST_ETHERNET_TXRATE)
+    if (txrate==ETHERNET_TXRATE || txrate==FAST_ETHERNET_TXRATE)
         slotTime = SLOT_TIME;
     else
         slotTime = GIGABIT_SLOT_TIME;
 
-    // only if Gigabit Ethernet or better
-    frameBursting = (txrate >= GIGABIT_ETHERNET_TXRATE);
+    // only if Gigabit Ethernet
+    frameBursting = (txrate==GIGABIT_ETHERNET_TXRATE || txrate==FAST_GIGABIT_ETHERNET_TXRATE);
     carrierExtension = (slotTime == GIGABIT_SLOT_TIME && !duplexMode);
 
     interFrameGap = INTERFRAME_GAP_BITS/(double)txrate;
     jamDuration = 8*JAM_SIGNAL_BYTES*bitTime;
     shortestFrameDuration = carrierExtension ? GIGABIT_MIN_FRAME_WITH_EXT : MIN_ETHERNET_FRAME;
-
-    if (txrate > GIGABIT_ETHERNET_TXRATE)
-    {
-        interFrameGap = 10.0 / (double)txrate;
-        shortestFrameDuration = 0.0;
-    }
 }
 
 void EnhancedEtherMACBase::printParameters()
 {
     // Dump parameters
     EV << "MAC address: " << address << (promiscuous ? ", promiscuous mode" : "") << endl;
-    EV << "txrate: " << txrate << ", " << (duplexMode ? "full duplex" : "half-duplex") << endl;
+    EV << "txrate: " << txrate << ", " << (duplexMode ? "duplex" : "half-duplex") << endl;
+#if 0
     EV << "bitTime: " << bitTime << endl;
     EV << "carrierExtension: " << carrierExtension << endl;
     EV << "frameBursting: " << frameBursting << endl;
     EV << "slotTime: " << slotTime << endl;
     EV << "interFrameGap: " << interFrameGap << endl;
     EV << endl;
+#endif
 }
 
 void EnhancedEtherMACBase::processFrameFromUpperLayer(EtherFrame *frame)
 {
-    //EV << "Received frame from upper layer: " << frame << endl;
-
-    // check message kind
-    if (frame->kind()!=ETH_FRAME && frame->kind()!=ETH_PAUSE)
-        error("message with unexpected message kind %d arrived from higher layer", frame->kind());
-
-    // pause frames must be EtherPauseFrame AND kind==ETH_PAUSE
-    ASSERT((frame->kind()==ETH_PAUSE) == (dynamic_cast<EtherPauseFrame *>(frame)!=NULL));
+    EV << "Received frame from upper layer: " << frame << endl;
 
     if (frame->getDest().equals(address))
     {
         error("logic error: frame %s from higher layer has local MAC address as dest (%s)",
-              frame->fullName(), frame->getDest().str().c_str());
+              frame->getFullName(), frame->getDest().str().c_str());
     }
 
-    if (frame->byteLength() > MAX_ETHERNET_FRAME_SIZE)
-        error("packet from higher layer (%d bytes) exceeds maximum Ethernet frame size (%d)", frame->byteLength(), MAX_ETHERNET_FRAME);
+    if (frame->getByteLength() > MAX_ETHERNET_FRAME)
+        error("packet from higher layer (%d bytes) exceeds maximum Ethernet frame size (%d)", frame->getByteLength(), MAX_ETHERNET_FRAME);
 
-    // must be ETH_FRAME (or ETH_PAUSE) from upper layer
-    bool isPauseFrame = (frame->kind()==ETH_PAUSE);
+    // must be EtherFrame (or EtherPauseFrame) from upper layer
+    bool isPauseFrame = (dynamic_cast<EtherPauseFrame*>(frame)!=NULL);
     if (!isPauseFrame)
     {
         numFramesFromHL++;
@@ -334,58 +314,55 @@ void EnhancedEtherMACBase::processFrameFromUpperLayer(EtherFrame *frame)
             frame->setSrc(address);
 
         // store frame and possibly begin transmitting
-        //EV << "Packet " << frame << " arrived from higher layers, enqueueing\n";
+        EV << "Packet " << frame << " arrived from higher layers, enqueueing\n";
         txQueue.insert(frame);
     }
     else
     {
-        //EV << "PAUSE received from higher layer\n";
+        EV << "PAUSE received from higher layer\n";
 
         // PAUSE frames enjoy priority -- they're transmitted before all other frames queued up
         if (!txQueue.empty())
-            txQueue.insertBefore(txQueue.tail(), frame);  // tail() frame is probably being transmitted
+            txQueue.insertBefore(txQueue.front(), frame);  // front() frame is probably being transmitted
         else
             txQueue.insert(frame);
     }
 
 }
 
-void EnhancedEtherMACBase::processMsgFromNetwork(cMessage *frame)
+void EnhancedEtherMACBase::processMsgFromNetwork(cPacket *frame)
 {
-    //EV << "Received frame from network: " << frame << endl;
+    EV << "Received frame from network: " << frame << endl;
 
-    // frame must be ETH_FRAME, ETH_PAUSE or JAM_SIGNAL
-    if (frame->kind()!=ETH_FRAME && frame->kind()!=ETH_PAUSE && frame->kind()!=JAM_SIGNAL)
-        error("message with unexpected message kind %d arrived from network", frame->kind());
+    // frame must be EtherFrame or EtherJam
+    if (dynamic_cast<EtherFrame*>(frame)==NULL && dynamic_cast<EtherJam*>(frame)==NULL)
+        error("message with unexpected message class '%s' arrived from network (name='%s')",
+                frame->getClassName(), frame->getFullName());
 
     // detect cable length violation in half-duplex mode
-    if (!duplexMode && simTime()-frame->sendingTime()>=shortestFrameDuration)
+    if (!duplexMode && simTime()-frame->getSendingTime()>=shortestFrameDuration)
         error("very long frame propagation time detected, maybe cable exceeds maximum allowed length? "
               "(%lgs corresponds to an approx. %lgm cable)",
-              simTime()-frame->sendingTime(),
-              (simTime()-frame->sendingTime())*200000000.0);
+              SIMTIME_STR(simTime() - frame->getSendingTime()),
+              SIMTIME_STR((simTime() - frame->getSendingTime())*SPEED_OF_LIGHT));
 }
 
 void EnhancedEtherMACBase::frameReceptionComplete(EtherFrame *frame)
 {
     int pauseUnits;
+    EtherPauseFrame *pauseFrame;
 
-    switch (frame->kind())
+    if ((pauseFrame=dynamic_cast<EtherPauseFrame*>(frame))!=NULL)
     {
-      case ETH_FRAME:
-        processReceivedDataFrame((EtherFrame *)frame);
-        break;
-
-      case ETH_PAUSE:
-        pauseUnits = ((EtherPauseFrame *)frame)->getPauseTime();
+        pauseUnits = pauseFrame->getPauseTime();
         delete frame;
         numPauseFramesRcvd++;
         numPauseFramesRcvdVector.record(numPauseFramesRcvd);
         processPauseCommand(pauseUnits);
-        break;
-
-      default:
-        error("Invalid message kind %d",frame->kind());
+    }
+    else
+    {
+        processReceivedDataFrame((EtherFrame *)frame);
     }
 }
 
@@ -405,7 +382,7 @@ void EnhancedEtherMACBase::processReceivedDataFrame(EtherFrame *frame)
 
     // statistics
     numFramesReceivedOK++;
-    numBytesReceivedOK += frame->byteLength();
+    numBytesReceivedOK += frame->getByteLength();
     numFramesReceivedOKVector.record(numFramesReceivedOK);
     numBytesReceivedOKVector.record(numBytesReceivedOK);
 
@@ -416,7 +393,7 @@ void EnhancedEtherMACBase::processReceivedDataFrame(EtherFrame *frame)
     numFramesPassedToHLVector.record(numFramesPassedToHL);
 
     // pass up to upper layer
-    send(frame, upperLayerOutGateId);
+    send(frame, "upperLayerOut");
 }
 
 void EnhancedEtherMACBase::processPauseCommand(int pauseUnits)
@@ -452,11 +429,11 @@ void EnhancedEtherMACBase::handleEndIFGPeriod()
         error("End of IFG and no frame to transmit");
 
     // End of IFG period, okay to transmit, if Rx idle OR duplexMode
-    cMessage *frame = (cMessage *)txQueue.tail();
+    cPacket *frame = (cPacket *)txQueue.front();
     EV << "IFG elapsed, now begin transmission of frame " << frame << endl;
 
     // Perform carrier extension if in Gigabit Ethernet
-    if (carrierExtension && frame->byteLength() < GIGABIT_MIN_FRAME_WITH_EXT)
+    if (carrierExtension && frame->getByteLength() < GIGABIT_MIN_FRAME_WITH_EXT)
     {
         EV << "Performing carrier extension of small frame\n";
         frame->setByteLength(GIGABIT_MIN_FRAME_WITH_EXT);
@@ -481,14 +458,14 @@ void EnhancedEtherMACBase::handleEndTxPeriod()
         error("Frame under transmission cannot be found");
 
     // get frame from buffer
-    cMessage *frame = (cMessage*)txQueue.pop();
+    cPacket *frame = (cPacket *)txQueue.pop();
 
     numFramesSent++;
-    numBytesSent += frame->byteLength();
+    numBytesSent += frame->getByteLength();
     numFramesSentVector.record(numFramesSent);
     numBytesSentVector.record(numBytesSent);
 
-    if (frame->kind()==ETH_PAUSE)
+    if (dynamic_cast<EtherPauseFrame*>(frame)!=NULL)
     {
         numPauseFramesSent++;
         numPauseFramesSentVector.record(numPauseFramesSent);
@@ -525,16 +502,16 @@ void EnhancedEtherMACBase::scheduleEndIFGPeriod()
     transmitState = WAIT_IFG_STATE;
 }
 
-void EnhancedEtherMACBase::scheduleEndTxPeriod(cMessage *frame)
+void EnhancedEtherMACBase::scheduleEndTxPeriod(cPacket *frame)
 {
-    scheduleAt(simTime()+frame->length()*bitTime, endTxMsg);
+    scheduleAt(simTime()+frame->getBitLength()*bitTime, endTxMsg);
     transmitState = TRANSMITTING_STATE;
 }
 
 void EnhancedEtherMACBase::scheduleEndPausePeriod(int pauseUnits)
 {
     // length is interpreted as 512-bit-time units
-    double pausePeriod = pauseUnits*PAUSE_BITTIME*bitTime;
+    simtime_t pausePeriod = pauseUnits*PAUSE_BITTIME*bitTime;
     scheduleAt(simTime()+pausePeriod, endPauseMsg);
     transmitState = PAUSE_STATE;
 }
@@ -579,19 +556,19 @@ void EnhancedEtherMACBase::beginSendFrames()
     }
 }
 
-void EnhancedEtherMACBase::fireChangeNotification(int type, cMessage *msg)
+void EnhancedEtherMACBase::fireChangeNotification(int type, cPacket *msg)
 {
-   	if (nb) {
-	    notifDetails.setMessage(msg);
-		nb->fireChangeNotification(type, &notifDetails);
-	}
+    if (nb) {
+        notifDetails.setPacket(msg);
+        nb->fireChangeNotification(type, &notifDetails);
+    }
 }
 
 void EnhancedEtherMACBase::finish()
 {
-    if (!disabled && par("writeScalars").boolValue())
+    if (!disabled)
     {
-        double t = simTime();
+        simtime_t t = simTime();
         recordScalar("simulated time", t);
         recordScalar("txrate (Mb)", txrate/1000000);
         recordScalar("full duplex", duplexMode);
@@ -635,9 +612,9 @@ void EnhancedEtherMACBase::updateDisplayString()
         color = "gray";
     else
         color = "";
-    displayString().setTagArg("i",1,color);
-    if (!strcmp(parentModule()->className(),"EthernetInterface"))
-        parentModule()->displayString().setTagArg("i",1,color);
+    getDisplayString().setTagArg("i",1,color);
+    if (!strcmp(getParentModule()->getClassName(),"EthernetInterface"))
+        getParentModule()->getDisplayString().setTagArg("i",1,color);
 
     // connection coloring
     updateConnectionColor(transmitState);
@@ -665,7 +642,7 @@ void EnhancedEtherMACBase::updateDisplayString()
     char buf[80];
     sprintf(buf, "tx:%s rx: %s\n#boff:%d #cTx:%d",
                  txStateName, rxStateName, backoffs, numConcurrentTransmissions);
-    displayString().setTagArg("t",0,buf);
+    getDisplayString().setTagArg("t",0,buf);
 #endif
 }
 
@@ -679,11 +656,19 @@ void EnhancedEtherMACBase::updateConnectionColor(int txState)
     else
         color = "";
 
-    cGate *g = gate("physOut");
-    while (g && g->type()=='O')
+    cGate *g = physOutGate;
+    while (g && g->getType()==cGate::OUTPUT)
     {
-        g->displayString().setTagArg("o",0,color);
-        g->displayString().setTagArg("o",1, color[0] ? "3" : "1");
-        g = g->toGate();
+        g->getDisplayString().setTagArg("o",0,color);
+        g->getDisplayString().setTagArg("o",1, color[0] ? "3" : "1");
+        g = g->getNextGate();
     }
 }
+
+void EnhancedEtherMACBase::receiveChangeNotification(int category, const cPolymorphic *)
+{
+    if (category==NF_SUBSCRIBERLIST_CHANGED)
+        updateHasSubcribers();
+}
+
+

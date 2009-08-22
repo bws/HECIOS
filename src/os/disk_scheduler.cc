@@ -14,7 +14,7 @@ using namespace std;
 
 //=============================================================================
 //
-// DiskScheduler implementation (bastract class)
+// DiskScheduler implementation (abstract class)
 //
 //=============================================================================
 
@@ -22,7 +22,7 @@ vector<SchedulerEntry*> DiskScheduler::extractIdenticalEntries(
     cQueue& queue, LogicalBlockAddress lba, bool readsOnly)
 {
     vector<SchedulerEntry*> completed;
-    for (cQueueIterator iter(queue); !iter.end() ; iter++ )
+    for (cQueue::Iterator iter(queue); !iter.end() ; iter++ )
     {
         SchedulerEntry* entry = static_cast<SchedulerEntry*>(iter());
         if (lba == entry->lba &&
@@ -45,9 +45,9 @@ DiskScheduler::~DiskScheduler()
 
 void DiskScheduler::initialize()
 {
-    inGateId_ = gate("in")->id();
-    outGateId_ = gate("out")->id();
-    requestGateId_ = gate("request")->id();
+    inGateId_ = gate("in")->getId();
+    outGateId_ = gate("out")->getId();
+    requestGateId_ = gate("request")->getId();
 
     // Initialize derived schedulers
     initializeScheduler();
@@ -59,7 +59,7 @@ void DiskScheduler::finish()
 
 void DiskScheduler::handleMessage( cMessage *msg )
 {
-    if (msg->arrivalGateId() == inGateId_)
+    if (msg->getArrivalGateId() == inGateId_)
     {
         // If the scheduler is empty, send this entry to disk
         // otherwise, add it to the scheduler
@@ -101,7 +101,7 @@ void DiskScheduler::handleMessage( cMessage *msg )
             dynamic_cast<spfsOSReadDeviceResponse*>(msg))
         {
             spfsOSReadDeviceRequest* readReq =
-                static_cast<spfsOSReadDeviceRequest*>(read->contextPointer());
+                static_cast<spfsOSReadDeviceRequest*>(read->getContextPointer());
             LogicalBlockAddress readBlock = readReq->getAddress();
             completedReqs = popRequestsCompletedByRead(readBlock);
         }
@@ -109,7 +109,7 @@ void DiskScheduler::handleMessage( cMessage *msg )
                  dynamic_cast<spfsOSWriteDeviceResponse*>(msg))
         {
             spfsOSWriteDeviceRequest* writeReq =
-               static_cast<spfsOSWriteDeviceRequest*>(write->contextPointer());
+               static_cast<spfsOSWriteDeviceRequest*>(write->getContextPointer());
             LogicalBlockAddress writtenBlock = writeReq->getAddress();
             completedReqs = popRequestsCompletedByWrite(writtenBlock);
 
@@ -150,7 +150,7 @@ void DiskScheduler::handleMessage( cMessage *msg )
 // FCFSDiskScheduler implementation (concrete DiskScheduler)
 //
 //=============================================================================
-Define_Module_Like(FCFSDiskScheduler, DiskScheduler)
+Define_Module(FCFSDiskScheduler);
 
 FCFSDiskScheduler::FCFSDiskScheduler()
 {
@@ -184,7 +184,7 @@ vector<SchedulerEntry*> FCFSDiskScheduler::popRequestsCompletedByWrite(
 // SSTFDiskScheduler implementation (concrete DiskScheduler)
 //
 //=============================================================================
-Define_Module_Like(SSTFDiskScheduler, DiskScheduler)
+Define_Module(SSTFDiskScheduler);
 
 SSTFDiskScheduler::SSTFDiskScheduler()
 {
@@ -203,7 +203,7 @@ void SSTFDiskScheduler::addEntry(SchedulerEntry* entry)
 
 SchedulerEntry* SSTFDiskScheduler::popNextEntry()
 {
-    cQueueIterator iter(sstfQueue, false);
+    cQueue::Iterator iter(sstfQueue, false);
     SchedulerEntry* closestEntry = static_cast<SchedulerEntry*>(iter());
     int64_t smallestDelta = abs64(currentAddress_ - closestEntry->lba);
 

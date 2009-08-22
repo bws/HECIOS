@@ -38,7 +38,7 @@ protected:
     virtual void handleMessage(cMessage* msg);
 
     /** Extract the payload from a completed socket message */
-    void socketDataArrived(int, void *, cMessage *msg, bool);
+    void socketDataArrived(int, void *, cPacket* msg, bool);
 
 private:
     /** @return a socket with an open connection to the server */
@@ -62,7 +62,7 @@ Define_Module(MPITcpClient);
  */
 void MPITcpClient::initialize()
 {
-    appOutGateId_ = gate("appOut")->id();
+    appOutGateId_ = findGate("appOut");
 }
 
 /**
@@ -84,7 +84,7 @@ void MPITcpClient::handleMessage(cMessage* msg)
 
         // Encapsulate the domain message and send via TCP
         spfsNetworkClientSendMessage* pkt = new spfsNetworkClientSendMessage();
-        pkt->encapsulate(msg);
+        pkt->encapsulate(req);
         pkt->setByteLength(256);
         sock->send(pkt);
     }
@@ -141,7 +141,7 @@ TCPSocket* MPITcpClient::getConnectedSocket(int rank)
 // and tcp.receiveQueueClass="TCPMsgBasedRcvQueue" ensuring that only
 // whole messages are received rather than message fragments
 //
-void MPITcpClient::socketDataArrived(int, void *, cMessage *msg, bool)
+void MPITcpClient::socketDataArrived(int, void *, cPacket* msg, bool)
 {
     // Decapsulate the payload and call handleMessage with the payload
     cMessage* payload = msg->decapsulate();

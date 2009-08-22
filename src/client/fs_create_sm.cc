@@ -87,7 +87,7 @@ bool FSCreateSM::updateState(cFSM& currentState, cMessage* msg)
         }
         case FSM_Exit(WRITE_ATTR):
         {
-            cerr << msg->className() << " " << msg->info() << endl;
+            cerr << msg->getClassName() << " " << msg->info() << endl;
             assert(0 != dynamic_cast<spfsSetAttrResponse*>(msg));
             FSM_Goto(currentState, WRITE_DIRENT);
             break;

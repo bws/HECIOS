@@ -97,7 +97,7 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         collectTransferFromStorageDelay(readResp);
 
         // Cleanup the originating request
-        delete static_cast<cMessage*>(msg->contextPointer());
+        delete static_cast<cMessage*>(msg->getContextPointer());
     }
     else if (0 != dynamic_cast<spfsOSFileWriteResponse*>(msg))
     {
@@ -109,7 +109,7 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
         collectTransferToStorageDelay(writeResp);
 
         // Cleanup the originating request
-        delete static_cast<cMessage*>(msg->contextPointer());
+        delete static_cast<cMessage*>(msg->getContextPointer());
     }
 
     // If this is the last flow message response, send the final response
@@ -120,7 +120,7 @@ void BMIListIODataFlow::processDataFlowMessage(cMessage* msg)
             new spfsDataFlowFinish(0, SPFS_DATA_FLOW_FINISH);
         flowFinish->setContextPointer(getOriginatingMessage());
         flowFinish->setFlowId(getUniqueId());
-        module_->scheduleAt(module_->simTime(), flowFinish);
+        module_->scheduleAt(simulation.getSimTime(), flowFinish);
         //cerr << "Finishing BMI-ListIO flow\n";
     }
 
@@ -242,7 +242,7 @@ void BMIListIODataFlow::sendPushAck(FSSize amountRecvd)
     assert(0 != partnerModule);
 
     // Send the acknowledgement directly to module
-    parentModule()->sendDirect(pushResponse, 0.0, partnerModule, "directIn");
+    parentModule()->sendDirect(pushResponse, 0.0, 0.0, partnerModule, "directIn");
 }
 
 void BMIListIODataFlow::updateBstreamSize(FSSize lastByteOffset)

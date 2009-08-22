@@ -12,18 +12,16 @@
 //
 
 simple MpiMiddleware
+{
     gates:
-        in: appIn, aggIn, cacheIn, netIn;
-        out: appOut, aggOut, cacheOut, netOut;
-endsimple
+        input appIn;
+        input aggIn;
+        input cacheIn;
+        input netIn;
+        output appOut;
+        output aggOut;
+        output cacheOut;
+        output netOut;
+}
 
 
-//
-// Local variables:
-//  indent-tabs-mode: nil
-//  c-indent-level: 4
-//  c-basic-offset: 4
-// End:
-//
-// vim: ts=4 sts=4 sw=4 expandtab
-//

@@ -11,29 +11,40 @@
 //
 // Template for I/O Library models
 //
-simple IOLibrary
+moduleinterface IOLibrary
+{
     gates:
-        in: in, response;
-        out: out, request;
-endsimple
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
 //
 // Passthrough/No-op I/O library model
 //
-simple PassThroughIOLibrary
+simple PassThroughIOLibrary like IOLibrary
+{
+	@class(PassThroughLibrary);
     gates:
-        in: in, response;
-        out: out, request;
-endsimple
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
 //
 // I/O Library model that supports List I/O messages
 //
-simple ListIOLibrary
-  gates:
-    in: in, response;
-    out: out, request;
-endsimple
+simple ListIOLibrary like IOLibrary
+{
+	@class(ListIOLibrary);
+    gates:
+        input in;
+        input response;
+        output out;
+        output request;
+}
 
 //
 // Local variables:

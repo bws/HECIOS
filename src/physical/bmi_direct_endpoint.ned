@@ -12,11 +12,12 @@
 //
 simple BMIDirectEndpoint
 
+{
     gates:
-        in: appIn;
-        out: appOut;
+        input appIn;
+        output appOut;
 
-        in: netIn;
-        out: netOut;
+        input netIn;
+        output netOut;
 
-endsimple
+}
